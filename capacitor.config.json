@@ -4,6 +4,7 @@
   "webDir": "www",
   "server": {
     "url": "https://htspos-sales.netlify.app",
+    "hostname": "htspos-sales.netlify.app",
     "cleartext": false,
     "allowNavigation": [
       "*.netlify.app",
