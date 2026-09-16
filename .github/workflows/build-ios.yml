@@ -26,6 +26,12 @@ jobs:
       - name: Sync web assets into iOS project
         run: npx cap sync ios
 
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+
+      - name: Install Pods (Capacitor runtime dependencies)
+        run: cd ios/App && pod install --repo-update
+
       - name: Set camera + app permissions in Info.plist
         run: |
           PLIST=ios/App/App/Info.plist
