@@ -1,0 +1,60 @@
+name: Build iOS App (AltStore)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Add iOS platform
+        run: npx cap add ios
+
+      - name: Sync web assets into iOS project
+        run: npx cap sync ios
+
+      - name: Set camera + app permissions in Info.plist
+        run: |
+          PLIST=ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'التطبيق محتاج الكاميرا عشان يمسح الباركود في الجرد'" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" || true
+
+      - name: Build unsigned .app (no code signing)
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive -archivePath build/App.xcarchive
+
+      - name: Package into .ipa
+        run: |
+          mkdir -p build/Payload
+          cp -r build/App.xcarchive/Products/Applications/App.app build/Payload/
+          cd build
+          zip -r ../HTCPOS.ipa Payload
+          cd ..
+
+      - name: Upload .ipa as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HTCPOS-ipa
+          path: HTCPOS.ipa
+          retention-days: 30
