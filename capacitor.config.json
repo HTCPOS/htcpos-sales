@@ -3,8 +3,8 @@
   "appName": "HTCPOS",
   "webDir": "www",
   "server": {
-    "url": "https://htspos-sales.netlify.app",
-    "hostname": "htspos-sales.netlify.app",
+    "url": "https://htcpos-sales.netlify.app",
+    "hostname": "htcpos-sales.netlify.app",
     "cleartext": false,
     "allowNavigation": [
       "*.netlify.app",
