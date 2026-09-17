@@ -3,11 +3,11 @@
   "appName": "HTCPOS",
   "webDir": "www",
   "server": {
-    "url": "https://htcpos-sales.netlify.app",
-    "hostname": "htcpos-sales.netlify.app",
+    "url": "https://htcpos.github.io/htcpos-sales/",
+    "hostname": "htcpos.github.io",
     "cleartext": false,
     "allowNavigation": [
-      "*.netlify.app",
+      "*.github.io",
       "*.firebaseio.com",
       "*.firebasedatabase.app",
       "*.googleapis.com",
