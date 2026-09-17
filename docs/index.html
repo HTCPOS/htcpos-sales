@@ -1501,21 +1501,25 @@ async function testCameraRaw() {
   report.push('isNativePlatform: ' + (window.Capacitor && window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : 'n/a'));
   const pluginKeys = window.Capacitor && window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins) : [];
   report.push('كل المكتبات المسجلة: ' + (pluginKeys.length ? pluginKeys.join(', ') : 'لا يوجد أي مكتبة مسجلة!'));
-  const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorBarcodeScanner;
-  report.push('CapacitorBarcodeScanner موجود: ' + (!!plugin));
+  const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BarcodeScanner;
+  report.push('BarcodeScanner موجود: ' + (!!plugin));
   alert(report.join('\n'));
   if (!plugin) return;
   try {
-    const result = await plugin.scanBarcode({ hint: 'ALL', scanInstructions: 'اختبار', scanButton: false });
+    const sup = await plugin.isSupported();
+    alert('isSupported(): ' + JSON.stringify(sup));
+    const perm = await plugin.requestPermissions();
+    alert('requestPermissions(): ' + JSON.stringify(perm));
+    const result = await plugin.scan({});
     alert('✅ نجح المسح: ' + JSON.stringify(result));
   } catch (e) {
-    alert('❌ فشل المسح: ' + (e && e.message ? e.message : JSON.stringify(e)));
+    alert('❌ فشل: ' + (e && e.message ? e.message : JSON.stringify(e)));
   }
 }
 
 function startCameraScan() {
   if (isNativeApp()) {
-    const plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorBarcodeScanner;
+    const plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.BarcodeScanner;
     if (!plugin) {
       document.getElementById('barcodeScanStatus').textContent = 'مكتبة الكاميرا الأصلية مش موجودة في النسخة دي من التطبيق - جرب تحدّث التطبيق.';
       return;
@@ -1523,11 +1527,11 @@ function startCameraScan() {
     document.getElementById('startCameraBtn').style.display = 'none';
     document.getElementById('barcodeReaderView').style.display = 'none';
     document.getElementById('barcodeScanStatus').textContent = 'هتفتح كاميرا الجهاز الآن...';
-    plugin.scanBarcode({ hint: 'ALL', scanInstructions: 'وجّه الكاميرا على الباركود', scanButton: false })
+    plugin.requestPermissions().then(() => plugin.scan({}))
       .then(result => {
         document.getElementById('startCameraBtn').style.display = 'block';
-        if (result && result.ScanResult) {
-          onBarcodeScanned(result.ScanResult);
+        if (result && result.barcodes && result.barcodes.length) {
+          onBarcodeScanned(result.barcodes[0].rawValue);
           // في وضع "مسح سريع" نفتح الكاميرا تاني تلقائي عشان نكمل مسح باقي الأصناف من غير ما يدوس الزرار كل مرة
           if (scanMode === 'increment') {
             document.getElementById('barcodeScanStatus').textContent = 'وجّه الكاميرا على الباركود التالي...';
