@@ -257,6 +257,7 @@
       <div id="faceIdWrap" style="display:none;">
         <div class="loginDivider">أو</div>
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
+      </div>
     </div>
   </div>
 </div>
@@ -1494,6 +1495,37 @@ function openBarcodeScanner() {
 }
 
 function startCameraScan() {
+  if (isNativeApp()) {
+    const plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorBarcodeScanner;
+    if (!plugin) {
+      document.getElementById('barcodeScanStatus').textContent = 'مكتبة الكاميرا الأصلية مش موجودة في النسخة دي من التطبيق - جرب تحدّث التطبيق.';
+      return;
+    }
+    document.getElementById('startCameraBtn').style.display = 'none';
+    document.getElementById('barcodeReaderView').style.display = 'none';
+    document.getElementById('barcodeScanStatus').textContent = 'هتفتح كاميرا الجهاز الآن...';
+    plugin.scanBarcode({ hint: 'ALL', scanInstructions: 'وجّه الكاميرا على الباركود', scanButton: false })
+      .then(result => {
+        document.getElementById('startCameraBtn').style.display = 'block';
+        if (result && result.ScanResult) {
+          onBarcodeScanned(result.ScanResult);
+          // في وضع "مسح سريع" نفتح الكاميرا تاني تلقائي عشان نكمل مسح باقي الأصناف من غير ما يدوس الزرار كل مرة
+          if (scanMode === 'increment') {
+            document.getElementById('barcodeScanStatus').textContent = 'وجّه الكاميرا على الباركود التالي...';
+            setTimeout(startCameraScan, 500);
+          } else {
+            document.getElementById('barcodeScanStatus').textContent = '';
+          }
+        } else {
+          document.getElementById('barcodeScanStatus').textContent = 'استخدم البحث اليدوي فوق أو فعّل الكاميرا';
+        }
+      })
+      .catch(err => {
+        document.getElementById('startCameraBtn').style.display = 'block';
+        document.getElementById('barcodeScanStatus').textContent = 'مقدرناش نوصل للكاميرا (' + (err && err.message ? err.message : JSON.stringify(err)) + ') - تأكد من السماح بإذن الكاميرا للتطبيق من إعدادات الآيفون. تقدر تستخدم مربع "البحث اليدوي" فوق من غير كاميرا.';
+      });
+    return;
+  }
   document.getElementById('startCameraBtn').style.display = 'none';
   document.getElementById('barcodeReaderView').style.display = 'block';
   document.getElementById('barcodeScanStatus').textContent = 'بيحاول يوصل للكاميرا...';
