@@ -1560,7 +1560,7 @@ function startWebCameraScan() {
   try {
     barcodeScannerInstance = new Html5Qrcode('barcodeReaderView');
     barcodeScannerInstance.start(
-      { facingMode: { ideal: 'environment' }, advanced: [{ focusMode: 'continuous' }] },
+      { facingMode: 'environment' },
       { fps: 20, qrbox: { width: 280, height: 180 }, disableFlip: true, aspectRatio: 1.4 },
       (decodedText) => {
         onBarcodeScanned(decodedText);
