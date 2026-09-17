@@ -23,6 +23,9 @@ jobs:
       - name: Add iOS platform
         run: npx cap add ios
 
+      - name: Generate app icons from resources/icon.png
+        run: npx capacitor-assets generate --ios --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#111111'
+
       - name: Sync web assets into iOS project
         run: npx cap sync ios
 
@@ -36,6 +39,7 @@ jobs:
         run: |
           PLIST=ios/App/App/Info.plist
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'التطبيق محتاج الكاميرا عشان يمسح الباركود في الجرد'" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string 'التطبيق بيستخدم بصمة الوجه لتسجيل الدخول بسرعة وأمان'" "$PLIST" || true
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" || true
 
       - name: Build unsigned .app (no code signing)
