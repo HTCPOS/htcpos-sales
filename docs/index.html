@@ -29,78 +29,90 @@
   /* ---------- Login (HTC/POS branded design) ---------- */
   #loginScreen {
     position:fixed; inset:0; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse 900px 500px at 15% -5%, rgba(74,222,128,.20), transparent 60%),
-               radial-gradient(ellipse 900px 500px at 105% 105%, rgba(74,222,128,.16), transparent 60%),
-               linear-gradient(160deg,#0B1B3A 0%,#0A1730 55%,#081326 100%);
+    background:#F8FAFC;
     padding:24px; overflow:hidden; transition:background .25s; position:relative;
   }
   body.dark-theme #loginScreen {
-    background:radial-gradient(ellipse 900px 500px at 15% -5%, rgba(74,222,128,.14), transparent 60%),
-               radial-gradient(ellipse 900px 500px at 105% 105%, rgba(74,222,128,.10), transparent 60%),
-               linear-gradient(160deg,#060D1C 0%,#050A17 55%,#030710 100%);
+    background:radial-gradient(ellipse 900px 500px at 15% -5%, rgba(74,222,128,.20), transparent 60%),
+               radial-gradient(ellipse 900px 500px at 105% 105%, rgba(74,222,128,.16), transparent 60%),
+               linear-gradient(160deg,#0B1B3A 0%,#0A1730 55%,#081326 100%);
   }
   #loginScreen::before, #loginScreen::after {
     content:''; position:absolute; width:220px; height:220px; background:linear-gradient(135deg,#22C55E,#4ADE80);
-    opacity:.35; filter:blur(2px); pointer-events:none;
+    opacity:0; filter:blur(2px); pointer-events:none;
   }
+  body.dark-theme #loginScreen::before, body.dark-theme #loginScreen::after { opacity:.35; }
   #loginScreen::before { top:-90px; left:-90px; clip-path:polygon(0 0, 100% 0, 0 100%); }
   #loginScreen::after { bottom:-90px; right:-90px; clip-path:polygon(100% 100%, 100% 0, 0 100%); }
 
-  .loginBottomArt { position:absolute; bottom:0; left:0; right:0; height:120px; pointer-events:none; opacity:.9; z-index:0; }
-
   .loginThemeSwitch { display:flex; justify-content:center; gap:8px; margin-bottom:22px; position:relative; z-index:1; }
   .loginThemeSwitch button {
-    border:1.5px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); color:#CBD5E1; font-size:12px; font-weight:700;
+    border:1.5px solid #D1E4D8; background:#fff; color:#3F5B4A; font-size:12px; font-weight:700;
     padding:8px 16px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:6px;
   }
-  .loginThemeSwitch button.activeTheme { background:#fff; color:#0F172A; border-color:#fff; }
+  .loginThemeSwitch button.activeTheme { background:#16A34A; color:#fff; border-color:#16A34A; }
   body.dark-theme #loginScreen .loginThemeSwitch button { background:rgba(255,255,255,.05); color:#94A3B8; border-color:rgba(255,255,255,.1); }
   body.dark-theme #loginScreen .loginThemeSwitch button.activeTheme { background:#F8FAFC; color:#0F172A; border-color:#F8FAFC; }
 
   .loginLogoWrap { background:transparent; box-shadow:none; padding:0; margin:0 auto 8px; position:relative; z-index:1; }
-  .loginLogoWrap img { display:block; height:52px; width:auto; margin:0 auto; filter:drop-shadow(0 0 18px rgba(74,222,128,.35)); }
-  .loginTagline { text-align:center; color:#CBD5E1; font-size:13px; margin-bottom:26px; position:relative; z-index:1; display:flex; align-items:center; gap:10px; justify-content:center; }
-  .loginTagline::before, .loginTagline::after { content:''; width:36px; height:1px; background:linear-gradient(90deg,transparent,rgba(74,222,128,.6)); }
-  .loginTagline::after { background:linear-gradient(90deg,rgba(74,222,128,.6),transparent); }
+  .loginLogoWrap img { display:block; height:52px; width:auto; margin:0 auto; filter:drop-shadow(0 0 10px rgba(34,197,94,.2)); }
+  body.dark-theme .loginLogoWrap img { filter:drop-shadow(0 0 18px rgba(74,222,128,.35)); }
+  .loginTagline { text-align:center; color:#5B7566; font-size:13px; margin-bottom:26px; position:relative; z-index:1; display:flex; align-items:center; gap:10px; justify-content:center; }
+  .loginTagline::before, .loginTagline::after { content:''; width:36px; height:1px; background:linear-gradient(90deg,transparent,rgba(22,163,74,.5)); }
+  .loginTagline::after { background:linear-gradient(90deg,rgba(22,163,74,.5),transparent); }
+  body.dark-theme .loginTagline { color:#CBD5E1; }
+  body.dark-theme .loginTagline::before, body.dark-theme .loginTagline::after { background:linear-gradient(90deg,transparent,rgba(74,222,128,.6)); }
+  body.dark-theme .loginTagline::after { background:linear-gradient(90deg,rgba(74,222,128,.6),transparent); }
 
-  .loginCard { background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02)); border:1px solid rgba(74,222,128,.25);
+  .loginCard { background:#fff; border:1px solid #D1E4D8;
     border-radius:26px; padding:34px 26px; width:100%; max-width:380px; position:relative; z-index:1;
-    box-shadow:0 25px 60px rgba(0,0,0,.45); text-align:center; transition:background .25s, box-shadow .25s; }
+    box-shadow:0 25px 60px rgba(22,101,52,.12); text-align:center; transition:background .25s, box-shadow .25s; }
   body.dark-theme #loginScreen .loginCard { background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01)); border-color:rgba(74,222,128,.18); box-shadow:0 25px 60px rgba(0,0,0,.6); }
   .loginCard h1 {
     font-family:'Poppins', 'Segoe UI', sans-serif; font-size:26px; font-weight:800; letter-spacing:.5px;
-    margin-bottom:8px; color:#fff; display:flex; align-items:center; gap:12px; justify-content:center;
+    margin-bottom:8px; color:#14532D; display:flex; align-items:center; gap:12px; justify-content:center;
   }
-  .loginCard h1::before, .loginCard h1::after { content:''; width:34px; height:1px; background:linear-gradient(90deg,transparent,#4ADE80); }
-  .loginCard h1::after { background:linear-gradient(90deg,#4ADE80,transparent); }
+  .loginCard h1::before, .loginCard h1::after { content:''; width:34px; height:1px; background:linear-gradient(90deg,transparent,#16A34A); }
+  .loginCard h1::after { background:linear-gradient(90deg,#16A34A,transparent); }
   body.dark-theme #loginScreen .loginCard h1 { color:#F8FAFC; }
-  .loginCard p { color:#94A3B8; font-size:13.5px; margin-bottom:26px; }
+  body.dark-theme .loginCard h1::before, body.dark-theme .loginCard h1::after { background:linear-gradient(90deg,transparent,#4ADE80); }
+  body.dark-theme .loginCard h1::after { background:linear-gradient(90deg,#4ADE80,transparent); }
+  .loginCard p { color:#5B7566; font-size:13.5px; margin-bottom:26px; }
   body.dark-theme #loginScreen .loginCard p { color:#7C8DA6; }
   .loginInputWrap { position:relative; margin-bottom:14px; }
-  .loginInputWrap svg { position:absolute; top:50%; left:16px; transform:translateY(-50%); pointer-events:none; }
+  .loginInputWrap svg { position:absolute; top:50%; left:16px; transform:translateY(-50%); pointer-events:none; stroke:#16A34A; }
+  body.dark-theme .loginInputWrap svg { stroke:#4ADE80; }
   .loginCard input {
-    width:100%; padding:15px 44px 15px 44px; border:1.5px solid rgba(74,222,128,.25); border-radius:14px;
-    font-size:14.5px; text-align:right; direction:ltr; background:rgba(255,255,255,.04); color:#F8FAFC; box-sizing:border-box;
+    width:100%; padding:15px 44px 15px 44px; border:1.5px solid #D1E4D8; border-radius:14px;
+    font-size:14.5px; text-align:right; direction:ltr; background:#F7FBF8; color:#14532D; box-sizing:border-box;
   }
-  .loginCard input::placeholder { color:#7C8DA6; }
+  .loginCard input::placeholder { color:#7C9483; }
   body.dark-theme #loginScreen .loginCard input { background:rgba(255,255,255,.03); border-color:rgba(74,222,128,.18); color:#F8FAFC; }
-  .loginCard input:focus { outline:none; border-color:#4ADE80; }
-  #loginPwdToggle { position:absolute; top:50%; right:16px; transform:translateY(-50%); cursor:pointer; background:none; border:none; padding:0; display:flex; }
+  body.dark-theme #loginScreen .loginCard input::placeholder { color:#7C8DA6; }
+  .loginCard input:focus { outline:none; border-color:#16A34A; }
+  body.dark-theme .loginCard input:focus { border-color:#4ADE80; }
+  #loginPwdToggle { position:absolute; top:50%; right:14px; transform:translateY(-50%); cursor:pointer; background:none; border:none; padding:0; margin:0; width:22px; height:22px; display:flex; align-items:center; justify-content:center; -webkit-appearance:none; appearance:none; box-sizing:border-box; }
+  #loginPwdToggle svg { stroke:#8FA79A; }
+  body.dark-theme #loginPwdToggle svg { stroke:#7C8DA6; }
   .loginCard button.loginSubmit {
     width:100%; padding:15px; border:none; border-radius:14px; background:linear-gradient(135deg,#22C55E,#16A34A);
     color:#fff; font-size:15.5px; font-weight:800; cursor:pointer; margin-top:8px;
-    display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 10px 24px rgba(34,197,94,.35);
+    display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 10px 24px rgba(34,197,94,.28);
   }
   .loginCard button.loginSubmit:active { filter:brightness(.94); }
-  #loginError { color:#F87171; font-size:13px; margin-top:10px; min-height:18px; }
+  #loginError { color:#DC2626; font-size:13px; margin-top:10px; min-height:18px; }
+  body.dark-theme #loginError { color:#F87171; }
   .faceIdBtn {
-    display:none; width:100%; margin-top:12px; padding:14px 16px; border-radius:14px; border:1.5px solid rgba(74,222,128,.4);
-    background:rgba(74,222,128,.06); color:#F8FAFC; font-size:14px; font-weight:700; cursor:pointer;
+    display:none; width:100%; margin-top:12px; padding:14px 16px; border-radius:14px; border:1.5px solid #BBE3CB;
+    background:#F0FBF4; color:#14532D; font-size:14px; font-weight:700; cursor:pointer;
     align-items:center; justify-content:space-between; gap:8px;
   }
+  .faceIdBtn svg { stroke:#16A34A; }
   body.dark-theme #loginScreen .faceIdBtn { background:rgba(74,222,128,.04); border-color:rgba(74,222,128,.3); color:#F8FAFC; }
-  .loginDivider { display:flex; align-items:center; gap:10px; margin:18px 0; color:#7C8DA6; font-size:12px; }
-  .loginDivider::before, .loginDivider::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.12); }
+  body.dark-theme #loginScreen .faceIdBtn svg { stroke:#4ADE80; }
+  .loginDivider { display:flex; align-items:center; gap:10px; margin:18px 0; color:#7C9483; font-size:12px; }
+  .loginDivider::before, .loginDivider::after { content:''; flex:1; height:1px; background:#D1E4D8; }
+  body.dark-theme #loginScreen .loginDivider { color:#7C8DA6; }
   body.dark-theme #loginScreen .loginDivider::before, body.dark-theme #loginScreen .loginDivider::after { background:rgba(255,255,255,.08); }
 
   /* ---------- App shell ---------- */
@@ -213,14 +225,14 @@
     <button id="themeLightBtn" onclick="setLoginTheme('light')"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> عادي</button>
     <button id="themeDarkBtn" onclick="setLoginTheme('dark')"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg> داكن</button>
   </div>
-  <div class="loginLogoWrap"><img src="htc-pos-logo-dark.png" alt="HTC POS"></div>
+  <div class="loginLogoWrap"><img id="loginLogoImg" src="htc-pos-logo.png" alt="HTC POS"></div>
   <div class="loginTagline">حلول متكاملة لإدارة مبيعاتك</div>
   <div class="loginCard">
 
     <!-- شاشة قفل سريعة: بتظهر لو الجلسة محفوظة وبصمة الوجه مفعّلة - بصمة الوجه هي الطريقة الأساسية هنا -->
     <div id="faceIdLockCard" style="display:none;">
       <p id="faceIdLockEmail" style="margin-bottom:22px;"></p>
-      <button class="faceIdBtn" id="faceIdPrimaryBtn" style="display:flex; margin-top:0;" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>الدخول ببصمة الوجه</span><span>‹</span></button>
+      <button class="faceIdBtn" id="faceIdPrimaryBtn" style="display:flex; margin-top:0;" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>الدخول ببصمة الوجه</span><span>‹</span></button>
       <button onclick="showPasswordForm()" style="margin-top:16px; background:none; border:none; color:#4ADE80; font-size:13px; font-weight:700; cursor:pointer;">تسجيل الدخول بطريقة تانية</button>
       <div id="loginErrorLock" style="color:#F87171; font-size:13px; margin-top:10px; min-height:18px;"></div>
     </div>
@@ -230,31 +242,23 @@
       <h1>مرحباً بك</h1>
       <p>سجّل دخولك للمتابعة</p>
       <div class="loginInputWrap">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
         <input type="email" id="loginEmail" placeholder="الإيميل" autocomplete="username">
       </div>
       <div class="loginInputWrap">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <input type="password" id="loginPassword" placeholder="كلمة المرور" autocomplete="current-password">
         <button type="button" id="loginPwdToggle" onclick="const i=document.getElementById('loginPassword'); i.type = i.type==='password' ? 'text' : 'password';">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#7C8DA6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
       <button class="loginSubmit" onclick="doLogin()"><span>دخول</span><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       <div id="loginError"></div>
       <div id="faceIdWrap" style="display:none;">
         <div class="loginDivider">أو</div>
-        <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#4ADE80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
-      </div>
+        <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
     </div>
   </div>
-  <svg class="loginBottomArt" viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice">
-    <rect x="30" y="30" width="120" height="80" rx="10" fill="#0F2540" stroke="#1E3A5F" stroke-width="2" transform="rotate(-8 90 70)"/>
-    <rect x="42" y="42" width="96" height="56" rx="4" fill="#132C4C" transform="rotate(-8 90 70)"/>
-    <text x="60" y="76" transform="rotate(-8 90 70)" font-family="Poppins, sans-serif" font-size="13" font-weight="800"><tspan fill="#4ADE80">HTC</tspan><tspan fill="#94A3B8">/POS</tspan></text>
-    <path d="M300 20c40 10 70 45 80 90" stroke="#22C55E" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/>
-    <path d="M320 40c25 8 45 30 52 62" stroke="#4ADE80" stroke-width="2" fill="none" opacity=".3" stroke-linecap="round"/>
-  </svg>
 </div>
 
 <!-- ================= APP ================= -->
@@ -281,7 +285,7 @@
     </header>
 
     <div id="notifBanner" style="display:none; background:#EFF6FF; color:#1D4ED8; font-size:13px; font-weight:700; padding:12px 16px; align-items:center; justify-content:space-between; gap:10px;">
-      <span>🔔 فعّل الإشعارات عشان توصلك تنبيهات فورية</span>
+      <span style="display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2a6 6 0 0 0-6 6v3.09c0 .78-.31 1.53-.85 2.09L4 14.5c-.83.85-.24 2.29.94 2.29h14.12c1.18 0 1.77-1.44.94-2.29l-1.15-1.32a2.94 2.94 0 0 1-.85-2.09V8a6 6 0 0 0-6-6Zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z"/></svg> فعّل الإشعارات عشان توصلك تنبيهات فورية</span>
       <button onclick="requestNotificationPermission();document.getElementById('notifBanner').style.display='none';updateTopOffset();" style="background:#2563EB;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">تفعيل</button>
     </div>
   </div>
@@ -453,7 +457,7 @@
     <button class="closeM" onclick="closeModal('productsModal')">✕</button>
     <h3>كل المنتجات</h3>
     <div class="searchBox" style="margin:0 0 12px;">
-      <span>🔍</span>
+      <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="text" id="productsFilterInput" placeholder="فلترة..." oninput="renderProductsList()">
     </div>
     <div id="productsList"><div class="emptyMsg">جاري التحميل...</div></div>
@@ -511,8 +515,8 @@
     <div style="margin-bottom:16px;">
       <label style="font-size:12px;color:var(--textMuted);font-weight:700;">طريقة الدفع</label>
       <div style="display:flex;gap:8px;margin-top:6px;">
-        <button id="depositMethodCash" onclick="setDepositMethod('نقدي')" style="flex:1;padding:12px;border-radius:12px;border:none;font-weight:800;font-size:13px;cursor:pointer;">💵 نقدي</button>
-        <button id="depositMethodCard" onclick="setDepositMethod('بطاقة')" style="flex:1;padding:12px;border-radius:12px;border:none;font-weight:800;font-size:13px;cursor:pointer;">💳 بطاقة</button>
+        <button id="depositMethodCash" onclick="setDepositMethod('نقدي')" style="flex:1;padding:12px;border-radius:12px;border:none;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg> نقدي</button>
+        <button id="depositMethodCard" onclick="setDepositMethod('بطاقة')" style="flex:1;padding:12px;border-radius:12px;border:none;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/></svg> بطاقة</button>
       </div>
     </div>
     <button onclick="submitDeposit()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;">✓ تأكيد الإيداع</button>
@@ -536,12 +540,12 @@
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <input type="text" id="countFilterInput" placeholder="فلترة الأصناف..." style="flex:1;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
-      <button onclick="openBarcodeScanner()" style="background:#2563EB;color:#fff;border:none;border-radius:12px;padding:0 16px;font-weight:700;font-size:18px;cursor:pointer;white-space:nowrap;">📷</button>
+      <button onclick="openBarcodeScanner()" style="background:#2563EB;color:#fff;border:none;border-radius:12px;padding:0 16px;font-weight:700;font-size:18px;cursor:pointer;white-space:nowrap; display:flex; align-items:center; justify-content:center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M20 8V6a2 2 0 0 0-2-2h-2M20 16v2a2 2 0 0 1-2 2h-2"/><rect x="8" y="9" width="8" height="6" rx="1"/></svg></button>
     </div>
     <div id="inventoryCountList" style="max-height:45vh;overflow:auto;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid #F1F5F9;">
       <span id="countProgress" style="font-size:12px;color:var(--textMuted);">0 صنف اتعد</span>
-      <button onclick="finishInventoryCount()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:800;font-size:14px;cursor:pointer;">✅ إنهاء الجرد</button>
+      <button onclick="finishInventoryCount()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> إنهاء الجرد</button>
     </div>
   </div>
 </div>
@@ -551,15 +555,15 @@
     <button class="closeM" onclick="closeBarcodeScanner()">✕</button>
     <h3>مسح الباركود</h3>
     <div style="display:flex; gap:8px; margin:10px 0;">
-      <button id="modeIncrementBtn" onclick="setScanMode('increment')" style="flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; font-size:12px; cursor:pointer;">⚡ مسح = +1 (أسرع)</button>
-      <button id="modeManualBtn" onclick="setScanMode('manual')" style="flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; font-size:12px; cursor:pointer;">✏️ إدخال يدوي</button>
+      <button id="modeIncrementBtn" onclick="setScanMode('increment')" style="flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg> مسح = +1 (أسرع)</button>
+      <button id="modeManualBtn" onclick="setScanMode('manual')" style="flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> إدخال يدوي</button>
       <button onclick="closeBarcodeScanner()" style="background:#FEE2E2; color:#DC2626; border:none; border-radius:10px; padding:10px 14px; font-weight:800; font-size:12px; cursor:pointer; white-space:nowrap;">✕ رجوع</button>
     </div>
     <div style="position:relative; margin-bottom:10px;">
-      <input type="text" id="manualLookupInput" placeholder="🔍 اكتب اسم الصنف أو الباركود يدويًا (من غير كاميرا)..." oninput="manualLookupSearch()" style="width:100%; padding:12px 14px; border:1.5px solid #E2E8F0; border-radius:12px; font-size:14px; box-sizing:border-box;">
+      <input type="text" id="manualLookupInput" placeholder="اكتب اسم الصنف أو الباركود يدويًا (من غير كاميرا)..." oninput="manualLookupSearch()" style="width:100%; padding:12px 14px; border:1.5px solid #E2E8F0; border-radius:12px; font-size:14px; box-sizing:border-box;">
       <div id="manualLookupResults" style="display:none; position:absolute; top:52px; left:0; right:0; background:#fff; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:260px; overflow:auto;"></div>
     </div>
-    <div id="startCameraBtn" onclick="startCameraScan()" style="display:block; text-align:center; background:#EFF6FF; color:#2563EB; border:2px dashed #93C5FD; border-radius:14px; padding:22px; font-weight:800; font-size:14px; cursor:pointer;">🎥 دوس هنا عشان تفعّل الكاميرا</div>
+    <div id="startCameraBtn" onclick="startCameraScan()" style="display:flex; align-items:center; justify-content:center; gap:8px; text-align:center; background:#EFF6FF; color:#2563EB; border:2px dashed #93C5FD; border-radius:14px; padding:22px; font-weight:800; font-size:14px; cursor:pointer;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m23 7-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> دوس هنا عشان تفعّل الكاميرا</div>
     <div id="barcodeReaderView" style="display:none; width:100%;min-height:1px;border-radius:14px;overflow:hidden;position:relative;z-index:1;"></div>
     <div id="barcodeScanStatus" style="text-align:center;font-size:13px;color:var(--textMuted);margin-top:10px;">استخدم البحث اليدوي فوق أو فعّل الكاميرا</div>
     <div id="scanCountBox" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:14px; margin-top:12px;">
@@ -669,7 +673,11 @@ function applyAppTheme(mode) {
     darkBtn.classList.toggle('activeTheme', isDark);
   }
   const toggleBtn = document.getElementById('appThemeToggleBtn');
-  if (toggleBtn) toggleBtn.textContent = isDark ? '☀️' : '🌙';
+  if (toggleBtn) toggleBtn.innerHTML = isDark
+    ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.64 13a9 9 0 1 1-10.63-10.6 1 1 0 0 1 1.11 1.4A7 7 0 0 0 20.24 12a7.1 7.1 0 0 0-.24-1.8 1 1 0 0 1 1.4-1.1 9 9 0 0 1 .24 3.9Z"/></svg>';
+  const loginLogoImg = document.getElementById('loginLogoImg');
+  if (loginLogoImg) loginLogoImg.src = isDark ? 'htc-pos-logo-dark.png' : 'htc-pos-logo.png';
 }
 function setLoginTheme(mode) {
   localStorage.setItem('appTheme', mode);
@@ -1039,7 +1047,7 @@ function showInvoiceDetail(inv) {
         <div class="n">${it.name}</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="p">${it.qty} × ${fmtMoney(it.price)} د.ل</div>
-          <button onclick='openCustomerPicker(${JSON.stringify({name:it.name, qty:it.qty, price:it.price, amount:(it.qty*it.price), invoiceNumber:inv.number, date:inv.date})})' style="background:#FFF7ED;color:#EA580C;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">👥 دين</button>
+          <button onclick='openCustomerPicker(${JSON.stringify({name:it.name, qty:it.qty, price:it.price, amount:(it.qty*it.price), invoiceNumber:inv.number, date:inv.date})})' style="background:#FFF7ED;color:#EA580C;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/></svg> دين</button>
         </div>
       </div>`).join('');
   }
@@ -1212,7 +1220,7 @@ function renderAlertsList() {
           <div style="font-weight:800;font-size:14px;">${e.name}</div>
           <div style="font-size:11px;color:#94A3B8;margin-top:2px;">نفدت الكمية &middot; ${timeAgoDetailed(e.time)}</div>
         </div>
-        <button onclick="event.stopPropagation();addToShortagesFromAlert('${e.itemId}','${(e.name||'').replace(/'/g,"")}')" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">➕ نواقص</button>
+        <button onclick="event.stopPropagation();addToShortagesFromAlert('${e.itemId}','${(e.name||'').replace(/'/g,"")}')" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button>
       </div>`;
     }
     if (e.type === 'sale' || e.type === 'return') {
@@ -1230,7 +1238,7 @@ function renderAlertsList() {
       const name = it ? it.name : ('صنف #' + e.itemId);
       const valStr = e.field === 'qty' ? (e.newValue + ' قطعة') : (fmtMoney(e.newValue) + ' د.ل');
       return `<div style="display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid #F1F5F9;">
-        <div style="width:40px;height:40px;border-radius:10px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">✏️</div>
+        <div style="width:40px;height:40px;border-radius:10px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:800;font-size:14px;">${name}</div>
           <div style="font-size:11px;color:#94A3B8;margin-top:2px;">تعديل ${editFieldLabel(e.field)} الى ${valStr} &middot; ${timeAgoDetailed(e.time)}</div>
@@ -1385,7 +1393,7 @@ function computeDaySummaryHtml(results) {
   });
   const net = totalSales - totalReturns;
   const zeroPriceLine = zeroPriceItems.length
-    ? `<div style="font-size:12px;color:#DC2626;margin-top:6px;">⚠️ بسعر صفر: ${zeroPriceItems.join('، ')}</div>`
+    ? `<div style="font-size:12px;color:#DC2626;margin-top:6px;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#DC2626"/></svg> بسعر صفر: ${zeroPriceItems.join('، ')}</div>`
     : '';
   return `<div style="background:#F8FAFC;border-radius:14px;padding:14px;margin-bottom:14px;">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -1420,7 +1428,7 @@ function browseInvoicesByDate() {
       const val = snap.val();
       const archived = val ? Object.values(val) : [];
       if (archived.length) {
-        body.innerHTML = '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;">⚠️ جهاز المحل غير متصل حاليًا - دي آخر نسخة محفوظة وممكن تكون ناقصة</div>' + computeDaySummaryHtml(archived) + renderInvoiceResultsList(archived);
+        body.innerHTML = '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> جهاز المحل غير متصل حاليًا - دي آخر نسخة محفوظة وممكن تكون ناقصة</div>' + computeDaySummaryHtml(archived) + renderInvoiceResultsList(archived);
       } else {
         body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومفيش نسخة محفوظة لليوم ده</div>';
       }
@@ -1671,14 +1679,14 @@ function renderInventoryCountList() {
 
     if (isCounted) {
       const missingBadge = diff < 0
-        ? `<span style="background:#FEE2E2;color:#DC2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:10px;">🔴 ناقص ${Math.abs(diff)}</span>`
-        : (diff > 0 ? `<span style="background:#DBEAFE;color:#1D4ED8;font-size:11px;font-weight:800;padding:3px 9px;border-radius:10px;">➕ زيادة ${diff}</span>` : '');
+        ? `<span style="background:#FEE2E2;color:#DC2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:10px;display:inline-flex;align-items:center;gap:4px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="#DC2626"><circle cx="12" cy="12" r="9"/></svg> ناقص ${Math.abs(diff)}</span>`
+        : (diff > 0 ? `<span style="background:#DBEAFE;color:#1D4ED8;font-size:11px;font-weight:800;padding:3px 9px;border-radius:10px;display:inline-flex;align-items:center;gap:4px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#1D4ED8" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> زيادة ${diff}</span>` : '');
       return `<div class="searchResultRow" style="background:#F8FAFC;" data-row-id="${it.id}">
         <div style="flex:1;">
           <div class="n">${it.name}</div>
           <div class="p">مسجل بالنظام: ${systemQty} &middot; ✅ اتعد: ${countedVal} ${missingBadge}</div>
         </div>
-        <button onclick="editCountedItem(${it.id})" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;">✏️ تعديل</button>
+        <button onclick="editCountedItem(${it.id})" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل</button>
       </div>`;
     }
 
@@ -1779,7 +1787,7 @@ function loadMissingItems() {
   db.ref('data/missingItems').once('value').then(snap => {
     const val = snap.val();
     const items = val ? Object.entries(val).map(([id, m]) => ({ id, ...m })) : [];
-    if (!items.length) { el.innerHTML = '<div class="emptyMsg">✅ مفيش مفقودات مسجلة</div>'; return; }
+    if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش مفقودات مسجلة</div>'; return; }
     const sorted = items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
     el.innerHTML = sorted.map(m => {
       const fromStr = m.fromDate ? new Date(m.fromDate).toLocaleDateString('ar-EG-u-nu-latn') : 'أول جرد';
@@ -2013,7 +2021,7 @@ function openCustomerDebt(customerId, customerName) {
         const timeStr = dt.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
         return `<div class="searchResultRow">
           <div>
-            <div class="n">${p.method === 'بطاقة' ? '💳' : '💵'} ${p.method || ''}</div>
+            <div class="n" style="display:flex;align-items:center;gap:5px;">${p.method === 'بطاقة' ? '<svg viewBox="0 0 24 24" width="13" height="13" fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'2.5\' y=\'5\' width=\'19\' height=\'14\' rx=\'2\'/><path d=\'M2.5 10h19M6 15h4\'/></svg>' : '<svg viewBox="0 0 24 24" width="13" height="13" fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'2.5\' y=\'6\' width=\'19\' height=\'12\' rx=\'2\'/><circle cx=\'12\' cy=\'12\' r=\'2.5\'/></svg>'} ${p.method || ''}</div>
             <div style="font-size:11px;color:#94A3B8;">${timeStr} &middot; ${dateStr}</div>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
