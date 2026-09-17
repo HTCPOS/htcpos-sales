@@ -8,9 +8,11 @@
   },
   "dependencies": {
     "@capacitor/core": "^6.2.0",
-    "@capacitor/ios": "^6.2.0"
+    "@capacitor/ios": "^6.2.0",
+    "@aparajita/capacitor-biometric-auth": "^8.0.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.2.0"
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/assets": "^3.0.5"
   }
 }
