@@ -9,7 +9,8 @@
   "dependencies": {
     "@capacitor/core": "^6.2.0",
     "@capacitor/ios": "^6.2.0",
-    "@capgo/capacitor-native-biometric": "7.1.7"
+    "@capgo/capacitor-native-biometric": "7.1.7",
+    "@capacitor/barcode-scanner": "^1.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0",
