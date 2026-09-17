@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>HTC POS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
     --bg:#0B1220; --surface:#1E293B; --surface2:#334155; --text:#F1F5F9; --textMuted:#94A3B8; --textMuted2:#94A3B8;
     --border:#334155; --border2:#334155; --headerBg:rgba(15,23,42,.75); --navBg:rgba(15,23,42,.85);
   }
-  body { background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; position:relative; transition:background .2s,color .2s; }
+  body { background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; position:relative; transition:background .2s,color .2s; touch-action:pan-x pan-y; }
 
   /* ---------- Login (HTC/POS branded design) ---------- */
   #loginScreen {
@@ -1521,7 +1521,8 @@ function startCameraScan() {
   if (isNativeApp()) {
     const plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.BarcodeScanner;
     if (!plugin) {
-      document.getElementById('barcodeScanStatus').textContent = 'مكتبة الكاميرا الأصلية مش موجودة في النسخة دي من التطبيق - جرب تحدّث التطبيق.';
+      // مكتبة الكاميرا الأصلية مش مسجلة - نرجع نجرب طريقة الكاميرا العادية (Html5Qrcode) اللي كانت شغالة قبل كده
+      startWebCameraScan();
       return;
     }
     document.getElementById('startCameraBtn').style.display = 'none';
@@ -1544,11 +1545,15 @@ function startCameraScan() {
         }
       })
       .catch(err => {
-        document.getElementById('startCameraBtn').style.display = 'block';
-        document.getElementById('barcodeScanStatus').textContent = 'مقدرناش نوصل للكاميرا (' + (err && err.message ? err.message : JSON.stringify(err)) + ') - تأكد من السماح بإذن الكاميرا للتطبيق من إعدادات الآيفون. تقدر تستخدم مربع "البحث اليدوي" فوق من غير كاميرا.';
+        // فشلت المكتبة الأصلية - نرجع نجرب الطريقة العادية بدل ما نوقف خالص
+        startWebCameraScan();
       });
     return;
   }
+  startWebCameraScan();
+}
+
+function startWebCameraScan() {
   document.getElementById('startCameraBtn').style.display = 'none';
   document.getElementById('barcodeReaderView').style.display = 'block';
   document.getElementById('barcodeScanStatus').textContent = 'بيحاول يوصل للكاميرا...';
