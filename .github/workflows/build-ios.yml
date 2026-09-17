@@ -18,7 +18,7 @@ jobs:
           node-version: '20'
 
       - name: Install npm dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Add iOS platform
         run: npx cap add ios
