@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#2563EB">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Arial, sans-serif; }
-  html, body { height:100%; overflow:hidden; }
+  html, body { height:100%; overflow:hidden; background:var(--bg); }
   :root {
     --bg:#F3F5F9; --surface:#fff; --surface2:#F1F5F9; --text:#1E293B; --textMuted:#64748B; --textMuted2:#94A3B8;
     --border:#EEF1F6; --border2:#F1F5F9; --headerBg:rgba(255,255,255,.75); --navBg:rgba(255,255,255,.8);
@@ -29,7 +29,7 @@
   /* ---------- Login (HTC/POS branded design) ---------- */
   #loginScreen {
     position:fixed; inset:0; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background:#F8FAFC;
+    background:#F3F5F9;
     padding:24px; overflow:hidden; transition:background .25s; position:relative;
   }
   body.dark-theme #loginScreen {
@@ -124,6 +124,7 @@
     box-shadow:0 1px 0 rgba(238,241,246,.8);
     padding-top:env(safe-area-inset-top);
   }
+  body.dark-theme #topFixedStack { box-shadow:0 1px 0 rgba(0,0,0,.4); }
 
   header.topbar {
     display:flex; align-items:center; justify-content:space-between;
@@ -153,14 +154,16 @@
 
   .heroCard {
     margin:0 16px 16px; border-radius:20px; padding:22px;
-    background:linear-gradient(135deg,#2563EB,#1D4ED8);
+    background:linear-gradient(135deg,#22C55E,#16A34A);
     color:#fff; position:relative; overflow:hidden;
   }
+  body.dark-theme .heroCard { background:linear-gradient(135deg,#2563EB,#1D4ED8); }
   .heroIllustration { position:absolute; top:12px; left:10px; opacity:.95; pointer-events:none; }
   .heroCard .label { font-size:13px; opacity:.85; max-width:62%; }
   .heroCard .amount { font-size:32px; font-weight:800; margin:6px 0 14px; position:relative; z-index:1; }
-  .heroPill { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#1D4ED8;
+  .heroPill { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#16A34A;
     padding:8px 14px; border-radius:20px; font-size:13px; font-weight:700; position:relative; z-index:1; }
+  body.dark-theme .heroPill { color:#1D4ED8; }
 
   .statsGrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 16px 16px; }
   .statCard { background:var(--surface); border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px;
@@ -202,8 +205,10 @@
   nav.bottomNav { position:fixed; bottom:0; left:0; right:0; background:var(--navBg); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); border-top:1px solid rgba(238,241,246,.8);
     display:flex; justify-content:space-around; padding:6px 0 calc(4px + env(safe-area-inset-bottom)); max-width:480px; margin:0 auto; z-index:9999;
     -webkit-transform:translateZ(0); transform:translateZ(0); }
+  body.dark-theme nav.bottomNav { border-top-color:rgba(0,0,0,.4); }
   .navItem { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--textMuted2); cursor:pointer; }
-  .navItem.active { color:#2563EB; font-weight:800; }
+  .navItem.active { color:#16A34A; font-weight:800; }
+  body.dark-theme .navItem.active { color:#2563EB; }
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
   .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; }
@@ -317,7 +322,7 @@
     </svg>
     <div class="label">صافي المبيعات (بعد المرتجعات)</div>
     <div class="amount" id="heroTotal">0.00 د.ل</div>
-    <div class="heroPill"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> اليوم</div>
+    <div class="heroPill"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> اليوم</div>
   </div>
 
   <div class="statsGrid">
