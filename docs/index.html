@@ -460,7 +460,7 @@
 </style>
 
 <div class="modalBg" id="searchModal" onclick="if(event.target===this)closeModal('searchModal')">
-  <div class="modalSheet">
+  <div class="modalSheet" style="height:80vh;">
     <button class="closeM" onclick="closeModal('searchModal')">✕</button>
     <h3>نتائج البحث</h3>
     <div id="searchResults"><div class="emptyMsg">اكتب اسم صنف وابحث</div></div>
@@ -468,7 +468,7 @@
 </div>
 
 <div class="modalBg" id="productsModal" onclick="if(event.target===this)closeModal('productsModal')">
-  <div class="modalSheet">
+  <div class="modalSheet" style="height:80vh;">
     <button class="closeM" onclick="closeModal('productsModal')">✕</button>
     <h3>كل المنتجات</h3>
     <div class="searchBox" style="margin:0 0 12px;">
@@ -547,7 +547,7 @@
 </div>
 
 <div class="modalBg" id="inventoryCountModal" onclick="if(event.target===this)closeModal('inventoryCountModal')">
-  <div class="modalSheet" style="max-height:88vh;">
+  <div class="modalSheet" style="height:88vh;">
     <button class="closeM" onclick="closeModal('inventoryCountModal')">✕</button>
     <h3>الجرد اليومي</h3>
     <div style="background:#EFF6FF;color:#1D4ED8;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
@@ -557,7 +557,7 @@
       <input type="text" id="countFilterInput" placeholder="فلترة الأصناف..." style="flex:1;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
       <button onclick="openBarcodeScanner()" style="background:#2563EB;color:#fff;border:none;border-radius:12px;padding:0 16px;font-weight:700;font-size:18px;cursor:pointer;white-space:nowrap; display:flex; align-items:center; justify-content:center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M20 8V6a2 2 0 0 0-2-2h-2M20 16v2a2 2 0 0 1-2 2h-2"/><rect x="8" y="9" width="8" height="6" rx="1"/></svg></button>
     </div>
-    <div id="inventoryCountList" style="max-height:45vh;overflow:auto;"></div>
+    <div id="inventoryCountList" style="height:45vh;overflow:auto;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid #F1F5F9;">
       <span id="countProgress" style="font-size:12px;color:var(--textMuted);">0 صنف اتعد</span>
       <button onclick="finishInventoryCount()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> إنهاء الجرد</button>
