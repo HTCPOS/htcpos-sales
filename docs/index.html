@@ -1573,7 +1573,8 @@ function startWebCameraScan() {
     });
     barcodeScannerInstance.start(
       { facingMode: 'environment' },
-      { fps: 20, qrbox: { width: 280, height: 180 }, disableFlip: true, aspectRatio: 1.4 },
+      { fps: 15, qrbox: { width: 320, height: 220 }, disableFlip: true, aspectRatio: 1.4,
+        videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] } },
       (decodedText) => {
         onBarcodeScanned(decodedText);
       },
@@ -1597,7 +1598,12 @@ function manualLookupSearch() {
   const resEl = document.getElementById('manualLookupResults');
   if (!q) { resEl.style.display = 'none'; resEl.innerHTML = ''; return; }
   const items = Object.values(latestItems || {});
-  const matches = items.filter(it => (String(it.barcode || '').toLowerCase() === q) || (String(it.name || '').toLowerCase().includes(q))).slice(0, 20);
+  if (!items.length) {
+    resEl.style.display = 'block';
+    resEl.innerHTML = '<div class="emptyMsg" style="padding:14px;">البيانات لسه ما توصلتش من السيرفر - تأكد إن الجهاز متصل بالنت وجرب تاني بعد شوية</div>';
+    return;
+  }
+  const matches = items.filter(it => (String(it.barcode || '').trim().toLowerCase() === q) || (String(it.name || '').trim().toLowerCase().includes(q))).slice(0, 20);
   if (!matches.length) {
     resEl.style.display = 'block';
     resEl.innerHTML = '<div class="emptyMsg" style="padding:14px;">مفيش نتائج</div>';
@@ -1668,7 +1674,12 @@ function updateScanSessionCount() {
 
 function onBarcodeScanned(code) {
   const items = Object.values(latestItems || {});
-  const match = items.find(it => (it.barcode || '') === code);
+  if (!items.length) {
+    if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'البيانات لسه ما توصلتش من السيرفر - تأكد إن الجهاز متصل بالنت';
+    return;
+  }
+  const scannedCode = String(code || '').trim();
+  const match = items.find(it => String(it.barcode || '').trim() === scannedCode);
   if (!match) {
     if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'مفيش صنف بالباركود ده: ' + code;
     return;
