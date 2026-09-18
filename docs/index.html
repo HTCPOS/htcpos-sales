@@ -89,6 +89,10 @@
     width:100%; height:50px; padding:0 44px; border:1.5px solid #D1E4D8; border-radius:14px;
     font-size:14.5px; line-height:50px; text-align:right; direction:ltr; background:#F7FBF8; color:#14532D; box-sizing:border-box;
   }
+  /* بگ معروف في WebKit: الكيرسر بيطلع في مكان غلط لما اتجاه الكتابة (ltr) يختلف عن اتجاه
+     المحاذاة (right) في نفس اللحظة اللي بتدوس فيها على الحقل. بنخليهم متطابقين وقت التركيز بس
+     (لسه المحاذاة يمين لما الحقل فاضي أو مش متركّز عليه، عشان شكل النص العربي يفضل زي ما هو) */
+  .loginCard input:focus { text-align:left; }
   .loginCard input::placeholder { color:#7C9483; }
   body.dark-theme #loginScreen .loginCard input { background:rgba(255,255,255,.03); border-color:rgba(74,222,128,.18); color:#F8FAFC; }
   body.dark-theme #loginScreen .loginCard input::placeholder { color:#7C8DA6; }
