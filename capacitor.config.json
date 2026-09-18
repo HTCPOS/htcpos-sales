@@ -18,5 +18,10 @@
   "ios": {
     "contentInset": "never",
     "backgroundColor": "#F3F5F9"
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "none"
+    }
   }
 }
