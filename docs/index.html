@@ -1081,6 +1081,11 @@ function startListening() {
     const el = document.getElementById('statPurchaseDebts');
     if (el) el.textContent = val ? Object.keys(val).length : 0;
   });
+  db.ref('data/lowStockItems').on('value', snap => {
+    const val = snap.val();
+    latestLowStockItems = val ? Object.values(val) : [];
+    updateLowStockBadge();
+  });
 }
 
 function archiveInvoices(invoices) {
@@ -1099,17 +1104,23 @@ function renderSummary() {
   const s = latestSummary;
   document.getElementById('heroTotal').textContent = fmtMoney(s.netSalesToday) + ' د.ل';
   document.getElementById('statProducts').textContent = s.totalProducts ?? 0;
-  document.getElementById('statLowStock').textContent = s.lowStockCount ?? 0;
   document.getElementById('statReturns').textContent = s.returnsCount ?? 0;
   document.getElementById('statShortages').textContent = s.shortagesCount ?? 0;
+}
 
+let latestLowStockItems = [];
+function updateLowStockBadge() {
+  const dismissed = getDismissedLowStock();
+  const visibleCount = latestLowStockItems.filter(it => !dismissed.includes(String(it.id))).length;
+  const statEl = document.getElementById('statLowStock');
+  if (statEl) statEl.textContent = visibleCount;
   const alertBadge = document.getElementById('alertBadge');
-  const totalAlerts = (s.lowStockCount||0);
-  if (totalAlerts > 0) {
+  if (!alertBadge) return;
+  if (visibleCount > 0) {
     alertBadge.style.display = 'flex';
-    alertBadge.textContent = totalAlerts;
+    alertBadge.textContent = visibleCount;
     document.getElementById('alertBannerBox').style.display = 'flex';
-    document.getElementById('alertBannerText').textContent = 'لديك ' + totalAlerts + ' منتج نفد أو على وشك النفاد';
+    document.getElementById('alertBannerText').textContent = 'لديك ' + visibleCount + ' منتج نفد أو على وشك النفاد';
   } else {
     alertBadge.style.display = 'none';
     document.getElementById('alertBannerBox').style.display = 'none';
@@ -1344,6 +1355,11 @@ function renderAlertsList() {
 
 function addToShortagesFromAlert(itemId, itemName, btnEl) {
   db.ref('commands/addShortage/' + itemId).set(itemName).then(() => {
+    // بقى مسجل في النواقص بدل كده، فمفيش داعي يفضل يبان في تنبيه نفاد المخزون كمان
+    const dismissed = getDismissedLowStock();
+    if (!dismissed.includes(String(itemId))) dismissed.push(String(itemId));
+    try { localStorage.setItem('dismissedLowStock', JSON.stringify(dismissed)); } catch(e) {}
+    updateLowStockBadge();
     if (btnEl) {
       const row = btnEl.closest('.searchResultRow') || btnEl.parentElement;
       if (row) {
@@ -2392,6 +2408,7 @@ function dismissLowStockItem(itemId, btnEl) {
   const dismissed = getDismissedLowStock();
   if (!dismissed.includes(String(itemId))) dismissed.push(String(itemId));
   try { localStorage.setItem('dismissedLowStock', JSON.stringify(dismissed)); } catch(e) {}
+  updateLowStockBadge();
   if (btnEl) {
     const row = btnEl.closest('.searchResultRow') || btnEl.parentElement;
     if (row) {
