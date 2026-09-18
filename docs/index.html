@@ -579,7 +579,6 @@
       <div id="manualLookupResults" style="display:none; position:absolute; top:52px; left:0; right:0; background:var(--surface); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:260px; overflow:auto;"></div>
     </div>
     <div id="startCameraBtn" onclick="startCameraScan()" style="display:flex; align-items:center; justify-content:center; gap:8px; text-align:center; background:#EFF6FF; color:#2563EB; border:2px dashed #93C5FD; border-radius:14px; padding:22px; font-weight:800; font-size:14px; cursor:pointer;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m23 7-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> دوس هنا عشان تفعّل الكاميرا</div>
-    <button onclick="testCameraRaw()" style="width:100%; margin-top:10px; padding:8px; border-radius:10px; border:1.5px dashed #CBD5E1; background:transparent; color:#64748B; font-size:11px; font-weight:700; cursor:pointer;">🔍 اختبار الكاميرا (تشخيص)</button>
     <div id="barcodeReaderView" style="display:none; width:100%;min-height:1px;border-radius:14px;overflow:hidden;position:relative;z-index:1; background:#000;"></div>
     <div id="barcodeScanStatus" style="text-align:center;font-size:13px;color:var(--textMuted);margin-top:10px;">استخدم البحث اليدوي فوق أو فعّل الكاميرا</div>
     <div id="scanCountBox" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:14px; margin-top:12px;">
@@ -1544,61 +1543,7 @@ function openBarcodeScanner() {
   // ده عشان أي مشكلة تحصل من مكتبة الكاميرا متأثرش على باقي أزرار الشاشة قبل ما المستخدم يطلبها فعليًا.
 }
 
-async function testCameraRaw() {
-  let report = [];
-  report.push('Capacitor موجود: ' + (!!window.Capacitor));
-  report.push('isNativePlatform: ' + (window.Capacitor && window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : 'n/a'));
-  const pluginKeys = window.Capacitor && window.Capacitor.Plugins ? Object.keys(window.Capacitor.Plugins) : [];
-  report.push('كل المكتبات المسجلة: ' + (pluginKeys.length ? pluginKeys.join(', ') : 'لا يوجد أي مكتبة مسجلة!'));
-  const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BarcodeScanner;
-  report.push('BarcodeScanner موجود: ' + (!!plugin));
-  alert(report.join('\n'));
-  if (!plugin) return;
-  try {
-    const sup = await plugin.isSupported();
-    alert('isSupported(): ' + JSON.stringify(sup));
-    const perm = await plugin.requestPermissions();
-    alert('requestPermissions(): ' + JSON.stringify(perm));
-    const result = await plugin.scan({});
-    alert('✅ نجح المسح: ' + JSON.stringify(result));
-  } catch (e) {
-    alert('❌ فشل: ' + (e && e.message ? e.message : JSON.stringify(e)));
-  }
-}
-
 function startCameraScan() {
-  if (isNativeApp()) {
-    const plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.BarcodeScanner;
-    if (!plugin) {
-      // مكتبة الكاميرا الأصلية مش مسجلة - نرجع نجرب طريقة الكاميرا العادية (Html5Qrcode) اللي كانت شغالة قبل كده
-      startWebCameraScan();
-      return;
-    }
-    document.getElementById('startCameraBtn').style.display = 'none';
-    document.getElementById('barcodeReaderView').style.display = 'none';
-    document.getElementById('barcodeScanStatus').textContent = 'هتفتح كاميرا الجهاز الآن...';
-    plugin.requestPermissions().then(() => plugin.scan({}))
-      .then(result => {
-        document.getElementById('startCameraBtn').style.display = 'block';
-        if (result && result.barcodes && result.barcodes.length) {
-          onBarcodeScanned(result.barcodes[0].rawValue);
-          // في وضع "مسح سريع" نفتح الكاميرا تاني تلقائي عشان نكمل مسح باقي الأصناف من غير ما يدوس الزرار كل مرة
-          if (scanMode === 'increment') {
-            document.getElementById('barcodeScanStatus').textContent = 'وجّه الكاميرا على الباركود التالي...';
-            setTimeout(startCameraScan, 500);
-          } else {
-            document.getElementById('barcodeScanStatus').textContent = '';
-          }
-        } else {
-          document.getElementById('barcodeScanStatus').textContent = 'استخدم البحث اليدوي فوق أو فعّل الكاميرا';
-        }
-      })
-      .catch(err => {
-        // فشلت المكتبة الأصلية - نرجع نجرب الطريقة العادية بدل ما نوقف خالص
-        startWebCameraScan();
-      });
-    return;
-  }
   startWebCameraScan();
 }
 
