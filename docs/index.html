@@ -915,17 +915,26 @@ window.addEventListener('resize', updateTopOffset);
 // بنتأكد إحنا إن الحقل اللي المستخدم بيكتب فيه يفضل ظاهر فوق الكيبورد
 if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.Keyboard) {
   const Keyboard = window.Capacitor.Plugins.Keyboard;
-  Keyboard.addListener('keyboardWillShow', () => {
+  Keyboard.addListener('keyboardWillShow', (info) => {
     const active = document.activeElement;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
-      setTimeout(() => active.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
+      scrollIntoViewIfCovered(active, info && info.keyboardHeight);
     }
   });
+}
+// نحرّك الحقل بس لو فعلاً هيتغطي بالكيبورد - لو أصلاً ظاهر كويس منسيبه ثابت زي ما هو
+// (عشان الكيرسر اللي بيرسمه النظام يفضل متطابق مع مكان الصندوق بالظبط، من غير أي حركة)
+function scrollIntoViewIfCovered(el, keyboardHeight) {
+  const rect = el.getBoundingClientRect();
+  const safeBottom = window.innerHeight - (keyboardHeight || 300) - 12;
+  if (rect.bottom > safeBottom) {
+    el.scrollIntoView({ block: 'center' });
+  }
 }
 document.addEventListener('focusin', (e) => {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
-    setTimeout(() => t.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250);
+    setTimeout(() => scrollIntoViewIfCovered(t), 250);
   }
 });
 
