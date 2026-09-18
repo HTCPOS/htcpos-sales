@@ -20,6 +20,7 @@
      (بما فيها الحقول اللي بتتولد بالجافاسكريبت) بدل ما نعدل كل حقل لوحده */
   input, select, textarea { font-size:16px !important; }
   :root {
+    --kb-h:0px;
     --bg:#F3F5F9; --surface:#fff; --surface2:#F1F5F9; --text:#1E293B; --textMuted:#64748B; --textMuted2:#94A3B8;
     --border:#EEF1F6; --border2:#F1F5F9; --headerBg:rgba(255,255,255,.75); --navBg:rgba(255,255,255,.8);
   }
@@ -35,6 +36,7 @@
     background:#F3F5F9;
     padding:24px; overflow:hidden; transition:background .25s; position:relative;
   }
+  body.keyboard-open #loginScreen { padding-bottom:calc(24px + var(--kb-h)); justify-content:flex-start; padding-top:calc(24px + 6vh); }
   body.dark-theme #loginScreen {
     background:radial-gradient(ellipse 900px 500px at 15% -5%, rgba(74,222,128,.20), transparent 60%),
                radial-gradient(ellipse 900px 500px at 105% 105%, rgba(74,222,128,.16), transparent 60%),
@@ -255,11 +257,11 @@
       <p>سجّل دخولك للمتابعة</p>
       <div class="loginInputWrap">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
-        <input type="email" id="loginEmail" placeholder="الإيميل" autocomplete="username">
+        <input type="email" id="loginEmail" placeholder="الإيميل" autocomplete="username" enterkeyhint="next" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('loginPassword').focus();}">
       </div>
       <div class="loginInputWrap">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        <input type="password" id="loginPassword" placeholder="كلمة المرور" autocomplete="current-password">
+        <input type="password" id="loginPassword" placeholder="كلمة المرور" autocomplete="current-password" enterkeyhint="go" onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin();}">
         <button type="button" id="loginPwdToggle" onclick="const i=document.getElementById('loginPassword'); i.type = i.type==='password' ? 'text' : 'password';">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
@@ -912,21 +914,29 @@ function updateTopOffset() {
 window.addEventListener('resize', updateTopOffset);
 
 // resize:none بيوقف تصغير الشاشة خالص لما الكيبورد يفتح، فبدل ما آبل تحرك المحتوى تلقائي
-// بنتأكد إحنا إن الحقل اللي المستخدم بيكتب فيه يفضل ظاهر فوق الكيبورد
+// بنتأكد إحنا إن الحقل اللي المستخدم بيكتب فيه يفضل ظاهر فوق الكيبورد.
+// شاشة الدخول (#loginScreen) ثابتة بـ position:fixed، فـ scrollIntoView مالهاش تأثير عليها -
+// بنضيفلها مساحة فاضية تحت بمقاس الكيبورد بدل كده، فالبطاقة تتزحزح لفوق داخل المساحة المتبقية.
 if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.Keyboard) {
   const Keyboard = window.Capacitor.Plugins.Keyboard;
   Keyboard.addListener('keyboardWillShow', (info) => {
+    const kh = (info && info.keyboardHeight) || 300;
+    document.documentElement.style.setProperty('--kb-h', kh + 'px');
+    document.body.classList.add('keyboard-open');
     const active = document.activeElement;
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
-      scrollIntoViewIfCovered(active, info && info.keyboardHeight);
+      setTimeout(() => scrollIntoViewIfCovered(active, kh), 50);
     }
   });
+  Keyboard.addListener('keyboardWillHide', () => {
+    document.body.classList.remove('keyboard-open');
+  });
 }
-// نحرّك الحقل بس لو فعلاً هيتغطي بالكيبورد - لو أصلاً ظاهر كويس منسيبه ثابت زي ما هو
-// (عشان الكيرسر اللي بيرسمه النظام يفضل متطابق مع مكان الصندوق بالظبط، من غير أي حركة)
+// نحرّك الحقل بس لو فعلاً هيتغطي بالكيبورد (مفيد للحقول جوه المودالات القابلة للسكرول -
+// لو أصلاً ظاهر كويس منسيبه ثابت زي ما هو عشان الكيرسر يفضل متطابق مع مكان الصندوق بالظبط)
 function scrollIntoViewIfCovered(el, keyboardHeight) {
   const rect = el.getBoundingClientRect();
-  const safeBottom = window.innerHeight - (keyboardHeight || 300) - 12;
+  const safeBottom = window.innerHeight - (keyboardHeight || 340) - 12;
   if (rect.bottom > safeBottom) {
     el.scrollIntoView({ block: 'center' });
   }
