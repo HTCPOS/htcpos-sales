@@ -2,6 +2,7 @@
   "appId": "com.htcpos.sales",
   "appName": "HTCPOS",
   "webDir": "www",
+  "zoomEnabled": false,
   "server": {
     "url": "https://htcpos.github.io/htcpos-sales/",
     "hostname": "htcpos.github.io",
