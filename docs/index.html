@@ -220,7 +220,8 @@
   body.dark-theme .navItem.active { color:#2563EB; }
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
-  .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; }
+  .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; transition:padding-bottom .15s; }
+  body.keyboard-open .modalBg { padding-bottom:var(--kb-h); }
   .modalSheet { background:var(--surface); color:var(--text); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
