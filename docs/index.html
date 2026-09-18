@@ -1558,7 +1558,19 @@ function startWebCameraScan() {
   document.getElementById('barcodeReaderView').style.display = 'block';
   document.getElementById('barcodeScanStatus').textContent = 'بيحاول يوصل للكاميرا...';
   try {
-    barcodeScannerInstance = new Html5Qrcode('barcodeReaderView');
+    barcodeScannerInstance = new Html5Qrcode('barcodeReaderView', {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF
+      ]
+    });
     barcodeScannerInstance.start(
       { facingMode: 'environment' },
       { fps: 20, qrbox: { width: 280, height: 180 }, disableFlip: true, aspectRatio: 1.4 },
