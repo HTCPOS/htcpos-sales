@@ -220,8 +220,7 @@
   body.dark-theme .navItem.active { color:#2563EB; }
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
-  .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; transition:padding-bottom .15s; }
-  body.keyboard-open .modalBg { padding-bottom:var(--kb-h); }
+  .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; }
   .modalSheet { background:var(--surface); color:var(--text); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
@@ -1665,6 +1664,7 @@ function manualLookupSearch() {
   }
   resEl.style.display = 'block';
   resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer; padding:12px 14px;" onclick="selectManualLookupItem('${it.id}')"><div class="n">${it.name}</div><div class="p" style="font-size:11px; color:#94A3B8;">مسجل بالنظام: ${it.stock}</div></div>`).join('');
+  resEl.scrollTop = 0;
 }
 
 function selectManualLookupItem(itemId) {
@@ -1835,6 +1835,7 @@ function renderInventoryCountList() {
       <input type="number" inputmode="numeric" data-item-id="${it.id}" value="" lang="en" placeholder="العدد الفعلي" oninput="setCountValue(${it.id}, this.value)" style="width:90px;padding:8px 10px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;text-align:center;">
     </div>`;
   }).join('') + (sorted.length > 150 ? '<div class="emptyMsg">اكتب اسم اصح لتضييق النتائج (اكتر من 150 صنف)</div>' : '');
+  el.scrollTop = 0;
 }
 
 function editCountedItem(itemId) {
@@ -2328,6 +2329,7 @@ function renderProductsList() {
       <div class="n">${it.name}</div>
       <div class="p">${fmtMoney(it.price)} د.ل &nbsp;|&nbsp; متبقي: ${it.stock}</div>
     </div>`).join('') + (sorted.length > 200 ? '<div class="emptyMsg">اكتب اسم اصح لتضييق النتائج (اكتر من 200 صنف)</div>' : '');
+  el.scrollTop = 0;
 }
 
 function showItemDetail(id) {
@@ -2381,6 +2383,7 @@ function onSearchInput() {
       <div class="n">${it.name}</div>
       <div class="p">${fmtMoney(it.price)} د.ل | متبقي: ${it.stock}</div>
     </div>`).join('');
+  dd.scrollTop = 0;
 }
 
 document.addEventListener('click', function(e) {
