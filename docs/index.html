@@ -904,6 +904,24 @@ function updateTopOffset() {
 }
 window.addEventListener('resize', updateTopOffset);
 
+// resize:none بيوقف تصغير الشاشة خالص لما الكيبورد يفتح، فبدل ما آبل تحرك المحتوى تلقائي
+// بنتأكد إحنا إن الحقل اللي المستخدم بيكتب فيه يفضل ظاهر فوق الكيبورد
+if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.Keyboard) {
+  const Keyboard = window.Capacitor.Plugins.Keyboard;
+  Keyboard.addListener('keyboardWillShow', () => {
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+      setTimeout(() => active.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
+    }
+  });
+}
+document.addEventListener('focusin', (e) => {
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+    setTimeout(() => t.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250);
+  }
+});
+
 function enterApp() {
   appUnlockedThisSession = true;
   document.getElementById('loginScreen').style.display = 'none';
