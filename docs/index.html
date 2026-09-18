@@ -2172,13 +2172,7 @@ function submitPurchaseDebt() {
   });
 }
 
-function deletePurchaseDebt(id, itemName) {
-  if (!confirm('تأكيد إنك سددت "' + itemName + '" وعايز تشيلها من القائمة؟')) return;
-  db.ref('data/purchaseDebts/' + id).remove().then(() => {
-    logActivity('تسديد دين مشتريات', itemName);
-    loadPurchaseDebts();
-  });
-}
+let latestPurchaseDebts = [];
 
 function loadPurchaseDebts() {
   const el = document.getElementById('purchaseDebtsList');
@@ -2187,18 +2181,63 @@ function loadPurchaseDebts() {
   totalEl.textContent = '';
   db.ref('data/purchaseDebts').once('value').then(snap => {
     const val = snap.val();
-    const items = val ? Object.entries(val).map(([id, d]) => ({ id, ...d })) : [];
-    if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش ديون مشتريات مسجلة</div>'; return; }
-    const sorted = items.sort((a,b) => new Date(b.at) - new Date(a.at));
-    const total = sorted.reduce((sum, it) => sum + Number(it.price || 0), 0);
-    totalEl.textContent = 'إجمالي الديون: ' + fmtMoney(total) + ' د.ل (' + sorted.length + ' صنف)';
-    el.innerHTML = sorted.map(it => `<div class="searchResultRow">
+    latestPurchaseDebts = val ? Object.entries(val).map(([id, d]) => ({ id, ...d })) : [];
+    renderPurchaseDebtsSuppliers();
+  });
+}
+
+function renderPurchaseDebtsSuppliers() {
+  const el = document.getElementById('purchaseDebtsList');
+  const totalEl = document.getElementById('purchaseDebtsTotal');
+  if (!latestPurchaseDebts.length) { el.innerHTML = '<div class="emptyMsg">مفيش ديون مشتريات مسجلة</div>'; totalEl.textContent = ''; return; }
+  const grandTotal = latestPurchaseDebts.reduce((sum, it) => sum + Number(it.price || 0), 0);
+  totalEl.textContent = 'إجمالي الديون: ' + fmtMoney(grandTotal) + ' د.ل (' + latestPurchaseDebts.length + ' صنف)';
+
+  const bySupplier = {};
+  latestPurchaseDebts.forEach(it => {
+    const key = it.supplierName || 'بدون اسم';
+    if (!bySupplier[key]) bySupplier[key] = [];
+    bySupplier[key].push(it);
+  });
+  const suppliers = Object.keys(bySupplier).sort((a,b) => a.localeCompare(b));
+  el.innerHTML = suppliers.map(name => {
+    const list = bySupplier[name];
+    const total = list.reduce((sum, it) => sum + Number(it.price || 0), 0);
+    return `<div class="searchResultRow" style="cursor:pointer" onclick="showSupplierPurchaseDebts('${name.replace(/'/g,"")}')">
+      <div style="flex:1;min-width:0;">
+        <div class="n">${name}</div>
+        <div class="p">${list.length} صنف</div>
+      </div>
+      <div style="font-weight:800;color:#B45309;">${fmtMoney(total)} د.ل</div>
+    </div>`;
+  }).join('');
+}
+
+function showSupplierPurchaseDebts(supplierName) {
+  const el = document.getElementById('purchaseDebtsList');
+  const totalEl = document.getElementById('purchaseDebtsTotal');
+  const list = latestPurchaseDebts.filter(it => (it.supplierName || 'بدون اسم') === supplierName);
+  if (!list.length) { renderPurchaseDebtsSuppliers(); return; }
+  const total = list.reduce((sum, it) => sum + Number(it.price || 0), 0);
+  const sorted = list.sort((a,b) => new Date(b.at) - new Date(a.at));
+  totalEl.innerHTML = `<button onclick="renderPurchaseDebtsSuppliers()" style="background:none;border:none;color:#2563EB;font-weight:700;font-size:12px;cursor:pointer;padding:0;">→ كل المحلات</button>`;
+  el.innerHTML = `<div class="searchResultRow" style="background:var(--surface2);"><div class="n">${supplierName}</div><div style="font-weight:800;color:#B45309;">إجمالي: ${fmtMoney(total)} د.ل</div></div>` +
+    sorted.map(it => `<div class="searchResultRow">
       <div style="flex:1;min-width:0;">
         <div class="n">${it.itemName}</div>
-        <div class="p">${it.supplierName} &middot; ${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
       </div>
-      <button onclick="deletePurchaseDebt('${it.id}','${(it.itemName||'').replace(/'/g,"")}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> سددت</button>
+      <button onclick="deletePurchaseDebt('${it.id}','${(it.itemName||'').replace(/'/g,"")}','${supplierName.replace(/'/g,"")}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> سددت</button>
     </div>`).join('');
+}
+
+function deletePurchaseDebt(id, itemName, supplierName) {
+  if (!confirm('تأكيد إنك سددت "' + itemName + '" وعايز تشيلها من القائمة؟')) return;
+  db.ref('data/purchaseDebts/' + id).remove().then(() => {
+    logActivity('تسديد دين مشتريات', itemName);
+    latestPurchaseDebts = latestPurchaseDebts.filter(it => it.id !== id);
+    const remaining = latestPurchaseDebts.filter(it => (it.supplierName || 'بدون اسم') === supplierName);
+    if (remaining.length) { showSupplierPurchaseDebts(supplierName); } else { renderPurchaseDebtsSuppliers(); }
   });
 }
 
@@ -2344,15 +2383,40 @@ function markDebtReturned(debtId, customerId, customerName, itemName, amount) {
   });
 }
 
+// إخفاء تنبيهات نفاد المخزون اللي مش محتاجها - محفوظة على الجهاز ده بس لحد ما نعدل سكريبت
+// المزامنة لاحقًا يتعرف عليها هو كمان (السكريبت حاليًا بيعيد بناء القائمة من عنده كل شوية)
+function getDismissedLowStock() {
+  try { return JSON.parse(localStorage.getItem('dismissedLowStock') || '[]'); } catch(e) { return []; }
+}
+function dismissLowStockItem(itemId, btnEl) {
+  const dismissed = getDismissedLowStock();
+  if (!dismissed.includes(String(itemId))) dismissed.push(String(itemId));
+  try { localStorage.setItem('dismissedLowStock', JSON.stringify(dismissed)); } catch(e) {}
+  if (btnEl) {
+    const row = btnEl.closest('.searchResultRow') || btnEl.parentElement;
+    if (row) {
+      row.style.transition = 'opacity .2s';
+      row.style.opacity = '0';
+      setTimeout(() => row.remove(), 200);
+    }
+  }
+}
 function loadLowStock() {
   const el = document.getElementById('lowStockList');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   db.ref('data/lowStockItems').once('value').then(snap => {
     const val = snap.val();
-    const items = val ? Object.values(val) : [];
+    const dismissed = getDismissedLowStock();
+    const items = (val ? Object.values(val) : []).filter(it => !dismissed.includes(String(it.id)));
     if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش اصناف نفدت في آخر يومين</div>'; return; }
     const sorted = items.sort((a,b) => new Date(b.time) - new Date(a.time));
-    el.innerHTML = sorted.map(it => `<div class="searchResultRow" data-item-id="${it.id}"><div class="n">${it.name}</div><div class="p">${it.time || ''}</div><button onclick="addToShortagesFromAlert('${it.id}','${(it.name||'').replace(/'/g,"")}', this)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button></div>`).join('');
+    el.innerHTML = sorted.map(it => `<div class="searchResultRow" data-item-id="${it.id}">
+      <div style="flex:1;min-width:0;"><div class="n">${it.name}</div><div class="p">${it.time || ''}</div></div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button onclick="addToShortagesFromAlert('${it.id}','${(it.name||'').replace(/'/g,"")}', this)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button>
+        <button onclick="dismissLowStockItem('${it.id}', this)" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; justify-content:center;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13h10l1-13"/></svg></button>
+      </div>
+    </div>`).join('');
   });
 }
 function deleteShortage(itemId, itemName) {
