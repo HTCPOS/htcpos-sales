@@ -335,13 +335,13 @@
   </div>
 
   <div class="statsGrid">
-    <div class="statCard" onclick="openModal('productsModal')" style="cursor:pointer">
-      <div class="statIcon" style="background:#DCFCE7;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 5V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1M8 11h8M8 15h5"/></svg></div>
-      <div><div class="num" id="statOrders">0</div><div class="lbl">إجمالي الطلبات</div></div>
+    <div class="statCard" onclick="openModal('purchaseDebtsModal')" style="cursor:pointer">
+      <div class="statIcon" style="background:#FEF3C7;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/><circle cx="16" cy="17" r="1"/></svg></div>
+      <div><div class="num" id="statPurchaseDebts">0</div><div class="lbl">ديون مشتريات</div></div>
     </div>
-    <div class="statCard" onclick="openModal('productsModal')" style="cursor:pointer">
+    <div class="statCard" onclick="openModal('priceCheckModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#DBEAFE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
-      <div><div class="num" id="statProducts">0</div><div class="lbl">إجمالي المنتجات</div></div>
+      <div><div class="num" id="statProducts">0</div><div class="lbl">فحص سعر</div></div>
     </div>
     <div class="statCard" onclick="openModal('lowStockModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#DC2626"/></svg></div>
@@ -435,7 +435,13 @@
 <div class="modalBg" id="reportsModal" onclick="if(event.target===this)closeModal('reportsModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('reportsModal')">✕</button>
-    <h3>ملخص اليوم</h3>
+    <h3>التقارير</h3>
+    <div style="display:flex;gap:6px;margin:12px 0;overflow-x:auto;">
+      <button class="alertTab reportTab" data-period="day" onclick="setReportPeriod('day')">يومي</button>
+      <button class="alertTab reportTab" data-period="week" onclick="setReportPeriod('week')">أسبوعي</button>
+      <button class="alertTab reportTab" data-period="month" onclick="setReportPeriod('month')">شهري</button>
+      <button class="alertTab reportTab" data-period="year" onclick="setReportPeriod('year')">سنوي</button>
+    </div>
     <div id="reportsBody"><div class="emptyMsg">لا يوجد بيانات</div></div>
   </div>
 </div>
@@ -535,6 +541,38 @@
       </div>
     </div>
     <button onclick="submitDeposit()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;">✓ تأكيد الإيداع</button>
+  </div>
+</div>
+
+<div class="modalBg" id="purchaseDebtsModal" onclick="if(event.target===this)closeModal('purchaseDebtsModal')">
+  <div class="modalSheet" style="height:85vh;">
+    <button class="closeM" onclick="closeModal('purchaseDebtsModal')">✕</button>
+    <h3>ديون مشتريات</h3>
+    <div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
+      بضاعة اشتريتها من برا ولسه ما سددتهاش ولا دخلتها في المنظومة - اسم الصنف، اسم المحل اللي اشتريت منه، وسعرها.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <input type="text" id="purchaseDebtItemInput" placeholder="اسم الصنف" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+      <input type="text" id="purchaseDebtSupplierInput" placeholder="اسم المحل اللي اشتريت منه" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+      <input type="number" inputmode="numeric" id="purchaseDebtPriceInput" lang="en" placeholder="السعر (د.ل)" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+      <button onclick="submitPurchaseDebt()" style="background:#B45309;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة</button>
+    </div>
+    <div id="purchaseDebtsTotal" style="font-size:12px;color:var(--textMuted);font-weight:700;margin-bottom:8px;"></div>
+    <div id="purchaseDebtsList" style="height:38vh;overflow:auto;"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="priceCheckModal" onclick="if(event.target===this)closeModal('priceCheckModal')">
+  <div class="modalSheet" style="height:85vh;">
+    <button class="closeM" onclick="closeModal('priceCheckModal')">✕</button>
+    <h3>فحص سعر سريع</h3>
+    <div class="searchBox" style="margin:12px 0;">
+      <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+      <input type="text" id="priceCheckInput" placeholder="اكتب اسم الصنف أو الباركود..." oninput="priceCheckSearch()">
+    </div>
+    <div id="priceCheckResults" style="max-height:32vh;overflow:auto;"></div>
+    <div id="priceCheckDetail" style="display:none;"></div>
+    <a href="#" onclick="event.preventDefault();closeModal('priceCheckModal');openModal('productsModal');" style="display:block;text-align:center;font-size:12px;color:var(--textMuted);margin-top:16px;">تصفح كل المنتجات</a>
   </div>
 </div>
 
@@ -1038,6 +1076,11 @@ function startListening() {
   db.ref('data/items').on('value', snap => {
     latestItems = snap.val() || {};
   });
+  db.ref('data/purchaseDebts').on('value', snap => {
+    const val = snap.val();
+    const el = document.getElementById('statPurchaseDebts');
+    if (el) el.textContent = val ? Object.keys(val).length : 0;
+  });
 }
 
 function archiveInvoices(invoices) {
@@ -1055,7 +1098,6 @@ function archiveInvoices(invoices) {
 function renderSummary() {
   const s = latestSummary;
   document.getElementById('heroTotal').textContent = fmtMoney(s.netSalesToday) + ' د.ل';
-  document.getElementById('statOrders').textContent = s.totalOrdersToday ?? 0;
   document.getElementById('statProducts').textContent = s.totalProducts ?? 0;
   document.getElementById('statLowStock').textContent = s.lowStockCount ?? 0;
   document.getElementById('statReturns').textContent = s.returnsCount ?? 0;
@@ -1183,6 +1225,7 @@ function openModal(id) {
   if (id === 'customersModal') loadCustomers();
   if (id === 'missingItemsModal') loadMissingItems();
   if (id === 'activityLogModal') loadActivityLog();
+  if (id === 'purchaseDebtsModal') loadPurchaseDebts();
 }
 function closeModal(id) {
   document.getElementById(id).style.display = 'none';
@@ -1270,7 +1313,7 @@ function renderAlertsList() {
           <div style="font-weight:800;font-size:14px;">${e.name}</div>
           <div style="font-size:11px;color:#94A3B8;margin-top:2px;">نفدت الكمية &middot; ${timeAgoDetailed(e.time)}</div>
         </div>
-        <button onclick="event.stopPropagation();addToShortagesFromAlert('${e.itemId}','${(e.name||'').replace(/'/g,"")}')" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button>
+        <button onclick="event.stopPropagation();addToShortagesFromAlert('${e.itemId}','${(e.name||'').replace(/'/g,"")}', this)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button>
       </div>`;
     }
     if (e.type === 'sale' || e.type === 'return') {
@@ -1299,9 +1342,16 @@ function renderAlertsList() {
   }).join('');
 }
 
-function addToShortagesFromAlert(itemId, itemName) {
+function addToShortagesFromAlert(itemId, itemName, btnEl) {
   db.ref('commands/addShortage/' + itemId).set(itemName).then(() => {
-    alert('هيتضاف "' + itemName + '" لقائمة النواقص خلال ثواني');
+    if (btnEl) {
+      const row = btnEl.closest('.searchResultRow') || btnEl.parentElement;
+      if (row) {
+        row.style.transition = 'opacity .2s';
+        row.style.opacity = '0';
+        setTimeout(() => row.remove(), 200);
+      }
+    }
   });
 }
 
@@ -1589,6 +1639,61 @@ function startWebCameraScan() {
     document.getElementById('startCameraBtn').style.display = 'block';
     document.getElementById('barcodeReaderView').style.display = 'none';
   }
+}
+
+function priceCheckSearch() {
+  const q = document.getElementById('priceCheckInput').value.trim().toLowerCase();
+  const resEl = document.getElementById('priceCheckResults');
+  document.getElementById('priceCheckDetail').style.display = 'none';
+  document.getElementById('priceCheckDetail').innerHTML = '';
+  if (!q) { resEl.innerHTML = ''; return; }
+  const items = Object.values(latestItems || {});
+  if (!items.length) { resEl.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت</div>'; return; }
+  const matches = items.filter(it => (String(it.barcode || '').trim().toLowerCase() === q) || (String(it.name || '').toLowerCase().includes(q))).slice(0, 20);
+  if (!matches.length) { resEl.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
+  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer" onclick="showPriceCheckDetail(${it.id})"><div class="n">${it.name}</div><div class="p">متبقي: ${it.stock}</div></div>`).join('');
+  resEl.scrollTop = 0;
+}
+
+function showPriceCheckDetail(itemId) {
+  const it = latestItems['i' + itemId];
+  if (!it) return;
+  document.getElementById('priceCheckResults').innerHTML = '';
+  const d = document.getElementById('priceCheckDetail');
+  d.style.display = 'block';
+  d.innerHTML = `
+    <div style="background:var(--surface2);border-radius:14px;padding:16px;margin-top:6px;">
+      <div style="font-weight:800;font-size:16px;margin-bottom:12px;">${it.name}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--textMuted);font-size:13px;">سعر التكلفة</span>
+        <span style="font-weight:700;">${fmtMoney(it.cost)} د.ل</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--textMuted);font-size:13px;">سعر الجملة</span>
+        <span style="font-weight:700;">${fmtMoney(it.wholesale)} د.ل</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;">
+        <span style="color:var(--textMuted);font-size:13px;">سعر القطعة (قابل للتعديل)</span>
+        <input type="number" inputmode="decimal" id="priceCheckPieceInput" lang="en" value="${it.price}" oninput="updatePriceCheckTotal()" style="width:100px;padding:8px;border:1.5px solid #2563EB;border-radius:8px;font-size:15px;font-weight:800;text-align:center;box-sizing:border-box;">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+      <span style="font-size:13px;color:var(--textMuted);font-weight:700;">الكمية</span>
+      <input type="number" inputmode="numeric" id="priceCheckQtyInput" lang="en" value="1" min="1" oninput="updatePriceCheckTotal()" style="width:70px;padding:8px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:15px;text-align:center;box-sizing:border-box;">
+    </div>
+    <div id="priceCheckTotal" style="margin-top:10px;font-size:15px;font-weight:800;color:#16A34A;"></div>
+  `;
+  updatePriceCheckTotal();
+}
+
+function updatePriceCheckTotal() {
+  const priceInput = document.getElementById('priceCheckPieceInput');
+  const qtyInput = document.getElementById('priceCheckQtyInput');
+  const totalEl = document.getElementById('priceCheckTotal');
+  if (!priceInput || !qtyInput || !totalEl) return;
+  const price = Number(priceInput.value) || 0;
+  const qty = Number(qtyInput.value) || 0;
+  totalEl.textContent = 'الإجمالي: ' + fmtMoney(price * qty) + ' د.ل';
 }
 
 function manualLookupSearch() {
@@ -2043,6 +2148,60 @@ function submitDeposit() {
   });
 }
 
+function submitPurchaseDebt() {
+  const itemInput = document.getElementById('purchaseDebtItemInput');
+  const supplierInput = document.getElementById('purchaseDebtSupplierInput');
+  const priceInput = document.getElementById('purchaseDebtPriceInput');
+  const itemName = itemInput.value.trim();
+  const supplierName = supplierInput.value.trim();
+  const price = Number(priceInput.value);
+  if (!itemName) { alert('اكتب اسم الصنف'); return; }
+  if (!supplierName) { alert('اكتب اسم المحل اللي اشتريت منه'); return; }
+  if (!price || price <= 0) { alert('اكتب سعر صحيح'); return; }
+  db.ref('data/purchaseDebts').push().set({
+    itemName: itemName,
+    supplierName: supplierName,
+    price: price,
+    at: new Date().toISOString()
+  }).then(() => {
+    logActivity('دين مشتريات جديد', itemName + ' من ' + supplierName + ' - ' + fmtMoney(price) + ' د.ل');
+    itemInput.value = '';
+    supplierInput.value = '';
+    priceInput.value = '';
+    loadPurchaseDebts();
+  });
+}
+
+function deletePurchaseDebt(id, itemName) {
+  if (!confirm('تأكيد إنك سددت "' + itemName + '" وعايز تشيلها من القائمة؟')) return;
+  db.ref('data/purchaseDebts/' + id).remove().then(() => {
+    logActivity('تسديد دين مشتريات', itemName);
+    loadPurchaseDebts();
+  });
+}
+
+function loadPurchaseDebts() {
+  const el = document.getElementById('purchaseDebtsList');
+  const totalEl = document.getElementById('purchaseDebtsTotal');
+  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  totalEl.textContent = '';
+  db.ref('data/purchaseDebts').once('value').then(snap => {
+    const val = snap.val();
+    const items = val ? Object.entries(val).map(([id, d]) => ({ id, ...d })) : [];
+    if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش ديون مشتريات مسجلة</div>'; return; }
+    const sorted = items.sort((a,b) => new Date(b.at) - new Date(a.at));
+    const total = sorted.reduce((sum, it) => sum + Number(it.price || 0), 0);
+    totalEl.textContent = 'إجمالي الديون: ' + fmtMoney(total) + ' د.ل (' + sorted.length + ' صنف)';
+    el.innerHTML = sorted.map(it => `<div class="searchResultRow">
+      <div style="flex:1;min-width:0;">
+        <div class="n">${it.itemName}</div>
+        <div class="p">${it.supplierName} &middot; ${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      <button onclick="deletePurchaseDebt('${it.id}','${(it.itemName||'').replace(/'/g,"")}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> سددت</button>
+    </div>`).join('');
+  });
+}
+
 function cancelDeposit(depositId, customerId, customerName) {
   db.ref('data/deposits/' + depositId).once('value').then(snap => {
     const dep = snap.val();
@@ -2193,7 +2352,7 @@ function loadLowStock() {
     const items = val ? Object.values(val) : [];
     if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش اصناف نفدت في آخر يومين</div>'; return; }
     const sorted = items.sort((a,b) => new Date(b.time) - new Date(a.time));
-    el.innerHTML = sorted.map(it => `<div class="searchResultRow"><div class="n">${it.name}</div><div class="p">${it.time || ''}</div></div>`).join('');
+    el.innerHTML = sorted.map(it => `<div class="searchResultRow" data-item-id="${it.id}"><div class="n">${it.name}</div><div class="p">${it.time || ''}</div><button onclick="addToShortagesFromAlert('${it.id}','${(it.name||'').replace(/'/g,"")}', this)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button></div>`).join('');
   });
 }
 function deleteShortage(itemId, itemName) {
@@ -2250,15 +2409,65 @@ function loadReturns() {
     resultRef.remove();
   });
 }
-function loadReports() {
+let currentReportPeriod = 'day';
+function setReportPeriod(period) {
+  currentReportPeriod = period;
+  document.querySelectorAll('.reportTab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.period === period);
+  });
+  loadReportForPeriod(period);
+}
+
+function reportRangeForPeriod(period) {
+  const now = new Date();
+  const fmt = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  let from = new Date(now);
+  if (period === 'week') {
+    from.setDate(from.getDate() - 6);
+  } else if (period === 'month') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (period === 'year') {
+    from = new Date(now.getFullYear(), 0, 1);
+  }
+  return { from: fmt(from), to: fmt(now) };
+}
+
+function loadReportForPeriod(period) {
   const el = document.getElementById('reportsBody');
-  const s = latestSummary;
-  el.innerHTML = `
-    <div class="searchResultRow"><div class="n">إجمالي المبيعات</div><div class="p">${fmtMoney(s.totalSalesToday)} د.ل</div></div>
-    <div class="searchResultRow"><div class="n">عدد الفواتير</div><div class="p">${s.totalOrdersToday ?? 0}</div></div>
-    <div class="searchResultRow"><div class="n">المرتجعات</div><div class="p">${s.returnsCount ?? 0}</div></div>
-    <div class="searchResultRow"><div class="n">اخر تحديث</div><div class="p">${timeAgo(s.lastSync)}</div></div>
-  `;
+  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  const range = reportRangeForPeriod(period);
+
+  const pushRef = db.ref('commands/reportQuery').push();
+  const pushId = pushRef.key;
+  pushRef.set({ from: range.from, to: range.to });
+
+  const resultRef = db.ref('data/reportQueryResults/' + pushId);
+  const timeout = setTimeout(() => {
+    resultRef.off('value');
+    el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل او مافيش رد - حاول تاني</div>';
+  }, 15000);
+
+  resultRef.on('value', snap => {
+    if (snap.val() === null) return;
+    clearTimeout(timeout);
+    resultRef.off('value');
+    const r = snap.val() || {};
+    const periodLabel = { day:'اليوم', week:'آخر 7 أيام', month:'من أول الشهر', year:'من أول السنة' }[period];
+    const net = (Number(r.totalSales)||0) - (Number(r.returnsTotal)||0);
+    el.innerHTML = `
+      <div class="searchResultRow"><div class="n">الفترة</div><div class="p">${periodLabel}</div></div>
+      <div class="searchResultRow"><div class="n">إجمالي المبيعات</div><div class="p">${fmtMoney(r.totalSales)} د.ل</div></div>
+      <div class="searchResultRow"><div class="n">عدد الفواتير</div><div class="p">${r.orderCount ?? 0}</div></div>
+      <div class="searchResultRow"><div class="n">عدد المرتجعات</div><div class="p">${r.returnsCount ?? 0}</div></div>
+      <div class="searchResultRow"><div class="n">قيمة المرتجعات</div><div class="p">${fmtMoney(r.returnsTotal)} د.ل</div></div>
+      <div class="searchResultRow"><div class="n">صافي المبيعات</div><div class="p">${fmtMoney(net)} د.ل</div></div>
+    `;
+    resultRef.remove();
+  });
+}
+
+function loadReports() {
+  setReportPeriod(currentReportPeriod);
 }
 
 function renderProductsList() {
