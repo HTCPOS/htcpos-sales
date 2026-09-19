@@ -221,14 +221,18 @@
   body.dark-theme .navItem.active { color:#4ADE80; }
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
-  .modalBg { display:none; position:fixed; inset:0; bottom:var(--navbar-h, 76px); background:rgba(15,23,42,.5); z-index:9998; align-items:flex-end; justify-content:center; }
+  .modalBg { display:none; position:fixed; inset:0; bottom:var(--navbar-h, 76px); background:rgba(15,23,42,.5); z-index:9998; align-items:flex-end; justify-content:center; animation:modalBgFadeIn .22s ease; }
+  @keyframes modalBgFadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes modalSheetSlideIn { from { transform:translateY(36px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  .dropPopover { animation:popoverFadeIn .18s ease; }
+  @keyframes popoverFadeIn { from { transform:translateY(-6px); opacity:0; } to { transform:translateY(0); opacity:1; } }
   #depositModal { align-items:center; }
   #depositModal .modalSheet { width:calc(100% - 64px); max-width:380px; border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
   #depositModal .modalSheet.dropOut { animation:depositDropOut .32s cubic-bezier(.4,0,.7,1) forwards; }
   body.keyboard-open #depositModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
-  .modalSheet { background:var(--surface); color:var(--text); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; }
+  .modalSheet { background:var(--surface); color:var(--text); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
   .searchResultRow { padding:12px 8px; border-bottom:1px solid var(--border2); display:flex; justify-content:space-between; align-items:center; }
@@ -280,7 +284,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">الإصدار 1</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 4:11 ص · db1821</div>
   </div>
 </div>
 
@@ -319,7 +323,7 @@
       <span><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="text" id="searchInput" placeholder="بحث عن صنف..." oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()" autocomplete="off">
     </div>
-    <div id="searchDropdown" style="display:none; position:absolute; top:52px; left:0; right:0; background:var(--surface); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:320px; overflow:auto;"></div>
+    <div id="searchDropdown" class="dropPopover" style="display:none; position:absolute; top:52px; left:0; right:0; background:var(--surface); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:320px; overflow:auto;"></div>
   </div>
 
   <div class="heroCard">
@@ -621,7 +625,7 @@
     </div>
     <div style="position:relative; margin-bottom:10px;">
       <input type="text" id="manualLookupInput" placeholder="اكتب اسم الصنف أو الباركود يدويًا (من غير كاميرا)..." oninput="manualLookupSearch()" style="width:100%; padding:12px 14px; border:1.5px solid #E2E8F0; border-radius:12px; font-size:14px; box-sizing:border-box;">
-      <div id="manualLookupResults" style="display:none; position:absolute; top:52px; left:0; right:0; background:var(--surface); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:260px; overflow:auto;"></div>
+      <div id="manualLookupResults" class="dropPopover" style="display:none; position:absolute; top:52px; left:0; right:0; background:var(--surface); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:260px; overflow:auto;"></div>
     </div>
     <div id="startCameraBtn" onclick="startCameraScan()" style="display:flex; align-items:center; justify-content:center; gap:8px; text-align:center; background:#EFF6FF; color:#2563EB; border:2px dashed #93C5FD; border-radius:14px; padding:22px; font-weight:800; font-size:14px; cursor:pointer;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m23 7-7 5 7 5V7Z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> دوس هنا عشان تفعّل الكاميرا</div>
     <div id="barcodeReaderView" style="display:none; width:100%;min-height:1px;border-radius:14px;overflow:hidden;position:relative;z-index:1; background:#000;"></div>
