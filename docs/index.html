@@ -2115,8 +2115,10 @@ function loadCustomers() {
   Promise.all([
     db.ref('data/customers').once('value'),
     db.ref('data/debts').once('value'),
-    db.ref('data/deposits').once('value')
-  ]).then(([custSnap, debtSnap, depSnap]) => {
+    db.ref('data/deposits').once('value'),
+    db.ref('data/purchaseDebts').once('value'),
+    db.ref('data/purchaseDeposits').once('value')
+  ]).then(([custSnap, debtSnap, depSnap, pdSnap, ppSnap]) => {
     const custVal = custSnap.val();
     const customers = custVal ? Object.entries(custVal).map(([id, c]) => ({ id, ...c })) : [];
     if (!customers.length) {
@@ -2127,19 +2129,29 @@ function loadCustomers() {
     const debts = debtVal ? Object.entries(debtVal).map(([id, d]) => ({ id, ...d })) : [];
     const depVal = depSnap.val();
     const deposits = depVal ? Object.entries(depVal).map(([id, p]) => ({ id, ...p })) : [];
+    const pdVal = pdSnap.val();
+    const purchaseDebts = pdVal ? Object.entries(pdVal).map(([id, d]) => ({ id, ...d })) : [];
+    const ppVal = ppSnap.val();
+    const purchaseDeposits = ppVal ? Object.entries(ppVal).map(([id, p]) => ({ id, ...p })) : [];
 
     const rows = customers.map(c => {
       const unpaid = debts.filter(d => d.customerId === c.id && !d.paid);
       const debtTotal = unpaid.reduce((s, d) => s + Number(d.amount || 0), 0);
       const depositTotal = deposits.filter(p => p.customerId === c.id).reduce((s, p) => s + Number(p.amount || 0), 0);
-      const net = debtTotal - depositTotal;
-      return { ...c, debtTotal, depositTotal, net, count: unpaid.length };
+      const salesNet = debtTotal - depositTotal;
+
+      const purchaseTotal = purchaseDebts.filter(d => d.customerId === c.id).reduce((s, d) => s + Number(d.price || 0), 0);
+      const purchaseDepositTotal = purchaseDeposits.filter(p => p.customerId === c.id).reduce((s, p) => s + Number(p.amount || 0), 0);
+      const purchaseNet = purchaseTotal - purchaseDepositTotal;
+
+      const net = salesNet - purchaseNet; // موجب = هو مديون لك، سالب = انت مديون له
+      return { ...c, net, count: unpaid.length };
     }).sort((a,b) => b.net - a.net);
 
     el.innerHTML = rows.map(c => {
       let statusHtml;
       if (c.net > 0) {
-        statusHtml = `<div class="p">${fmtMoney(c.net)} د.ل — ${c.count} صنف</div>`;
+        statusHtml = `<div class="p" style="color:#16A34A;font-weight:800;">${fmtMoney(c.net)} د.ل ${c.count ? '— ' + c.count + ' صنف' : ''} (مستحق منه)</div>`;
       } else if (c.net < 0) {
         statusHtml = `<div class="p" style="color:#DC2626;font-weight:800;">-${fmtMoney(Math.abs(c.net))} د.ل (مستحق له)</div>`;
       } else {
@@ -2234,7 +2246,8 @@ function loadPurchaseDebts() {
   totalEl.textContent = '';
   db.ref('data/purchaseDebts').once('value').then(snap => {
     const val = snap.val();
-    latestPurchaseDebts = val ? Object.entries(val).map(([id, d]) => ({ id, ...d })) : [];
+    const all = val ? Object.entries(val).map(([id, d]) => ({ id, ...d })) : [];
+    latestPurchaseDebts = all.filter(it => !it.paid);
     renderPurchaseDebtsSuppliers();
   });
 }
@@ -2267,8 +2280,8 @@ function renderPurchaseDebtsSuppliers() {
 }
 
 function deletePurchaseDebtFromAccount(id, itemName, customerId, customerName) {
-  if (!confirm('تأكيد إنك سددت "' + itemName + '" وعايز تشيلها من القائمة؟')) return;
-  db.ref('data/purchaseDebts/' + id).remove().then(() => {
+  if (!confirm('تأكيد إنك سددت "' + itemName + '"؟')) return;
+  db.ref('data/purchaseDebts/' + id).update({ paid: true, paidAt: new Date().toISOString() }).then(() => {
     logActivity('تسديد دين مشتريات', itemName + ' - ' + customerName);
     openCustomerDebt(customerId, customerName);
   });
@@ -2319,7 +2332,9 @@ function openCustomerDebt(customerId, customerName) {
   ]).then(([debtSnap, depSnap, pdSnap, ppSnap]) => {
     const debtVal = debtSnap.val();
     const allDebts = debtVal ? Object.entries(debtVal).map(([id, d]) => ({ id, ...d })) : [];
-    const mine = allDebts.filter(d => d.customerId === customerId && !d.paid).sort((a,b) => new Date(b.date) - new Date(a.date));
+    const myAllDebts = allDebts.filter(d => d.customerId === customerId);
+    const mine = myAllDebts.filter(d => !d.paid).sort((a,b) => new Date(b.date) - new Date(a.date));
+    const paidDebts = myAllDebts.filter(d => d.paid).sort((a,b) => new Date(b.paidAt || b.date) - new Date(a.paidAt || a.date));
 
     const depVal = depSnap.val();
     const allDeposits = depVal ? Object.entries(depVal).map(([id, p]) => ({ id, ...p })) : [];
@@ -2327,25 +2342,41 @@ function openCustomerDebt(customerId, customerName) {
 
     const debtTotal = mine.reduce((s, d) => s + Number(d.amount || 0), 0);
     const depositTotal = myDeposits.reduce((s, p) => s + Number(p.amount || 0), 0);
-    const net = debtTotal - depositTotal;
+    const salesNet = debtTotal - depositTotal;
 
+    const pdVal = pdSnap.val();
+    const allPurchaseDebts = pdVal ? Object.entries(pdVal).map(([id, d]) => ({ id, ...d })) : [];
+    const myAllPurchases = allPurchaseDebts.filter(d => d.customerId === customerId);
+    const myPurchases = myAllPurchases.filter(d => !d.paid).sort((a,b) => new Date(b.at) - new Date(a.at));
+    const paidPurchases = myAllPurchases.filter(d => d.paid).sort((a,b) => new Date(b.paidAt || b.at) - new Date(a.paidAt || a.at));
+
+    const ppVal = ppSnap.val();
+    const allPurchaseDeposits = ppVal ? Object.entries(ppVal).map(([id, p]) => ({ id, ...p })) : [];
+    const myPurchaseDeposits = allPurchaseDeposits.filter(p => p.customerId === customerId).sort((a,b) => new Date(b.at) - new Date(a.at));
+
+    const purchaseTotal = myPurchases.reduce((s, d) => s + Number(d.price || 0), 0);
+    const purchaseDepositTotal = myPurchaseDeposits.reduce((s, p) => s + Number(p.amount || 0), 0);
+    const purchaseNet = purchaseTotal - purchaseDepositTotal;
+
+    // رصيد واحد مدموج: موجب = هو مديون لك (أخضر)، سالب = انت مديون له (أحمر)
+    const combinedNet = salesNet - purchaseNet;
     let netHtml;
-    if (net > 0) {
-      netHtml = `<div class="p" style="font-weight:800;color:#DC2626;">${fmtMoney(net)} د.ل</div>`;
-    } else if (net < 0) {
-      netHtml = `<div class="p" style="font-weight:800;color:#DC2626;">-${fmtMoney(Math.abs(net))} د.ل (مستحق للزبون)</div>`;
+    if (combinedNet > 0) {
+      netHtml = `<div class="p" style="font-weight:800;color:#16A34A;">${fmtMoney(combinedNet)} د.ل (مستحق منه)</div>`;
+    } else if (combinedNet < 0) {
+      netHtml = `<div class="p" style="font-weight:800;color:#DC2626;">-${fmtMoney(Math.abs(combinedNet))} د.ل (مستحق له)</div>`;
     } else {
       netHtml = `<div class="p" style="font-weight:800;color:#16A34A;">0.00 د.ل (الحساب متزن)</div>`;
     }
+    let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
 
-    let html = `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:4px 0 6px;">💰 حساب المبيعات (اللي له عندك)</div>`;
-    html += `<div class="searchResultRow" id="debtTotalRow"><div class="n">الاجمالي بعد الخصم والإضافة</div>${netHtml}</div>`;
-    html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','sales')" style="width:100%;margin:10px 0;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
+    html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;">💰 حساب المبيعات (اللي له عندك)</div>`;
+    html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','sales')" style="width:100%;margin:6px 0 10px;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
 
     if (mine.length) {
       html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف المستحقة</div>`;
       html += mine.map(d => renderDebtRow(d, customerId, customerName, false)).join('');
-    } else {
+    } else if (!paidDebts.length) {
       html += `<div class="emptyMsg">مفيش أصناف مستحقة</div>`;
     }
 
@@ -2354,46 +2385,29 @@ function openCustomerDebt(customerId, customerName) {
       html += myDeposits.map(p => renderDepositRow(p, customerId, customerName, 'sales')).join('');
     }
 
-    // ---- حساب المشتريات (بضاعة اشتريتها من نفس الشخص/المحل ولسه ما سددتهاش) ----
-    const pdVal = pdSnap.val();
-    const allPurchaseDebts = pdVal ? Object.entries(pdVal).map(([id, d]) => ({ id, ...d })) : [];
-    const myPurchases = allPurchaseDebts.filter(d => d.customerId === customerId).sort((a,b) => new Date(b.at) - new Date(a.at));
+    if (paidDebts.length) {
+      html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;">تم سدادها</div>`;
+      html += paidDebts.map(d => renderDebtRow(d, customerId, customerName, false)).join('');
+    }
 
-    const ppVal = ppSnap.val();
-    const allPurchaseDeposits = ppVal ? Object.entries(ppVal).map(([id, p]) => ({ id, ...p })) : [];
-    const myPurchaseDeposits = allPurchaseDeposits.filter(p => p.customerId === customerId).sort((a,b) => new Date(b.at) - new Date(a.at));
-
-    if (myPurchases.length || myPurchaseDeposits.length) {
-      const purchaseTotal = myPurchases.reduce((s, d) => s + Number(d.price || 0), 0);
-      const purchaseDepositTotal = myPurchaseDeposits.reduce((s, p) => s + Number(p.amount || 0), 0);
-      const purchaseNet = purchaseTotal - purchaseDepositTotal;
-      let purchaseNetHtml;
-      if (purchaseNet > 0) {
-        purchaseNetHtml = `<div class="p" style="font-weight:800;color:#B45309;">${fmtMoney(purchaseNet)} د.ل</div>`;
-      } else if (purchaseNet < 0) {
-        purchaseNetHtml = `<div class="p" style="font-weight:800;color:#B45309;">-${fmtMoney(Math.abs(purchaseNet))} د.ل (مستحق ليك منه)</div>`;
-      } else {
-        purchaseNetHtml = `<div class="p" style="font-weight:800;color:#16A34A;">0.00 د.ل (الحساب متزن)</div>`;
-      }
-
+    // ---- حساب المشتريات (بضاعة اشتريتها من نفس الشخص/المحل) ----
+    if (myPurchases.length || myPurchaseDeposits.length || paidPurchases.length) {
       html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:22px 0 6px;border-top:1px solid var(--border);padding-top:16px;">🧾 حساب المشتريات (اللي عليك ليه)</div>`;
-      html += `<div class="searchResultRow"><div class="n">إجمالي المستحق عليك</div>${purchaseNetHtml}</div>`;
-      html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','purchase')" style="width:100%;margin:10px 0;background:#FEF3C7;color:#B45309;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#B45309" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> تسديد مبلغ للمحل</button>`;
+      html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','purchase')" style="width:100%;margin:6px 0 10px;background:#FEF3C7;color:#B45309;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#B45309" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> تسديد مبلغ للمحل</button>`;
 
       if (myPurchases.length) {
         html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف اللي اشتريتها</div>`;
-        html += myPurchases.map(it => `<div class="searchResultRow">
-          <div style="flex:1;min-width:0;">
-            <div class="n">${it.itemName}</div>
-            <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-          </div>
-          <button onclick="deletePurchaseDebtFromAccount('${it.id}','${(it.itemName||'').replace(/'/g,"")}','${customerId}','${customerName.replace(/'/g,"")}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> سددت</button>
-        </div>`).join('');
+        html += myPurchases.map(it => renderPurchaseDebtRow(it, customerId, customerName)).join('');
       }
 
       if (myPurchaseDeposits.length) {
         html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;">مبالغ سددتها له</div>`;
         html += myPurchaseDeposits.map(p => renderDepositRow(p, customerId, customerName, 'purchase')).join('');
+      }
+
+      if (paidPurchases.length) {
+        html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;">أصناف سددتها</div>`;
+        html += paidPurchases.map(it => renderPurchaseDebtRow(it, customerId, customerName)).join('');
       }
     }
 
@@ -2402,18 +2416,52 @@ function openCustomerDebt(customerId, customerName) {
   });
 }
 
+function renderPurchaseDebtRow(it, customerId, customerName) {
+  const itemLabelEsc = (it.itemName || '').replace(/'/g,"");
+  if (it.paid) {
+    const paidDateStr = it.paidAt ? new Date(it.paidAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="searchResultRow" style="opacity:.7;">
+      <div style="flex:1;min-width:0;">
+        <div class="n">${it.itemName}</div>
+        <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${paidDateStr ? ' &middot; سُدد ' + paidDateStr : ''}</div>
+      </div>
+      <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ سددت</div>
+    </div>`;
+  }
+  return `<div class="searchResultRow">
+    <div style="flex:1;min-width:0;">
+      <div class="n">${it.itemName}</div>
+      <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+      <div style="font-size:11px;color:#DC2626;font-weight:700;margin-top:2px;">⏳ لم يسدد بعد</div>
+    </div>
+    <button onclick="deletePurchaseDebtFromAccount('${it.id}','${itemLabelEsc}','${customerId}','${customerName.replace(/'/g,"")}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تسجيل السداد</button>
+  </div>`;
+}
+
 function renderDebtRow(d, customerId, customerName, isReturned) {
+  if (d.paid && !isReturned) {
+    const paidDateStr = d.paidAt ? new Date(d.paidAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    return `
+      <div class="searchResultRow" id="debtRow_${d.id}" style="opacity:.7;">
+        <div>
+          <div class="n">${d.itemName}</div>
+          <div style="font-size:11px;color:#94A3B8;">${d.qty} × ${fmtMoney(d.price)} د.ل &middot; فاتورة ${d.invoiceNumber}${paidDateStr ? ' &middot; سُدد ' + paidDateStr : ''}</div>
+        </div>
+        <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ سددت</div>
+      </div>`;
+  }
   const rowStyle = isReturned ? 'background:#FEF2F2;' : '';
   const nameStyle = isReturned ? 'color:#DC2626;' : '';
   const itemLabelEsc = (d.itemName || '').replace(/'/g,"");
   const actionBtn = isReturned
     ? `<button onclick="markDebtReturned('${d.id}','${customerId}','${customerName.replace(/'/g,"")}','${itemLabelEsc}',${Number(d.amount)||0})" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">↩️ إرجاع</button>`
-    : `<button onclick="markDebtPaid('${d.id}','${customerId}','${customerName.replace(/'/g,"")}','${itemLabelEsc}',${Number(d.amount)||0})" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تم السداد</button>`;
+    : `<button onclick="markDebtPaid('${d.id}','${customerId}','${customerName.replace(/'/g,"")}','${itemLabelEsc}',${Number(d.amount)||0})" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تسجيل السداد</button>`;
   return `
       <div class="searchResultRow" id="debtRow_${d.id}" style="${rowStyle}">
         <div>
           <div class="n" style="${nameStyle}">${d.itemName}</div>
           <div style="font-size:11px;color:#94A3B8;">${d.qty} × ${fmtMoney(d.price)} د.ل &middot; فاتورة ${d.invoiceNumber}</div>
+          ${!isReturned ? '<div style="font-size:11px;color:#DC2626;font-weight:700;margin-top:2px;">⏳ لم يسدد بعد</div>' : ''}
         </div>
         ${actionBtn}
       </div>`;
