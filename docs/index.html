@@ -284,7 +284,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 7:11 ص · 6f7c5c</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 7:26 ص · cc360c</div>
   </div>
 </div>
 
@@ -314,6 +314,11 @@
     <div id="notifBanner" style="display:none; background:#EFF6FF; color:#1D4ED8; font-size:13px; font-weight:700; padding:12px 16px; align-items:center; justify-content:space-between; gap:10px;">
       <span style="display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2a6 6 0 0 0-6 6v3.09c0 .78-.31 1.53-.85 2.09L4 14.5c-.83.85-.24 2.29.94 2.29h14.12c1.18 0 1.77-1.44.94-2.29l-1.15-1.32a2.94 2.94 0 0 1-.85-2.09V8a6 6 0 0 0-6-6Zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z"/></svg> فعّل الإشعارات عشان توصلك تنبيهات فورية</span>
       <button onclick="requestNotificationPermission();document.getElementById('notifBanner').style.display='none';updateTopOffset();" style="background:#2563EB;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">تفعيل</button>
+    </div>
+
+    <div id="offlineBanner" style="display:none; background:#FEF2F2; color:#B91C1C; font-size:13px; font-weight:700; padding:12px 16px; align-items:center; justify-content:center; gap:8px;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.9a5 5 0 0 1 7 0"/><path d="m2 2 20 20"/><path d="M12 20h.01"/></svg>
+      <span>مفيش اتصال بالإنترنت الآن - أي تعديل مش هيتحفظ لحد ما يرجع الاتصال</span>
     </div>
   </div>
 
@@ -430,10 +435,26 @@
 </div>
 
 <div class="modalBg" id="shortagesModal" onclick="if(event.target===this)closeModal('shortagesModal')">
-  <div class="modalSheet">
+  <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
     <button class="closeM" onclick="closeModal('shortagesModal')">✕</button>
     <h3>قائمة النواقص</h3>
-    <div id="shortagesList"><div class="emptyMsg">لا يوجد بيانات</div></div>
+    <button onclick="openAddShortageForm()" style="width:100%;margin:10px 0;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة صنف جديد للنواقص</button>
+    <div id="shortagesSourceTabs" style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;"></div>
+    <div id="shortagesList" style="flex:1;overflow:auto;"><div class="emptyMsg">لا يوجد بيانات</div></div>
+    <div id="shortagesFulfilledSection"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="shortageFormModal" onclick="if(event.target===this)closeModal('shortageFormModal')">
+  <div class="modalSheet" style="height:auto;">
+    <button class="closeM" onclick="closeModal('shortageFormModal')">✕</button>
+    <h3 id="shortageFormTitle">إضافة صنف جديد للنواقص</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+      <input type="text" id="shortageFormName" placeholder="اسم الصنف" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+      <input type="number" inputmode="numeric" lang="en" id="shortageFormQty" placeholder="الكمية المطلوبة (اختياري)" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+      <input type="text" id="shortageFormSource" placeholder="هتجيبه منين؟ (مثلاً: محلي، الصين...) - اختياري" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+      <button onclick="saveShortageForm()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">✓ حفظ</button>
+    </div>
   </div>
 </div>
 
@@ -709,6 +730,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
+
+// بانر تحذير لو النت مقطوع - عشان محدش يفتكر إن التعديل اتحفظ وهو فعليًا لسه واقف عنده
+db.ref('.info/connected').on('value', snap => {
+  const banner = document.getElementById('offlineBanner');
+  if (!banner) return;
+  const connected = snap.val() === true;
+  banner.style.display = connected ? 'none' : 'flex';
+  if (typeof updateTopOffset === 'function') setTimeout(updateTopOffset, 30);
+});
 
 const VAPID_KEY = "BEJI1cl1N_x9hg23kSRrXgyGSTpUGkI-4Vp2BoEKok2R3XFJop9tBpbUq0rBliR1BZ2LWLupbmCFhXprvnPZN3g";
 
@@ -2696,21 +2726,130 @@ function loadLowStock() {
     </div>`).join('');
   });
 }
-function deleteShortage(itemId, itemName) {
-  if (!confirm('تحذف "' + itemName + '" من قائمة النواقص؟')) return;
-  db.ref('commands/deleteShortage/' + itemId).set(true).then(() => {
-    setTimeout(loadShortages, 800);
-  });
-}
+let latestShortages = [];
+let currentShortageSourceFilter = 'all';
+let editingShortageId = null;
+
 function loadShortages() {
   const el = document.getElementById('shortagesList');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  document.getElementById('shortagesFulfilledSection').innerHTML = '';
   db.ref('data/shortages').once('value').then(snap => {
     const val = snap.val();
-    const items = val ? Object.values(val) : [];
-    if (!items.length) { el.innerHTML = '<div class="emptyMsg">قائمة النواقص فاضية</div>'; return; }
-    el.innerHTML = items.map(it => `<div class="searchResultRow"><div class="n">${it.name}</div><button onclick="deleteShortage('${it.id}', '${(it.name||'').replace(/'/g,"")}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13h10l1-13"/></svg> حذف</button></div>`).join('');
-    el.innerHTML += '<div class="emptyMsg" style="font-size:11px;">بيتحذف تلقائي كمان لما الصنف يترصد</div>';
+    latestShortages = val ? Object.entries(val).map(([id, it]) => ({ id, ...it })) : [];
+    currentShortageSourceFilter = 'all';
+    renderShortageSourceTabs();
+    renderShortagesList();
+    loadShortagesFulfilled();
+  });
+}
+
+function renderShortageSourceTabs() {
+  const tabsEl = document.getElementById('shortagesSourceTabs');
+  const sources = Array.from(new Set(latestShortages.map(it => it.source).filter(Boolean)));
+  if (!sources.length) { tabsEl.innerHTML = ''; return; }
+  const tabs = [{ key: 'all', label: 'الكل' }, ...sources.map(s => ({ key: s, label: s }))];
+  tabsEl.innerHTML = tabs.map(t => `<button class="alertTab${currentShortageSourceFilter === t.key ? ' active' : ''}" onclick="setShortageSourceFilter('${t.key.replace(/'/g,"")}')">${t.label}</button>`).join('');
+}
+
+function setShortageSourceFilter(key) {
+  currentShortageSourceFilter = key;
+  renderShortageSourceTabs();
+  renderShortagesList();
+}
+
+function renderShortagesList() {
+  const el = document.getElementById('shortagesList');
+  let items = latestShortages;
+  if (currentShortageSourceFilter !== 'all') items = items.filter(it => it.source === currentShortageSourceFilter);
+  if (!items.length) { el.innerHTML = '<div class="emptyMsg">قائمة النواقص فاضية</div>'; return; }
+  el.innerHTML = items.map(it => `<div class="searchResultRow">
+      <div style="flex:1;min-width:0;cursor:pointer;" onclick="openAddShortageForm('${it.id}')">
+        <div class="n">${it.name}${it.qty ? ' &middot; الكمية: ' + it.qty : ''}</div>
+        <div class="p">${it.source ? '📦 ' + it.source : 'دوس هنا تحدد الكمية والمصدر'}</div>
+      </div>
+      <button onclick="event.stopPropagation();markShortageFulfilled('${it.id}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> اشتريته</button>
+    </div>`).join('');
+}
+
+function loadShortagesFulfilled() {
+  const el = document.getElementById('shortagesFulfilledSection');
+  db.ref('data/shortagesFulfilled').once('value').then(snap => {
+    const val = snap.val();
+    const items = val ? Object.entries(val).map(([id, it]) => ({ id, ...it })) : [];
+    if (!items.length) { el.innerHTML = ''; return; }
+    const sorted = items.sort((a,b) => new Date(b.fulfilledAt) - new Date(a.fulfilledAt)).slice(0, 30);
+    el.innerHTML = '<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;border-top:1px solid var(--border);padding-top:14px;">تم شراؤها</div>' +
+      sorted.map(it => `<div class="searchResultRow" style="opacity:.7;">
+        <div style="flex:1;min-width:0;">
+          <div class="n">${it.name}${it.qty ? ' &middot; ' + it.qty : ''}</div>
+          <div class="p">${it.source ? it.source + ' &middot; ' : ''}${new Date(it.fulfilledAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ اتشرى</div>
+      </div>`).join('');
+  });
+}
+
+function openAddShortageForm(existingId) {
+  editingShortageId = existingId || null;
+  const nameInput = document.getElementById('shortageFormName');
+  const qtyInput = document.getElementById('shortageFormQty');
+  const sourceInput = document.getElementById('shortageFormSource');
+  const titleEl = document.getElementById('shortageFormTitle');
+  if (editingShortageId) {
+    const it = latestShortages.find(x => x.id === editingShortageId);
+    titleEl.textContent = 'تعديل بيانات الصنف';
+    nameInput.value = it ? it.name : '';
+    nameInput.disabled = !(it && it.isCustom);
+    qtyInput.value = (it && it.qty) || '';
+    sourceInput.value = (it && it.source) || '';
+  } else {
+    titleEl.textContent = 'إضافة صنف جديد للنواقص';
+    nameInput.value = '';
+    nameInput.disabled = false;
+    qtyInput.value = '';
+    sourceInput.value = '';
+  }
+  openModal('shortageFormModal');
+  setTimeout(() => nameInput.focus(), 150);
+}
+
+function saveShortageForm() {
+  const name = document.getElementById('shortageFormName').value.trim();
+  const qty = document.getElementById('shortageFormQty').value.trim();
+  const source = document.getElementById('shortageFormSource').value.trim();
+  if (!name) { alert('اكتب اسم الصنف'); return; }
+  const data = { name: name, qty: qty ? Number(qty) : null, source: source || null };
+  if (editingShortageId) {
+    db.ref('data/shortages/' + editingShortageId).update(data).then(() => {
+      closeModal('shortageFormModal');
+      loadShortages();
+    });
+  } else {
+    const newRef = db.ref('data/shortages').push();
+    newRef.set({ ...data, isCustom: true, time: new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) }).then(() => {
+      logActivity('إضافة صنف جديد للنواقص', name);
+      closeModal('shortageFormModal');
+      loadShortages();
+    });
+  }
+}
+
+function markShortageFulfilled(id) {
+  const it = latestShortages.find(x => x.id === id);
+  if (!it) return;
+  if (!confirm('تأكيد إنك اشتريت "' + it.name + '"؟')) return;
+  db.ref('data/shortagesFulfilled').push().set({
+    name: it.name, qty: it.qty || null, source: it.source || null, fulfilledAt: new Date().toISOString()
+  }).then(() => {
+    logActivity('شراء صنف ناقص', it.name);
+    if (it.isCustom) {
+      db.ref('data/shortages/' + id).remove().then(loadShortages);
+    } else {
+      db.ref('commands/deleteShortage/' + id).set(true).then(() => {
+        setTimeout(loadShortages, 800);
+      });
+    }
   });
 }
 function loadReturns() {
