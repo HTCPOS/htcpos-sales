@@ -230,6 +230,9 @@
   #depositModal .modalSheet { width:calc(100% - 64px); max-width:380px; border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
   #depositModal .modalSheet.dropOut { animation:depositDropOut .32s cubic-bezier(.4,0,.7,1) forwards; }
   body.keyboard-open #depositModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
+  #shortageFormModal { align-items:center; }
+  #shortageFormModal .modalSheet { width:calc(100% - 64px); max-width:380px; border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
+  body.keyboard-open #shortageFormModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
   .modalSheet { background:var(--surface); color:var(--text); width:calc(100% - 20px); max-width:480px; border-radius:24px; box-shadow:0 -8px 30px rgba(0,0,0,.18); padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); margin-bottom:18px; }
@@ -284,7 +287,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 8:00 ص · d3661f</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 8:12 ص · 45c218</div>
   </div>
 </div>
 
@@ -461,14 +464,18 @@
 </div>
 
 <div class="modalBg" id="shortageFormModal" onclick="if(event.target===this)closeModal('shortageFormModal')">
-  <div class="modalSheet" style="height:auto;">
+  <div class="modalSheet">
     <button class="closeM" onclick="closeModal('shortageFormModal')">✕</button>
     <h3 id="shortageFormTitle">إضافة صنف جديد للنواقص</h3>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
       <input type="text" id="shortageFormName" placeholder="اسم الصنف" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
       <input type="number" inputmode="numeric" lang="en" id="shortageFormQty" placeholder="الكمية المطلوبة (اختياري)" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
-      <input type="text" id="shortageFormSource" placeholder="هتجيبه منين؟ (مثلاً: محلي، الصين...) - اختياري" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
-      <button onclick="saveShortageForm()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">✓ حفظ</button>
+      <div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:4px;">هتجيبه منين؟ (اختياري)</div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" id="shortageSourceLocalBtn" onclick="setShortageFormSource('محلي')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">محلي</button>
+        <button type="button" id="shortageSourceChinaBtn" onclick="setShortageFormSource('الصين')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">الصين</button>
+      </div>
+      <button onclick="saveShortageForm()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;margin-top:6px;">✓ حفظ</button>
     </div>
   </div>
 </div>
@@ -2861,11 +2868,22 @@ function loadShortagesFulfilled() {
   });
 }
 
+let selectedShortageSource = '';
+
+function setShortageFormSource(value) {
+  selectedShortageSource = (selectedShortageSource === value) ? '' : value;
+  const localBtn = document.getElementById('shortageSourceLocalBtn');
+  const chinaBtn = document.getElementById('shortageSourceChinaBtn');
+  localBtn.style.background = selectedShortageSource === 'محلي' ? '#16A34A' : '#F1F5F9';
+  localBtn.style.color = selectedShortageSource === 'محلي' ? '#fff' : '#334155';
+  chinaBtn.style.background = selectedShortageSource === 'الصين' ? '#16A34A' : '#F1F5F9';
+  chinaBtn.style.color = selectedShortageSource === 'الصين' ? '#fff' : '#334155';
+}
+
 function openAddShortageForm(existingId) {
   editingShortageId = existingId || null;
   const nameInput = document.getElementById('shortageFormName');
   const qtyInput = document.getElementById('shortageFormQty');
-  const sourceInput = document.getElementById('shortageFormSource');
   const titleEl = document.getElementById('shortageFormTitle');
   if (editingShortageId) {
     const it = latestShortages.find(x => x.id === editingShortageId);
@@ -2873,13 +2891,14 @@ function openAddShortageForm(existingId) {
     nameInput.value = it ? it.name : '';
     nameInput.disabled = !(it && it.isCustom);
     qtyInput.value = (it && it.qty) || '';
-    sourceInput.value = (it && it.source) || '';
+    setShortageFormSource(''); // نصفّر الاختيار الأول
+    if (it && it.source) setShortageFormSource(it.source);
   } else {
     titleEl.textContent = 'إضافة صنف جديد للنواقص';
     nameInput.value = '';
     nameInput.disabled = false;
     qtyInput.value = '';
-    sourceInput.value = '';
+    setShortageFormSource('');
   }
   openModal('shortageFormModal');
   setTimeout(() => nameInput.focus(), 150);
@@ -2888,7 +2907,7 @@ function openAddShortageForm(existingId) {
 function saveShortageForm() {
   const name = document.getElementById('shortageFormName').value.trim();
   const qty = document.getElementById('shortageFormQty').value.trim();
-  const source = document.getElementById('shortageFormSource').value.trim();
+  const source = selectedShortageSource;
   if (!name) { alert('اكتب اسم الصنف'); return; }
   const data = { name: name, qty: qty ? Number(qty) : null, source: source || null };
   if (editingShortageId) {
