@@ -166,13 +166,13 @@
     background:linear-gradient(135deg,#22C55E,#16A34A);
     color:#fff; position:relative; overflow:hidden;
   }
-  body.dark-theme .heroCard { background:linear-gradient(135deg,#2563EB,#1D4ED8); }
+  body.dark-theme .heroCard { background:linear-gradient(135deg,#16A34A,#15803D); box-shadow:0 8px 30px rgba(74,222,128,.15); }
   .heroIllustration { position:absolute; top:12px; left:10px; opacity:.95; pointer-events:none; }
   .heroCard .label { font-size:13px; opacity:.85; max-width:62%; }
   .heroCard .amount { font-size:32px; font-weight:800; margin:6px 0 14px; position:relative; z-index:1; }
   .heroPill { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#16A34A;
     padding:8px 14px; border-radius:20px; font-size:13px; font-weight:700; position:relative; z-index:1; }
-  body.dark-theme .heroPill { color:#1D4ED8; }
+  body.dark-theme .heroPill { color:#16A34A; }
 
   .statsGrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 16px 16px; }
   .statCard { background:var(--surface); border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px;
@@ -217,7 +217,7 @@
   body.dark-theme nav.bottomNav { border-top-color:rgba(0,0,0,.4); }
   .navItem { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--textMuted2); cursor:pointer; }
   .navItem.active { color:#16A34A; font-weight:800; }
-  body.dark-theme .navItem.active { color:#2563EB; }
+  body.dark-theme .navItem.active { color:#4ADE80; }
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
   .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; }
@@ -516,7 +516,7 @@
 <div class="modalBg" id="customerPickerModal" onclick="if(event.target===this)closeModal('customerPickerModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('customerPickerModal')">✕</button>
-    <h3>ادراج في حساب زبون</h3>
+    <h3 id="customerPickerTitle">ادراج في حساب زبون</h3>
     <div style="display:flex;gap:8px;margin:14px 0;">
       <input type="text" id="newCustomerNameInput" placeholder="اسم زبون جديد..." style="flex:1;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;">
       <button onclick="addNewCustomerAndAssign()" style="background:#2563EB;color:#fff;border:none;border-radius:12px;padding:0 18px;font-weight:700;font-size:13px;cursor:pointer;">إضافة</button>
@@ -549,13 +549,12 @@
     <button class="closeM" onclick="closeModal('purchaseDebtsModal')">✕</button>
     <h3>ديون مشتريات</h3>
     <div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
-      بضاعة اشتريتها من برا ولسه ما سددتهاش ولا دخلتها في المنظومة - اسم الصنف، اسم المحل اللي اشتريت منه، وسعرها.
+      بضاعة اشتريتها من برا ولسه ما سددتهاش ولا دخلتها في المنظومة - اكتب اسم الصنف والسعر، وبعدين اختار المحل من قائمة الزبائن.
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
       <input type="text" id="purchaseDebtItemInput" placeholder="اسم الصنف" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
-      <input type="text" id="purchaseDebtSupplierInput" placeholder="اسم المحل اللي اشتريت منه" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
       <input type="number" inputmode="numeric" id="purchaseDebtPriceInput" lang="en" placeholder="السعر (د.ل)" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
-      <button onclick="submitPurchaseDebt()" style="background:#B45309;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة</button>
+      <button onclick="startPurchaseDebtEntry()" style="background:#B45309;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-8H7v8M7 3v5h8"/><path d="M5 3h11l4 4v14H5z"/></svg> اختيار المحل وتسجيل الدين</button>
     </div>
     <div id="purchaseDebtsTotal" style="font-size:12px;color:var(--textMuted);font-weight:700;margin-bottom:8px;"></div>
     <div id="purchaseDebtsList" style="height:38vh;overflow:auto;"></div>
@@ -1373,9 +1372,24 @@ function addToShortagesFromAlert(itemId, itemName, btnEl) {
 
 /* ================= الزبائن والديون ================= */
 let pendingDebtItem = null;
+let pendingPurchaseDebtDraft = null;
+let customerPickerMode = 'debt'; // 'debt' | 'purchaseDebt'
 
 function openCustomerPicker(itemInfo) {
+  customerPickerMode = 'debt';
   pendingDebtItem = itemInfo;
+  document.getElementById('customerPickerTitle').textContent = 'ادراج في حساب زبون';
+  openCustomerPickerList();
+}
+
+function openSupplierPickerForPurchase(itemName, price) {
+  customerPickerMode = 'purchaseDebt';
+  pendingPurchaseDebtDraft = { itemName: itemName, price: price };
+  document.getElementById('customerPickerTitle').textContent = 'اختر المحل اللي اشتريت منه';
+  openCustomerPickerList();
+}
+
+function openCustomerPickerList() {
   document.getElementById('newCustomerNameInput').value = '';
   const listEl = document.getElementById('customerPickerList');
   listEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
@@ -1388,19 +1402,27 @@ function openCustomerPicker(itemInfo) {
       return;
     }
     const sorted = customers.sort((a,b) => (a.name||'').localeCompare(b.name||''));
-    listEl.innerHTML = sorted.map(c => `<div class="searchResultRow" style="cursor:pointer" onclick="assignDebtToCustomer('${c.id}','${(c.name||'').replace(/'/g,"")}')"><div class="n">${c.name}</div></div>`).join('');
+    listEl.innerHTML = sorted.map(c => `<div class="searchResultRow" style="cursor:pointer" onclick="onCustomerPicked('${c.id}','${(c.name||'').replace(/'/g,"")}')"><div class="n">${c.name}</div></div>`).join('');
   });
 }
 
 function addNewCustomerAndAssign() {
   const nameInput = document.getElementById('newCustomerNameInput');
   const name = nameInput.value.trim();
-  if (!name) { alert('اكتب اسم الزبون الأول'); return; }
+  if (!name) { alert('اكتب الاسم الأول'); return; }
   const newRef = db.ref('data/customers').push();
   newRef.set({ name: name, createdAt: new Date().toISOString() }).then(() => {
     logActivity('إضافة زبون', name);
-    assignDebtToCustomer(newRef.key, name);
+    onCustomerPicked(newRef.key, name);
   });
+}
+
+function onCustomerPicked(customerId, customerName) {
+  if (customerPickerMode === 'purchaseDebt') {
+    finalizePurchaseDebt(customerId, customerName);
+  } else {
+    assignDebtToCustomer(customerId, customerName);
+  }
 }
 
 function assignDebtToCustomer(customerId, customerName) {
@@ -1427,6 +1449,28 @@ function assignDebtToCustomer(customerId, customerName) {
     closeModal('customerPickerModal');
     closeModal('itemDetailModal');
     alert('اتسجل الدين على حساب ' + customerName);
+  });
+}
+
+function finalizePurchaseDebt(customerId, customerName) {
+  if (!pendingPurchaseDebtDraft) return;
+  const itemName = pendingPurchaseDebtDraft.itemName;
+  const price = pendingPurchaseDebtDraft.price;
+  db.ref('data/purchaseDebts').push().set({
+    customerId: customerId,
+    customerName: customerName,
+    itemName: itemName,
+    price: price,
+    at: new Date().toISOString()
+  }).then(() => {
+    logActivity('دين مشتريات جديد', itemName + ' من ' + customerName + ' - ' + fmtMoney(price) + ' د.ل');
+    pendingPurchaseDebtDraft = null;
+    closeModal('customerPickerModal');
+    const itemInput = document.getElementById('purchaseDebtItemInput');
+    const priceInput = document.getElementById('purchaseDebtPriceInput');
+    if (itemInput) itemInput.value = '';
+    if (priceInput) priceInput.value = '';
+    loadPurchaseDebts();
   });
 }
 
@@ -2121,10 +2165,12 @@ function deleteCustomer(customerId, customerName) {
 
 let pendingDepositCustomer = null;
 let pendingDepositMethod = 'نقدي';
+let pendingDepositKind = 'sales';
 
-function openDepositForm(customerId, customerName) {
+function openDepositForm(customerId, customerName, kind) {
   pendingDepositCustomer = { id: customerId, name: customerName };
-  document.getElementById('depositModalTitle').textContent = 'إيداع مبلغ - ' + customerName;
+  pendingDepositKind = kind === 'purchase' ? 'purchase' : 'sales';
+  document.getElementById('depositModalTitle').textContent = (pendingDepositKind === 'purchase' ? 'تسديد مبلغ للمحل - ' : 'إيداع مبلغ - ') + customerName;
   document.getElementById('depositAmountInput').value = '';
   setDepositMethod('نقدي');
   openModal('depositModal');
@@ -2144,11 +2190,13 @@ function submitDeposit() {
   const amount = Number(document.getElementById('depositAmountInput').value);
   if (!amount || amount <= 0) { alert('اكتب مبلغ صحيح'); return; }
   const method = pendingDepositMethod;
+  const kind = pendingDepositKind;
   const customerId = pendingDepositCustomer.id;
   const customerName = pendingDepositCustomer.name;
-  const confirmMsg = 'تأكيد إيداع ' + fmtMoney(amount) + ' د.ل (' + method + ') على حساب "' + customerName + '"؟';
+  const confirmMsg = (kind === 'purchase' ? 'تأكيد تسديد ' : 'تأكيد إيداع ') + fmtMoney(amount) + ' د.ل (' + method + ') ' + (kind === 'purchase' ? 'لـ' : 'على حساب') + ' "' + customerName + '"؟';
   if (!confirm(confirmMsg)) return;
-  db.ref('data/deposits').push().set({
+  const path = kind === 'purchase' ? 'data/purchaseDeposits' : 'data/deposits';
+  db.ref(path).push().set({
     customerId: customerId,
     customerName: customerName,
     amount: amount,
@@ -2156,7 +2204,7 @@ function submitDeposit() {
     at: new Date().toISOString(),
     createdAt: new Date().toISOString()
   }).then(() => {
-    logActivity('إيداع مبلغ', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
+    logActivity(kind === 'purchase' ? 'تسديد مشتريات' : 'إيداع مبلغ', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
     pendingDepositCustomer = null;
     closeModal('depositModal');
     if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
@@ -2164,28 +2212,14 @@ function submitDeposit() {
   });
 }
 
-function submitPurchaseDebt() {
+function startPurchaseDebtEntry() {
   const itemInput = document.getElementById('purchaseDebtItemInput');
-  const supplierInput = document.getElementById('purchaseDebtSupplierInput');
   const priceInput = document.getElementById('purchaseDebtPriceInput');
   const itemName = itemInput.value.trim();
-  const supplierName = supplierInput.value.trim();
   const price = Number(priceInput.value);
   if (!itemName) { alert('اكتب اسم الصنف'); return; }
-  if (!supplierName) { alert('اكتب اسم المحل اللي اشتريت منه'); return; }
   if (!price || price <= 0) { alert('اكتب سعر صحيح'); return; }
-  db.ref('data/purchaseDebts').push().set({
-    itemName: itemName,
-    supplierName: supplierName,
-    price: price,
-    at: new Date().toISOString()
-  }).then(() => {
-    logActivity('دين مشتريات جديد', itemName + ' من ' + supplierName + ' - ' + fmtMoney(price) + ' د.ل');
-    itemInput.value = '';
-    supplierInput.value = '';
-    priceInput.value = '';
-    loadPurchaseDebts();
-  });
+  openSupplierPickerForPurchase(itemName, price);
 }
 
 let latestPurchaseDebts = [];
@@ -2209,65 +2243,64 @@ function renderPurchaseDebtsSuppliers() {
   const grandTotal = latestPurchaseDebts.reduce((sum, it) => sum + Number(it.price || 0), 0);
   totalEl.textContent = 'إجمالي الديون: ' + fmtMoney(grandTotal) + ' د.ل (' + latestPurchaseDebts.length + ' صنف)';
 
-  const bySupplier = {};
+  const byCustomer = {};
   latestPurchaseDebts.forEach(it => {
-    const key = it.supplierName || 'بدون اسم';
-    if (!bySupplier[key]) bySupplier[key] = [];
-    bySupplier[key].push(it);
+    const key = it.customerId || 'unknown';
+    if (!byCustomer[key]) byCustomer[key] = { name: it.customerName || 'بدون اسم', items: [] };
+    byCustomer[key].items.push(it);
   });
-  const suppliers = Object.keys(bySupplier).sort((a,b) => a.localeCompare(b));
-  el.innerHTML = suppliers.map(name => {
-    const list = bySupplier[name];
-    const total = list.reduce((sum, it) => sum + Number(it.price || 0), 0);
-    return `<div class="searchResultRow" style="cursor:pointer" onclick="showSupplierPurchaseDebts('${name.replace(/'/g,"")}')">
+  const groups = Object.keys(byCustomer).map(id => ({ id: id, name: byCustomer[id].name, items: byCustomer[id].items }))
+    .sort((a,b) => a.name.localeCompare(b.name));
+  el.innerHTML = groups.map(g => {
+    const total = g.items.reduce((sum, it) => sum + Number(it.price || 0), 0);
+    return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('purchaseDebtsModal');openCustomerDebt('${g.id}','${g.name.replace(/'/g,"")}')">
       <div style="flex:1;min-width:0;">
-        <div class="n">${name}</div>
-        <div class="p">${list.length} صنف</div>
+        <div class="n">${g.name}</div>
+        <div class="p">${g.items.length} صنف</div>
       </div>
       <div style="font-weight:800;color:#B45309;">${fmtMoney(total)} د.ل</div>
     </div>`;
   }).join('');
 }
 
-function showSupplierPurchaseDebts(supplierName) {
-  const el = document.getElementById('purchaseDebtsList');
-  const totalEl = document.getElementById('purchaseDebtsTotal');
-  const list = latestPurchaseDebts.filter(it => (it.supplierName || 'بدون اسم') === supplierName);
-  if (!list.length) { renderPurchaseDebtsSuppliers(); return; }
-  const total = list.reduce((sum, it) => sum + Number(it.price || 0), 0);
-  const sorted = list.sort((a,b) => new Date(b.at) - new Date(a.at));
-  totalEl.innerHTML = `<button onclick="renderPurchaseDebtsSuppliers()" style="background:none;border:none;color:#2563EB;font-weight:700;font-size:12px;cursor:pointer;padding:0;">→ كل المحلات</button>`;
-  el.innerHTML = `<div class="searchResultRow" style="background:var(--surface2);"><div class="n">${supplierName}</div><div style="font-weight:800;color:#B45309;">إجمالي: ${fmtMoney(total)} د.ل</div></div>` +
-    sorted.map(it => `<div class="searchResultRow">
-      <div style="flex:1;min-width:0;">
-        <div class="n">${it.itemName}</div>
-        <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-      </div>
-      <button onclick="deletePurchaseDebt('${it.id}','${(it.itemName||'').replace(/'/g,"")}','${supplierName.replace(/'/g,"")}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> سددت</button>
-    </div>`).join('');
-}
-
-function deletePurchaseDebt(id, itemName, supplierName) {
+function deletePurchaseDebtFromAccount(id, itemName, customerId, customerName) {
   if (!confirm('تأكيد إنك سددت "' + itemName + '" وعايز تشيلها من القائمة؟')) return;
   db.ref('data/purchaseDebts/' + id).remove().then(() => {
-    logActivity('تسديد دين مشتريات', itemName);
-    latestPurchaseDebts = latestPurchaseDebts.filter(it => it.id !== id);
-    const remaining = latestPurchaseDebts.filter(it => (it.supplierName || 'بدون اسم') === supplierName);
-    if (remaining.length) { showSupplierPurchaseDebts(supplierName); } else { renderPurchaseDebtsSuppliers(); }
+    logActivity('تسديد دين مشتريات', itemName + ' - ' + customerName);
+    openCustomerDebt(customerId, customerName);
   });
 }
 
-function cancelDeposit(depositId, customerId, customerName) {
-  db.ref('data/deposits/' + depositId).once('value').then(snap => {
+function cancelDeposit(depositId, customerId, customerName, kind) {
+  const path = (kind === 'purchase') ? 'data/purchaseDeposits/' : 'data/deposits/';
+  db.ref(path + depositId).once('value').then(snap => {
     const dep = snap.val();
     const amountLabel = dep ? fmtMoney(dep.amount) + ' د.ل (' + (dep.method || '') + ')' : '';
-    if (!confirm('تأكيد إلغاء الإيداع ' + amountLabel + ' الخاص بـ "' + customerName + '"؟ (في حال الزبون الغى العملية)')) return;
-    db.ref('data/deposits/' + depositId).remove().then(() => {
-      logActivity('إلغاء إيداع', amountLabel + ' - ' + customerName);
+    const who = kind === 'purchase' ? 'تسديد "' + customerName + '"' : 'الزبون "' + customerName + '"';
+    if (!confirm('تأكيد إلغاء الإيداع ' + amountLabel + ' الخاص بـ ' + who + '؟')) return;
+    db.ref(path + depositId).remove().then(() => {
+      logActivity(kind === 'purchase' ? 'إلغاء تسديد مشتريات' : 'إلغاء إيداع', amountLabel + ' - ' + customerName);
       if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
       if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
     });
   });
+}
+
+function renderDepositRow(p, customerId, customerName, kind) {
+  const dt = new Date(p.at);
+  const dateStr = dt.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'long', year:'numeric' });
+  const timeStr = dt.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
+  const color = kind === 'purchase' ? '#B45309' : '#16A34A';
+  return `<div class="searchResultRow">
+    <div>
+      <div class="n" style="display:flex;align-items:center;gap:5px;">${p.method === 'بطاقة' ? '<svg viewBox="0 0 24 24" width="13" height="13" fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'2.5\' y=\'5\' width=\'19\' height=\'14\' rx=\'2\'/><path d=\'M2.5 10h19M6 15h4\'/></svg>' : '<svg viewBox="0 0 24 24" width="13" height="13" fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'2.5\' y=\'6\' width=\'19\' height=\'12\' rx=\'2\'/><circle cx=\'12\' cy=\'12\' r=\'2.5\'/></svg>'} ${p.method || ''}</div>
+      <div style="font-size:11px;color:#94A3B8;">${timeStr} &middot; ${dateStr}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div class="p" style="font-weight:800;color:${color};">${fmtMoney(p.amount)} د.ل</div>
+      <button onclick="cancelDeposit('${p.id}','${customerId}','${customerName.replace(/'/g,"")}','${kind}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✕ إلغاء</button>
+    </div>
+  </div>`;
 }
 
 function openCustomerDebt(customerId, customerName) {
@@ -2277,8 +2310,10 @@ function openCustomerDebt(customerId, customerName) {
   openModal('customerDebtModal');
   Promise.all([
     db.ref('data/debts').once('value'),
-    db.ref('data/deposits').once('value')
-  ]).then(([debtSnap, depSnap]) => {
+    db.ref('data/deposits').once('value'),
+    db.ref('data/purchaseDebts').once('value'),
+    db.ref('data/purchaseDeposits').once('value')
+  ]).then(([debtSnap, depSnap, pdSnap, ppSnap]) => {
     const debtVal = debtSnap.val();
     const allDebts = debtVal ? Object.entries(debtVal).map(([id, d]) => ({ id, ...d })) : [];
     const mine = allDebts.filter(d => d.customerId === customerId && !d.paid).sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -2300,8 +2335,9 @@ function openCustomerDebt(customerId, customerName) {
       netHtml = `<div class="p" style="font-weight:800;color:#16A34A;">0.00 د.ل (الحساب متزن)</div>`;
     }
 
-    let html = `<div class="searchResultRow" id="debtTotalRow"><div class="n">الاجمالي بعد الخصم والإضافة</div>${netHtml}</div>`;
-    html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}')" style="width:100%;margin:10px 0;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
+    let html = `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:4px 0 6px;">💰 حساب المبيعات (اللي له عندك)</div>`;
+    html += `<div class="searchResultRow" id="debtTotalRow"><div class="n">الاجمالي بعد الخصم والإضافة</div>${netHtml}</div>`;
+    html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','sales')" style="width:100%;margin:10px 0;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
 
     if (mine.length) {
       html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف المستحقة</div>`;
@@ -2312,21 +2348,50 @@ function openCustomerDebt(customerId, customerName) {
 
     if (myDeposits.length) {
       html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;">الإيداعات</div>`;
-      html += myDeposits.map(p => {
-        const dt = new Date(p.at);
-        const dateStr = dt.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'long', year:'numeric' });
-        const timeStr = dt.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
-        return `<div class="searchResultRow">
-          <div>
-            <div class="n" style="display:flex;align-items:center;gap:5px;">${p.method === 'بطاقة' ? '<svg viewBox="0 0 24 24" width="13" height="13" fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'2.5\' y=\'5\' width=\'19\' height=\'14\' rx=\'2\'/><path d=\'M2.5 10h19M6 15h4\'/></svg>' : '<svg viewBox="0 0 24 24" width="13" height="13" fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'2.5\' y=\'6\' width=\'19\' height=\'12\' rx=\'2\'/><circle cx=\'12\' cy=\'12\' r=\'2.5\'/></svg>'} ${p.method || ''}</div>
-            <div style="font-size:11px;color:#94A3B8;">${timeStr} &middot; ${dateStr}</div>
+      html += myDeposits.map(p => renderDepositRow(p, customerId, customerName, 'sales')).join('');
+    }
+
+    // ---- حساب المشتريات (بضاعة اشتريتها من نفس الشخص/المحل ولسه ما سددتهاش) ----
+    const pdVal = pdSnap.val();
+    const allPurchaseDebts = pdVal ? Object.entries(pdVal).map(([id, d]) => ({ id, ...d })) : [];
+    const myPurchases = allPurchaseDebts.filter(d => d.customerId === customerId).sort((a,b) => new Date(b.at) - new Date(a.at));
+
+    const ppVal = ppSnap.val();
+    const allPurchaseDeposits = ppVal ? Object.entries(ppVal).map(([id, p]) => ({ id, ...p })) : [];
+    const myPurchaseDeposits = allPurchaseDeposits.filter(p => p.customerId === customerId).sort((a,b) => new Date(b.at) - new Date(a.at));
+
+    if (myPurchases.length || myPurchaseDeposits.length) {
+      const purchaseTotal = myPurchases.reduce((s, d) => s + Number(d.price || 0), 0);
+      const purchaseDepositTotal = myPurchaseDeposits.reduce((s, p) => s + Number(p.amount || 0), 0);
+      const purchaseNet = purchaseTotal - purchaseDepositTotal;
+      let purchaseNetHtml;
+      if (purchaseNet > 0) {
+        purchaseNetHtml = `<div class="p" style="font-weight:800;color:#B45309;">${fmtMoney(purchaseNet)} د.ل</div>`;
+      } else if (purchaseNet < 0) {
+        purchaseNetHtml = `<div class="p" style="font-weight:800;color:#B45309;">-${fmtMoney(Math.abs(purchaseNet))} د.ل (مستحق ليك منه)</div>`;
+      } else {
+        purchaseNetHtml = `<div class="p" style="font-weight:800;color:#16A34A;">0.00 د.ل (الحساب متزن)</div>`;
+      }
+
+      html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:22px 0 6px;border-top:1px solid var(--border);padding-top:16px;">🧾 حساب المشتريات (اللي عليك ليه)</div>`;
+      html += `<div class="searchResultRow"><div class="n">إجمالي المستحق عليك</div>${purchaseNetHtml}</div>`;
+      html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','purchase')" style="width:100%;margin:10px 0;background:#FEF3C7;color:#B45309;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#B45309" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> تسديد مبلغ للمحل</button>`;
+
+      if (myPurchases.length) {
+        html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف اللي اشتريتها</div>`;
+        html += myPurchases.map(it => `<div class="searchResultRow">
+          <div style="flex:1;min-width:0;">
+            <div class="n">${it.itemName}</div>
+            <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <div class="p" style="font-weight:800;color:#16A34A;">${fmtMoney(p.amount)} د.ل</div>
-            <button onclick="cancelDeposit('${p.id}','${customerId}','${customerName.replace(/'/g,"")}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✕ إلغاء</button>
-          </div>
-        </div>`;
-      }).join('');
+          <button onclick="deletePurchaseDebtFromAccount('${it.id}','${(it.itemName||'').replace(/'/g,"")}','${customerId}','${customerName.replace(/'/g,"")}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> سددت</button>
+        </div>`).join('');
+      }
+
+      if (myPurchaseDeposits.length) {
+        html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;">مبالغ سددتها له</div>`;
+        html += myPurchaseDeposits.map(p => renderDepositRow(p, customerId, customerName, 'purchase')).join('');
+      }
     }
 
     el.innerHTML = html;
