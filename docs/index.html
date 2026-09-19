@@ -284,7 +284,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 7:26 ص · cc360c</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 8:00 ص · d3661f</div>
   </div>
 </div>
 
@@ -368,6 +368,10 @@
       <div class="statIcon" style="background:#EDE9FE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 12 4l9 5-9 5-9-5Z"/><path d="M3 9v7l9 5 9-5V9M12 14v5"/></svg></div>
       <div><div class="num" id="statReturns">0</div><div class="lbl">المرتجعات</div></div>
     </div>
+    <div class="statCard" onclick="openModal('zeroPriceModal')" style="cursor:pointer">
+      <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+      <div><div class="num" id="statZeroPrice">0</div><div class="lbl">بيع بسعر 0</div></div>
+    </div>
     <div class="statCard" id="shortagesRow" onclick="openModal('shortagesModal')" style="cursor:pointer; grid-column:span 2;">
       <svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
       <div class="statIcon" style="background:#FFEDD5;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5"/><path d="M12 12v4m0 0 2-2m-2 2-2-2"/></svg></div>
@@ -431,6 +435,17 @@
     <button class="closeM" onclick="closeModal('lowStockModal')">✕</button>
     <h3>أصناف نفدت الكمية</h3>
     <div id="lowStockList"><div class="emptyMsg">لا يوجد بيانات</div></div>
+  </div>
+</div>
+
+<div class="modalBg" id="zeroPriceModal" onclick="if(event.target===this)closeModal('zeroPriceModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('zeroPriceModal')">✕</button>
+    <h3>أصناف اتباعت بسعر 0</h3>
+    <div style="background:#FEF2F2;color:#B91C1C;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
+      دي فواتير محتاجة تتراجع وتتصحح من برنامج الكاشير نفسه - هنا بس للتنبيه.
+    </div>
+    <div id="zeroPriceList"><div class="emptyMsg">لا يوجد بيانات</div></div>
   </div>
 </div>
 
@@ -1145,6 +1160,11 @@ function startListening() {
     latestInvoices = val ? Object.values(val) : [];
     renderInvoices();
     archiveInvoices(latestInvoices);
+    computeZeroPriceSales();
+  });
+  db.ref('data/dismissedZeroPrice').on('value', snap => {
+    latestDismissedZeroPrice = snap.val() || {};
+    updateZeroPriceBadge();
   });
   db.ref('data/items').on('value', snap => {
     latestItems = snap.val() || {};
@@ -1187,21 +1207,71 @@ function renderSummary() {
 
 let latestLowStockItems = [];
 let latestDismissedLowStock = {};
+let latestZeroPriceSales = [];
+let latestDismissedZeroPrice = {};
 function updateLowStockBadge() {
-  const visibleCount = latestLowStockItems.filter(it => !latestDismissedLowStock[String(it.id)]).length;
+  const visibleLowStock = latestLowStockItems.filter(it => !latestDismissedLowStock[String(it.id)]).length;
   const statEl = document.getElementById('statLowStock');
-  if (statEl) statEl.textContent = visibleCount;
+  if (statEl) statEl.textContent = visibleLowStock;
+  updateCombinedAlertBadge();
+}
+
+function computeZeroPriceSales() {
+  const results = [];
+  latestInvoices.forEach(inv => {
+    (inv.items || []).forEach((it, idx) => {
+      if (Number(it.price) === 0) {
+        results.push({ id: inv.number + '_' + idx, invoiceNumber: inv.number, itemName: it.name, qty: it.qty, date: inv.date });
+      }
+    });
+  });
+  latestZeroPriceSales = results;
+  updateZeroPriceBadge();
+}
+
+function updateZeroPriceBadge() {
+  const visible = latestZeroPriceSales.filter(it => !latestDismissedZeroPrice[it.id]).length;
+  const statEl = document.getElementById('statZeroPrice');
+  if (statEl) statEl.textContent = visible;
+  updateCombinedAlertBadge();
+}
+
+function updateCombinedAlertBadge() {
+  const visibleLowStock = latestLowStockItems.filter(it => !latestDismissedLowStock[String(it.id)]).length;
+  const visibleZeroPrice = latestZeroPriceSales.filter(it => !latestDismissedZeroPrice[it.id]).length;
+  const total = visibleLowStock + visibleZeroPrice;
   const alertBadge = document.getElementById('alertBadge');
   if (!alertBadge) return;
-  if (visibleCount > 0) {
+  if (total > 0) {
     alertBadge.style.display = 'flex';
-    alertBadge.textContent = visibleCount;
+    alertBadge.textContent = total;
     document.getElementById('alertBannerBox').style.display = 'flex';
-    document.getElementById('alertBannerText').textContent = 'لديك ' + visibleCount + ' منتج نفد أو على وشك النفاد';
+    const parts = [];
+    if (visibleLowStock > 0) parts.push(visibleLowStock + ' منتج نفد أو على وشك النفاد');
+    if (visibleZeroPrice > 0) parts.push(visibleZeroPrice + ' صنف اتباع بسعر 0');
+    document.getElementById('alertBannerText').textContent = 'لديك ' + parts.join(' و ');
   } else {
     alertBadge.style.display = 'none';
     document.getElementById('alertBannerBox').style.display = 'none';
   }
+}
+
+function loadZeroPriceModal() {
+  const el = document.getElementById('zeroPriceList');
+  const visible = latestZeroPriceSales.filter(it => !latestDismissedZeroPrice[it.id]);
+  if (!visible.length) { el.innerHTML = '<div class="emptyMsg">مفيش أصناف اتباعت بسعر 0</div>'; return; }
+  const sorted = visible.sort((a,b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = sorted.map(it => `<div class="searchResultRow">
+    <div style="flex:1;min-width:0;">
+      <div class="n">${it.itemName}</div>
+      <div class="p">فاتورة ${it.invoiceNumber} &middot; الكمية: ${it.qty} &middot; ${new Date(it.date).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>
+    <button onclick="dismissZeroPrice('${it.id}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 حذف</button>
+  </div>`).join('');
+}
+
+function dismissZeroPrice(id) {
+  db.ref('data/dismissedZeroPrice/' + id).set(true).then(loadZeroPriceModal);
 }
 
 function showInvoiceDetail(inv) {
@@ -1317,6 +1387,7 @@ function openModal(id) {
   if (id === 'missingItemsModal') loadMissingItems();
   if (id === 'activityLogModal') loadActivityLog();
   if (id === 'purchaseDebtsModal') loadPurchaseDebts();
+  if (id === 'zeroPriceModal') loadZeroPriceModal();
 }
 function closeModal(id) {
   document.getElementById(id).style.display = 'none';
