@@ -221,6 +221,11 @@
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
   .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; }
+  #depositModal { align-items:flex-start; }
+  #depositModal .modalSheet { border-radius:0 0 22px 22px; animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
+  #depositModal .modalSheet.dropOut { animation:depositDropOut .32s cubic-bezier(.4,0,.7,1) forwards; }
+  @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
+  @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
   .modalSheet { background:var(--surface); color:var(--text); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
@@ -525,9 +530,9 @@
   </div>
 </div>
 
-<div class="modalBg" id="depositModal" onclick="if(event.target===this)closeModal('depositModal')">
+<div class="modalBg" id="depositModal" onclick="if(event.target===this)closeDepositModalAnimated()">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('depositModal')">✕</button>
+    <button class="closeM" onclick="closeDepositModalAnimated()">✕</button>
     <h3 id="depositModalTitle">إيداع مبلغ</h3>
     <div style="margin:14px 0;">
       <label style="font-size:12px;color:var(--textMuted);font-weight:700;">المبلغ (د.ل)</label>
@@ -2200,6 +2205,19 @@ function setDepositMethod(method) {
   document.getElementById('depositMethodCard').style.color = method === 'بطاقة' ? '#fff' : '#334155';
 }
 
+function closeDepositModalAnimated() {
+  const sheet = document.querySelector('#depositModal .modalSheet');
+  if (sheet) {
+    sheet.classList.add('dropOut');
+    setTimeout(() => {
+      closeModal('depositModal');
+      sheet.classList.remove('dropOut');
+    }, 320);
+  } else {
+    closeModal('depositModal');
+  }
+}
+
 function submitDeposit() {
   if (!pendingDepositCustomer) return;
   const amount = Number(document.getElementById('depositAmountInput').value);
@@ -2221,7 +2239,7 @@ function submitDeposit() {
   }).then(() => {
     logActivity(kind === 'purchase' ? 'تسديد مشتريات' : 'إيداع مبلغ', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
     pendingDepositCustomer = null;
-    closeModal('depositModal');
+    closeDepositModalAnimated();
     if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
     if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
   });
