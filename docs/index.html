@@ -21,6 +21,7 @@
   input, select, textarea { font-size:16px !important; }
   :root {
     --kb-h:0px;
+    --navbar-h:76px;
     --bg:#F3F5F9; --surface:#fff; --surface2:#F1F5F9; --text:#1E293B; --textMuted:#64748B; --textMuted2:#94A3B8;
     --border:#EEF1F6; --border2:#F1F5F9; --headerBg:rgba(255,255,255,.75); --navBg:rgba(255,255,255,.8);
   }
@@ -220,7 +221,7 @@
   body.dark-theme .navItem.active { color:#4ADE80; }
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
-  .modalBg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:10000; align-items:flex-end; justify-content:center; }
+  .modalBg { display:none; position:fixed; inset:0; bottom:var(--navbar-h, 76px); background:rgba(15,23,42,.5); z-index:9998; align-items:flex-end; justify-content:center; }
   #depositModal { align-items:center; }
   #depositModal .modalSheet { width:calc(100% - 64px); max-width:380px; border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
   #depositModal .modalSheet.dropOut { animation:depositDropOut .32s cubic-bezier(.4,0,.7,1) forwards; }
@@ -407,10 +408,10 @@
   </div>
 
   <nav class="bottomNav">
-    <div class="navItem active"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg></div>الرئيسية</div>
-    <div class="navItem" onclick="openModal('lowStockModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 12 3l9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>المنتجات</div>
-    <div class="navItem" onclick="openModal('customersModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M15.5 6a3 3 0 0 1 0 6"/><path d="M17 14.2a5.8 5.8 0 0 1 4.5 5.8"/></svg></div>الزبائن</div>
-    <div class="navItem" onclick="openModal('reportsModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>التقارير</div>
+    <div class="navItem active" data-nav="home" onclick="switchNav('home')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg></div>الرئيسية</div>
+    <div class="navItem" data-nav="lowStockModal" onclick="switchNav('lowStockModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 12 3l9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>المنتجات</div>
+    <div class="navItem" data-nav="customersModal" onclick="switchNav('customersModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M15.5 6a3 3 0 0 1 0 6"/><path d="M17 14.2a5.8 5.8 0 0 1 4.5 5.8"/></svg></div>الزبائن</div>
+    <div class="navItem" data-nav="reportsModal" onclick="switchNav('reportsModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>التقارير</div>
   </nav>
 </div>
 
@@ -954,7 +955,12 @@ function updateTopOffset() {
   const stack = document.getElementById('topFixedStack');
   if (stack) document.documentElement.style.setProperty('--topbar-h', stack.offsetHeight + 'px');
 }
+function updateNavbarOffset() {
+  const nav = document.querySelector('nav.bottomNav');
+  if (nav) document.documentElement.style.setProperty('--navbar-h', nav.offsetHeight + 'px');
+}
 window.addEventListener('resize', updateTopOffset);
+window.addEventListener('resize', updateNavbarOffset);
 
 // resize:none بيوقف تصغير الشاشة خالص لما الكيبورد يفتح، فبدل ما آبل تحرك المحتوى تلقائي
 // بنتأكد إحنا إن الحقل اللي المستخدم بيكتب فيه يفضل ظاهر فوق الكيبورد.
@@ -998,6 +1004,8 @@ function enterApp() {
   startListening();
   updateTopOffset();
   setTimeout(updateTopOffset, 50);
+  updateNavbarOffset();
+  setTimeout(updateNavbarOffset, 50);
   // الإشعارات (Service Worker) بتتفعل بس لو مش داخل تطبيق AltStore (Capacitor) -
   // التسجيل ده بيسبب مشاكل تنقل خطيرة جوه WKWebView بتاعة Capacitor لما الموقع محمّل عن بعد
   if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) {
@@ -1227,11 +1235,14 @@ function unlockBodyScroll() {
 function anyModalOpen() {
   return Array.from(document.querySelectorAll('.modalBg')).some(m => m.style.display === 'flex');
 }
+function closeAllModals() {
+  document.querySelectorAll('.modalBg').forEach(m => { if (m.style.display === 'flex') m.style.display = 'none'; });
+  unlockBodyScroll();
+  setActiveNavItem(null);
+}
 function openModal(id) {
   const wasAnyOpen = anyModalOpen();
   document.getElementById(id).style.display = 'flex';
-  const navEl = document.querySelector('nav.bottomNav');
-  if (navEl) navEl.style.display = 'none';
   if (!wasAnyOpen) lockBodyScroll();
   if (id === 'lowStockModal') loadLowStock();
   if (id === 'shortagesModal') loadShortages();
@@ -1246,9 +1257,20 @@ function openModal(id) {
 }
 function closeModal(id) {
   document.getElementById(id).style.display = 'none';
-  const navEl = document.querySelector('nav.bottomNav');
-  if (navEl && !anyModalOpen()) navEl.style.display = 'flex';
-  if (!anyModalOpen()) unlockBodyScroll();
+  if (!anyModalOpen()) { unlockBodyScroll(); setActiveNavItem(null); }
+}
+// تبديل نضيف بين أقسام الشريط السفلي: يقفل أي نافذة مفتوحة قبل ما يفتح الجديدة، عشان التنقل
+// يبقى سلس من غير ما نافذتين يتراكبوا فوق بعض
+function setActiveNavItem(id) {
+  document.querySelectorAll('.navItem').forEach(el => {
+    el.classList.toggle('active', el.dataset.nav === id);
+  });
+}
+function switchNav(id) {
+  document.querySelectorAll('.modalBg').forEach(m => { if (m.style.display === 'flex') m.style.display = 'none'; });
+  setActiveNavItem(id);
+  if (id === 'home') { unlockBodyScroll(); return; }
+  openModal(id);
 }
 
 function timeAgoDetailed(ts) {
@@ -1836,8 +1858,7 @@ function forceCloseScanner() {
   try { document.getElementById('incrementFeedback').style.display = 'none'; } catch(e) {}
   try { renderInventoryCountList(); } catch(e) {}
   try { unlockBodyScroll(); } catch(e) {}
-  const navEl = document.querySelector('nav.bottomNav');
-  if (navEl && !anyModalOpen()) navEl.style.display = 'flex';
+  setActiveNavItem(null);
   document.getElementById('emergencyCloseScanner').style.display = 'none';
 }
 
