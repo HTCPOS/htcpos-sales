@@ -284,7 +284,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 6:53 ص · 8b7f85</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 7:11 ص · 6f7c5c</div>
   </div>
 </div>
 
@@ -670,12 +670,24 @@
 </div>
 
 <div class="modalBg" id="notesModal" onclick="if(event.target===this)closeModal('notesModal')">
-  <div class="modalSheet" style="height:70vh; display:flex; flex-direction:column;">
+  <div class="modalSheet" style="height:75vh; display:flex; flex-direction:column;">
     <button class="closeM" onclick="closeModal('notesModal')">✕</button>
-    <h3>الملاحظات</h3>
-    <div id="notesSavedAt" style="font-size:11px;color:#94A3B8;margin:6px 0 10px;"></div>
-    <textarea id="notesTextarea" placeholder="اكتب أي ملاحظة تحب ترجع لها بعدين..." style="flex:1;width:100%;resize:none;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;font-size:14px;font-family:inherit;box-sizing:border-box;line-height:1.7;"></textarea>
-    <button onclick="saveNotes()" style="width:100%;margin-top:12px;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> حفظ الملاحظة</button>
+
+    <div id="notesListView">
+      <h3>الملاحظات</h3>
+      <button onclick="openNoteEditor()" style="width:100%;margin:12px 0;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> ملاحظة جديدة</button>
+      <div id="notesList" style="flex:1;overflow:auto;"></div>
+    </div>
+
+    <div id="notesEditorView" style="display:none; flex-direction:column; flex:1; min-height:0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <button onclick="closeNoteEditor()" style="background:none;border:none;color:#2563EB;font-weight:700;font-size:13px;cursor:pointer;padding:4px 0; display:flex; align-items:center; gap:4px;">→ رجوع</button>
+      </div>
+      <h3 id="noteEditorTitle">ملاحظة جديدة</h3>
+      <div id="noteEditorSavedAt" style="font-size:11px;color:#94A3B8;margin:6px 0 10px;"></div>
+      <textarea id="noteEditorTextarea" placeholder="اكتب ملاحظتك هنا..." style="flex:1;width:100%;resize:none;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;font-size:14px;font-family:inherit;box-sizing:border-box;line-height:1.7;"></textarea>
+      <button onclick="saveNote()" style="width:100%;margin-top:12px;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> حفظ الملاحظة</button>
+    </div>
   </div>
 </div>
 
@@ -1117,6 +1129,10 @@ function startListening() {
     latestLowStockItems = val ? Object.values(val) : [];
     updateLowStockBadge();
   });
+  db.ref('data/dismissedLowStock').on('value', snap => {
+    latestDismissedLowStock = snap.val() || {};
+    updateLowStockBadge();
+  });
 }
 
 function archiveInvoices(invoices) {
@@ -1140,9 +1156,9 @@ function renderSummary() {
 }
 
 let latestLowStockItems = [];
+let latestDismissedLowStock = {};
 function updateLowStockBadge() {
-  const dismissed = getDismissedLowStock();
-  const visibleCount = latestLowStockItems.filter(it => !dismissed.includes(String(it.id))).length;
+  const visibleCount = latestLowStockItems.filter(it => !latestDismissedLowStock[String(it.id)]).length;
   const statEl = document.getElementById('statLowStock');
   if (statEl) statEl.textContent = visibleCount;
   const alertBadge = document.getElementById('alertBadge');
@@ -1401,10 +1417,7 @@ function renderAlertsList() {
 function addToShortagesFromAlert(itemId, itemName, btnEl) {
   db.ref('commands/addShortage/' + itemId).set(itemName).then(() => {
     // بقى مسجل في النواقص بدل كده، فمفيش داعي يفضل يبان في تنبيه نفاد المخزون كمان
-    const dismissed = getDismissedLowStock();
-    if (!dismissed.includes(String(itemId))) dismissed.push(String(itemId));
-    try { localStorage.setItem('dismissedLowStock', JSON.stringify(dismissed)); } catch(e) {}
-    updateLowStockBadge();
+    db.ref('data/dismissedLowStock/' + itemId).set(true);
     if (btnEl) {
       const row = btnEl.closest('.searchResultRow') || btnEl.parentElement;
       if (row) {
@@ -2100,24 +2113,80 @@ function loadMissingItems() {
 }
 
 /* ================= سجل حركات التطبيق (إضافة دين / سداد / ترجيع / تعديل زبائن - ما عدا الجرد) ================= */
+let editingNoteId = null;
+
 function openNotesModal() {
-  const ta = document.getElementById('notesTextarea');
-  const savedAtEl = document.getElementById('notesSavedAt');
-  ta.value = '';
-  savedAtEl.textContent = 'جاري التحميل...';
+  document.getElementById('notesListView').style.display = 'block';
+  document.getElementById('notesEditorView').style.display = 'none';
   openModal('notesModal');
-  db.ref('data/storeNotes').once('value').then(snap => {
+  loadNotesList();
+}
+
+function loadNotesList() {
+  const el = document.getElementById('notesList');
+  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  db.ref('data/notes').once('value').then(snap => {
     const val = snap.val();
-    ta.value = (val && val.text) || '';
-    savedAtEl.textContent = (val && val.updatedAt) ? 'آخر تعديل: ' + new Date(val.updatedAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    const notes = val ? Object.entries(val).map(([id, n]) => ({ id, ...n })) : [];
+    if (!notes.length) { el.innerHTML = '<div class="emptyMsg">لسه مفيش ملاحظات</div>'; return; }
+    const sorted = notes.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    el.innerHTML = sorted.map(n => {
+      const firstLine = (n.text || '').split('\n')[0].slice(0, 60) || '(ملاحظة فاضية)';
+      const dateStr = n.updatedAt ? new Date(n.updatedAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+      return `<div class="searchResultRow" style="cursor:pointer;" onclick="openNoteEditor('${n.id}')">
+        <div style="flex:1;min-width:0;">
+          <div class="n">${firstLine}</div>
+          <div class="p">${dateStr}</div>
+        </div>
+        <button onclick="event.stopPropagation();deleteNote('${n.id}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">🗑 حذف</button>
+      </div>`;
+    }).join('');
   });
 }
 
-function saveNotes() {
-  const text = document.getElementById('notesTextarea').value;
-  db.ref('data/storeNotes').set({ text: text, updatedAt: new Date().toISOString() }).then(() => {
-    document.getElementById('notesSavedAt').textContent = 'اتحفظت الآن ✓';
-  });
+function openNoteEditor(noteId) {
+  editingNoteId = noteId || null;
+  document.getElementById('notesListView').style.display = 'none';
+  document.getElementById('notesEditorView').style.display = 'flex';
+  const ta = document.getElementById('noteEditorTextarea');
+  const savedAtEl = document.getElementById('noteEditorSavedAt');
+  const titleEl = document.getElementById('noteEditorTitle');
+  ta.value = '';
+  savedAtEl.textContent = '';
+  if (editingNoteId) {
+    titleEl.textContent = 'تعديل الملاحظة';
+    db.ref('data/notes/' + editingNoteId).once('value').then(snap => {
+      const val = snap.val();
+      ta.value = (val && val.text) || '';
+      savedAtEl.textContent = (val && val.updatedAt) ? 'آخر تعديل: ' + new Date(val.updatedAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+      setTimeout(() => ta.focus(), 100);
+    });
+  } else {
+    titleEl.textContent = 'ملاحظة جديدة';
+    setTimeout(() => ta.focus(), 100);
+  }
+}
+
+function closeNoteEditor() {
+  document.getElementById('notesEditorView').style.display = 'none';
+  document.getElementById('notesListView').style.display = 'block';
+  loadNotesList();
+}
+
+function saveNote() {
+  const text = document.getElementById('noteEditorTextarea').value.trim();
+  if (!text) { alert('اكتب حاجة الأول'); return; }
+  const now = new Date().toISOString();
+  if (editingNoteId) {
+    db.ref('data/notes/' + editingNoteId).update({ text: text, updatedAt: now }).then(closeNoteEditor);
+  } else {
+    db.ref('data/notes').push().set({ text: text, createdAt: now, updatedAt: now }).then(closeNoteEditor);
+  }
+}
+
+function deleteNote(noteId) {
+  if (!confirm('تأكيد حذف الملاحظة دي؟')) return;
+  db.ref('data/notes/' + noteId).remove().then(loadNotesList);
 }
 
 function logActivity(action, detail) {
@@ -2593,16 +2662,13 @@ function markDebtReturned(debtId, customerId, customerName, itemName, amount) {
   });
 }
 
-// إخفاء تنبيهات نفاد المخزون اللي مش محتاجها - محفوظة على الجهاز ده بس لحد ما نعدل سكريبت
-// المزامنة لاحقًا يتعرف عليها هو كمان (السكريبت حاليًا بيعيد بناء القائمة من عنده كل شوية)
+// إخفاء تنبيهات نفاد المخزون اللي مش محتاجها - محفوظة سحابيًا في Firebase زي باقي بيانات
+// التطبيق (latestDismissedLowStock بيتحدث لحظيًا من db.ref('data/dismissedLowStock') في startListening)
 function getDismissedLowStock() {
-  try { return JSON.parse(localStorage.getItem('dismissedLowStock') || '[]'); } catch(e) { return []; }
+  return Object.keys(latestDismissedLowStock || {});
 }
 function dismissLowStockItem(itemId, btnEl) {
-  const dismissed = getDismissedLowStock();
-  if (!dismissed.includes(String(itemId))) dismissed.push(String(itemId));
-  try { localStorage.setItem('dismissedLowStock', JSON.stringify(dismissed)); } catch(e) {}
-  updateLowStockBadge();
+  db.ref('data/dismissedLowStock/' + itemId).set(true);
   if (btnEl) {
     const row = btnEl.closest('.searchResultRow') || btnEl.parentElement;
     if (row) {
