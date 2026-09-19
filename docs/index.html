@@ -1390,6 +1390,9 @@ function openSupplierPickerForPurchase(itemName, price) {
 }
 
 function openCustomerPickerList() {
+  // بيتفتح أحيانًا فوق نافذة تانية مفتوحة (زي ديون المشتريات) - بننقله لآخر الصفحة
+  // كل مرة عشان يفضل هو الظاهر فوق مهما كانت النافذة التانية مكتوبة قبله في الكود
+  document.body.appendChild(document.getElementById('customerPickerModal'));
   document.getElementById('newCustomerNameInput').value = '';
   const listEl = document.getElementById('customerPickerList');
   listEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
