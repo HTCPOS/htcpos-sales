@@ -284,7 +284,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 6:44 ص · 94029f</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 6:53 ص · 8b7f85</div>
   </div>
 </div>
 
@@ -408,6 +408,7 @@
     <div class="quickItem" onclick="openInventoryCount()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div class="ql">الجرد</div></div>
     <div class="quickItem" onclick="openModal('missingItemsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div><div class="ql">المفقودات</div></div>
     <div class="quickItem" onclick="openModal('activityLogModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l2 3v15H6V6Z"/><path d="M9 11h6M9 15h6"/></svg></div><div class="ql">سجل الحركات</div></div>
+    <div class="quickItem" onclick="openNotesModal()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#CA8A04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4Z"/><path d="M17 4v3h3"/><path d="M8 11h8M8 15h5"/></svg></div><div class="ql">الملاحظات</div></div>
   </div>
   </div>
 
@@ -665,6 +666,16 @@
       كل عملية إضافة دين، سداد، ترجيع، أو تعديل في الزبائن — بالوقت والتاريخ (ما عدا الجرد).
     </div>
     <div id="activityLogBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="notesModal" onclick="if(event.target===this)closeModal('notesModal')">
+  <div class="modalSheet" style="height:70vh; display:flex; flex-direction:column;">
+    <button class="closeM" onclick="closeModal('notesModal')">✕</button>
+    <h3>الملاحظات</h3>
+    <div id="notesSavedAt" style="font-size:11px;color:#94A3B8;margin:6px 0 10px;"></div>
+    <textarea id="notesTextarea" placeholder="اكتب أي ملاحظة تحب ترجع لها بعدين..." style="flex:1;width:100%;resize:none;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;font-size:14px;font-family:inherit;box-sizing:border-box;line-height:1.7;"></textarea>
+    <button onclick="saveNotes()" style="width:100%;margin-top:12px;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> حفظ الملاحظة</button>
   </div>
 </div>
 
@@ -1099,7 +1110,7 @@ function startListening() {
   db.ref('data/purchaseDebts').on('value', snap => {
     const val = snap.val();
     const el = document.getElementById('statPurchaseDebts');
-    if (el) el.textContent = val ? Object.keys(val).length : 0;
+    if (el) el.textContent = val ? Object.values(val).filter(d => !d.paid).length : 0;
   });
   db.ref('data/lowStockItems').on('value', snap => {
     const val = snap.val();
@@ -2089,6 +2100,26 @@ function loadMissingItems() {
 }
 
 /* ================= سجل حركات التطبيق (إضافة دين / سداد / ترجيع / تعديل زبائن - ما عدا الجرد) ================= */
+function openNotesModal() {
+  const ta = document.getElementById('notesTextarea');
+  const savedAtEl = document.getElementById('notesSavedAt');
+  ta.value = '';
+  savedAtEl.textContent = 'جاري التحميل...';
+  openModal('notesModal');
+  db.ref('data/storeNotes').once('value').then(snap => {
+    const val = snap.val();
+    ta.value = (val && val.text) || '';
+    savedAtEl.textContent = (val && val.updatedAt) ? 'آخر تعديل: ' + new Date(val.updatedAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  });
+}
+
+function saveNotes() {
+  const text = document.getElementById('notesTextarea').value;
+  db.ref('data/storeNotes').set({ text: text, updatedAt: new Date().toISOString() }).then(() => {
+    document.getElementById('notesSavedAt').textContent = 'اتحفظت الآن ✓';
+  });
+}
+
 function logActivity(action, detail) {
   db.ref('data/activityLog').push().set({
     action: action,
