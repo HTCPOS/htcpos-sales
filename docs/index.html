@@ -292,7 +292,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 7:08 م · 078593</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 7:18 م · d2baf3</div>
   </div>
 </div>
 
@@ -2821,7 +2821,15 @@ function downloadStatementViewPDF() {
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
           }
-          pdf.save(filename + '.pdf');
+          const pdfBlob = pdf.output('blob');
+          const pdfFile = new File([pdfBlob], filename + '.pdf', { type: 'application/pdf' });
+          if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+            navigator.share({ files: [pdfFile], title: filename }).catch(() => {});
+          } else if (typeof pdf.save === 'function') {
+            pdf.save(filename + '.pdf');
+          } else {
+            alert('مقدرناش نجهزلك الملف للحفظ أو المشاركة على الجهاز ده.');
+          }
         } catch (innerErr) {
           alert('حصلت مشكلة وقت بناء ملف الـ PDF نفسه: ' + (innerErr && innerErr.message ? innerErr.message : innerErr));
         }
