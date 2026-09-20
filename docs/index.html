@@ -315,7 +315,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 1:02 ص · 199560</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 1:11 ص · e522ad</div>
   </div>
 </div>
 
@@ -594,6 +594,19 @@
     <button class="closeM" onclick="closeModal('customerDebtModal')">✕</button>
     <h3 id="customerDebtTitle">حساب الزبون</h3>
     <div id="customerDebtBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="statementSectionPickerModal" onclick="if(event.target===this)closeModal('statementSectionPickerModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('statementSectionPickerModal')">✕</button>
+    <h3>اختر أجزاء الكشف</h3>
+    <div style="display:flex;gap:8px;margin:12px 0;">
+      <button onclick="setSectionPickerAll(true)" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:10px;padding:9px;font-weight:700;font-size:12px;cursor:pointer;">تحديد الكل</button>
+      <button onclick="setSectionPickerAll(false)" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:10px;padding:9px;font-weight:700;font-size:12px;cursor:pointer;">إلغاء الكل</button>
+    </div>
+    <div id="statementSectionPickerList"></div>
+    <button onclick="confirmSectionPickerAndOpen()" style="width:100%;margin-top:14px;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">👁 فتح الكشف</button>
   </div>
 </div>
 
@@ -2668,7 +2681,7 @@ function openCustomerDebt(customerId, customerName) {
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
-      <button onclick="openCustomerStatementView()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
+      <button onclick="openStatementSectionPicker()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
       <button onclick="shareCustomerStatement()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
@@ -2763,9 +2776,46 @@ function stmtStatCard(icon, label, amount, color) {
   </div>`;
 }
 
-function openCustomerStatementView() {
+const STMT_SECTION_DEFS = [
+  { key: 'salesDebts', label: '💰 المبيعات المستحقة' },
+  { key: 'salesPaid', label: '✅ مبيعات مسددة' },
+  { key: 'salesDeposits', label: '💵 الإيداعات' },
+  { key: 'purchaseDebts', label: '📦 المشتريات المستحقة عليك' },
+  { key: 'purchasePaid', label: '✅ مشتريات مسددة' },
+  { key: 'purchaseDeposits', label: '💸 تسديدات المشتريات' },
+];
+let selectedStmtSections = null;
+
+function openStatementSectionPicker() {
   const s = lastCustomerStatement;
   if (!s) return;
+  const listEl = document.getElementById('statementSectionPickerList');
+  const available = STMT_SECTION_DEFS.filter(def => s[def.key] && s[def.key].length);
+  if (!available.length) { alert('مفيش أي حركات مسجلة لهذا الحساب'); return; }
+  listEl.innerHTML = available.map(def => `
+    <label style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
+      <input type="checkbox" class="stmtSectionCheckbox" value="${def.key}" checked style="width:18px;height:18px;">
+      <span style="font-size:13.5px;">${def.label}</span>
+    </label>`).join('');
+  openModal('statementSectionPickerModal');
+}
+
+function setSectionPickerAll(checked) {
+  document.querySelectorAll('.stmtSectionCheckbox').forEach(cb => cb.checked = checked);
+}
+
+function confirmSectionPickerAndOpen() {
+  const checked = Array.from(document.querySelectorAll('.stmtSectionCheckbox:checked')).map(cb => cb.value);
+  if (!checked.length) { alert('اختار جزء واحد على الأقل'); return; }
+  selectedStmtSections = checked;
+  closeModal('statementSectionPickerModal');
+  openCustomerStatementView(checked);
+}
+
+function openCustomerStatementView(sectionsFilter) {
+  const s = lastCustomerStatement;
+  if (!s) return;
+  const include = (key) => !sectionsFilter || sectionsFilter.includes(key);
   currentStatementViewType = 'customer';
   const netLabel = s.combinedNet > 0 ? 'مستحق منه' : s.combinedNet < 0 ? 'مستحق له' : 'الحساب متزن';
   const netColor = s.combinedNet < 0 ? '#DC2626' : '#16A34A';
@@ -2795,44 +2845,51 @@ function openCustomerStatementView() {
       ${stmtStatCard('🛒', 'المشتريات', totalPurchases, '#EA580C')}
     </div>`;
 
-  if (s.salesDebts.length) {
+  let anySectionShown = false;
+  if (s.salesDebts.length && include('salesDebts')) {
+    anySectionShown = true;
     html += buildStmtSectionBlock('💰', 'المبيعات المستحقة', '#16A34A',
       ['الصنف', 'رقم الإيصال', 'التاريخ', 'المبلغ'],
       s.salesDebts.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.date), fmtMoney(d.amount) + ' د.ل']),
       'إجمالي المبيعات المستحقة', totalSalesDue);
   }
-  if (s.salesPaid.length) {
+  if (s.salesPaid.length && include('salesPaid')) {
+    anySectionShown = true;
     html += buildStmtSectionBlock('✅', 'مبيعات مسددة', '#0D9488',
       ['الصنف', 'رقم الإيصال', 'تاريخ السداد', 'المبلغ'],
       s.salesPaid.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.paidAt || d.date), fmtMoney(d.amount) + ' د.ل']),
       'إجمالي المسدد', sum(s.salesPaid, 'amount'));
   }
-  if (s.salesDeposits.length) {
+  if (s.salesDeposits.length && include('salesDeposits')) {
+    anySectionShown = true;
     html += buildStmtSectionBlock('💵', 'الإيداعات', '#2563EB',
       ['طريقة الدفع', 'التاريخ', 'المبلغ'],
       s.salesDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']),
       'إجمالي الإيداعات', totalDeposits);
   }
-  if (s.purchaseDebts.length) {
+  if (s.purchaseDebts.length && include('purchaseDebts')) {
+    anySectionShown = true;
     html += buildStmtSectionBlock('📦', 'المشتريات المستحقة عليك', '#EA580C',
       ['الصنف', 'التاريخ', 'المبلغ'],
       s.purchaseDebts.map(d => [d.itemName, fmtDT(d.at), fmtMoney(d.price) + ' د.ل']),
       'إجمالي المستحق عليك', sum(s.purchaseDebts, 'price'));
   }
-  if (s.purchasePaid.length) {
+  if (s.purchasePaid.length && include('purchasePaid')) {
+    anySectionShown = true;
     html += buildStmtSectionBlock('✅', 'مشتريات مسددة', '#0D9488',
       ['الصنف', 'تاريخ السداد', 'المبلغ'],
       s.purchasePaid.map(d => [d.itemName, fmtDT(d.paidAt || d.at), fmtMoney(d.price) + ' د.ل']),
       'إجمالي المسدد', sum(s.purchasePaid, 'price'));
   }
-  if (s.purchaseDeposits.length) {
+  if (s.purchaseDeposits.length && include('purchaseDeposits')) {
+    anySectionShown = true;
     html += buildStmtSectionBlock('💸', 'تسديدات المشتريات', '#DC2626',
       ['طريقة الدفع', 'التاريخ', 'المبلغ'],
       s.purchaseDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']),
       'إجمالي المسدد', sum(s.purchaseDeposits, 'amount'));
   }
-  if (!s.salesDebts.length && !s.salesPaid.length && !s.salesDeposits.length && !s.purchaseDebts.length && !s.purchasePaid.length && !s.purchaseDeposits.length) {
-    html += `<div class="emptyMsg">مفيش أي حركات مسجلة</div>`;
+  if (!anySectionShown) {
+    html += `<div class="emptyMsg">مفيش أي أقسام اتحددت أو مفيش حركات مسجلة</div>`;
   }
 
   html += `<div class="stmtGrandTotal" style="color:${netColor};">الرصيد الإجمالي<br><span>${fmtMoney(Math.abs(s.combinedNet))} د.ل</span><small>(${netLabel})</small></div>`;
