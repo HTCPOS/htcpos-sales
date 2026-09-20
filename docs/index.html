@@ -235,6 +235,15 @@
   body.keyboard-open #shortageFormModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
+  @media print {
+    body * { visibility:hidden; }
+    #printableArea, #printableArea * { visibility:visible; }
+    #printableArea { display:block !important; position:absolute; top:0; right:0; left:0; width:100%; padding:24px; direction:rtl; }
+    #printableArea .pRow { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #ddd; font-size:13px; }
+    #printableArea h1 { font-size:20px; margin-bottom:4px; }
+    #printableArea h2 { font-size:14px; margin:18px 0 6px; color:#555; }
+    #printableArea .pTotal { font-size:16px; font-weight:800; padding:10px 0; }
+  }
   .modalSheet { background:var(--surface); color:var(--text); width:calc(100% - 20px); max-width:480px; border-radius:24px; box-shadow:0 -8px 30px rgba(0,0,0,.18); padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); margin-bottom:18px; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
@@ -246,6 +255,8 @@
 </style>
 </head>
 <body>
+
+<div id="printableArea" style="display:none;"></div>
 
 <!-- ================= LOGIN ================= -->
 <div id="loginScreen">
@@ -287,7 +298,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 19 سبتمبر 8:12 ص · 45c218</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 5:35 ص · 87360b</div>
   </div>
 </div>
 
@@ -1216,6 +1227,7 @@ let latestLowStockItems = [];
 let latestDismissedLowStock = {};
 let latestZeroPriceSales = [];
 let latestDismissedZeroPrice = {};
+let lastCustomerStatement = null;
 function updateLowStockBadge() {
   const visibleLowStock = latestLowStockItems.filter(it => !latestDismissedLowStock[String(it.id)]).length;
   const statEl = document.getElementById('statLowStock');
@@ -2382,7 +2394,7 @@ function loadCustomers() {
       const depositTotal = deposits.filter(p => p.customerId === c.id).reduce((s, p) => s + Number(p.amount || 0), 0);
       const salesNet = debtTotal - depositTotal;
 
-      const purchaseTotal = purchaseDebts.filter(d => d.customerId === c.id).reduce((s, d) => s + Number(d.price || 0), 0);
+      const purchaseTotal = purchaseDebts.filter(d => d.customerId === c.id && !d.paid).reduce((s, d) => s + Number(d.price || 0), 0);
       const purchaseDepositTotal = purchaseDeposits.filter(p => p.customerId === c.id).reduce((s, p) => s + Number(p.amount || 0), 0);
       const purchaseNet = purchaseTotal - purchaseDepositTotal;
 
@@ -2624,6 +2636,10 @@ function openCustomerDebt(customerId, customerName) {
       netHtml = `<div class="p" style="font-weight:800;color:#16A34A;">0.00 د.ل (الحساب متزن)</div>`;
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
+    html += `<div style="display:flex;gap:8px;margin:10px 0;">
+      <button onclick="printCustomerStatement()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> تحميل PDF</button>
+      <button onclick="shareCustomerStatement()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
+    </div>`;
 
     html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;">💰 حساب المبيعات (اللي له عندك)</div>`;
     html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','sales')" style="width:100%;margin:6px 0 10px;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
@@ -2668,7 +2684,71 @@ function openCustomerDebt(customerId, customerName) {
 
     el.innerHTML = html;
     if (mine.length) checkDebtReturns(mine, customerId, customerName);
+
+    lastCustomerStatement = {
+      customerId, customerName, combinedNet,
+      salesDebts: mine, salesPaid: paidDebts, salesDeposits: myDeposits,
+      purchaseDebts: myPurchases, purchasePaid: paidPurchases, purchaseDeposits: myPurchaseDeposits
+    };
   });
+}
+
+function buildCustomerStatementLines(s) {
+  const lines = [];
+  s.salesDebts.forEach(d => lines.push({ label: d.itemName, sub: 'فاتورة ' + d.invoiceNumber, amount: d.amount, tag: 'لم يسدد بعد' }));
+  s.salesPaid.forEach(d => lines.push({ label: d.itemName, sub: 'فاتورة ' + d.invoiceNumber, amount: d.amount, tag: 'مسدد ✓' }));
+  s.salesDeposits.forEach(p => lines.push({ label: 'إيداع (' + (p.method||'') + ')', sub: new Date(p.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: -p.amount, tag: '' }));
+  s.purchaseDebts.forEach(d => lines.push({ label: d.itemName + ' (مشتريات)', sub: new Date(d.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: -d.price, tag: 'لم يسدد بعد' }));
+  s.purchasePaid.forEach(d => lines.push({ label: d.itemName + ' (مشتريات)', sub: new Date(d.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: -d.price, tag: 'مسدد ✓' }));
+  s.purchaseDeposits.forEach(p => lines.push({ label: 'تسديد مشتريات (' + (p.method||'') + ')', sub: new Date(p.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: p.price, tag: '' }));
+  return lines;
+}
+
+function printCustomerStatement() {
+  const s = lastCustomerStatement;
+  if (!s) return;
+  const area = document.getElementById('printableArea');
+  const netLabel = s.combinedNet > 0 ? '(مستحق منه)' : s.combinedNet < 0 ? '(مستحق له)' : '(الحساب متزن)';
+  let html = `<h1>كشف حساب - ${s.customerName}</h1><div class="pTotal">الرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل ${netLabel}</div>`;
+  if (s.salesDebts.length || s.salesPaid.length) {
+    html += `<h2>💰 حساب المبيعات</h2>`;
+    s.salesDebts.forEach(d => html += `<div class="pRow"><span>${d.itemName} — فاتورة ${d.invoiceNumber} (لم يسدد بعد)</span><span>${fmtMoney(d.amount)} د.ل</span></div>`);
+    s.salesPaid.forEach(d => html += `<div class="pRow"><span>${d.itemName} — فاتورة ${d.invoiceNumber} (مسدد)</span><span>${fmtMoney(d.amount)} د.ل</span></div>`);
+  }
+  if (s.salesDeposits.length) {
+    html += `<h2>الإيداعات</h2>`;
+    s.salesDeposits.forEach(p => html += `<div class="pRow"><span>${p.method || ''} — ${new Date(p.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>${fmtMoney(p.amount)} د.ل</span></div>`);
+  }
+  if (s.purchaseDebts.length || s.purchasePaid.length || s.purchaseDeposits.length) {
+    html += `<h2>🧾 حساب المشتريات</h2>`;
+    s.purchaseDebts.forEach(d => html += `<div class="pRow"><span>${d.itemName} (لم يسدد بعد)</span><span>${fmtMoney(d.price)} د.ل</span></div>`);
+    s.purchasePaid.forEach(d => html += `<div class="pRow"><span>${d.itemName} (مسدد)</span><span>${fmtMoney(d.price)} د.ل</span></div>`);
+    s.purchaseDeposits.forEach(p => html += `<div class="pRow"><span>تسديد (${p.method||''}) — ${new Date(p.at).toLocaleDateString('ar-EG-u-nu-latn')}</span><span>${fmtMoney(p.amount)} د.ل</span></div>`);
+  }
+  area.innerHTML = html;
+  setTimeout(() => window.print(), 100);
+}
+
+function shareCustomerStatement() {
+  const s = lastCustomerStatement;
+  if (!s) return;
+  const netLabel = s.combinedNet > 0 ? 'مستحق منه' : s.combinedNet < 0 ? 'مستحق له' : 'الحساب متزن';
+  let text = `كشف حساب - ${s.customerName}\nالرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل (${netLabel})\n`;
+  if (s.salesDebts.length) {
+    text += `\nالأصناف المستحقة:\n`;
+    s.salesDebts.forEach(d => text += `- ${d.itemName}: ${fmtMoney(d.amount)} د.ل\n`);
+  }
+  if (s.purchaseDebts.length) {
+    text += `\nمشتريات لم تسدد:\n`;
+    s.purchaseDebts.forEach(d => text += `- ${d.itemName}: ${fmtMoney(d.price)} د.ل\n`);
+  }
+  if (navigator.share) {
+    navigator.share({ title: 'كشف حساب - ' + s.customerName, text: text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => alert('اتنسخ الكشف - الصقه فين ما تحب'));
+  } else {
+    alert(text);
+  }
 }
 
 function renderPurchaseDebtRow(it, customerId, customerName) {
@@ -2815,7 +2895,7 @@ function loadShortages() {
   db.ref('data/shortages').once('value').then(snap => {
     const val = snap.val();
     latestShortages = val ? Object.entries(val).map(([id, it]) => ({ id, ...it })) : [];
-    currentShortageSourceFilter = 'all';
+    currentShortageSourceFilter = 'unclassified';
     renderShortageSourceTabs();
     renderShortagesList();
     loadShortagesFulfilled();
@@ -2825,9 +2905,10 @@ function loadShortages() {
 function renderShortageSourceTabs() {
   const tabsEl = document.getElementById('shortagesSourceTabs');
   const sources = Array.from(new Set(latestShortages.map(it => it.source).filter(Boolean)));
-  if (!sources.length) { tabsEl.innerHTML = ''; return; }
-  const tabs = [{ key: 'all', label: 'الكل' }, ...sources.map(s => ({ key: s, label: s }))];
-  tabsEl.innerHTML = tabs.map(t => `<button class="alertTab${currentShortageSourceFilter === t.key ? ' active' : ''}" onclick="setShortageSourceFilter('${t.key.replace(/'/g,"")}')">${t.label}</button>`).join('');
+  const tabs = [{ key: 'unclassified', label: 'بدون تصنيف' }, ...sources.map(s => ({ key: s, label: s }))];
+  tabsEl.innerHTML = tabs.map(t => `<button class="alertTab${currentShortageSourceFilter === t.key ? ' active' : ''}" onclick="setShortageSourceFilter('${t.key.replace(/'/g,"")}')">${t.label}</button>`).join('') +
+    `<button onclick="printShortagesList()" style="background:#F1F5F9;color:#334155;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> PDF</button>` +
+    `<button onclick="shareShortagesList()" style="background:#DBEAFE;color:#2563EB;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> نسخ/إرسال</button>`;
 }
 
 function setShortageSourceFilter(key) {
@@ -2839,8 +2920,10 @@ function setShortageSourceFilter(key) {
 function renderShortagesList() {
   const el = document.getElementById('shortagesList');
   let items = latestShortages;
-  if (currentShortageSourceFilter !== 'all') items = items.filter(it => it.source === currentShortageSourceFilter);
-  if (!items.length) { el.innerHTML = '<div class="emptyMsg">قائمة النواقص فاضية</div>'; return; }
+  items = currentShortageSourceFilter === 'unclassified'
+    ? items.filter(it => !it.source)
+    : items.filter(it => it.source === currentShortageSourceFilter);
+  if (!items.length) { el.innerHTML = '<div class="emptyMsg">القائمة فاضية</div>'; return; }
   el.innerHTML = items.map(it => `<div class="searchResultRow">
       <div style="flex:1;min-width:0;cursor:pointer;" onclick="openAddShortageForm('${it.id}')">
         <div class="n">${it.name}${it.qty ? ' &middot; الكمية: ' + it.qty : ''}</div>
@@ -2848,6 +2931,48 @@ function renderShortagesList() {
       </div>
       <button onclick="event.stopPropagation();markShortageFulfilled('${it.id}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> اشتريته</button>
     </div>`).join('');
+}
+
+function shareShortagesList() {
+  let items = latestShortages;
+  let title = 'قائمة النواقص';
+  if (currentShortageSourceFilter === 'unclassified') {
+    items = items.filter(it => !it.source);
+    title = 'قائمة النواقص - بدون تصنيف';
+  } else {
+    items = items.filter(it => it.source === currentShortageSourceFilter);
+    title = 'قائمة النواقص - ' + currentShortageSourceFilter;
+  }
+  if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
+  const lines = items.map((it, idx) => (idx + 1) + '. ' + it.name + (it.qty ? ' × ' + it.qty : ''));
+  const text = title + '\n\n' + lines.join('\n');
+  if (navigator.share) {
+    navigator.share({ title: title, text: text }).catch(() => {});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => alert('اتنسخت القائمة - الصقها في ملاحظاتك أو في محادثة المورد')).catch(() => alert(text));
+  } else {
+    alert(text);
+  }
+}
+
+function printShortagesList() {
+  let items = latestShortages;
+  let title = 'قائمة النواقص';
+  if (currentShortageSourceFilter === 'unclassified') {
+    items = items.filter(it => !it.source);
+    title = 'قائمة النواقص - بدون تصنيف';
+  } else {
+    items = items.filter(it => it.source === currentShortageSourceFilter);
+    title = 'قائمة النواقص - ' + currentShortageSourceFilter;
+  }
+  if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
+  const area = document.getElementById('printableArea');
+  let html = `<h1>${title}</h1><div class="pTotal">${items.length} صنف</div>`;
+  items.forEach((it, idx) => {
+    html += `<div class="pRow"><span>${idx + 1}. ${it.name}</span><span>${it.qty ? 'الكمية: ' + it.qty : ''}</span></div>`;
+  });
+  area.innerHTML = html;
+  setTimeout(() => window.print(), 100);
 }
 
 function loadShortagesFulfilled() {
