@@ -235,13 +235,11 @@
   body.keyboard-open #shortageFormModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
-  #printableArea { display:none; direction:rtl; font-family:'Segoe UI', Tahoma, Arial, sans-serif; padding:28px; background:#fff; color:#1E293B; }
-  #printableArea h1 { font-size:20px; margin-bottom:4px; }
-  #printableArea .pTotal { font-size:15px; font-weight:800; padding:10px 0 18px; }
-  #printableArea .pTable { width:100%; border-collapse:collapse; font-size:12px; }
-  #printableArea .pTable th { background:#F1F5F9; color:#334155; padding:8px 6px; text-align:right; border-bottom:2px solid #CBD5E1; white-space:nowrap; }
-  #printableArea .pTable td { padding:7px 6px; border-bottom:1px solid #E2E8F0; white-space:nowrap; }
-  #printableArea .pFooter { margin-top:18px; font-size:11px; color:#94A3B8; }
+  .stmtTotal { font-size:15px; font-weight:800; padding:12px; background:var(--surface2); border-radius:12px; margin-bottom:14px; text-align:center; }
+  .stmtTable { width:100%; border-collapse:collapse; font-size:12px; color:var(--text); }
+  .stmtTable th { background:var(--surface2); color:var(--textMuted); padding:8px 6px; text-align:right; border-bottom:2px solid var(--border); white-space:nowrap; position:sticky; top:0; }
+  .stmtTable td { padding:8px 6px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .stmtFooter { margin-top:14px; font-size:11px; color:var(--textMuted); text-align:center; }
   .modalSheet { background:var(--surface); color:var(--text); width:calc(100% - 20px); max-width:480px; border-radius:24px; box-shadow:0 -8px 30px rgba(0,0,0,.18); padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); margin-bottom:18px; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
@@ -253,8 +251,6 @@
 </style>
 </head>
 <body>
-
-<div id="printableArea" style="display:none;"></div>
 
 <!-- ================= LOGIN ================= -->
 <div id="loginScreen">
@@ -296,7 +292,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 6:09 ص · 564df4</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 8:03 ص · 30cc67</div>
   </div>
 </div>
 
@@ -578,6 +574,15 @@
   </div>
 </div>
 
+<div class="modalBg" id="statementViewModal" onclick="if(event.target===this)closeModal('statementViewModal')">
+  <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
+    <button class="closeM" onclick="closeModal('statementViewModal')">✕</button>
+    <h3 id="statementViewTitle">كشف حساب</h3>
+    <div id="statementViewBody" style="flex:1;overflow:auto;margin-top:10px;"></div>
+    <button onclick="shareStatementView()" style="width:100%;margin-top:12px;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> تحميل / مشاركة</button>
+  </div>
+</div>
+
 <div class="modalBg" id="customerPickerModal" onclick="if(event.target===this)closeModal('customerPickerModal')">
   <div class="modalSheet" style="height:75vh;">
     <button class="closeM" onclick="closeModal('customerPickerModal')">✕</button>
@@ -748,8 +753,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBVvW-gB2p0MR85iXgyE35flEfbusrgn0Y",
@@ -2637,7 +2640,7 @@ function openCustomerDebt(customerId, customerName) {
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
-      <button onclick="downloadCustomerStatementPDF()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> تحميل PDF</button>
+      <button onclick="openCustomerStatementView()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
       <button onclick="shareCustomerStatement()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
@@ -2693,56 +2696,7 @@ function openCustomerDebt(customerId, customerName) {
   });
 }
 
-function generatePdfFromArea(filename) {
-  const area = document.getElementById('printableArea');
-  area.style.display = 'block';
-  area.style.position = 'absolute';
-  area.style.top = '0';
-  area.style.left = '-9999px';
-  area.style.zIndex = '-1';
-  area.style.width = '760px';
-  area.style.background = '#ffffff';
-
-  setTimeout(() => {
-    html2canvas(area, { scale: 2, backgroundColor: '#ffffff', width: area.scrollWidth, height: area.scrollHeight, windowWidth: area.scrollWidth }).then(canvas => {
-      if (!canvas.width || !canvas.height) {
-        alert('مقدرناش نجهز الـ PDF (الصفحة طلعت فاضية) - جرب تاني');
-        area.style.display = 'none';
-        return;
-      }
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF('p', 'pt', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = canvas.height * (imgWidth / canvas.width);
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-      pdf.save(filename + '.pdf');
-      area.style.display = 'none';
-      area.style.position = '';
-      area.style.left = '';
-      area.style.zIndex = '';
-      area.innerHTML = '';
-    }).catch(err => {
-      alert('حصلت مشكلة وقت إنشاء الـ PDF: ' + err.message);
-      area.style.display = 'none';
-    });
-  }, 150);
-}
-
-function downloadCustomerStatementPDF() {
-  const s = lastCustomerStatement;
-  if (!s) return;
+function buildStatementRows(s) {
   const rows = [];
   s.salesDebts.forEach(d => rows.push({ date: d.date, type: 'دين مبيعات', invoice: d.invoiceNumber || '-', detail: d.itemName, amount: d.amount, status: 'لم يسدد بعد' }));
   s.salesPaid.forEach(d => rows.push({ date: d.paidAt || d.date, type: 'دين مبيعات', invoice: d.invoiceNumber || '-', detail: d.itemName, amount: d.amount, status: 'مسدد' }));
@@ -2751,11 +2705,25 @@ function downloadCustomerStatementPDF() {
   s.purchasePaid.forEach(d => rows.push({ date: d.paidAt || d.at, type: 'دين مشتريات', invoice: '-', detail: d.itemName, amount: -d.price, status: 'مسدد' }));
   s.purchaseDeposits.forEach(p => rows.push({ date: p.at, type: 'تسديد مشتريات', invoice: '-', detail: p.method || '', amount: p.amount, status: '' }));
   rows.sort((a,b) => new Date(a.date) - new Date(b.date));
+  return rows;
+}
 
+let currentStatementViewType = 'customer';
+
+function openCustomerStatementView() {
+  const s = lastCustomerStatement;
+  if (!s) return;
+  currentStatementViewType = 'customer';
+  const rows = buildStatementRows(s);
   const netLabel = s.combinedNet > 0 ? 'مستحق منه' : s.combinedNet < 0 ? 'مستحق له' : 'الحساب متزن';
-  let html = `<h1>كشف حساب - ${s.customerName}</h1>
-    <div class="pTotal">الرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل (${netLabel})</div>
-    <table class="pTable"><thead><tr><th>التاريخ</th><th>الساعة</th><th>رقم الإيصال</th><th>البيان</th><th>الحالة</th><th>المبلغ (د.ل)</th></tr></thead><tbody>`;
+  const netColor = s.combinedNet < 0 ? '#DC2626' : '#16A34A';
+
+  document.getElementById('statementViewTitle').textContent = 'كشف حساب - ' + s.customerName;
+  let html = `<div class="stmtTotal" style="color:${netColor};">الرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل (${netLabel})</div>
+    <table class="stmtTable"><thead><tr><th>التاريخ</th><th>الساعة</th><th>رقم الإيصال</th><th>البيان</th><th>الحالة</th><th>المبلغ</th></tr></thead><tbody>`;
+  if (!rows.length) {
+    html += `<tr><td colspan="6" style="text-align:center;color:var(--textMuted);padding:20px;">مفيش أي حركات مسجلة</td></tr>`;
+  }
   rows.forEach(r => {
     const d = new Date(r.date);
     const dateStr = d.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'short', year:'numeric' });
@@ -2763,29 +2731,44 @@ function downloadCustomerStatementPDF() {
     const color = r.amount >= 0 ? '#16A34A' : '#DC2626';
     html += `<tr><td>${dateStr}</td><td>${timeStr}</td><td>${r.invoice}</td><td>${r.type} - ${r.detail}</td><td>${r.status}</td><td style="color:${color};font-weight:700;">${fmtMoney(Math.abs(r.amount))}</td></tr>`;
   });
-  html += `</tbody></table><div class="pFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>`;
-
-  document.getElementById('printableArea').innerHTML = html;
-  generatePdfFromArea('كشف حساب - ' + s.customerName);
+  html += `</tbody></table><div class="stmtFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>`;
+  document.getElementById('statementViewBody').innerHTML = html;
+  openModal('statementViewModal');
 }
 
-function shareCustomerStatement() {
+function shareStatementView() {
+  if (currentStatementViewType === 'shortages') {
+    shareShortagesView();
+    return;
+  }
   const s = lastCustomerStatement;
   if (!s) return;
+  const rows = buildStatementRows(s);
   const netLabel = s.combinedNet > 0 ? 'مستحق منه' : s.combinedNet < 0 ? 'مستحق له' : 'الحساب متزن';
-  let text = `كشف حساب - ${s.customerName}\nالرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل (${netLabel})\n`;
-  if (s.salesDebts.length) {
-    text += `\nالأصناف المستحقة:\n`;
-    s.salesDebts.forEach(d => text += `- ${d.itemName}: ${fmtMoney(d.amount)} د.ل\n`);
-  }
-  if (s.purchaseDebts.length) {
-    text += `\nمشتريات لم تسدد:\n`;
-    s.purchaseDebts.forEach(d => text += `- ${d.itemName}: ${fmtMoney(d.price)} د.ل\n`);
-  }
+  let text = `كشف حساب - ${s.customerName}\nالرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل (${netLabel})\n\n`;
+  rows.forEach(r => {
+    const d = new Date(r.date);
+    const dateStr = d.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'short' });
+    text += `${dateStr} | ${r.type} - ${r.detail} | ${fmtMoney(Math.abs(r.amount))} د.ل${r.status ? ' (' + r.status + ')' : ''}\n`;
+  });
   if (navigator.share) {
     navigator.share({ title: 'كشف حساب - ' + s.customerName, text: text }).catch(() => {});
   } else if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => alert('اتنسخ الكشف - الصقه فين ما تحب'));
+  } else {
+    alert(text);
+  }
+}
+
+function shareShortagesView() {
+  const v = lastShortagesView;
+  if (!v) return;
+  const lines = v.items.map((it, idx) => (idx + 1) + '. ' + it.name + (it.qty ? ' × ' + it.qty : ''));
+  const text = v.title + '\n\n' + lines.join('\n');
+  if (navigator.share) {
+    navigator.share({ title: v.title, text: text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => alert('اتنسخت القائمة - الصقها فين ما تحب'));
   } else {
     alert(text);
   }
@@ -2947,7 +2930,7 @@ function renderShortageSourceTabs() {
   const sources = Array.from(new Set(latestShortages.map(it => it.source).filter(Boolean)));
   const tabs = [{ key: 'unclassified', label: 'بدون تصنيف' }, ...sources.map(s => ({ key: s, label: s }))];
   tabsEl.innerHTML = tabs.map(t => `<button class="alertTab${currentShortageSourceFilter === t.key ? ' active' : ''}" onclick="setShortageSourceFilter('${t.key.replace(/'/g,"")}')">${t.label}</button>`).join('') +
-    `<button onclick="downloadShortagesListPDF()" style="background:#F1F5F9;color:#334155;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> PDF</button>` +
+    `<button onclick="openShortagesListView()" style="background:#F1F5F9;color:#334155;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>` +
     `<button onclick="shareShortagesList()" style="background:#DBEAFE;color:#2563EB;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> نسخ/إرسال</button>`;
 }
 
@@ -2995,7 +2978,9 @@ function shareShortagesList() {
   }
 }
 
-function downloadShortagesListPDF() {
+let lastShortagesView = null;
+
+function openShortagesListView() {
   let items = latestShortages;
   let title = 'قائمة النواقص';
   if (currentShortageSourceFilter === 'unclassified') {
@@ -3006,14 +2991,18 @@ function downloadShortagesListPDF() {
     title = 'قائمة النواقص - ' + currentShortageSourceFilter;
   }
   if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
-  let html = `<h1>${title}</h1><div class="pTotal">${items.length} صنف</div>
-    <table class="pTable"><thead><tr><th>#</th><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`;
+  currentStatementViewType = 'shortages';
+  lastShortagesView = { title, items };
+
+  document.getElementById('statementViewTitle').textContent = title;
+  let html = `<div class="stmtTotal">${items.length} صنف</div>
+    <table class="stmtTable"><thead><tr><th>#</th><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`;
   items.forEach((it, idx) => {
     html += `<tr><td>${idx + 1}</td><td>${it.name}</td><td>${it.qty || '-'}</td></tr>`;
   });
-  html += `</tbody></table><div class="pFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>`;
-  document.getElementById('printableArea').innerHTML = html;
-  generatePdfFromArea(title);
+  html += `</tbody></table><div class="stmtFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>`;
+  document.getElementById('statementViewBody').innerHTML = html;
+  openModal('statementViewModal');
 }
 
 function loadShortagesFulfilled() {
