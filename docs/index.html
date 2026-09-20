@@ -235,11 +235,11 @@
   body.keyboard-open #shortageFormModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
-  .stmtTotal { font-size:15px; font-weight:800; padding:12px; background:var(--surface2); border-radius:12px; margin-bottom:14px; text-align:center; }
-  .stmtTable { width:100%; border-collapse:collapse; font-size:12px; color:var(--text); }
-  .stmtTable th { background:var(--surface2); color:var(--textMuted); padding:8px 6px; text-align:right; border-bottom:2px solid var(--border); white-space:nowrap; position:sticky; top:0; }
-  .stmtTable td { padding:8px 6px; border-bottom:1px solid var(--border); white-space:nowrap; }
-  .stmtFooter { margin-top:14px; font-size:11px; color:var(--textMuted); text-align:center; }
+  .stmtTotal { font-size:15px; font-weight:800; padding:12px; background:#F1F5F9; border-radius:12px; margin-bottom:14px; text-align:center; }
+  .stmtTable { width:100%; border-collapse:collapse; font-size:12px; color:#1E293B; }
+  .stmtTable th { background:#F1F5F9; color:#334155; padding:8px 6px; text-align:right; border-bottom:2px solid #CBD5E1; white-space:nowrap; position:sticky; top:0; }
+  .stmtTable td { padding:8px 6px; border-bottom:1px solid #E2E8F0; white-space:nowrap; }
+  .stmtFooter { margin-top:14px; font-size:11px; color:#94A3B8; text-align:center; }
   .modalSheet { background:var(--surface); color:var(--text); width:calc(100% - 20px); max-width:480px; border-radius:24px; box-shadow:0 -8px 30px rgba(0,0,0,.18); padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); margin-bottom:18px; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
@@ -292,7 +292,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 8:03 ص · 30cc67</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 6:56 م · 5901b5</div>
   </div>
 </div>
 
@@ -578,8 +578,11 @@
   <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
     <button class="closeM" onclick="closeModal('statementViewModal')">✕</button>
     <h3 id="statementViewTitle">كشف حساب</h3>
-    <div id="statementViewBody" style="flex:1;overflow:auto;margin-top:10px;"></div>
-    <button onclick="shareStatementView()" style="width:100%;margin-top:12px;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> تحميل / مشاركة</button>
+    <div id="statementViewBody" style="flex:1;overflow:auto;margin-top:10px;background:#fff;color:#1E293B;border-radius:12px;padding:4px;"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button onclick="downloadStatementViewPDF()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:13.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> تحميل PDF</button>
+      <button onclick="shareStatementView()" style="flex:1;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:13.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة نصية</button>
+    </div>
   </div>
 </div>
 
@@ -753,6 +756,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBVvW-gB2p0MR85iXgyE35flEfbusrgn0Y",
@@ -2772,6 +2777,44 @@ function shareShortagesView() {
   } else {
     alert(text);
   }
+}
+
+function downloadStatementViewPDF() {
+  const body = document.getElementById('statementViewBody');
+  const filename = document.getElementById('statementViewTitle').textContent || 'كشف حساب';
+  const originalHtml = body.innerHTML;
+  body.innerHTML = '<div style="text-align:center;padding:30px 0;color:#64748B;">جاري تجهيز الـ PDF...</div>' + originalHtml;
+
+  setTimeout(() => {
+    html2canvas(body, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+      body.innerHTML = originalHtml;
+      if (!canvas.width || !canvas.height) {
+        alert('مقدرناش نجهز الـ PDF - جرب تاني');
+        return;
+      }
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = canvas.height * (imgWidth / canvas.width);
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      pdf.save(filename + '.pdf');
+    }).catch(err => {
+      body.innerHTML = originalHtml;
+      alert('حصلت مشكلة وقت إنشاء الـ PDF: ' + err.message);
+    });
+  }, 100);
 }
 
 function renderPurchaseDebtRow(it, customerId, customerName) {
