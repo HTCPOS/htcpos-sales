@@ -235,14 +235,34 @@
   body.keyboard-open #shortageFormModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
-  .stmtFrame { border:1.5px solid #E2E8F0; border-radius:16px; padding:20px 18px; margin:4px; }
+  .stmtFrame { border:1.5px solid #E2E8F0; border-radius:16px; padding:16px 14px; margin:4px; box-sizing:border-box; }
   .stmtHeading { font-size:17px; font-weight:800; color:#1E293B; margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid #1E293B; }
   .stmtTotal { font-size:16px; font-weight:800; padding:14px; background:#F1F5F9; border-radius:12px; margin-top:18px; text-align:center; }
-  .stmtTable { width:100%; border-collapse:collapse; font-size:12px; color:#1E293B; }
-  .stmtTable th { background:#F1F5F9; color:#334155; padding:8px 10px; text-align:right; border-bottom:2px solid #CBD5E1; white-space:nowrap; position:sticky; top:0; }
-  .stmtTable td { padding:8px 10px; border-bottom:1px solid #E2E8F0; white-space:nowrap; }
+  .stmtTable { width:100%; border-collapse:collapse; font-size:11px; color:#1E293B; table-layout:fixed; }
+  .stmtTable th { background:#F8FAFC; color:#334155; padding:7px 5px; text-align:right; border-bottom:1px solid #E2E8F0; font-size:10px; font-weight:700; word-break:break-word; box-sizing:border-box; }
+  .stmtTable td { padding:7px 5px; border-bottom:1px solid #F1F5F9; word-break:break-word; box-sizing:border-box; }
   .stmtFooter { margin-top:14px; font-size:11px; color:#94A3B8; text-align:center; }
   .stmtSectionTitle { font-size:13px; font-weight:800; color:#334155; margin:16px 0 6px; padding-bottom:4px; border-bottom:2px solid #E2E8F0; }
+  .stmtBanner { display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#1E3A8A,#1D4ED8); color:#fff; border-radius:14px; padding:14px; margin-bottom:14px; box-sizing:border-box; }
+  .stmtBannerIcon { width:38px; height:38px; min-width:38px; border-radius:50%; background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .stmtBannerText { flex:1; min-width:0; }
+  .stmtBannerTitle { font-size:14.5px; font-weight:800; }
+  .stmtBannerSub { font-size:10px; opacity:.85; margin-top:2px; }
+  .stmtBannerDate { font-size:9px; text-align:center; opacity:.9; line-height:1.5; flex-shrink:0; white-space:nowrap; }
+  .stmtCustomerBox { display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:12px; box-sizing:border-box; }
+  .stmtCustomerLabel { color:#64748B; }
+  .stmtCustomerName { font-weight:800; color:#1E293B; }
+  .stmtStatGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:18px; }
+  .stmtStatCard { border-radius:12px; padding:12px 8px; color:#fff; text-align:center; box-sizing:border-box; min-width:0; }
+  .stmtStatIcon { font-size:16px; margin-bottom:4px; }
+  .stmtStatLabel { font-size:9.5px; opacity:.9; margin-bottom:3px; }
+  .stmtStatAmount { font-size:12.5px; font-weight:800; word-break:break-word; }
+  .stmtSection { margin-bottom:16px; border-radius:12px; overflow:hidden; border:1px solid #E2E8F0; }
+  .stmtSectionBar { color:#fff; font-size:12px; font-weight:800; padding:9px 12px; }
+  .stmtSectionTotal { padding:9px 12px; font-size:11.5px; font-weight:700; display:flex; justify-content:space-between; }
+  .stmtGrandTotal { margin-top:6px; text-align:center; background:#F1F5F9; border-radius:14px; padding:16px; font-size:13px; font-weight:700; }
+  .stmtGrandTotal span { display:block; font-size:19px; font-weight:800; margin:4px 0; }
+  .stmtGrandTotal small { font-size:10.5px; font-weight:600; opacity:.8; }
   .modalSheet { background:var(--surface); color:var(--text); width:calc(100% - 20px); max-width:480px; border-radius:24px; box-shadow:0 -8px 30px rgba(0,0,0,.18); padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); margin-bottom:18px; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
@@ -295,7 +315,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 7:58 م · f8c68e</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 12:08 ص · 6d6560</div>
   </div>
 </div>
 
@@ -581,7 +601,7 @@
   <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
     <button class="closeM" onclick="closeModal('statementViewModal')">✕</button>
     <h3 id="statementViewTitle">كشف حساب</h3>
-    <div id="statementViewBody" style="flex:1;overflow:auto;margin-top:10px;background:#fff;color:#1E293B;border-radius:12px;padding:14px;"></div>
+    <div id="statementViewBody" style="flex:1;overflow-y:auto;overflow-x:hidden;margin-top:10px;background:#fff;color:#1E293B;border-radius:12px;padding:14px;box-sizing:border-box;width:100%;"></div>
     <div style="display:flex;gap:8px;margin-top:12px;">
       <button onclick="downloadStatementViewPDF()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:13.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> تحميل PDF</button>
       <button onclick="shareStatementView()" style="flex:1;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:13.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة نصية</button>
@@ -2718,8 +2738,10 @@ function buildStatementRows(s) {
 
 let currentStatementViewType = 'customer';
 
-function buildStmtSectionTable(headers, rows) {
-  let html = `<table class="stmtTable"><thead><tr>`;
+function buildStmtSectionBlock(icon, label, color, headers, rows, totalLabel, totalAmount) {
+  let html = `<div class="stmtSection">
+    <div class="stmtSectionBar" style="background:${color};">${icon} ${label}</div>
+    <table class="stmtTable"><thead><tr>`;
   headers.forEach(h => html += `<th>${h}</th>`);
   html += `</tr></thead><tbody>`;
   rows.forEach(r => {
@@ -2727,8 +2749,18 @@ function buildStmtSectionTable(headers, rows) {
     r.forEach(cell => html += `<td>${cell}</td>`);
     html += `</tr>`;
   });
-  html += `</tbody></table>`;
+  html += `</tbody></table>
+    <div class="stmtSectionTotal" style="background:${color}1A;color:${color};">${totalLabel} <b>${fmtMoney(totalAmount)} د.ل</b></div>
+  </div>`;
   return html;
+}
+
+function stmtStatCard(icon, label, amount, color) {
+  return `<div class="stmtStatCard" style="background:${color};">
+    <div class="stmtStatIcon">${icon}</div>
+    <div class="stmtStatLabel">${label}</div>
+    <div class="stmtStatAmount">${fmtMoney(amount)} د.ل</div>
+  </div>`;
 }
 
 function openCustomerStatementView() {
@@ -2741,46 +2773,70 @@ function openCustomerStatementView() {
     const d = new Date(iso);
     return d.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'short', year:'numeric' }) + ' &middot; ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
   };
+  const sum = (arr, field) => arr.reduce((t, x) => t + Number(x[field] || 0), 0);
+  const totalSalesDue = sum(s.salesDebts, 'amount');
+  const totalDeposits = sum(s.salesDeposits, 'amount');
+  const totalPurchases = sum(s.purchaseDebts, 'price') + sum(s.purchasePaid, 'price');
+  const now = new Date();
 
   document.getElementById('statementViewTitle').textContent = 'كشف حساب - ' + s.customerName;
-  let html = `<div class="stmtFrame"><h2 class="stmtHeading">كشف حساب - ${s.customerName}</h2>`;
+
+  let html = `<div class="stmtFrame">
+    <div class="stmtBanner">
+      <div class="stmtBannerIcon">👤</div>
+      <div class="stmtBannerText"><div class="stmtBannerTitle">كشف حساب</div><div class="stmtBannerSub">تقرير تفصيلي للحساب</div></div>
+      <div class="stmtBannerDate">${now.toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric'})}<br>${now.toLocaleTimeString('ar-EG-u-nu-latn',{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>
+    <div class="stmtCustomerBox"><span class="stmtCustomerLabel">اسم العميل</span><span class="stmtCustomerName">${s.customerName}</span></div>
+    <div class="stmtStatGrid">
+      ${stmtStatCard('🏦', 'الرصيد الإجمالي', Math.abs(s.combinedNet), '#7C3AED')}
+      ${stmtStatCard('🤝', netLabel, Math.abs(s.combinedNet), netColor)}
+      ${stmtStatCard('💰', 'الإيداعات', totalDeposits, '#2563EB')}
+      ${stmtStatCard('🛒', 'المشتريات', totalPurchases, '#EA580C')}
+    </div>`;
 
   if (s.salesDebts.length) {
-    html += `<div class="stmtSectionTitle">💰 المبيعات المستحقة</div>`;
-    html += buildStmtSectionTable(['الصنف', 'رقم الإيصال', 'التاريخ', 'المبلغ'],
-      s.salesDebts.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.date), fmtMoney(d.amount) + ' د.ل']));
+    html += buildStmtSectionBlock('💰', 'المبيعات المستحقة', '#16A34A',
+      ['الصنف', 'رقم الإيصال', 'التاريخ', 'المبلغ'],
+      s.salesDebts.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.date), fmtMoney(d.amount) + ' د.ل']),
+      'إجمالي المبيعات المستحقة', totalSalesDue);
   }
   if (s.salesPaid.length) {
-    html += `<div class="stmtSectionTitle">✅ مبيعات مسددة</div>`;
-    html += buildStmtSectionTable(['الصنف', 'رقم الإيصال', 'تاريخ السداد', 'المبلغ'],
-      s.salesPaid.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.paidAt || d.date), fmtMoney(d.amount) + ' د.ل']));
+    html += buildStmtSectionBlock('✅', 'مبيعات مسددة', '#0D9488',
+      ['الصنف', 'رقم الإيصال', 'تاريخ السداد', 'المبلغ'],
+      s.salesPaid.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.paidAt || d.date), fmtMoney(d.amount) + ' د.ل']),
+      'إجمالي المسدد', sum(s.salesPaid, 'amount'));
   }
   if (s.salesDeposits.length) {
-    html += `<div class="stmtSectionTitle">💵 الإيداعات</div>`;
-    html += buildStmtSectionTable(['طريقة الدفع', 'التاريخ', 'المبلغ'],
-      s.salesDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']));
+    html += buildStmtSectionBlock('💵', 'الإيداعات', '#2563EB',
+      ['طريقة الدفع', 'التاريخ', 'المبلغ'],
+      s.salesDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']),
+      'إجمالي الإيداعات', totalDeposits);
   }
   if (s.purchaseDebts.length) {
-    html += `<div class="stmtSectionTitle">📦 المشتريات المستحقة عليك</div>`;
-    html += buildStmtSectionTable(['الصنف', 'التاريخ', 'المبلغ'],
-      s.purchaseDebts.map(d => [d.itemName, fmtDT(d.at), fmtMoney(d.price) + ' د.ل']));
+    html += buildStmtSectionBlock('📦', 'المشتريات المستحقة عليك', '#EA580C',
+      ['الصنف', 'التاريخ', 'المبلغ'],
+      s.purchaseDebts.map(d => [d.itemName, fmtDT(d.at), fmtMoney(d.price) + ' د.ل']),
+      'إجمالي المستحق عليك', sum(s.purchaseDebts, 'price'));
   }
   if (s.purchasePaid.length) {
-    html += `<div class="stmtSectionTitle">✅ مشتريات مسددة</div>`;
-    html += buildStmtSectionTable(['الصنف', 'تاريخ السداد', 'المبلغ'],
-      s.purchasePaid.map(d => [d.itemName, fmtDT(d.paidAt || d.at), fmtMoney(d.price) + ' د.ل']));
+    html += buildStmtSectionBlock('✅', 'مشتريات مسددة', '#0D9488',
+      ['الصنف', 'تاريخ السداد', 'المبلغ'],
+      s.purchasePaid.map(d => [d.itemName, fmtDT(d.paidAt || d.at), fmtMoney(d.price) + ' د.ل']),
+      'إجمالي المسدد', sum(s.purchasePaid, 'price'));
   }
   if (s.purchaseDeposits.length) {
-    html += `<div class="stmtSectionTitle">💸 تسديدات المشتريات</div>`;
-    html += buildStmtSectionTable(['طريقة الدفع', 'التاريخ', 'المبلغ'],
-      s.purchaseDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']));
+    html += buildStmtSectionBlock('💸', 'تسديدات المشتريات', '#DC2626',
+      ['طريقة الدفع', 'التاريخ', 'المبلغ'],
+      s.purchaseDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']),
+      'إجمالي المسدد', sum(s.purchaseDeposits, 'amount'));
   }
   if (!s.salesDebts.length && !s.salesPaid.length && !s.salesDeposits.length && !s.purchaseDebts.length && !s.purchasePaid.length && !s.purchaseDeposits.length) {
     html += `<div class="emptyMsg">مفيش أي حركات مسجلة</div>`;
   }
 
-  html += `<div class="stmtTotal" style="color:${netColor};">الرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل (${netLabel})</div>`;
-  html += `<div class="stmtFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`;
+  html += `<div class="stmtGrandTotal" style="color:${netColor};">الرصيد الإجمالي<br><span>${fmtMoney(Math.abs(s.combinedNet))} د.ل</span><small>(${netLabel})</small></div>`;
+  html += `<div class="stmtFooter">تم الإنشاء: ${now.toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`;
   document.getElementById('statementViewBody').innerHTML = html;
   openModal('statementViewModal');
 }
