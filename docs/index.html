@@ -235,15 +235,13 @@
   body.keyboard-open #shortageFormModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
-  @media print {
-    body * { visibility:hidden; }
-    #printableArea, #printableArea * { visibility:visible; }
-    #printableArea { display:block !important; position:absolute; top:0; right:0; left:0; width:100%; padding:24px; direction:rtl; }
-    #printableArea .pRow { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #ddd; font-size:13px; }
-    #printableArea h1 { font-size:20px; margin-bottom:4px; }
-    #printableArea h2 { font-size:14px; margin:18px 0 6px; color:#555; }
-    #printableArea .pTotal { font-size:16px; font-weight:800; padding:10px 0; }
-  }
+  #printableArea { display:none; direction:rtl; font-family:'Segoe UI', Tahoma, Arial, sans-serif; padding:28px; background:#fff; color:#1E293B; }
+  #printableArea h1 { font-size:20px; margin-bottom:4px; }
+  #printableArea .pTotal { font-size:15px; font-weight:800; padding:10px 0 18px; }
+  #printableArea .pTable { width:100%; border-collapse:collapse; font-size:12px; }
+  #printableArea .pTable th { background:#F1F5F9; color:#334155; padding:8px 6px; text-align:right; border-bottom:2px solid #CBD5E1; white-space:nowrap; }
+  #printableArea .pTable td { padding:7px 6px; border-bottom:1px solid #E2E8F0; white-space:nowrap; }
+  #printableArea .pFooter { margin-top:18px; font-size:11px; color:#94A3B8; }
   .modalSheet { background:var(--surface); color:var(--text); width:calc(100% - 20px); max-width:480px; border-radius:24px; box-shadow:0 -8px 30px rgba(0,0,0,.18); padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); margin-bottom:18px; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
@@ -298,7 +296,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 5:35 ص · 87360b</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 20 سبتمبر 5:48 ص · 761ddb</div>
   </div>
 </div>
 
@@ -750,6 +748,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBVvW-gB2p0MR85iXgyE35flEfbusrgn0Y",
@@ -2637,7 +2637,7 @@ function openCustomerDebt(customerId, customerName) {
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
-      <button onclick="printCustomerStatement()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> تحميل PDF</button>
+      <button onclick="downloadCustomerStatementPDF()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> تحميل PDF</button>
       <button onclick="shareCustomerStatement()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
@@ -2693,40 +2693,73 @@ function openCustomerDebt(customerId, customerName) {
   });
 }
 
-function buildCustomerStatementLines(s) {
-  const lines = [];
-  s.salesDebts.forEach(d => lines.push({ label: d.itemName, sub: 'فاتورة ' + d.invoiceNumber, amount: d.amount, tag: 'لم يسدد بعد' }));
-  s.salesPaid.forEach(d => lines.push({ label: d.itemName, sub: 'فاتورة ' + d.invoiceNumber, amount: d.amount, tag: 'مسدد ✓' }));
-  s.salesDeposits.forEach(p => lines.push({ label: 'إيداع (' + (p.method||'') + ')', sub: new Date(p.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: -p.amount, tag: '' }));
-  s.purchaseDebts.forEach(d => lines.push({ label: d.itemName + ' (مشتريات)', sub: new Date(d.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: -d.price, tag: 'لم يسدد بعد' }));
-  s.purchasePaid.forEach(d => lines.push({ label: d.itemName + ' (مشتريات)', sub: new Date(d.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: -d.price, tag: 'مسدد ✓' }));
-  s.purchaseDeposits.forEach(p => lines.push({ label: 'تسديد مشتريات (' + (p.method||'') + ')', sub: new Date(p.at).toLocaleDateString('ar-EG-u-nu-latn'), amount: p.price, tag: '' }));
-  return lines;
+function generatePdfFromArea(filename) {
+  const area = document.getElementById('printableArea');
+  area.style.display = 'block';
+  area.style.position = 'fixed';
+  area.style.top = '0';
+  area.style.left = '0';
+  area.style.zIndex = '-1';
+  area.style.width = '760px';
+
+  setTimeout(() => {
+    html2canvas(area, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = canvas.height * (imgWidth / canvas.width);
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      pdf.save(filename + '.pdf');
+      area.style.display = 'none';
+      area.style.position = '';
+      area.style.zIndex = '';
+      area.innerHTML = '';
+    }).catch(err => {
+      alert('حصلت مشكلة وقت إنشاء الـ PDF: ' + err.message);
+      area.style.display = 'none';
+    });
+  }, 150);
 }
 
-function printCustomerStatement() {
+function downloadCustomerStatementPDF() {
   const s = lastCustomerStatement;
   if (!s) return;
-  const area = document.getElementById('printableArea');
-  const netLabel = s.combinedNet > 0 ? '(مستحق منه)' : s.combinedNet < 0 ? '(مستحق له)' : '(الحساب متزن)';
-  let html = `<h1>كشف حساب - ${s.customerName}</h1><div class="pTotal">الرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل ${netLabel}</div>`;
-  if (s.salesDebts.length || s.salesPaid.length) {
-    html += `<h2>💰 حساب المبيعات</h2>`;
-    s.salesDebts.forEach(d => html += `<div class="pRow"><span>${d.itemName} — فاتورة ${d.invoiceNumber} (لم يسدد بعد)</span><span>${fmtMoney(d.amount)} د.ل</span></div>`);
-    s.salesPaid.forEach(d => html += `<div class="pRow"><span>${d.itemName} — فاتورة ${d.invoiceNumber} (مسدد)</span><span>${fmtMoney(d.amount)} د.ل</span></div>`);
-  }
-  if (s.salesDeposits.length) {
-    html += `<h2>الإيداعات</h2>`;
-    s.salesDeposits.forEach(p => html += `<div class="pRow"><span>${p.method || ''} — ${new Date(p.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span><span>${fmtMoney(p.amount)} د.ل</span></div>`);
-  }
-  if (s.purchaseDebts.length || s.purchasePaid.length || s.purchaseDeposits.length) {
-    html += `<h2>🧾 حساب المشتريات</h2>`;
-    s.purchaseDebts.forEach(d => html += `<div class="pRow"><span>${d.itemName} (لم يسدد بعد)</span><span>${fmtMoney(d.price)} د.ل</span></div>`);
-    s.purchasePaid.forEach(d => html += `<div class="pRow"><span>${d.itemName} (مسدد)</span><span>${fmtMoney(d.price)} د.ل</span></div>`);
-    s.purchaseDeposits.forEach(p => html += `<div class="pRow"><span>تسديد (${p.method||''}) — ${new Date(p.at).toLocaleDateString('ar-EG-u-nu-latn')}</span><span>${fmtMoney(p.amount)} د.ل</span></div>`);
-  }
-  area.innerHTML = html;
-  setTimeout(() => window.print(), 100);
+  const rows = [];
+  s.salesDebts.forEach(d => rows.push({ date: d.date, type: 'دين مبيعات', invoice: d.invoiceNumber || '-', detail: d.itemName, amount: d.amount, status: 'لم يسدد بعد' }));
+  s.salesPaid.forEach(d => rows.push({ date: d.paidAt || d.date, type: 'دين مبيعات', invoice: d.invoiceNumber || '-', detail: d.itemName, amount: d.amount, status: 'مسدد' }));
+  s.salesDeposits.forEach(p => rows.push({ date: p.at, type: 'إيداع', invoice: '-', detail: p.method || '', amount: -p.amount, status: '' }));
+  s.purchaseDebts.forEach(d => rows.push({ date: d.at, type: 'دين مشتريات', invoice: '-', detail: d.itemName, amount: -d.price, status: 'لم يسدد بعد' }));
+  s.purchasePaid.forEach(d => rows.push({ date: d.paidAt || d.at, type: 'دين مشتريات', invoice: '-', detail: d.itemName, amount: -d.price, status: 'مسدد' }));
+  s.purchaseDeposits.forEach(p => rows.push({ date: p.at, type: 'تسديد مشتريات', invoice: '-', detail: p.method || '', amount: p.amount, status: '' }));
+  rows.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  const netLabel = s.combinedNet > 0 ? 'مستحق منه' : s.combinedNet < 0 ? 'مستحق له' : 'الحساب متزن';
+  let html = `<h1>كشف حساب - ${s.customerName}</h1>
+    <div class="pTotal">الرصيد الإجمالي: ${fmtMoney(Math.abs(s.combinedNet))} د.ل (${netLabel})</div>
+    <table class="pTable"><thead><tr><th>التاريخ</th><th>الساعة</th><th>رقم الإيصال</th><th>البيان</th><th>الحالة</th><th>المبلغ (د.ل)</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    const d = new Date(r.date);
+    const dateStr = d.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'short', year:'numeric' });
+    const timeStr = d.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
+    const color = r.amount >= 0 ? '#16A34A' : '#DC2626';
+    html += `<tr><td>${dateStr}</td><td>${timeStr}</td><td>${r.invoice}</td><td>${r.type} - ${r.detail}</td><td>${r.status}</td><td style="color:${color};font-weight:700;">${fmtMoney(Math.abs(r.amount))}</td></tr>`;
+  });
+  html += `</tbody></table><div class="pFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>`;
+
+  document.getElementById('printableArea').innerHTML = html;
+  generatePdfFromArea('كشف حساب - ' + s.customerName);
 }
 
 function shareCustomerStatement() {
@@ -2907,7 +2940,7 @@ function renderShortageSourceTabs() {
   const sources = Array.from(new Set(latestShortages.map(it => it.source).filter(Boolean)));
   const tabs = [{ key: 'unclassified', label: 'بدون تصنيف' }, ...sources.map(s => ({ key: s, label: s }))];
   tabsEl.innerHTML = tabs.map(t => `<button class="alertTab${currentShortageSourceFilter === t.key ? ' active' : ''}" onclick="setShortageSourceFilter('${t.key.replace(/'/g,"")}')">${t.label}</button>`).join('') +
-    `<button onclick="printShortagesList()" style="background:#F1F5F9;color:#334155;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> PDF</button>` +
+    `<button onclick="downloadShortagesListPDF()" style="background:#F1F5F9;color:#334155;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 14H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg> PDF</button>` +
     `<button onclick="shareShortagesList()" style="background:#DBEAFE;color:#2563EB;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> نسخ/إرسال</button>`;
 }
 
@@ -2955,7 +2988,7 @@ function shareShortagesList() {
   }
 }
 
-function printShortagesList() {
+function downloadShortagesListPDF() {
   let items = latestShortages;
   let title = 'قائمة النواقص';
   if (currentShortageSourceFilter === 'unclassified') {
@@ -2966,13 +2999,14 @@ function printShortagesList() {
     title = 'قائمة النواقص - ' + currentShortageSourceFilter;
   }
   if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
-  const area = document.getElementById('printableArea');
-  let html = `<h1>${title}</h1><div class="pTotal">${items.length} صنف</div>`;
+  let html = `<h1>${title}</h1><div class="pTotal">${items.length} صنف</div>
+    <table class="pTable"><thead><tr><th>#</th><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`;
   items.forEach((it, idx) => {
-    html += `<div class="pRow"><span>${idx + 1}. ${it.name}</span><span>${it.qty ? 'الكمية: ' + it.qty : ''}</span></div>`;
+    html += `<tr><td>${idx + 1}</td><td>${it.name}</td><td>${it.qty || '-'}</td></tr>`;
   });
-  area.innerHTML = html;
-  setTimeout(() => window.print(), 100);
+  html += `</tbody></table><div class="pFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>`;
+  document.getElementById('printableArea').innerHTML = html;
+  generatePdfFromArea(title);
 }
 
 function loadShortagesFulfilled() {
