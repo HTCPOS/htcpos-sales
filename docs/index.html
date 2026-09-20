@@ -315,7 +315,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 12:08 ص · 6d6560</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 12:47 ص · 5f9139</div>
   </div>
 </div>
 
@@ -2932,21 +2932,12 @@ function downloadStatementViewPDF() {
           }
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
           const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF('p', 'pt', 'a4');
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
+          const pageWidth = 595; // عرض A4 بالنقاط (بت) - ثابت
           const imgWidth = pageWidth;
           const imgHeight = canvas.height * (imgWidth / canvas.width);
-          let heightLeft = imgHeight;
-          let position = 0;
-          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-          }
+          // صفحة واحدة بس بارتفاع يساوي المحتوى بالظبط، مش تقسيم على كذا صفحة
+          const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: [pageWidth, imgHeight] });
+          pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
           const pdfBlob = pdf.output('blob');
           const pdfFile = new File([pdfBlob], filename + '.pdf', { type: 'application/pdf' });
           if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
