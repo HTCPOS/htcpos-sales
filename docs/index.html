@@ -332,7 +332,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 6:52 م · 325c5a</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 7:15 م · e938d2</div>
   </div>
 </div>
 
@@ -1793,8 +1793,17 @@ function processReceiptOcrBlob(blob) {
     return;
   }
   const toast = showQuickToast('جاري قراءة رقم الإيصال...');
-  // بنحدد للمكتبة إنها تدور بس على حرف P والأرقام - عشان متلخبطش مع أي كلام عربي أو رموز تانية في الإيصال
-  Tesseract.recognize(blob, 'eng', { tessedit_char_whitelist: 'P0123456789' })
+  let ocrWorker = null;
+  // بنستخدم worker مباشر (مش Tesseract.recognize العادي) عشان setParameters هو الطريقة
+  // الوحيدة اللي فعليًا بتفرض على المكتبة إنها تدور بس على حرف P والأرقام، وتتجاهل أي حاجة تانية
+  // في الورقة (عربي، حروف تانية، رموز) - المحاولة القديمة كانت بتمرر الإعداد ده في مكان غلط فمكانش بيتفعّل خالص
+  Tesseract.createWorker('eng')
+    .then(worker => {
+      ocrWorker = worker;
+      return worker.setParameters({
+        tessedit_char_whitelist: 'P0123456789'
+      }).then(() => worker.recognize(blob));
+    })
     .then(({ data }) => {
       if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
       const text = (data && data.text) || '';
@@ -1812,9 +1821,11 @@ function processReceiptOcrBlob(blob) {
           searchInvoiceByNumber();
         }
       }
+      if (ocrWorker) ocrWorker.terminate();
     })
     .catch(err => {
       if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+      if (ocrWorker) ocrWorker.terminate();
       alert('حصلت مشكلة وقت قراءة الصورة: ' + (err && err.message ? err.message : err));
     });
 }
