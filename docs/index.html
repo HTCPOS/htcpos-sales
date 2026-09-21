@@ -332,7 +332,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 12:46 ص · 15e474</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 12:58 ص · f0f082</div>
   </div>
 </div>
 
@@ -1882,12 +1882,19 @@ function closeReceiptOcrCamera() {
 
 function scheduleReceiptOcrScan() {
   if (!receiptOcrScanning) return;
-  receiptOcrScanTimer = setTimeout(attemptReceiptOcrScan, 1400);
+  receiptOcrScanTimer = setTimeout(attemptReceiptOcrScan, 700);
 }
 
-function cropVideoToGuideCanvas(video, guide, upscale) {
+function cropVideoToGuideCanvas(video, guide, upscale, subRegion) {
   const videoRect = video.getBoundingClientRect();
-  const guideRect = guide.getBoundingClientRect();
+  let guideRect = guide.getBoundingClientRect();
+  if (subRegion) {
+    // بنضيّق المستطيل على جزء رأسي منه بس (فوق أو تحت) عشان "نزوم" على الرقم اللي لسه ناقص
+    const fullHeight = guideRect.height;
+    const newTop = guideRect.top + fullHeight * subRegion.top;
+    const newBottom = guideRect.top + fullHeight * subRegion.bottom;
+    guideRect = { left: guideRect.left, right: guideRect.right, top: newTop, bottom: newBottom, width: guideRect.width, height: newBottom - newTop };
+  }
 
   // نحسب أي جزء من الفيديو الأصلي (بالبكسل الحقيقي) بيتوافق مع مكان الإطار الأخضر
   // على الشاشة - لازم نعوّض إن الفيديو المعروض ممكن يبقى مقصوص شوية بسبب object-fit:cover
@@ -1953,9 +1960,15 @@ let cardReceiptOcrStream = null;
 
 let cardReceiptOcrScanning = false;
 let cardReceiptOcrScanTimer = null;
+let cardReceiptAmountLocked = false;
+let cardReceiptRefLocked = false;
 
 function openCardReceiptOcrCamera() {
   openModal('cardReceiptOcrCameraModal');
+  cardReceiptAmountLocked = false;
+  cardReceiptRefLocked = false;
+  document.getElementById('depositAmountInput').value = '';
+  document.getElementById('depositRefInput').value = '';
   const video = document.getElementById('cardReceiptOcrVideo');
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1920 }, advanced: [{ focusMode: 'continuous' }] } })
     .then(stream => {
@@ -1983,7 +1996,7 @@ function closeCardReceiptOcrCamera() {
 
 function scheduleCardReceiptOcrScan() {
   if (!cardReceiptOcrScanning) return;
-  cardReceiptOcrScanTimer = setTimeout(attemptCardReceiptOcrScan, 1400);
+  cardReceiptOcrScanTimer = setTimeout(attemptCardReceiptOcrScan, 700);
 }
 
 function attemptCardReceiptOcrScan() {
@@ -1996,8 +2009,18 @@ function attemptCardReceiptOcrScan() {
     alert('مقدرناش نستخدم قراءة الصورة: مكتبة القراءة لسه ما اتحمّلتش من الإنترنت. تأكد من الاتصال وجرب تاني.');
     return;
   }
-  // تكبير أعلى هنا (3 مرات) عشان الإطار بيغطي كذا سطر، فكل سطر بيبقى نسبيًا أصغر من الماسح التاني
-  const canvas = cropVideoToGuideCanvas(video, guide, 3);
+  // لو لقينا حاجة واحدة (المبلغ أو الرقم المرجعي) وقفلناها، بنـ"زوم" على نص المستطيل بس
+  // اللي فيه الحاجة الناقصة، عشان القراءة تركّز عليها وتبقى أوضح
+  let subRegion = null;
+  let upscale = 3;
+  if (cardReceiptAmountLocked && !cardReceiptRefLocked) {
+    subRegion = { top: 0.55, bottom: 1 }; // الرقم المرجعي في النص التحتاني من المستطيل
+    upscale = 5;
+  } else if (cardReceiptRefLocked && !cardReceiptAmountLocked) {
+    subRegion = { top: 0, bottom: 0.45 }; // المبلغ في النص الفوقاني من المستطيل
+    upscale = 5;
+  }
+  const canvas = cropVideoToGuideCanvas(video, guide, upscale, subRegion);
   canvas.toBlob(blob => {
     if (!blob || !cardReceiptOcrScanning) { scheduleCardReceiptOcrScan(); return; }
     Tesseract.recognize(blob, 'eng')
@@ -2006,14 +2029,24 @@ function attemptCardReceiptOcrScan() {
         const text = (data && data.text) || '';
         // المبلغ شكله دايمًا رقم وبعده 000 (زي 25.000) - بس النقطة نفسها صغيرة وممكن القراءة تلخبط
         // فيها أو تسيبها خالص، فبنجرب الأشكال المحتملة كلها بالترتيب من الأدق للأقل دقة
-        const amountMatch = text.match(/\b(\d{1,3})[.,](\d{3})\b/) // 25.000 أو 25,000 - الشكل الصريح
-          || text.match(/\b(\d{1,3})\s(\d{3})\b/) // 25 000 - مسافة بدل النقطة
-          || text.match(/\b(\d{1,3})(000)\b/); // 25000 - النقطة اتلغت خالص من القراءة
-        // الرقم المرجعي شكله دايمًا رقم طويل من 12-14 خانة، مختلف تمامًا عن أي رقم تاني في الإيصال
-        const refMatch = text.match(/\b(\d{12,14})\b/);
-        if (amountMatch) document.getElementById('depositAmountInput').value = amountMatch[1] + '.' + amountMatch[2];
-        if (refMatch) document.getElementById('depositRefInput').value = refMatch[1];
-        if (amountMatch && refMatch) {
+        if (!cardReceiptAmountLocked) {
+          const amountMatch = text.match(/\b(\d{1,3})[.,](\d{3})\b/) // 25.000 أو 25,000 - الشكل الصريح
+            || text.match(/\b(\d{1,3})\s(\d{3})\b/) // 25 000 - مسافة بدل النقطة
+            || text.match(/\b(\d{1,3})(000)\b/); // 25000 - النقطة اتلغت خالص من القراءة
+          if (amountMatch) {
+            document.getElementById('depositAmountInput').value = amountMatch[1] + '.' + amountMatch[2];
+            cardReceiptAmountLocked = true; // اتقفلت، مش هنلمسها تاني
+          }
+        }
+        if (!cardReceiptRefLocked) {
+          // الرقم المرجعي شكله دايمًا رقم طويل من 12-14 خانة، مختلف تمامًا عن أي رقم تاني في الإيصال
+          const refMatch = text.match(/\b(\d{12,14})\b/);
+          if (refMatch) {
+            document.getElementById('depositRefInput').value = refMatch[1];
+            cardReceiptRefLocked = true;
+          }
+        }
+        if (cardReceiptAmountLocked && cardReceiptRefLocked) {
           // لقينا الاتنين مع بعض - نقفل تلقائي، ده المطلوب
           cardReceiptOcrScanning = false;
           closeCardReceiptOcrCamera();
@@ -2021,8 +2054,8 @@ function attemptCardReceiptOcrScan() {
           const statusEl = document.getElementById('cardReceiptOcrStatus');
           if (statusEl) {
             const found = [];
-            if (amountMatch) found.push('المبلغ');
-            if (refMatch) found.push('الرقم المرجعي');
+            if (cardReceiptAmountLocked) found.push('المبلغ');
+            if (cardReceiptRefLocked) found.push('الرقم المرجعي');
             statusEl.textContent = found.length ? '🔄 لقيت ' + found.join(' و') + ' - لسه بيدور على الباقي...' : '🔄 بيدور على المبلغ والرقم المرجعي... حرّك الكاميرا شوية';
           }
           scheduleCardReceiptOcrScan();
