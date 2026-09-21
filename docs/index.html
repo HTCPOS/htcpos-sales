@@ -332,7 +332,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 7:52 م · af4c7a</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 12:08 ص · f4debf</div>
   </div>
 </div>
 
@@ -733,10 +733,12 @@
   <div class="modalSheet" style="height:auto;">
     <button class="closeM" onclick="closeReceiptOcrCamera()">✕</button>
     <h3>قراءة رقم الإيصال</h3>
-    <div style="background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
+    <div style="position:relative;background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
       <video id="receiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+      <div id="receiptOcrGuide" style="position:absolute;top:38%;left:8%;right:8%;height:16%;border:3px solid #22C55E;border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none;"></div>
+      <div style="position:absolute;top:calc(38% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">حط رقم الإيصال جوه الإطار الأخضر بس</div>
     </div>
-    <div style="font-size:12px;color:var(--textMuted);text-align:center;margin-bottom:10px;">قرّب الكاميرا لحد ما رقم الإيصال يملى الشاشة، في إضاءة كويسة، وثبّت إيدك ثانية قبل ما تدوس مسح</div>
+    <div style="font-size:12px;color:var(--textMuted);text-align:center;margin-bottom:10px;">قرّب الكاميرا لحد ما رقم الإيصال (P وبعده الأرقام) يملى الإطار الأخضر بالظبط، في إضاءة كويسة</div>
     <button onclick="captureAndReadReceipt()" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:8px;">📷 امسح دلوقتي</button>
     <button onclick="closeReceiptOcrCamera();document.getElementById('receiptOcrFileInput').click()" style="width:100%;background:none;color:#2563EB;border:none;padding:8px;font-weight:700;font-size:13px;cursor:pointer;">اختيار صورة من المعرض بدل الكاميرا</button>
     <input type="file" id="receiptOcrFileInput" accept="image/*" style="display:none;" onchange="handleReceiptOcrFile(event)">
@@ -1854,15 +1856,42 @@ function closeReceiptOcrCamera() {
 
 function captureAndReadReceipt() {
   const video = document.getElementById('receiptOcrVideo');
+  const guide = document.getElementById('receiptOcrGuide');
   if (!video || !video.videoWidth) { alert('الكاميرا لسه مش جاهزة، جرب تاني بعد ثانية'); return; }
+
+  const videoRect = video.getBoundingClientRect();
+  const guideRect = guide.getBoundingClientRect();
+
+  // نحسب أي جزء من الفيديو الأصلي (بالبكسل الحقيقي) بيتوافق مع مكان الإطار الأخضر
+  // على الشاشة - لازم نعوّض إن الفيديو المعروض ممكن يبقى مقصوص شوية بسبب object-fit:cover
+  const scale = Math.max(videoRect.width / video.videoWidth, videoRect.height / video.videoHeight);
+  const renderedW = video.videoWidth * scale;
+  const renderedH = video.videoHeight * scale;
+  const offsetX = (renderedW - videoRect.width) / 2;
+  const offsetY = (renderedH - videoRect.height) / 2;
+
+  const fracLeft = (guideRect.left - videoRect.left) / videoRect.width;
+  const fracTop = (guideRect.top - videoRect.top) / videoRect.height;
+  const fracRight = (guideRect.right - videoRect.left) / videoRect.width;
+  const fracBottom = (guideRect.bottom - videoRect.top) / videoRect.height;
+
+  const sx = Math.max(0, (fracLeft * videoRect.width + offsetX) / scale);
+  const sy = Math.max(0, (fracTop * videoRect.height + offsetY) / scale);
+  const ex = Math.min(video.videoWidth, (fracRight * videoRect.width + offsetX) / scale);
+  const ey = Math.min(video.videoHeight, (fracBottom * videoRect.height + offsetY) / scale);
+  const cropW = Math.max(1, ex - sx);
+  const cropH = Math.max(1, ey - sy);
+
   const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
+  // بنكبّر الجزء المقصوص نفسه لضعفين عشان الخط يبقى أوضح للقراءة، بما إن الإطار صغير نسبيًا
+  const upscale = 2;
+  canvas.width = cropW * upscale;
+  canvas.height = cropH * upscale;
+  canvas.getContext('2d').drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
   canvas.toBlob(blob => {
     closeReceiptOcrCamera();
     if (blob) processReceiptOcrBlob(blob);
-  }, 'image/jpeg', 0.92);
+  }, 'image/jpeg', 0.95);
 }
 
 function searchInvoiceByNumber() {
