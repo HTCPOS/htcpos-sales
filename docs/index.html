@@ -332,7 +332,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 7:35 م · a3aa09</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 21 سبتمبر 7:52 م · af4c7a</div>
   </div>
 </div>
 
@@ -736,7 +736,7 @@
     <div style="background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
       <video id="receiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
     </div>
-    <div style="font-size:12px;color:var(--textMuted);text-align:center;margin-bottom:10px;">وجّه الكاميرا على رقم الإيصال، وحاول يبقى واضح ومن غير أرقام تانية جنبه (زي رقم الطلب)</div>
+    <div style="font-size:12px;color:var(--textMuted);text-align:center;margin-bottom:10px;">قرّب الكاميرا لحد ما رقم الإيصال يملى الشاشة، في إضاءة كويسة، وثبّت إيدك ثانية قبل ما تدوس مسح</div>
     <button onclick="captureAndReadReceipt()" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;margin-bottom:8px;">📷 امسح دلوقتي</button>
     <button onclick="closeReceiptOcrCamera();document.getElementById('receiptOcrFileInput').click()" style="width:100%;background:none;color:#2563EB;border:none;padding:8px;font-weight:700;font-size:13px;cursor:pointer;">اختيار صورة من المعرض بدل الكاميرا</button>
     <input type="file" id="receiptOcrFileInput" accept="image/*" style="display:none;" onchange="handleReceiptOcrFile(event)">
@@ -1832,7 +1832,7 @@ let receiptOcrStream = null;
 function openReceiptOcrCamera() {
   openModal('receiptOcrCameraModal');
   const video = document.getElementById('receiptOcrVideo');
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1920 }, advanced: [{ focusMode: 'continuous' }] } })
     .then(stream => {
       receiptOcrStream = stream;
       video.srcObject = stream;
