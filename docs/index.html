@@ -348,7 +348,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 7:25 ص · a7f291</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 7:39 ص · 5c9e2b</div>
   </div>
 </div>
 
@@ -2140,7 +2140,48 @@ async function finalizeCardReceiptCapture(video, guide) {
       imageB: variantB.toDataURL('image/jpeg', 0.85)
     }
   };
+
+  // المسار السريع: اللي فعليًا بيتستخدم من الحقول العشرة هو المبلغ والرقم المرجعي بس (هما اللي
+  // بيتملوا في خانات الإيداع). لو الاتنين دول اتقروا بشكل سليم (مطابقين لشكلهم المتوقع)، نعبيهم
+  // فورًا ونقفل من غير ما نتعب المستخدم بمراجعة الـ 10 حقول كلها. باقي الحقول (لو اتقرت) بتتحفظ
+  // في السجل برضو كأرشيف، بس مش شرط لإكمال العملية.
+  const amountOk = merged.amount && merged.amount.value;
+  const refOk = merged.reference_number && merged.reference_number.value;
+  if (amountOk && refOk) {
+    document.getElementById('depositAmountInput').value = merged.amount.value;
+    document.getElementById('depositRefInput').value = merged.reference_number.value;
+    pendingReceiptOcrJson = buildReceiptOcrJson(merged);
+    receiptCaptureState = null;
+    showQuickReceiptToast('✅ اتعبّى المبلغ والرقم المرجعي تلقائيًا');
+    return;
+  }
+
+  // لو حاجة من الاتنين دول ناقصة، نفتح شاشة المراجعة عشان يكملها بنفسه يدويًا (بدل ما نمنعه يكمل خالص)
   openReceiptReviewScreen();
+}
+
+function showQuickReceiptToast(msg) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(15,23,42,.88);color:#fff;padding:14px 22px;border-radius:12px;font-size:13.5px;font-weight:700;z-index:999999;text-align:center;max-width:80vw;';
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 1600);
+}
+
+function buildReceiptOcrJson(fields) {
+  const overallConfidence = Math.round(
+    fieldOrderForDisplay().reduce((s, k) => s + (fields[k] ? fields[k].confidence : 0), 0) / fieldOrderForDisplay().length
+  );
+  return {
+    document_type: 'pos_receipt',
+    merchant: {}, location: {},
+    terminal_id: fields.terminal_id, batch_number: fields.batch_number,
+    transaction_type: fields.transaction_type, amount: fields.amount, card: fields.card,
+    authorization_code: fields.authorization_code, reference_number: fields.reference_number,
+    datetime: fields.datetime, receipt_number: fields.receipt_number, stan: fields.stan,
+    overall_confidence: overallConfidence,
+    needs_review: fieldOrderForDisplay().some(k => fields[k] && fields[k].needs_review)
+  };
 }
 
 // معالجة الصورة (Canvas → Canvas): تحويل رمادي + تحسين تباين + Threshold - بدون أي تغيير قد
@@ -2441,11 +2482,10 @@ function renderReceiptReviewFields() {
   const listEl = document.getElementById('rvFieldsList');
   const summaryEl = document.getElementById('rvSummaryBar');
 
-  const total = fieldOrderForDisplay().length;
-  const needReviewCount = fieldOrderForDisplay().filter(k => fields[k] && fields[k].needs_review).length;
-  summaryEl.innerHTML = needReviewCount > 0
-    ? `<span style="color:#B45309;">⚠️ ${needReviewCount} من ${total} حقول محتاجة تأكيد يدوي</span><span style="color:var(--textMuted);">دوس على الحقل لتحديد مكانه بالصورة</span>`
-    : `<span style="color:#16A34A;">✅ كل الحقول اتقرأت واتحققت تلقائيًا</span>`;
+  const criticalMissing = ['amount', 'reference_number'].filter(k => !(fields[k] && fields[k].value));
+  summaryEl.innerHTML = criticalMissing.length
+    ? `<span style="color:#B45309;">⚠️ اكتب يدويًا: ${criticalMissing.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ')}</span><span style="color:var(--textMuted);">باقي الحقول اختيارية</span>`
+    : `<span style="color:#16A34A;">✅ المبلغ والرقم المرجعي جاهزين - باقي الحقول اختيارية</span>`;
 
   listEl.innerHTML = fieldOrderForDisplay().map(key => {
     const f = fields[key] || { value: null, needs_review: true, verified: false, confidence: 0 };
@@ -2513,13 +2553,16 @@ function cancelReceiptReview() {
 // التأكيد النهائي: مفيش أي حقل يتحفظ وهو needs_review لسه، إلا لو المستخدم لمسه وأكّده بنفسه
 function confirmReceiptReview() {
   const fields = receiptCaptureState.fields;
-  const stillBlocking = fieldOrderForDisplay().filter(k => {
+  // بسّطنا الشرط: المطلوب فعليًا بس المبلغ والرقم المرجعي (هما اللي بيتملوا في خانات الإيداع).
+  // باقي الحقول (رقم الآلة، STAN، إلخ) بتتحفظ لو اتقرت، بس مش شرط تمنعك تكمل لو ناقصة
+  const criticalFields = ['amount', 'reference_number'];
+  const stillBlocking = criticalFields.filter(k => {
     const f = fields[k];
-    return f && f.needs_review && !f.userConfirmed && (f.value === null || f.value === undefined || f.value === '');
+    return !f || (!f.value && !f.userConfirmed);
   });
   if (stillBlocking.length) {
     const names = stillBlocking.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ');
-    alert('في حقول لسه محتاجة تدخل منك قبل الحفظ: ' + names);
+    alert('اكتب القيمة يدويًا في الحقل ده قبل ما تكمل: ' + names);
     return;
   }
 
@@ -2531,27 +2574,7 @@ function confirmReceiptReview() {
     document.getElementById('depositRefInput').value = fields.reference_number.value;
   }
 
-  // نجهز الـ JSON الكامل بالمواصفة المطلوبة عشان يتخزن مع الإيداع
-  const overallConfidence = Math.round(
-    fieldOrderForDisplay().reduce((s, k) => s + (fields[k] ? fields[k].confidence : 0), 0) / fieldOrderForDisplay().length
-  );
-  pendingReceiptOcrJson = {
-    document_type: 'pos_receipt',
-    merchant: {},
-    location: {},
-    terminal_id: fields.terminal_id,
-    batch_number: fields.batch_number,
-    transaction_type: fields.transaction_type,
-    amount: fields.amount,
-    card: fields.card,
-    authorization_code: fields.authorization_code,
-    reference_number: fields.reference_number,
-    datetime: fields.datetime,
-    receipt_number: fields.receipt_number,
-    stan: fields.stan,
-    overall_confidence: overallConfidence,
-    needs_review: fieldOrderForDisplay().some(k => fields[k] && fields[k].needs_review && !fields[k].userConfirmed)
-  };
+  pendingReceiptOcrJson = buildReceiptOcrJson(fields);
 
   receiptCaptureState = null;
   closeModal('receiptReviewModal');
