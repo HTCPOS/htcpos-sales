@@ -348,7 +348,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 7:51 ص · 8b41f0</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 8:01 ص · f31a7c</div>
   </div>
 </div>
 
@@ -2292,10 +2292,22 @@ function extractReceiptFields(ocrData) {
   const cardMatch = fullText.match(/(\d{6})\*{2,}(\d{4})/);
   if (cardMatch) { claim('card', cardMatch[1] + '******' + cardMatch[2], 92, findLineInfoContaining(lines, cardMatch[0])); maskMatch(cardMatch); }
 
-  // المبلغ: رقم بعده فاصلة عشرية/مسافة و٣ أرقام بالظبط (الصيغة الليبية القياسية) - نقبل أكتر من
-  // فاصل واحد بينهم (نقطة ومسافة مع بعض) لأن OCR أحيانًا بيحط مسافة زيادة حوالين النقطة
-  const amountMatch = fullText.match(/\b(\d{1,6})[.,\s]+(\d{3})\b/);
+  // المبلغ: رقم بعده فاصلة عشرية/مسافة و٣ أرقام بالظبط (الصيغة الليبية القياسية). لاحظ إننا هنا
+  // مش بنطلب \b بعد آخر رقم (زي ما كان قبل كده) - لأن في الإيصالات اللي المبلغ فيها ملزّق في نفس
+  // السطر مع "المبلغ:" و"د.ل" من غير مسافة واضحة، الـ OCR بيدمج حرف العملة مباشرة بعد آخر رقم
+  // (زي "140.000دل")، وحرف+رقم مع بعض مبيكوّنوش حد فاصل (\b) فكانت القاعدة بترفض القيمة الصحيحة.
+  // بدل كده بنمنع بس إن يكون اللي بعدها رقم رابع (عشان منسحبش رقم أطول بالغلط)
+  const amountMatch = fullText.match(/\b(\d{1,6})[.,\s]+(\d{3})(?!\d)/);
   if (amountMatch) { claim('amount', amountMatch[1] + '.' + amountMatch[2], 85, findLineInfoContaining(lines, amountMatch[0])); maskMatch(amountMatch); }
+  else {
+    // احتياطي: لو الفاصل بين الرقمين اتاكل تمامًا من القراءة (زي "140000" بدل "140.000")، نقبل
+    // رقم من ٤-٧ خانات بيخلص بـ "000" بس لو هو المرشح الوحيد من النوع ده (مفيش لبس مع رقم تاني)
+    const fusedCandidates = Array.from(scanText.matchAll(/\b(\d{1,4})000(?!\d)\b/g));
+    if (fusedCandidates.length === 1) {
+      claim('amount', fusedCandidates[0][1] + '.000', 60, findLineInfoContaining(lines, fusedCandidates[0][0]));
+      maskMatch(fusedCandidates[0]);
+    }
+  }
 
   // التاريخ والوقت: dd/mm/yy hh:mm:ss في سطر واحد غالبًا
   const dtMatch = fullText.match(/(\d{2}\/\d{2}\/\d{2})\D{0,4}(\d{2}:\d{2}:\d{2})/);
