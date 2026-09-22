@@ -348,7 +348,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 8:01 ص · f31a7c</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 8:17 ص · c02d5e</div>
   </div>
 </div>
 
@@ -2469,28 +2469,38 @@ function fieldOrderForDisplay() {
   return ['transaction_type','amount','card','terminal_id','batch_number','authorization_code','reference_number','datetime','receipt_number','stan'];
 }
 
+function populateReceiptDebugPanel() {
+  const panel = document.getElementById('rvDebugPanel');
+  if (!receiptCaptureState || !receiptCaptureState.debug) return;
+  const dbg = receiptCaptureState.debug;
+  panel.innerHTML = `
+    <div style="font-weight:800;margin-bottom:6px;">النص الخام (القراءة أ):</div>
+    <pre style="white-space:pre-wrap;direction:ltr;text-align:left;background:var(--surface);padding:8px;border-radius:8px;">${(dbg.textA || '').replace(/</g,'&lt;')}</pre>
+    <div style="font-weight:800;margin:10px 0 6px;">النص الخام (القراءة ب):</div>
+    <pre style="white-space:pre-wrap;direction:ltr;text-align:left;background:var(--surface);padding:8px;border-radius:8px;">${(dbg.textB || '').replace(/</g,'&lt;')}</pre>
+    <div style="font-weight:800;margin:10px 0 6px;">الصورة بعد المعالجة (أ):</div>
+    <img src="${dbg.imageA}" style="width:100%;border-radius:8px;">
+  `;
+}
+
 function toggleReceiptDebugPanel() {
   const panel = document.getElementById('rvDebugPanel');
   const isHidden = panel.style.display === 'none';
-  if (isHidden && receiptCaptureState && receiptCaptureState.debug) {
-    const dbg = receiptCaptureState.debug;
-    panel.innerHTML = `
-      <div style="font-weight:800;margin-bottom:6px;">النص الخام (القراءة أ):</div>
-      <pre style="white-space:pre-wrap;direction:ltr;text-align:left;background:var(--surface);padding:8px;border-radius:8px;">${(dbg.textA || '').replace(/</g,'&lt;')}</pre>
-      <div style="font-weight:800;margin:10px 0 6px;">النص الخام (القراءة ب):</div>
-      <pre style="white-space:pre-wrap;direction:ltr;text-align:left;background:var(--surface);padding:8px;border-radius:8px;">${(dbg.textB || '').replace(/</g,'&lt;')}</pre>
-      <div style="font-weight:800;margin:10px 0 6px;">الصورة بعد المعالجة (أ):</div>
-      <img src="${dbg.imageA}" style="width:100%;border-radius:8px;">
-    `;
-  }
+  if (isHidden) populateReceiptDebugPanel();
   panel.style.display = isHidden ? 'block' : 'none';
 }
 
 function openReceiptReviewScreen() {
   if (!receiptCaptureState) return;
   document.getElementById('rvCapturedImage').src = receiptCaptureState.imageDataUrl;
-  document.getElementById('rvDebugPanel').style.display = 'none';
   renderReceiptReviewFields();
+  // لو المبلغ أو الرقم المرجعي (الحقول الأساسية) مش واضحين، نعرض النص الخام اللي اتقرا فعليًا
+  // تلقائيًا من غير ما تحتاج تدوس على حاجة - عشان تشوف بنفسك إيه اللي القارئ فهمه غلط
+  const fields = receiptCaptureState.fields || {};
+  const criticalFailed = !(fields.amount && fields.amount.value) || !(fields.reference_number && fields.reference_number.value);
+  const panel = document.getElementById('rvDebugPanel');
+  if (criticalFailed) { populateReceiptDebugPanel(); panel.style.display = 'block'; }
+  else { panel.style.display = 'none'; }
   openModal('receiptReviewModal');
 }
 
