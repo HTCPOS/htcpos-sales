@@ -364,7 +364,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 12:19 م · 3a8de1</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 8:54 م · 1c9fa2</div>
   </div>
 </div>
 
@@ -2396,13 +2396,19 @@ function receiptPreprocess(sourceCanvas, variant) {
   }
 
   if (variant === 'quick') {
-    // نسخة سريعة وخفيفة بس للكشف الأولي أثناء التصوير (مش القراءة النهائية الدقيقة) - تحسين
-    // تباين بسيط بدون الحسابات الأتقل بتاعة الـ Threshold التكيّفي
-    let min = 255, max = 0;
-    for (let p = 0; p < gray.length; p++) { if (gray[p] < min) min = gray[p]; if (gray[p] > max) max = gray[p]; }
-    const range = Math.max(1, max - min);
+    // نسخة سريعة للكشف الأولي أثناء التصوير - بنستخدم Percentile (٥٪/٩٥٪) بدل أقصى/أقل بكسل
+    // حرفيًا، عشان لون جلد الإيد أو ظل حوالين الإيصال ميبوّظش حسبة التباين لمنطقة الفحص كلها
+    // (نفس المشكلة اللي اتصلحت في اللقطة النهائية، بس بنسخة أخف حسابيًا تناسب الفحص المتكرر)
+    const hist = new Uint32Array(256);
+    for (let p = 0; p < gray.length; p++) hist[gray[p] | 0]++;
+    const total = gray.length;
+    let cum = 0, p5 = 0, p95 = 255;
+    for (let v = 0; v < 256; v++) { cum += hist[v]; if (cum >= total * 0.05) { p5 = v; break; } }
+    cum = 0;
+    for (let v = 255; v >= 0; v--) { cum += hist[v]; if (cum >= total * 0.05) { p95 = v; break; } }
+    const range = Math.max(1, p95 - p5);
     for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-      const v = Math.max(0, Math.min(255, ((gray[p] - min) / range) * 255));
+      const v = Math.max(0, Math.min(255, ((gray[p] - p5) / range) * 255));
       d[i] = d[i + 1] = d[i + 2] = v;
     }
     ctx.putImageData(imgData, 0, 0);
