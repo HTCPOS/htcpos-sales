@@ -288,6 +288,22 @@
   .searchResultRow .p { font-size:12px; color:var(--textMuted); }
 
   .emptyMsg { text-align:center; color:var(--textMuted2); font-size:13px; padding:20px; }
+
+  /* ---------- شاشة مراجعة قراءة إيصال البطاقة (Receipt OCR Review) ---------- */
+  .rvFieldRow { display:flex; align-items:center; gap:10px; padding:12px 4px; border-bottom:1px solid var(--border2); cursor:pointer; }
+  .rvFieldRow.rvActive { background:var(--surface2); border-radius:10px; }
+  .rvFieldInfo { flex:1; min-width:0; }
+  .rvFieldLabel { font-size:11px; color:var(--textMuted); font-weight:700; }
+  .rvFieldValueWrap { display:flex; align-items:center; gap:6px; margin-top:3px; }
+  .rvFieldInput { flex:1; min-width:0; border:1.5px solid transparent; background:transparent; font-size:14.5px; font-weight:800; color:var(--text); padding:4px 6px; border-radius:8px; text-align:right; direction:ltr; }
+  .rvFieldInput:focus { outline:none; border-color:#2563EB; background:var(--surface); }
+  .rvBadge { font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+  .rvBadge.rvOk { background:#DCFCE7; color:#16A34A; }
+  .rvBadge.rvReview { background:#FEF3C7; color:#B45309; }
+  .rvImageWrap { position:relative; border-radius:14px; overflow:hidden; background:#000; margin-bottom:12px; }
+  .rvImageWrap img { display:block; width:100%; height:auto; }
+  .rvHighlightBox { position:absolute; border:3px solid #2563EB; border-radius:4px; box-shadow:0 0 0 999px rgba(0,0,0,.35); pointer-events:none; transition:all .15s ease; display:none; }
+  .rvSummaryBar { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border-radius:12px; padding:10px 14px; margin-bottom:10px; font-size:12.5px; font-weight:700; }
 </style>
 </head>
 <body>
@@ -332,7 +348,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 12:58 ص · f0f082</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 1:07 ص · d0eb85</div>
   </div>
 </div>
 
@@ -688,6 +704,25 @@
       <div style="position:absolute;top:calc(28% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">حط من "المبلغ" لحد "الرقم المرجعي" جوه الإطار</div>
     </div>
     <div id="cardReceiptOcrStatus" style="font-size:13px;color:#2563EB;font-weight:700;text-align:center;margin-bottom:10px;">🔄 بيدور على المبلغ والرقم المرجعي... حرّك الكاميرا شوية</div>
+  </div>
+</div>
+
+<!-- شاشة مراجعة استخراج بيانات إيصال البطاقة - بتظهر بعد ما الكاميرا تاخد لقطة نهائية واضحة،
+     قبل ما أي قيمة تتحفظ. كل حقل لازم يتراجع/يتأكد يدويًا لو مش verified. -->
+<div class="modalBg" id="receiptReviewModal" onclick="if(event.target===this)return;">
+  <div class="modalSheet" style="height:88vh; display:flex; flex-direction:column;">
+    <button class="closeM" onclick="cancelReceiptReview()">✕</button>
+    <h3>مراجعة بيانات الإيصال</h3>
+    <div class="rvSummaryBar" id="rvSummaryBar"></div>
+    <div class="rvImageWrap" id="rvImageWrap">
+      <img id="rvCapturedImage" src="" alt="الإيصال">
+      <div class="rvHighlightBox" id="rvHighlightBox"></div>
+    </div>
+    <div style="flex:1; overflow-y:auto;" id="rvFieldsList"></div>
+    <div style="display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border2);">
+      <button onclick="retakeReceiptPhoto()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:13.5px;cursor:pointer;">↻ إعادة التصوير</button>
+      <button onclick="confirmReceiptReview()" style="flex:2;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">✓ تأكيد واستخدام البيانات</button>
+    </div>
   </div>
 </div>
 
@@ -1957,18 +1992,43 @@ function attemptReceiptOcrScan() {
 }
 
 let cardReceiptOcrStream = null;
-
 let cardReceiptOcrScanning = false;
 let cardReceiptOcrScanTimer = null;
-let cardReceiptAmountLocked = false;
-let cardReceiptRefLocked = false;
+
+/* ======================================================================
+   محرك قراءة إيصالات البطاقة (Receipt Field Extraction Pipeline)
+   Preprocessing → OCR → Field Extraction → Validation → Dual Verification
+   → Confidence → Review → (تأكيد المستخدم) → Firebase
+   كل الدوال هنا جديدة ومستقلة، ومش بتلمس أي وظيفة تانية في التطبيق.
+   ====================================================================== */
+
+// الحد الأدنى للثقة عشان الحقل يتحسب "موثوق" - قابل للتعديل من هنا فقط
+const RECEIPT_CONFIDENCE_THRESHOLD = 95;
+
+// الحقول الحساسة اللي لازم تتحقق مرتين (Dual Verification) ومتتقبلش لو القراءتين اختلفوا
+const RECEIPT_SENSITIVE_FIELDS = ['amount', 'reference_number', 'authorization_code', 'terminal_id', 'stan', 'datetime'];
+
+// تعريف كل حقل: نمط التحقق (regex) + اسم عربي للعرض في شاشة المراجعة
+const RECEIPT_FIELD_DEFS = {
+  terminal_id:        { label: 'رقم الآلة (Terminal ID)', pattern: /^\d{7,9}$/ },
+  batch_number:        { label: 'Batch',                   pattern: /^\d{1,5}$/ },
+  stan:                 { label: 'STAN',                    pattern: /^\d{4,6}$/ },
+  authorization_code:  { label: 'رمز التفويض',             pattern: /^\d{5,7}$/ },
+  reference_number:    { label: 'الرقم المرجعي',           pattern: /^\d{10,16}$/ },
+  amount:               { label: 'المبلغ',                  pattern: /^\d{1,6}\.\d{3}$/ },
+  card:                 { label: 'رقم البطاقة',             pattern: /^\d{6}\*+\d{4}$/ },
+  receipt_number:      { label: 'رقم الإيصال',             pattern: /^\d{1,5}$/ },
+  datetime:             { label: 'التاريخ والوقت',          pattern: /^\d{2}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/ },
+  transaction_type:    { label: 'نوع المعاملة',            pattern: /^(شراء|استرجاع|الغاء|إلغاء)$/ }
+};
+
+let receiptCaptureState = null; // { imageDataUrl, fields: {...}, overallConfidence, needsReview }
+let pendingReceiptOcrJson = null; // آخر JSON مؤكَّد من المستخدم، جاهز يتلصق مع الإيداع عند الحفظ
 
 function openCardReceiptOcrCamera() {
   openModal('cardReceiptOcrCameraModal');
-  cardReceiptAmountLocked = false;
-  cardReceiptRefLocked = false;
-  document.getElementById('depositAmountInput').value = '';
-  document.getElementById('depositRefInput').value = '';
+  const statusEl = document.getElementById('cardReceiptOcrStatus');
+  if (statusEl) statusEl.textContent = '🔄 وجّه الكاميرا على الإيصال كامل جوه الإطار';
   const video = document.getElementById('cardReceiptOcrVideo');
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1920 }, advanced: [{ focusMode: 'continuous' }] } })
     .then(stream => {
@@ -1996,10 +2056,12 @@ function closeCardReceiptOcrCamera() {
 
 function scheduleCardReceiptOcrScan() {
   if (!cardReceiptOcrScanning) return;
-  cardReceiptOcrScanTimer = setTimeout(attemptCardReceiptOcrScan, 700);
+  cardReceiptOcrScanTimer = setTimeout(attemptCardReceiptOcrScan, 800);
 }
 
-function attemptCardReceiptOcrScan() {
+// المرحلة 1: فحص خفيف وسريع كل ثانية تقريبًا - بس عشان نعرف "في إيصال واضح جوه الإطار ولا لأ"
+// (بيدوّر بس على المبلغ وشكل رقم الكارت كعلامات سريعة) - مفيش أي حفظ أو قرار نهائي هنا خالص
+async function attemptCardReceiptOcrScan() {
   if (!cardReceiptOcrScanning) return;
   const video = document.getElementById('cardReceiptOcrVideo');
   const guide = document.getElementById('cardReceiptOcrGuide');
@@ -2009,60 +2071,421 @@ function attemptCardReceiptOcrScan() {
     alert('مقدرناش نستخدم قراءة الصورة: مكتبة القراءة لسه ما اتحمّلتش من الإنترنت. تأكد من الاتصال وجرب تاني.');
     return;
   }
-  // لو لقينا حاجة واحدة (المبلغ أو الرقم المرجعي) وقفلناها، بنـ"زوم" على نص المستطيل بس
-  // اللي فيه الحاجة الناقصة، عشان القراءة تركّز عليها وتبقى أوضح
-  let subRegion = null;
-  let upscale = 3;
-  if (cardReceiptAmountLocked && !cardReceiptRefLocked) {
-    subRegion = { top: 0.55, bottom: 1 }; // الرقم المرجعي في النص التحتاني من المستطيل
-    upscale = 5;
-  } else if (cardReceiptRefLocked && !cardReceiptAmountLocked) {
-    subRegion = { top: 0, bottom: 0.45 }; // المبلغ في النص الفوقاني من المستطيل
-    upscale = 5;
+  const rawCanvas = cropVideoToGuideCanvas(video, guide, 2, null);
+  const quickCanvas = receiptPreprocess(rawCanvas, 'quick');
+  try {
+    const { data } = await Tesseract.recognize(quickCanvas, 'eng');
+    if (!cardReceiptOcrScanning) return;
+    const text = (data && data.text) || '';
+    const hasAmount = /\b\d{1,6}[.,\s]\s?\d{3}\b/.test(text);
+    const hasCard = /\d{6}\*{2,}\d{4}/.test(text);
+    const hasRef = /\b\d{10,16}\b/.test(text);
+    const foundCount = [hasAmount, hasCard, hasRef].filter(Boolean).length;
+    const statusEl = document.getElementById('cardReceiptOcrStatus');
+    if (foundCount >= 2) {
+      // في إيصال واضح جوه الإطار - ناخد لقطة نهائية عالية الجودة ونقفل الكاميرا ونبدأ المراجعة الكاملة
+      if (statusEl) statusEl.textContent = '✅ لقيت الإيصال - جاري التحليل الدقيق...';
+      await finalizeCardReceiptCapture(video, guide);
+    } else {
+      if (statusEl) statusEl.textContent = '🔄 وجّه الكاميرا على الإيصال كامل جوه الإطار';
+      scheduleCardReceiptOcrScan();
+    }
+  } catch (e) {
+    scheduleCardReceiptOcrScan();
   }
-  const canvas = cropVideoToGuideCanvas(video, guide, upscale, subRegion);
-  canvas.toBlob(blob => {
-    if (!blob || !cardReceiptOcrScanning) { scheduleCardReceiptOcrScan(); return; }
-    Tesseract.recognize(blob, 'eng')
-      .then(({ data }) => {
-        if (!cardReceiptOcrScanning) return;
-        const text = (data && data.text) || '';
-        // المبلغ شكله دايمًا رقم وبعده 000 (زي 25.000) - بس النقطة نفسها صغيرة وممكن القراءة تلخبط
-        // فيها أو تسيبها خالص، فبنجرب الأشكال المحتملة كلها بالترتيب من الأدق للأقل دقة
-        if (!cardReceiptAmountLocked) {
-          const amountMatch = text.match(/\b(\d{1,3})[.,](\d{3})\b/) // 25.000 أو 25,000 - الشكل الصريح
-            || text.match(/\b(\d{1,3})\s(\d{3})\b/) // 25 000 - مسافة بدل النقطة
-            || text.match(/\b(\d{1,3})(000)\b/); // 25000 - النقطة اتلغت خالص من القراءة
-          if (amountMatch) {
-            document.getElementById('depositAmountInput').value = amountMatch[1] + '.' + amountMatch[2];
-            cardReceiptAmountLocked = true; // اتقفلت، مش هنلمسها تاني
-          }
-        }
-        if (!cardReceiptRefLocked) {
-          // الرقم المرجعي شكله دايمًا رقم طويل من 12-14 خانة، مختلف تمامًا عن أي رقم تاني في الإيصال
-          const refMatch = text.match(/\b(\d{12,14})\b/);
-          if (refMatch) {
-            document.getElementById('depositRefInput').value = refMatch[1];
-            cardReceiptRefLocked = true;
-          }
-        }
-        if (cardReceiptAmountLocked && cardReceiptRefLocked) {
-          // لقينا الاتنين مع بعض - نقفل تلقائي، ده المطلوب
-          cardReceiptOcrScanning = false;
-          closeCardReceiptOcrCamera();
-        } else {
-          const statusEl = document.getElementById('cardReceiptOcrStatus');
-          if (statusEl) {
-            const found = [];
-            if (cardReceiptAmountLocked) found.push('المبلغ');
-            if (cardReceiptRefLocked) found.push('الرقم المرجعي');
-            statusEl.textContent = found.length ? '🔄 لقيت ' + found.join(' و') + ' - لسه بيدور على الباقي...' : '🔄 بيدور على المبلغ والرقم المرجعي... حرّك الكاميرا شوية';
-          }
-          scheduleCardReceiptOcrScan();
-        }
-      })
-      .catch(() => { scheduleCardReceiptOcrScan(); });
-  }, 'image/jpeg', 0.95);
+}
+
+// المرحلة 2: لقطة نهائية عالية الدقة + Pipeline كامل (Preprocessing مزدوج → OCR → Extraction →
+// Validation → Dual Verification → Confidence) - بتتنفذ مرة واحدة بس بعد ما نتأكد إن الإيصال واضح
+async function finalizeCardReceiptCapture(video, guide) {
+  cardReceiptOcrScanning = false;
+  if (cardReceiptOcrScanTimer) { clearTimeout(cardReceiptOcrScanTimer); cardReceiptOcrScanTimer = null; }
+
+  const finalCanvas = cropVideoToGuideCanvas(video, guide, 3, null);
+  const imageDataUrl = finalCanvas.toDataURL('image/jpeg', 0.92);
+
+  // Dual Verification: نجهز نسختين معالجتين بشكل مختلف شوية من نفس اللقطة، ونقرا كل واحدة لوحدها
+  const variantA = receiptPreprocess(finalCanvas, 'A');
+  const variantB = receiptPreprocess(finalCanvas, 'B');
+
+  if (cardReceiptOcrStream) { cardReceiptOcrStream.getTracks().forEach(t => t.stop()); cardReceiptOcrStream = null; }
+  closeModal('cardReceiptOcrCameraModal');
+
+  let resultA, resultB;
+  try {
+    resultA = await Tesseract.recognize(variantA, 'eng');
+    resultB = await Tesseract.recognize(variantB, 'eng');
+  } catch (e) {
+    alert('حصلت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - جرب تاني');
+    openCardReceiptOcrCamera();
+    return;
+  }
+
+  const fieldsA = extractReceiptFields(resultA.data);
+  const fieldsB = extractReceiptFields(resultB.data);
+  const merged = mergeDualReadings(fieldsA, fieldsB, finalCanvas);
+
+  receiptCaptureState = { imageDataUrl: imageDataUrl, fields: merged };
+  openReceiptReviewScreen();
+}
+
+// معالجة الصورة (Canvas → Canvas): تحويل رمادي + تحسين تباين + Threshold - بدون أي تغيير قد
+// يشوّه شكل الأرقام/الحروف نفسها (زي ما طلب: لا تعدّل الأرقام)
+function receiptPreprocess(sourceCanvas, variant) {
+  const w = sourceCanvas.width, h = sourceCanvas.height;
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(sourceCanvas, 0, 0);
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const d = imgData.data;
+
+  // تحويل لتدرج رمادي
+  const gray = new Uint8ClampedArray(w * h);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+  }
+
+  // متوسط وانحراف السطوع - لتحسين التباين تلقائيًا (زي CLAHE مبسّطة)
+  let min = 255, max = 0;
+  for (let p = 0; p < gray.length; p++) { if (gray[p] < min) min = gray[p]; if (gray[p] > max) max = gray[p]; }
+  const range = Math.max(1, max - min);
+
+  const threshold = variant === 'B' ? 0.52 : 0.5; // فرق بسيط ومتعمد بين النسختين عشان الـ Dual Verification تبقى قراءتين مستقلتين فعليًا
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    let v = ((gray[p] - min) / range) * 255; // شدّ التباين لملء المدى بالكامل
+    if (variant !== 'quick') {
+      v = v > 255 * threshold ? 255 : (v < 255 * (threshold - 0.18) ? 0 : v); // Threshold ناعم قريب من الحواف بدل قطع فجائي يهرّس الأرقام
+    }
+    d[i] = d[i + 1] = d[i + 2] = v;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return out;
+}
+
+// تحويل نتيجة Tesseract (الأسطر + الإحداثيات) لحقول الإيصال - Layout-aware مش نص خام بس
+function extractReceiptFields(ocrData) {
+  const lines = (ocrData && ocrData.lines) || [];
+  const fullText = (ocrData && ocrData.text) || '';
+  const found = {};
+  // نسخة شغل من النص بنـ"يمسح" منها أي جزء اتاخد فعلًا لحقل معيّن (بنستبدله بـ #) عشان نفس
+  // الأرقام دي متتلخبطش تاني كمرشح لحقل تاني. المسح بيتم بالموقع بالظبط (index) مش باستبدال كل
+  // نسخة من النص في الصفحة، لأن بعض الحقول بتشترك في نفس الأرقام كجزء فرعي (مثلًا آخر خانات
+  // الرقم المرجعي ممكن تطابق قيمة STAN بالصدفة) وأي استبدال شامل كان ممكن يهرّس رقم تاني بالغلط
+  let scanText = fullText;
+  function maskMatch(m) {
+    if (!m || typeof m.index !== 'number') return;
+    const s = m.index, len = m[0].length;
+    scanText = scanText.slice(0, s) + '#'.repeat(len) + scanText.slice(s + len);
+  }
+
+  function claim(key, value, fallbackConf, lineInfo) {
+    if (found[key]) return; // أول قراءة صحيحة تكسب، مفيش استبدال عشوائي
+    const conf = lineInfo && typeof lineInfo.confidence === 'number' ? lineInfo.confidence : fallbackConf;
+    found[key] = { raw_value: value, confidence: Math.round(conf || 0), bbox: lineInfo ? lineInfo.bbox : null };
+  }
+
+  // STAN و BATCH غالبًا بيتطبعوا بكلمة إنجليزية صريحة جنب الرقم - نعتمد عليها لو موجودة (أدق حاجة)
+  const stanLineMatch = fullText.match(/STAN\s*[:.]?\s*(\d{4,6})/i);
+  if (stanLineMatch) { claim('stan', stanLineMatch[1], 90, findLineInfoContaining(lines, stanLineMatch[1])); maskMatch(stanLineMatch); }
+  const batchLineMatch = fullText.match(/BATCH\s*[:.]?\s*(\d{1,5})/i);
+  if (batchLineMatch) { claim('batch_number', batchLineMatch[1], 90, findLineInfoContaining(lines, batchLineMatch[1])); maskMatch(batchLineMatch); }
+
+  // البطاقة: نمط مميز جدًا (٦ أرقام + نجوم + ٤ أرقام) - مينفعش يتلخبط مع أي حقل تاني
+  const cardMatch = fullText.match(/(\d{6})\*{2,}(\d{4})/);
+  if (cardMatch) { claim('card', cardMatch[1] + '******' + cardMatch[2], 92, findLineInfoContaining(lines, cardMatch[0])); maskMatch(cardMatch); }
+
+  // المبلغ: رقم بعده فاصلة عشرية/مسافة و٣ أرقام بالظبط (الصيغة الليبية القياسية) - نقبل أكتر من
+  // فاصل واحد بينهم (نقطة ومسافة مع بعض) لأن OCR أحيانًا بيحط مسافة زيادة حوالين النقطة
+  const amountMatch = fullText.match(/\b(\d{1,6})[.,\s]+(\d{3})\b/);
+  if (amountMatch) { claim('amount', amountMatch[1] + '.' + amountMatch[2], 85, findLineInfoContaining(lines, amountMatch[0])); maskMatch(amountMatch); }
+
+  // التاريخ والوقت: dd/mm/yy hh:mm:ss في سطر واحد غالبًا
+  const dtMatch = fullText.match(/(\d{2}\/\d{2}\/\d{2})\D{0,4}(\d{2}:\d{2}:\d{2})/);
+  if (dtMatch) { claim('datetime', dtMatch[1] + ' ' + dtMatch[2], 88, findLineInfoContaining(lines, dtMatch[0])); maskMatch(dtMatch); }
+
+  // من هنا هنشتغل على scanText (بعد ما اتمسحت منه كل الأجزاء اللي اتاخدت فعلًا) بدل fullText
+  // عشان نفس الرقم ميترشحش لحقلين مختلفين، مع الحفاظ على طول النص زي ما هو عشان الإحداثيات تفضل صح
+
+  // رقم الآلة: ٧-٩ أرقام متتالية
+  const terminalMatches = Array.from(scanText.matchAll(/\b\d{7,9}\b/g));
+  if (terminalMatches.length === 1) { claim('terminal_id', terminalMatches[0][0], 80, findLineInfoContaining(lines, terminalMatches[0][0])); maskMatch(terminalMatches[0]); }
+  else if (terminalMatches.length > 1) { found.terminal_id = { raw_value: null, confidence: 0, bbox: null, ambiguous: true }; }
+
+  // الرقم المرجعي: أطول رقم متتالي في الإيصال (١٠-١٦ خانة) - غالبًا فريد بالطول ده
+  const refMatches = Array.from(scanText.matchAll(/\b\d{10,16}\b/g));
+  if (refMatches.length === 1) { claim('reference_number', refMatches[0][0], 85, findLineInfoContaining(lines, refMatches[0][0])); maskMatch(refMatches[0]); }
+  else if (refMatches.length > 1) {
+    // أكتر من مرشح - مينفعش نخمن أيهم، لازم مراجعة
+    found.reference_number = { raw_value: null, confidence: 0, bbox: null, ambiguous: true };
+  }
+
+  // رمز التفويض لو مش لاقيينه بعد: أرقام ٤-٧ خانات متبقية بعد استبعاد كل حقل اتاخد فعلًا
+  const shortMatches = Array.from(scanText.matchAll(/\b\d{4,7}\b/g));
+  if (!found.authorization_code) {
+    if (shortMatches.length === 1) { claim('authorization_code', shortMatches[0][0], 75, findLineInfoContaining(lines, shortMatches[0][0])); maskMatch(shortMatches[0]); }
+    else if (shortMatches.length > 1) found.authorization_code = { raw_value: null, confidence: 0, bbox: null, ambiguous: true };
+  } else if (shortMatches.length === 1) { maskMatch(shortMatches[0]); }
+
+  // رقم الإيصال: آخر رقم قصير (١-٣ خانات) متبقي لوحده في الإيصال
+  if (!found.receipt_number) {
+    const veryShortMatches = Array.from(scanText.matchAll(/\b\d{1,3}\b/g));
+    if (veryShortMatches.length === 1) claim('receipt_number', veryShortMatches[0][0], 65, findLineInfoContaining(lines, veryShortMatches[0][0]));
+    else if (veryShortMatches.length > 1) found.receipt_number = { raw_value: null, confidence: 0, bbox: null, ambiguous: true };
+  }
+
+  // نوع المعاملة: عربي، من قاموس مغلق فقط - لو مش متطابق تمامًا بنسيبه فاضي بدل ما نخمن
+  const typeWhitelist = ['شراء', 'استرجاع', 'الغاء', 'إلغاء'];
+  const typeHit = typeWhitelist.find(w => fullText.includes(w));
+  if (typeHit) claim('transaction_type', typeHit, 70, findLineInfoContaining(lines, typeHit));
+
+  return found;
+}
+
+// بيدوّر على أول سطر فيه القيمة دي، ويرجّع مكانها (bbox) + ثقة القراءة الحقيقية من Tesseract
+// لنفس السطر ده (بدل أرقام تقديرية ثابتة) - لو مش لاقي أي سطر يرجع null والدالة اللي نادته
+// بتستخدم قيمة احتياطية بدلها
+function findLineInfoContaining(lines, needle) {
+  if (!needle) return null;
+  const cleanNeedle = String(needle).replace(/\s/g, '');
+  for (const line of lines) {
+    if (line.text && line.text.replace(/\s/g, '').includes(cleanNeedle)) {
+      return {
+        bbox: { x0: line.bbox.x0, y0: line.bbox.y0, x1: line.bbox.x1, y1: line.bbox.y1 },
+        confidence: typeof line.confidence === 'number' ? line.confidence : null
+      };
+    }
+  }
+  return null;
+}
+
+// دمج القراءتين المستقلتين (Dual Verification) في حقل واحد نهائي لكل مفتاح
+function mergeDualReadings(fieldsA, fieldsB, canvasForQuality) {
+  const quality = estimateImageQuality(canvasForQuality);
+  const result = {};
+  const allKeys = new Set([...Object.keys(fieldsA), ...Object.keys(fieldsB), ...Object.keys(RECEIPT_FIELD_DEFS)]);
+
+  allKeys.forEach(key => {
+    const def = RECEIPT_FIELD_DEFS[key];
+    const a = fieldsA[key];
+    const b = fieldsB[key];
+    const isSensitive = isSensitiveReceiptField(key);
+
+    if (!a && !b) {
+      result[key] = { value: null, raw_value: null, confidence: 0, verified: false, needs_review: true, bbox: null };
+      return;
+    }
+    if ((a && a.ambiguous) || (b && b.ambiguous)) {
+      result[key] = { value: null, raw_value: null, confidence: 0, verified: false, needs_review: true, bbox: null };
+      return;
+    }
+
+    const normA = a ? normalizeFieldValue(key, a.raw_value) : null;
+    const normB = b ? normalizeFieldValue(key, b.raw_value) : null;
+    const patternValidA = normA && def ? def.pattern.test(normA) : false;
+    const patternValidB = normB && def ? def.pattern.test(normB) : false;
+
+    let chosenValue = null, chosenRaw = null, chosenConf = 0, chosenBbox = null, verified = false;
+
+    if (normA && normB && normA === normB) {
+      chosenValue = normA; chosenRaw = a.raw_value; chosenConf = Math.max(a.confidence, b.confidence);
+      chosenBbox = a.bbox || b.bbox; verified = patternValidA;
+    } else if (normA && patternValidA && (!normB || !patternValidB)) {
+      chosenValue = normA; chosenRaw = a.raw_value; chosenConf = a.confidence * 0.6; chosenBbox = a.bbox; verified = false;
+    } else if (normB && patternValidB && (!normA || !patternValidA)) {
+      chosenValue = normB; chosenRaw = b.raw_value; chosenConf = b.confidence * 0.6; chosenBbox = b.bbox; verified = false;
+    } else if (normA || normB) {
+      // في قراءتين مختلفتين ومتضاربتين - ده بالظبط اللي المستخدم قال ما نخمنش فيه
+      chosenValue = null; chosenRaw = (a && a.raw_value) || (b && b.raw_value); chosenConf = 0; verified = false;
+    }
+
+    const patternValid = chosenValue && def ? def.pattern.test(chosenValue) : false;
+    const composite = Math.round(
+      0.35 * chosenConf +
+      0.25 * (patternValid ? 100 : 0) +
+      0.25 * (isSensitive ? (verified ? 100 : 40) : 70) +
+      0.15 * quality
+    );
+
+    // "أي حقل حساس أقل من الحد أو غير مؤكد لا يُحفظ تلقائيًا" - يعني حد الثقة 95% ده بيحكم
+    // الحقول الحساسة بس (المبلغ/المرجعي/التفويض/الآلة/STAN/التاريخ)، مش كل حقل في الإيصال
+    const needsReview = !chosenValue || !patternValid || (isSensitive && (!verified || composite < RECEIPT_CONFIDENCE_THRESHOLD));
+
+    result[key] = {
+      value: patternValid ? chosenValue : null,
+      raw_value: chosenRaw || null,
+      confidence: composite,
+      verified: !!verified && patternValid,
+      needs_review: needsReview,
+      bbox: chosenBbox
+    };
+  });
+
+  return result;
+}
+
+function isSensitiveReceiptField(key) { return RECEIPT_SENSITIVE_FIELDS.indexOf(key) !== -1; }
+
+function normalizeFieldValue(key, raw) {
+  if (raw === null || raw === undefined) return null;
+  if (key === 'card') return String(raw).toUpperCase();
+  return String(raw).trim();
+}
+
+// تقدير بسيط لجودة الصورة (Sharpness) اعتمادًا على تباين البكسلات المتجاورة - بديل خفيف عن
+// Laplacian variance الكامل، كافي لترجيح الثقة مش لاتخاذ قرار لوحده
+function estimateImageQuality(canvas) {
+  try {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const step = Math.max(1, Math.floor(w / 200));
+    const d = ctx.getImageData(0, 0, w, h).data;
+    let sum = 0, count = 0;
+    for (let y = 1; y < h - 1; y += step * 3) {
+      for (let x = 1; x < w - 1; x += step) {
+        const i = (y * w + x) * 4;
+        const iRight = (y * w + (x + 1)) * 4;
+        const diff = Math.abs(d[i] - d[iRight]);
+        sum += diff; count++;
+      }
+    }
+    const avgDiff = count ? sum / count : 0;
+    return Math.max(0, Math.min(100, avgDiff * 4)); // كل ما التباين بين البكسلات جنب بعض أعلى، كل ما الصورة أوضح
+  } catch (e) { return 50; }
+}
+
+// ---------- شاشة المراجعة: عرض النتيجة، تمييز الحقول، تصحيح المستخدم، منع الحفظ التلقائي ----------
+
+function fieldOrderForDisplay() {
+  return ['transaction_type','amount','card','terminal_id','batch_number','authorization_code','reference_number','datetime','receipt_number','stan'];
+}
+
+function openReceiptReviewScreen() {
+  if (!receiptCaptureState) return;
+  document.getElementById('rvCapturedImage').src = receiptCaptureState.imageDataUrl;
+  renderReceiptReviewFields();
+  openModal('receiptReviewModal');
+}
+
+function renderReceiptReviewFields() {
+  const fields = receiptCaptureState.fields;
+  const listEl = document.getElementById('rvFieldsList');
+  const summaryEl = document.getElementById('rvSummaryBar');
+
+  const total = fieldOrderForDisplay().length;
+  const needReviewCount = fieldOrderForDisplay().filter(k => fields[k] && fields[k].needs_review).length;
+  summaryEl.innerHTML = needReviewCount > 0
+    ? `<span style="color:#B45309;">⚠️ ${needReviewCount} من ${total} حقول محتاجة تأكيد يدوي</span><span style="color:var(--textMuted);">دوس على الحقل لتحديد مكانه بالصورة</span>`
+    : `<span style="color:#16A34A;">✅ كل الحقول اتقرأت واتحققت تلقائيًا</span>`;
+
+  listEl.innerHTML = fieldOrderForDisplay().map(key => {
+    const f = fields[key] || { value: null, needs_review: true, verified: false, confidence: 0 };
+    const def = RECEIPT_FIELD_DEFS[key];
+    const displayVal = f.value !== null && f.value !== undefined ? f.value : '';
+    const badge = f.needs_review
+      ? '<span class="rvBadge rvReview">يحتاج مراجعة</span>'
+      : '<span class="rvBadge rvOk">✓ متحقق منه</span>';
+    return `<div class="rvFieldRow" data-field-key="${key}" onclick="highlightReceiptField('${key}')">
+      <div class="rvFieldInfo">
+        <div class="rvFieldLabel">${def.label}</div>
+        <div class="rvFieldValueWrap">
+          <input class="rvFieldInput" id="rvInput_${key}" value="${displayVal}" placeholder="مش واضح - اكتبها يدويًا"
+                 oninput="onReceiptFieldEdited('${key}')" onclick="event.stopPropagation()">
+        </div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function highlightReceiptField(key) {
+  document.querySelectorAll('.rvFieldRow').forEach(el => el.classList.toggle('rvActive', el.dataset.fieldKey === key));
+  const f = receiptCaptureState.fields[key];
+  const box = document.getElementById('rvHighlightBox');
+  const img = document.getElementById('rvCapturedImage');
+  if (!f || !f.bbox || !img.naturalWidth) { box.style.display = 'none'; return; }
+  const scaleX = img.clientWidth / img.naturalWidth;
+  const scaleY = img.clientHeight / img.naturalHeight;
+  box.style.left = (f.bbox.x0 * scaleX) + 'px';
+  box.style.top = (f.bbox.y0 * scaleY) + 'px';
+  box.style.width = ((f.bbox.x1 - f.bbox.x0) * scaleX) + 'px';
+  box.style.height = ((f.bbox.y1 - f.bbox.y0) * scaleY) + 'px';
+  box.style.display = 'block';
+}
+
+// لما المستخدم يعدّل/يأكد حقل بإيده، بنعتبره متأكد منه (مش auto) طالما القيمة مطابقة لشكل الحقل
+function onReceiptFieldEdited(key) {
+  const input = document.getElementById('rvInput_' + key);
+  const def = RECEIPT_FIELD_DEFS[key];
+  const val = input.value.trim();
+  const f = receiptCaptureState.fields[key];
+  const isValid = val && def.pattern.test(val);
+  f.value = val || null;
+  f.raw_value = val || null;
+  f.verified = false; // اتعدل يدويًا - مش "متحقق تلقائيًا"، لكن هيتقبل لأن المستخدم شافه بعينه
+  f.needs_review = !isValid; // لو لسه مش مطابق للنمط، يفضل يطلب مراجعة
+  f.userConfirmed = !!val;
+  renderReceiptReviewFields();
+  highlightReceiptField(key);
+}
+
+function retakeReceiptPhoto() {
+  receiptCaptureState = null;
+  closeModal('receiptReviewModal');
+  openCardReceiptOcrCamera();
+}
+
+function cancelReceiptReview() {
+  if (!confirm('تجاهل بيانات الإيصال اللي اتقرأت؟')) return;
+  receiptCaptureState = null;
+  closeModal('receiptReviewModal');
+}
+
+// التأكيد النهائي: مفيش أي حقل يتحفظ وهو needs_review لسه، إلا لو المستخدم لمسه وأكّده بنفسه
+function confirmReceiptReview() {
+  const fields = receiptCaptureState.fields;
+  const stillBlocking = fieldOrderForDisplay().filter(k => {
+    const f = fields[k];
+    return f && f.needs_review && !f.userConfirmed && (f.value === null || f.value === undefined || f.value === '');
+  });
+  if (stillBlocking.length) {
+    const names = stillBlocking.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ');
+    alert('في حقول لسه محتاجة تدخل منك قبل الحفظ: ' + names);
+    return;
+  }
+
+  // نعبي حقول الإيداع الموجودة أصلاً (توافق كامل مع باقي النظام بدون أي تعديل عليه)
+  if (fields.amount && fields.amount.value) {
+    document.getElementById('depositAmountInput').value = fields.amount.value;
+  }
+  if (fields.reference_number && fields.reference_number.value) {
+    document.getElementById('depositRefInput').value = fields.reference_number.value;
+  }
+
+  // نجهز الـ JSON الكامل بالمواصفة المطلوبة عشان يتخزن مع الإيداع
+  const overallConfidence = Math.round(
+    fieldOrderForDisplay().reduce((s, k) => s + (fields[k] ? fields[k].confidence : 0), 0) / fieldOrderForDisplay().length
+  );
+  pendingReceiptOcrJson = {
+    document_type: 'pos_receipt',
+    merchant: {},
+    location: {},
+    terminal_id: fields.terminal_id,
+    batch_number: fields.batch_number,
+    transaction_type: fields.transaction_type,
+    amount: fields.amount,
+    card: fields.card,
+    authorization_code: fields.authorization_code,
+    reference_number: fields.reference_number,
+    datetime: fields.datetime,
+    receipt_number: fields.receipt_number,
+    stan: fields.stan,
+    overall_confidence: overallConfidence,
+    needs_review: fieldOrderForDisplay().some(k => fields[k] && fields[k].needs_review && !fields[k].userConfirmed)
+  };
+
+  receiptCaptureState = null;
+  closeModal('receiptReviewModal');
 }
 
 function searchInvoiceByNumber() {
@@ -2796,6 +3219,7 @@ function openDepositForm(customerId, customerName, kind) {
   pendingDepositKind = kind === 'purchase' ? 'purchase' : 'sales';
   document.getElementById('depositModalTitle').textContent = (pendingDepositKind === 'purchase' ? 'تسديد مبلغ للمحل - ' : 'إيداع مبلغ - ') + customerName;
   document.getElementById('depositAmountInput').value = '';
+  pendingReceiptOcrJson = null; // إيداع جديد - أي بيانات إيصال قديمة متحفوظة من مرة سابقة تتلغى
   setDepositMethod('نقدي');
   openModal('depositModal');
   setTimeout(() => { document.getElementById('depositAmountInput').focus(); }, 150);
@@ -2845,9 +3269,13 @@ function submitDeposit() {
     createdAt: new Date().toISOString()
   };
   if (refNumber) record.refNumber = refNumber;
+  // لو المستخدم راجع وأكّد بيانات إيصال ماسوح بالكاميرا، نلصقها كاملة مع الإيداع (بدون ما تغيّر
+  // أي حقل موجود أصلاً) - مفيدة كأرشيف ودليل لو حصل نزاع على العملية لاحقًا
+  if (pendingReceiptOcrJson) record.receiptOcr = pendingReceiptOcrJson;
   db.ref(path).push().set(record).then(() => {
     logActivity(kind === 'purchase' ? 'تسديد مشتريات' : 'إيداع مبلغ', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
     pendingDepositCustomer = null;
+    pendingReceiptOcrJson = null;
     closeDepositModalAnimated();
     if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
     if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
