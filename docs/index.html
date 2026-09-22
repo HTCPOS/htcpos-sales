@@ -291,9 +291,10 @@
 
   /* شاشة مراجعة الإيصال بتفتح كصفحة كاملة مستقلة (مش نافذة صغيرة من تحت زي باقي المودالز) -
      أسهل للقراءة والتعديل لما الحقول كتير */
-  #receiptReviewModal { align-items:stretch; justify-content:stretch; bottom:0; }
+  #receiptReviewModal { align-items:stretch; justify-content:stretch; bottom:0; z-index:10000; }
   #receiptReviewModal .modalSheet {
-    width:100%; max-width:100%; height:100dvh; max-height:100dvh; border-radius:0;
+    position:fixed; inset:0; z-index:10000;
+    width:100%; max-width:100%; height:auto; max-height:none; border-radius:0;
     margin-bottom:0; box-shadow:none;
     padding-top:calc(20px + env(safe-area-inset-top));
     padding-bottom:calc(20px + env(safe-area-inset-bottom));
@@ -363,7 +364,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 11:34 ص · 4f8a12</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 11:47 ص · d5c130</div>
   </div>
 </div>
 
@@ -1297,6 +1298,19 @@ let latestSummary = {};
 let latestInvoices = [];
 let latestItems = {};
 
+// تعقيم أي نص حر (اسم زبون/صنف/ملاحظة) قبل عرضه كـ HTML - بيمنع حد يكتب كود HTML/جافاسكريبت
+// جوه اسم أو ملاحظة ويخلّيه يتنفذ لما يتعرض في أي قائمة (XSS). بنستخدمها في كل مكان بيعرض
+// نص المستخدم الحر جوه الصفحة.
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function fmtMoney(n) {
   n = Number(n || 0);
   return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -1434,7 +1448,7 @@ function loadZeroPriceModal() {
   const sorted = visible.sort((a,b) => new Date(b.date) - new Date(a.date));
   el.innerHTML = sorted.map(it => `<div class="searchResultRow">
     <div style="flex:1;min-width:0;">
-      <div class="n">${it.itemName}</div>
+      <div class="n">${escapeHtml(it.itemName)}</div>
       <div class="p">فاتورة ${it.invoiceNumber} &middot; الكمية: ${it.qty} &middot; ${new Date(it.date).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
     </div>
     <button onclick="dismissZeroPrice('${it.id}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;"><span class="ic ic-trash"></span> حذف</button>
@@ -1452,10 +1466,10 @@ function showInvoiceDetail(inv) {
   const items = inv.items || [];
   let html = '';
   if (inv.orderNo) {
-    html += `<div class="searchResultRow"><div class="n">رقم الطلب</div><div class="p">${inv.orderNo}</div></div>`;
+    html += `<div class="searchResultRow"><div class="n">رقم الطلب</div><div class="p">${escapeHtml(inv.orderNo)}</div></div>`;
   }
   if (inv.payment) {
-    html += `<div class="searchResultRow"><div class="n">طريقة الدفع</div><div class="p">${inv.payment}</div></div>`;
+    html += `<div class="searchResultRow"><div class="n">طريقة الدفع</div><div class="p">${escapeHtml(inv.payment)}</div></div>`;
   }
   html += `<div class="searchResultRow"><div class="n">التاريخ</div><div class="p">${new Date(inv.date).toLocaleString('ar-EG-u-nu-latn')}</div></div>`;
   html += `<div class="searchResultRow"><div class="n">الاجمالي</div><div class="p">${fmtMoney(inv.amount)} د.ل</div></div>`;
@@ -1465,10 +1479,10 @@ function showInvoiceDetail(inv) {
     html += '<div style="margin-top:10px;font-weight:800;font-size:13px;">الأصناف:</div>';
     html += items.map((it, idx) => `
       <div class="searchResultRow">
-        <div class="n">${it.name}</div>
+        <div class="n">${escapeHtml(it.name)}</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="p">${it.qty} × ${fmtMoney(it.price)} د.ل</div>
-          <button onclick='openCustomerPicker(${JSON.stringify({name:it.name, qty:it.qty, price:it.price, amount:(it.qty*it.price), invoiceNumber:inv.number, date:inv.date})})' style="background:#FFF7ED;color:#EA580C;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/></svg> دين</button>
+          <button onclick='openCustomerPicker(${escapeHtml(JSON.stringify({name:it.name, qty:it.qty, price:it.price, amount:(it.qty*it.price), invoiceNumber:inv.number, date:inv.date}))})' style="background:#FFF7ED;color:#EA580C;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/></svg> دين</button>
         </div>
       </div>`).join('');
   }
@@ -1508,7 +1522,7 @@ function renderInvoices() {
     const chipBg = isReturn ? '#FEE2E2' : '#DCFCE7';
     const chipColor = isReturn ? '#DC2626' : '#16A34A';
     const chipText = isReturn ? 'مرتجع' : 'مكتمل';
-    const itemNames = (inv.items && inv.items.length) ? inv.items.map(it => it.name).join('، ') : '';
+    const itemNames = (inv.items && inv.items.length) ? inv.items.map(it => escapeHtml(it.name)).join('، ') : '';
     const receiptLabel = isReturn ? 'رقم الإرجاع: ' : 'رقم الإيصال: ';
     const returnBadge = (!isReturn && inv.hasReturn) ? ' <span style="background:#FEE2E2;color:#DC2626;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;">مرتجع</span>' : '';
     const paymentLine = inv.payment ? `<div style="font-size:11px;color:#94A3B8;margin-top:1px;">${inv.payment}</div>` : '';
@@ -1626,7 +1640,7 @@ function loadAlerts() {
 
     const invVal = invSnap.val();
     (invVal ? Object.values(invVal) : []).forEach(inv => {
-      const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => i.name).join('، ') : '';
+      const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => escapeHtml(i.name)).join('، ') : '';
       events.push({ type: inv.type === 'return' ? 'return' : 'sale', time: inv.date, number: inv.number, amount: inv.amount, itemsStr });
     });
 
@@ -1654,7 +1668,7 @@ function renderAlertsList() {
       return `<div style="display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid #F1F5F9;">
         <div style="width:40px;height:40px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#DC2626"/></svg></div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:14px;">${e.name}</div>
+          <div style="font-weight:800;font-size:14px;">${escapeHtml(e.name)}</div>
           <div style="font-size:11px;color:#94A3B8;margin-top:2px;">نفدت الكمية &middot; ${timeAgoDetailed(e.time)}</div>
         </div>
         <button onclick="event.stopPropagation();addToShortagesFromAlert('${e.itemId}','${(e.name||'').replace(/'/g,"")}', this)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button>
@@ -1736,7 +1750,7 @@ function openCustomerPickerList() {
       return;
     }
     const sorted = customers.sort((a,b) => (a.name||'').localeCompare(b.name||''));
-    listEl.innerHTML = sorted.map(c => `<div class="searchResultRow" style="cursor:pointer" onclick="onCustomerPicked('${c.id}','${(c.name||'').replace(/'/g,"")}')"><div class="n">${c.name}</div></div>`).join('');
+    listEl.innerHTML = sorted.map(c => `<div class="searchResultRow" style="cursor:pointer" onclick="onCustomerPicked('${c.id}','${(c.name||'').replace(/'/g,"")}')"><div class="n">${escapeHtml(c.name)}</div></div>`).join('');
   });
 }
 
@@ -1820,7 +1834,7 @@ function renderInvoiceResultsList(results) {
     const isReturn = inv.type === 'return';
     const receiptLabel = isReturn ? 'رقم الإرجاع: ' : 'رقم الإيصال: ';
     const returnBadge = (!isReturn && inv.hasReturn) ? ' <span style="background:#FEE2E2;color:#DC2626;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;">مرتجع</span>' : '';
-    const itemNames = (inv.items && inv.items.length) ? inv.items.map(it => it.name).join('، ') : '';
+    const itemNames = (inv.items && inv.items.length) ? inv.items.map(it => escapeHtml(it.name)).join('، ') : '';
     return `<div class="invoiceRow" onclick="closeModal('invoiceResultsModal');showInvoiceDetail(window.__invoicesById['${inv.id}'])" style="cursor:pointer">
       ${renderInvIcon(idx, isReturn, inv.number)}
       <div class="invInfo">
@@ -2920,7 +2934,7 @@ function priceCheckSearch() {
   if (!items.length) { resEl.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت</div>'; return; }
   const matches = items.filter(it => (String(it.barcode || '').trim().toLowerCase() === q) || (String(it.name || '').toLowerCase().includes(q))).slice(0, 20);
   if (!matches.length) { resEl.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
-  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer" onclick="showPriceCheckDetail(${it.id})"><div class="n">${it.name}</div><div class="p">متبقي: ${it.stock}</div></div>`).join('');
+  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer" onclick="showPriceCheckDetail(${it.id})"><div class="n">${escapeHtml(it.name)}</div><div class="p">متبقي: ${it.stock}</div></div>`).join('');
   resEl.scrollTop = 0;
 }
 
@@ -2932,7 +2946,7 @@ function showPriceCheckDetail(itemId) {
   d.style.display = 'block';
   d.innerHTML = `
     <div style="background:var(--surface2);border-radius:14px;padding:16px;margin-top:6px;">
-      <div style="font-weight:800;font-size:16px;margin-bottom:12px;">${it.name}</div>
+      <div style="font-weight:800;font-size:16px;margin-bottom:12px;">${escapeHtml(it.name)}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
         <span style="color:var(--textMuted);font-size:13px;">سعر التكلفة</span>
         <span style="font-weight:700;">${fmtMoney(it.cost)} د.ل</span>
@@ -2982,7 +2996,7 @@ function manualLookupSearch() {
     return;
   }
   resEl.style.display = 'block';
-  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer; padding:12px 14px;" onclick="selectManualLookupItem('${it.id}')"><div class="n">${it.name}</div><div class="p" style="font-size:11px; color:#94A3B8;">مسجل بالنظام: ${it.stock}</div></div>`).join('');
+  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer; padding:12px 14px;" onclick="selectManualLookupItem('${it.id}')"><div class="n">${escapeHtml(it.name)}</div><div class="p" style="font-size:11px; color:#94A3B8;">مسجل بالنظام: ${it.stock}</div></div>`).join('');
   resEl.scrollTop = 0;
 }
 
@@ -3138,7 +3152,7 @@ function renderInventoryCountList() {
         : (diff > 0 ? `<span style="background:#DBEAFE;color:#1D4ED8;font-size:11px;font-weight:800;padding:3px 9px;border-radius:10px;display:inline-flex;align-items:center;gap:4px;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#1D4ED8" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> زيادة ${diff}</span>` : '');
       return `<div class="searchResultRow" style="background:var(--surface2);" data-row-id="${it.id}">
         <div style="flex:1;">
-          <div class="n">${it.name}</div>
+          <div class="n">${escapeHtml(it.name)}</div>
           <div class="p">مسجل بالنظام: ${systemQty} &middot; <span class="ic ic-checkgreen"></span> اتعد: ${countedVal} ${missingBadge}</div>
         </div>
         <button onclick="editCountedItem(${it.id})" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل</button>
@@ -3147,7 +3161,7 @@ function renderInventoryCountList() {
 
     return `<div class="searchResultRow" data-row-id="${it.id}">
       <div style="flex:1;">
-        <div class="n">${it.name}</div>
+        <div class="n">${escapeHtml(it.name)}</div>
         <div class="p">مسجل بالنظام: ${systemQty}${!it.barcode ? ' &middot; بدون باركود' : ''}</div>
       </div>
       <input type="number" inputmode="numeric" data-item-id="${it.id}" value="" lang="en" placeholder="العدد الفعلي" oninput="setCountValue(${it.id}, this.value)" style="width:90px;padding:8px 10px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;text-align:center;">
@@ -3165,7 +3179,7 @@ function editCountedItem(itemId) {
   row.style.background = '';
   row.innerHTML = `
     <div style="flex:1;">
-      <div class="n">${it.name}</div>
+      <div class="n">${escapeHtml(it.name)}</div>
       <div class="p">مسجل بالنظام: ${it.stock}</div>
     </div>
     <input type="number" inputmode="numeric" data-item-id="${itemId}" value="${currentVal}" lang="en" placeholder="العدد الفعلي" oninput="setCountValue(${itemId}, this.value)" style="width:90px;padding:8px 10px;border:1.5px solid #2563EB;border-radius:10px;font-size:14px;text-align:center;">
@@ -3250,7 +3264,7 @@ function loadMissingItems() {
       const toStr = new Date(m.toDate).toLocaleDateString('ar-EG-u-nu-latn');
       return `<div class="searchResultRow">
         <div>
-          <div class="n">${m.itemName}</div>
+          <div class="n">${escapeHtml(m.itemName)}</div>
           <div style="font-size:11px;color:#94A3B8;margin-top:2px;">الفترة: ${fromStr} — ${toStr}</div>
         </div>
         <div class="p" style="color:#DC2626;font-weight:800;">${m.missingQty} قطعة</div>
@@ -3282,7 +3296,7 @@ function loadNotesList() {
       const dateStr = n.updatedAt ? new Date(n.updatedAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
       return `<div class="searchResultRow" style="cursor:pointer;" onclick="openNoteEditor('${n.id}')">
         <div style="flex:1;min-width:0;">
-          <div class="n">${firstLine}</div>
+          <div class="n">${escapeHtml(firstLine)}</div>
           <div class="p">${dateStr}</div>
         </div>
         <button onclick="event.stopPropagation();deleteNote('${n.id}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;"><span class="ic ic-trash"></span> حذف</button>
@@ -3371,7 +3385,7 @@ function loadActivityLog() {
         <div style="width:34px;height:34px;border-radius:9px;background:${ic.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-inline-end:10px;">${ic.svg}</div>
         <div style="flex:1;">
           <div class="n">${e.action}</div>
-          <div style="font-size:12px;color:var(--text);margin-top:2px;">${e.detail || ''}</div>
+          <div style="font-size:12px;color:var(--text);margin-top:2px;">${escapeHtml(e.detail || '')}</div>
         </div>
         <div class="p" style="text-align:left;white-space:nowrap;">${timeStr}<br>${dateStr}</div>
       </div>`;
@@ -3441,7 +3455,7 @@ function loadCustomers() {
       return `
       <div class="searchResultRow">
         <div style="cursor:pointer; flex:1;" onclick="openCustomerDebt('${c.id}','${(c.name||'').replace(/'/g,"")}')">
-          <div class="n">${c.name}</div>
+          <div class="n">${escapeHtml(c.name)}</div>
           ${statusHtml}
         </div>
         <button onclick="openDepositForm('${c.id}','${(c.name||'').replace(/'/g,"")}')" style="background:#DBEAFE;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;margin-inline-start:6px; display:inline-flex; align-items:center; gap:5px;"><span class="ic ic-wallet"></span> إيداع</button>
@@ -3575,7 +3589,7 @@ function renderPurchaseDebtsSuppliers() {
     const total = g.items.reduce((sum, it) => sum + Number(it.price || 0), 0);
     return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('purchaseDebtsModal');openCustomerDebt('${g.id}','${g.name.replace(/'/g,"")}')">
       <div style="flex:1;min-width:0;">
-        <div class="n">${g.name}</div>
+        <div class="n">${escapeHtml(g.name)}</div>
         <div class="p">${g.items.length} صنف</div>
       </div>
       <div style="font-weight:800;color:#B45309;">${fmtMoney(total)} د.ل</div>
@@ -3675,7 +3689,7 @@ function openCustomerDebt(customerId, customerName) {
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
       <button onclick="openStatementSectionPicker()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
-      <button onclick="shareCustomerStatement()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
+      <button onclick="shareStatementView()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
     html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;"><span class="ic ic-moneybag"></span> حساب المبيعات (اللي له عندك)</div>`;
@@ -3752,7 +3766,7 @@ function buildStmtSectionBlock(icon, label, color, headers, rows, totalLabel, to
   html += `</tr></thead><tbody>`;
   rows.forEach(r => {
     html += `<tr>`;
-    r.forEach(cell => html += `<td>${cell}</td>`);
+    r.forEach(cell => html += `<td>${escapeHtml(cell)}</td>`);
     html += `</tr>`;
   });
   html += `</tbody></table>
@@ -3830,7 +3844,7 @@ function openCustomerStatementView(sectionsFilter) {
       <div class="stmtBannerText"><div class="stmtBannerTitle">كشف حساب</div><div class="stmtBannerSub">تقرير تفصيلي للحساب</div></div>
       <div class="stmtBannerDate">${now.toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric'})}<br>${now.toLocaleTimeString('ar-EG-u-nu-latn',{hour:'2-digit',minute:'2-digit'})}</div>
     </div>
-    <div class="stmtCustomerBox"><span class="stmtCustomerLabel">اسم العميل</span><span class="stmtCustomerName">${s.customerName}</span></div>
+    <div class="stmtCustomerBox"><span class="stmtCustomerLabel">اسم العميل</span><span class="stmtCustomerName">${escapeHtml(s.customerName)}</span></div>
     <div class="stmtStatGrid">
       ${stmtStatCard('<span class="ic ic-bank"></span>', 'الرصيد الإجمالي', Math.abs(s.combinedNet), '#7C3AED')}
       ${stmtStatCard('<span class="ic ic-moneybag"></span>', netLabel, Math.abs(s.combinedNet), netColor)}
@@ -4017,7 +4031,7 @@ function renderPurchaseDebtRow(it, customerId, customerName) {
     const paidDateStr = it.paidAt ? new Date(it.paidAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
     return `<div class="searchResultRow" style="opacity:.7;">
       <div style="flex:1;min-width:0;">
-        <div class="n">${it.itemName}</div>
+        <div class="n">${escapeHtml(it.itemName)}</div>
         <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${paidDateStr ? ' &middot; سُدد ' + paidDateStr : ''}</div>
       </div>
       <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ سددت</div>
@@ -4025,7 +4039,7 @@ function renderPurchaseDebtRow(it, customerId, customerName) {
   }
   return `<div class="searchResultRow">
     <div style="flex:1;min-width:0;">
-      <div class="n">${it.itemName}</div>
+      <div class="n">${escapeHtml(it.itemName)}</div>
       <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
       <div style="font-size:11px;color:#DC2626;font-weight:700;margin-top:2px;display:flex;align-items:center;gap:3px;"><span class="ic ic-clock" style="width:12px;height:12px;"></span> لم يسدد بعد</div>
     </div>
@@ -4039,7 +4053,7 @@ function renderDebtRow(d, customerId, customerName, isReturned) {
     return `
       <div class="searchResultRow" id="debtRow_${d.id}" style="opacity:.7;">
         <div>
-          <div class="n">${d.itemName}</div>
+          <div class="n">${escapeHtml(d.itemName)}</div>
           <div style="font-size:11px;color:#94A3B8;">${d.qty} × ${fmtMoney(d.price)} د.ل &middot; فاتورة ${d.invoiceNumber}${paidDateStr ? ' &middot; سُدد ' + paidDateStr : ''}</div>
         </div>
         <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ سددت</div>
@@ -4054,7 +4068,7 @@ function renderDebtRow(d, customerId, customerName, isReturned) {
   return `
       <div class="searchResultRow" id="debtRow_${d.id}" style="${rowStyle}">
         <div>
-          <div class="n" style="${nameStyle}">${d.itemName}</div>
+          <div class="n" style="${nameStyle}">${escapeHtml(d.itemName)}</div>
           <div style="font-size:11px;color:#94A3B8;">${d.qty} × ${fmtMoney(d.price)} د.ل &middot; فاتورة ${d.invoiceNumber}</div>
           ${!isReturned ? '<div style="font-size:11px;color:#DC2626;font-weight:700;margin-top:2px;display:flex;align-items:center;gap:3px;"><span class="ic ic-clock" style="width:12px;height:12px;"></span> لم يسدد بعد</div>' : ''}
         </div>
@@ -4136,7 +4150,7 @@ function loadLowStock() {
     if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش اصناف نفدت في آخر يومين</div>'; return; }
     const sorted = items.sort((a,b) => new Date(b.time) - new Date(a.time));
     el.innerHTML = sorted.map(it => `<div class="searchResultRow" data-item-id="${it.id}">
-      <div style="flex:1;min-width:0;"><div class="n">${it.name}</div><div class="p">${it.time || ''}</div></div>
+      <div style="flex:1;min-width:0;"><div class="n">${escapeHtml(it.name)}</div><div class="p">${it.time || ''}</div></div>
       <div style="display:flex;gap:6px;flex-shrink:0;">
         <button onclick="addToShortagesFromAlert('${it.id}','${(it.name||'').replace(/'/g,"")}', this)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> نواقص</button>
         <button onclick="dismissLowStockItem('${it.id}', this)" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; justify-content:center;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13h10l1-13"/></svg></button>
@@ -4186,7 +4200,7 @@ function renderShortagesList() {
   if (!items.length) { el.innerHTML = '<div class="emptyMsg">القائمة فاضية</div>'; return; }
   el.innerHTML = items.map(it => `<div class="searchResultRow">
       <div style="flex:1;min-width:0;cursor:pointer;" onclick="openAddShortageForm('${it.id}')">
-        <div class="n">${it.name}${it.qty ? ' &middot; الكمية: ' + it.qty : ''}</div>
+        <div class="n">${escapeHtml(it.name)}${it.qty ? ' &middot; الكمية: ' + it.qty : ''}</div>
         <div class="p">${it.source ? '<span class="ic ic-packagecheck"></span> ' + it.source : 'دوس هنا تحدد الكمية والمصدر'}</div>
       </div>
       <button onclick="event.stopPropagation();markShortageFulfilled('${it.id}')" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> اشتريته</button>
@@ -4235,7 +4249,7 @@ function openShortagesListView() {
   let html = `<div class="stmtFrame"><h2 class="stmtHeading">${title}</h2>
     <table class="stmtTable"><thead><tr><th>#</th><th>الصنف</th><th>الكمية</th></tr></thead><tbody>`;
   items.forEach((it, idx) => {
-    html += `<tr><td>${idx + 1}</td><td>${it.name}</td><td>${it.qty || '-'}</td></tr>`;
+    html += `<tr><td>${idx + 1}</td><td>${escapeHtml(it.name)}</td><td>${it.qty || '-'}</td></tr>`;
   });
   html += `</tbody></table><div class="stmtTotal">${items.length} صنف</div>`;
   html += `<div class="stmtFooter">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`;
@@ -4253,7 +4267,7 @@ function loadShortagesFulfilled() {
     el.innerHTML = '<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;border-top:1px solid var(--border);padding-top:14px;">تم شراؤها</div>' +
       sorted.map(it => `<div class="searchResultRow" style="opacity:.7;">
         <div style="flex:1;min-width:0;">
-          <div class="n">${it.name}${it.qty ? ' &middot; ' + it.qty : ''}</div>
+          <div class="n">${escapeHtml(it.name)}${it.qty ? ' &middot; ' + it.qty : ''}</div>
           <div class="p">${it.source ? it.source + ' &middot; ' : ''}${new Date(it.fulfilledAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
         </div>
         <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ اتشرى</div>
@@ -4360,7 +4374,7 @@ function loadReturns() {
     if (!returns.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد مرتجعات اليوم</div>'; resultRef.remove(); return; }
     const sorted = returns.sort((a,b) => new Date(b.date) - new Date(a.date));
     el.innerHTML = sorted.map(inv => {
-      const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => i.name).join('، ') : '';
+      const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => escapeHtml(i.name)).join('، ') : '';
       return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('returnsModal');showInvoiceDetail(window.__invoicesById['${inv.id}'])">
         <div>
           <div class="n">رقم الإرجاع: ${inv.number}</div>
@@ -4443,7 +4457,7 @@ function renderProductsList() {
   const sorted = filtered.sort((a,b) => (a.name||'').localeCompare(b.name||''));
   el.innerHTML = sorted.slice(0,200).map(it => `
     <div class="searchResultRow" style="cursor:pointer" onclick="showItemDetail(${it.id})">
-      <div class="n">${it.name}</div>
+      <div class="n">${escapeHtml(it.name)}</div>
       <div class="p">${fmtMoney(it.price)} د.ل &nbsp;|&nbsp; متبقي: ${it.stock}</div>
     </div>`).join('') + (sorted.length > 200 ? '<div class="emptyMsg">اكتب اسم اصح لتضييق النتائج (اكتر من 200 صنف)</div>' : '');
   el.scrollTop = 0;
@@ -4473,7 +4487,7 @@ function doSearch() {
   if (!results.length) { el.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
   el.innerHTML = results.slice(0,50).map(it => `
     <div class="searchResultRow" style="cursor:pointer" onclick="closeModal('searchModal');showItemDetail(${it.id})">
-      <div class="n">${it.name}</div>
+      <div class="n">${escapeHtml(it.name)}</div>
       <div class="p">${fmtMoney(it.price)} د.ل | متبقي: ${it.stock}</div>
     </div>`).join('');
 }
@@ -4497,7 +4511,7 @@ function onSearchInput() {
   dd.style.display = 'block';
   dd.innerHTML = results.map(it => `
     <div class="searchResultRow" style="cursor:pointer; padding:12px 16px;" onclick="document.getElementById('searchDropdown').style.display='none'; showItemDetail(${it.id})">
-      <div class="n">${it.name}</div>
+      <div class="n">${escapeHtml(it.name)}</div>
       <div class="p">${fmtMoney(it.price)} د.ل | متبقي: ${it.stock}</div>
     </div>`).join('');
   dd.scrollTop = 0;
