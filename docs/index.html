@@ -299,21 +299,26 @@
     padding-bottom:calc(20px + env(safe-area-inset-bottom));
   }
 
-  /* ---------- شاشة مراجعة قراءة إيصال البطاقة (Receipt OCR Review) ---------- */
-  .rvFieldRow { display:flex; align-items:center; gap:10px; padding:12px 4px; border-bottom:1px solid var(--border2); cursor:pointer; }
-  .rvFieldRow.rvActive { background:var(--surface2); border-radius:10px; }
-  .rvFieldInfo { flex:1; min-width:0; }
-  .rvFieldLabel { font-size:11px; color:var(--textMuted); font-weight:700; }
-  .rvFieldValueWrap { display:flex; align-items:center; gap:6px; margin-top:3px; }
-  .rvFieldInput { flex:1; min-width:0; border:1.5px solid transparent; background:transparent; font-size:14.5px; font-weight:800; color:var(--text); padding:4px 6px; border-radius:8px; text-align:right; direction:ltr; }
-  .rvFieldInput:focus { outline:none; border-color:#2563EB; background:var(--surface); }
-  .rvBadge { font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
-  .rvBadge.rvOk { background:#DCFCE7; color:#16A34A; }
-  .rvBadge.rvReview { background:#FEF3C7; color:#B45309; }
-  .rvImageWrap { position:relative; border-radius:14px; overflow:hidden; background:#000; margin-bottom:12px; }
+  /* ---------- شاشة مراجعة قراءة إيصال البطاقة (Receipt OCR Review) - تصميم جدول احترافي ---------- */
+  .rvTable { width:100%; border-collapse:collapse; }
+  .rvTable tr { border-bottom:1px solid var(--border2); }
+  .rvTable tr:last-child { border-bottom:none; }
+  .rvTable tr.rvActive { background:var(--surface2); }
+  .rvLabelCell { padding:11px 6px; font-size:12.5px; color:var(--textMuted); font-weight:700; white-space:nowrap; width:1%; vertical-align:middle; }
+  .rvValueCell { padding:11px 6px; vertical-align:middle; }
+  .rvStatusCell { padding:11px 4px; vertical-align:middle; width:1%; }
+  .rvFieldInput { width:100%; min-width:0; border:1.5px solid var(--border2); background:var(--surface); font-size:14px; font-weight:800; color:var(--text); padding:8px 9px; border-radius:9px; text-align:center; direction:ltr; box-sizing:border-box; }
+  .rvFieldInput:focus { outline:none; border-color:#2563EB; }
+  .rvFieldInput::placeholder { font-size:11.5px; font-weight:600; color:var(--textMuted2); }
+  .rvDot { display:inline-block; width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .rvDot.rvOk { background:#16A34A; }
+  .rvDot.rvReview { background:#F59E0B; }
+  .rvImageToggleBtn { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; background:var(--surface2); border:none; border-radius:10px; padding:10px; margin-bottom:10px; font-size:12.5px; font-weight:700; color:var(--textMuted); cursor:pointer; }
+  .rvImageWrap { position:relative; border-radius:14px; overflow:hidden; background:#000; margin-bottom:12px; display:none; }
+  .rvImageWrap.rvOpen { display:block; }
   .rvImageWrap img { display:block; width:100%; height:auto; }
   .rvHighlightBox { position:absolute; border:3px solid #2563EB; border-radius:4px; box-shadow:0 0 0 999px rgba(0,0,0,.35); pointer-events:none; transition:all .15s ease; display:none; }
-  .rvSummaryBar { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border-radius:12px; padding:10px 14px; margin-bottom:10px; font-size:12.5px; font-weight:700; }
+  .rvSummaryBar { display:flex; flex-direction:column; gap:2px; background:var(--surface2); border-radius:12px; padding:10px 14px; margin-bottom:10px; font-size:12.5px; font-weight:700; }
 </style>
 </head>
 <body>
@@ -358,7 +363,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 8:52 ص · 61d9af</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 11:34 ص · 4f8a12</div>
   </div>
 </div>
 
@@ -724,6 +729,7 @@
     <button class="closeM" onclick="cancelReceiptReview()">✕</button>
     <h3>مراجعة بيانات الإيصال</h3>
     <div class="rvSummaryBar" id="rvSummaryBar"></div>
+    <button class="rvImageToggleBtn" onclick="toggleReceiptImage()" id="rvImageToggleBtn">📷 عرض صورة الإيصال</button>
     <div class="rvImageWrap" id="rvImageWrap">
       <img id="rvCapturedImage" src="" alt="الإيصال">
       <div class="rvHighlightBox" id="rvHighlightBox"></div>
@@ -2588,6 +2594,12 @@ function toggleReceiptDebugPanel() {
 function openReceiptReviewScreen() {
   if (!receiptCaptureState) return;
   document.getElementById('rvCapturedImage').src = receiptCaptureState.imageDataUrl;
+  // الصورة تفضل مطوية افتراضيًا كل مرة تفتح فيها الشاشة (توفير مساحة) - بتتفتح تلقائي بس لو
+  // دوست على حقل عنده مكان محدد بالصورة (highlightReceiptField)
+  const imgWrap = document.getElementById('rvImageWrap');
+  const imgBtn = document.getElementById('rvImageToggleBtn');
+  imgWrap.classList.remove('rvOpen');
+  imgBtn.textContent = '📷 عرض صورة الإيصال';
   renderReceiptReviewFields();
   // لو المبلغ أو الرقم المرجعي (الحقول الأساسية) مش واضحين، نعرض النص الخام اللي اتقرا فعليًا
   // تلقائيًا من غير ما تحتاج تدوس على حاجة - عشان تشوف بنفسك إيه اللي القارئ فهمه غلط
@@ -2599,6 +2611,13 @@ function openReceiptReviewScreen() {
   openModal('receiptReviewModal');
 }
 
+function toggleReceiptImage() {
+  const wrap = document.getElementById('rvImageWrap');
+  const btn = document.getElementById('rvImageToggleBtn');
+  const isOpen = wrap.classList.toggle('rvOpen');
+  btn.textContent = isOpen ? '🔽 إخفاء صورة الإيصال' : '📷 عرض صورة الإيصال';
+}
+
 function renderReceiptReviewFields() {
   const fields = receiptCaptureState.fields;
   const listEl = document.getElementById('rvFieldsList');
@@ -2606,45 +2625,53 @@ function renderReceiptReviewFields() {
 
   const criticalMissing = ['amount', 'reference_number'].filter(k => !(fields[k] && fields[k].value));
   summaryEl.innerHTML = criticalMissing.length
-    ? `<span style="color:#B45309;">⚠️ اكتب يدويًا: ${criticalMissing.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ')}</span><span style="color:var(--textMuted);">باقي الحقول اختيارية</span>`
-    : `<span style="color:#16A34A;">✅ المبلغ والرقم المرجعي جاهزين - باقي الحقول اختيارية</span>`;
+    ? `<span style="color:#B45309;">⚠️ اكتب يدويًا: ${criticalMissing.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ')}</span><span style="color:var(--textMuted); font-weight:600;">باقي الحقول اختيارية</span>`
+    : `<span style="color:#16A34A;">✅ المبلغ والرقم المرجعي جاهزين</span><span style="color:var(--textMuted); font-weight:600;">باقي الحقول اختيارية</span>`;
 
-  listEl.innerHTML = fieldOrderForDisplay().map(key => {
+  const rows = fieldOrderForDisplay().map(key => {
     const f = fields[key] || { value: null, needs_review: true, verified: false, confidence: 0 };
     const def = RECEIPT_FIELD_DEFS[key];
     const displayVal = f.value !== null && f.value !== undefined ? f.value : '';
-    const badge = f.needs_review
-      ? '<span class="rvBadge rvReview">يحتاج مراجعة</span>'
-      : '<span class="rvBadge rvOk">✓ متحقق منه</span>';
-    return `<div class="rvFieldRow" data-field-key="${key}" onclick="highlightReceiptField('${key}')">
-      <div class="rvFieldInfo">
-        <div class="rvFieldLabel">${def.label}</div>
-        <div class="rvFieldValueWrap">
-          <input class="rvFieldInput" id="rvInput_${key}" value="${displayVal}" placeholder="مش واضح - اكتبها يدويًا"
-                 oninput="onReceiptFieldEdited('${key}')" onclick="event.stopPropagation()">
-        </div>
-      </div>
-      ${badge}
-    </div>`;
+    const dot = f.needs_review ? '<span class="rvDot rvReview" title="يحتاج مراجعة"></span>' : '<span class="rvDot rvOk" title="متحقق منه"></span>';
+    return `<tr data-field-key="${key}" onclick="highlightReceiptField('${key}')">
+      <td class="rvLabelCell">${def.label}</td>
+      <td class="rvValueCell">
+        <input class="rvFieldInput" id="rvInput_${key}" value="${displayVal}" placeholder="اكتبها يدويًا"
+               oninput="onReceiptFieldEdited('${key}')" onclick="event.stopPropagation()">
+      </td>
+      <td class="rvStatusCell">${dot}</td>
+    </tr>`;
   }).join('');
+
+  listEl.innerHTML = `<table class="rvTable"><tbody>${rows}</tbody></table>`;
 }
 
 function highlightReceiptField(key) {
-  document.querySelectorAll('.rvFieldRow').forEach(el => el.classList.toggle('rvActive', el.dataset.fieldKey === key));
+  document.querySelectorAll('#rvFieldsList tr').forEach(el => el.classList.toggle('rvActive', el.dataset.fieldKey === key));
   const f = receiptCaptureState.fields[key];
+  if (!f || !f.bbox) return;
+  // نفتح الصورة تلقائيًا ونأشّر على مكان الحقل - المستخدم مش محتاج يفتحها بنفسه كل مرة
+  const wrap = document.getElementById('rvImageWrap');
+  if (!wrap.classList.contains('rvOpen')) toggleReceiptImage();
   const box = document.getElementById('rvHighlightBox');
   const img = document.getElementById('rvCapturedImage');
-  if (!f || !f.bbox || !img.naturalWidth) { box.style.display = 'none'; return; }
-  const scaleX = img.clientWidth / img.naturalWidth;
-  const scaleY = img.clientHeight / img.naturalHeight;
-  box.style.left = (f.bbox.x0 * scaleX) + 'px';
-  box.style.top = (f.bbox.y0 * scaleY) + 'px';
-  box.style.width = ((f.bbox.x1 - f.bbox.x0) * scaleX) + 'px';
-  box.style.height = ((f.bbox.y1 - f.bbox.y0) * scaleY) + 'px';
-  box.style.display = 'block';
+  const draw = () => {
+    if (!img.naturalWidth) return;
+    const scaleX = img.clientWidth / img.naturalWidth;
+    const scaleY = img.clientHeight / img.naturalHeight;
+    box.style.left = (f.bbox.x0 * scaleX) + 'px';
+    box.style.top = (f.bbox.y0 * scaleY) + 'px';
+    box.style.width = ((f.bbox.x1 - f.bbox.x0) * scaleX) + 'px';
+    box.style.height = ((f.bbox.y1 - f.bbox.y0) * scaleY) + 'px';
+    box.style.display = 'block';
+  };
+  if (img.complete && img.naturalWidth) draw(); else img.onload = draw;
 }
 
 // لما المستخدم يعدّل/يأكد حقل بإيده، بنعتبره متأكد منه (مش auto) طالما القيمة مطابقة لشكل الحقل
+// مهم: من غير ما نعيد بناء الجدول كله (زي ما كان بيحصل قبل كده) - إعادة البناء كانت بتمسح
+// خانة الكتابة نفسها وهي لسه متركّز عليها، فيقفل الكيبورد بعد أول حرف. دلوقتي بنعدّل بس النقطة
+// الملوّنة وملخص الأعلى، والخانة نفسها متتلمسش خالص وإنت بتكتب فيها
 function onReceiptFieldEdited(key) {
   const input = document.getElementById('rvInput_' + key);
   const def = RECEIPT_FIELD_DEFS[key];
@@ -2656,8 +2683,16 @@ function onReceiptFieldEdited(key) {
   f.verified = false; // اتعدل يدويًا - مش "متحقق تلقائيًا"، لكن هيتقبل لأن المستخدم شافه بعينه
   f.needs_review = !isValid; // لو لسه مش مطابق للنمط، يفضل يطلب مراجعة
   f.userConfirmed = !!val;
-  renderReceiptReviewFields();
-  highlightReceiptField(key);
+
+  const dot = document.querySelector('tr[data-field-key="' + key + '"] .rvDot');
+  if (dot) { dot.className = 'rvDot ' + (f.needs_review ? 'rvReview' : 'rvOk'); dot.title = f.needs_review ? 'يحتاج مراجعة' : 'متحقق منه'; }
+
+  const fields = receiptCaptureState.fields;
+  const criticalMissing = ['amount', 'reference_number'].filter(k => !(fields[k] && fields[k].value));
+  const summaryEl = document.getElementById('rvSummaryBar');
+  summaryEl.innerHTML = criticalMissing.length
+    ? `<span style="color:#B45309;">⚠️ اكتب يدويًا: ${criticalMissing.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ')}</span><span style="color:var(--textMuted); font-weight:600;">باقي الحقول اختيارية</span>`
+    : `<span style="color:#16A34A;">✅ المبلغ والرقم المرجعي جاهزين</span><span style="color:var(--textMuted); font-weight:600;">باقي الحقول اختيارية</span>`;
 }
 
 function retakeReceiptPhoto() {
