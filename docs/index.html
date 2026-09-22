@@ -364,7 +364,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 8:54 م · 1c9fa2</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 9:19 م · 7fe823</div>
   </div>
 </div>
 
@@ -1921,6 +1921,17 @@ async function getTesseractWorker2() {
   }
   return sharedTesseractWorker2Promise;
 }
+
+// لو محرك جاهز أصلاً بقى بايظ من جوّه (زي خطأ "SetVariable"/"null is not an object" اللي بيحصل
+// أحيانًا لأسباب داخلية في المكتبة نفسها)، الكود القديم كان بيفضل يحاول بنفس المحرك البايظ ده
+// طول الجلسة لأنه "موجود أصلاً" فمكانش بيعيد تجهيزه. الدالة دي بتمسح المحركين المخزّنين بالكامل
+// عشان أي محاولة جاية تجهّز محرك جديد نضيف من الصفر بدل ما تفضل عالقة على واحد ميت
+function resetTesseractWorkers() {
+  try { if (sharedTesseractWorker) sharedTesseractWorker.terminate(); } catch (e) {}
+  try { if (sharedTesseractWorker2) sharedTesseractWorker2.terminate(); } catch (e) {}
+  sharedTesseractWorker = null; sharedTesseractWorkerPromise = null;
+  sharedTesseractWorker2 = null; sharedTesseractWorker2Promise = null;
+}
 // نبدأ تجهيز العاملين من أول ما الصفحة تفتح (مش لما المستخدم يفتح الكاميرا) - عشان وقت التجهيز
 // يخلص في الخلفية قبل ما يحتاجهم فعليًا. لو فشلت المحاولة الأولى (نت وقتي مثلًا)، أي استخدام
 // فعلي بعد كده هيحاول تاني تلقائيًا (مش هيفضل عالق) بفضل منطق إعادة المحاولة فوق
@@ -1957,6 +1968,7 @@ function processReceiptOcrBlob(blob) {
     })
     .catch(err => {
       if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+      resetTesseractWorkers();
       alert('حصلت مشكلة وقت قراءة الصورة: ' + (err && err.message ? err.message : err));
     });
 }
@@ -2073,7 +2085,7 @@ function attemptReceiptOcrScan() {
           scheduleReceiptOcrScan(); // لسه ما لقيناهوش، نجرب تاني من غير ما نضايق المستخدم برسالة فشل
         }
       })
-      .catch(() => { scheduleReceiptOcrScan(); });
+      .catch(() => { resetTesseractWorkers(); scheduleReceiptOcrScan(); });
   }, 'image/jpeg', 0.95);
 }
 
@@ -2182,6 +2194,9 @@ async function attemptCardReceiptOcrScan() {
       scheduleCardReceiptOcrScan();
     }
   } catch (e) {
+    // المحرك الجاهز بقى بايظ من جوّه (مش بس فشل تجهيز) - نمسحه عشان المحاولة الجاية تعمل واحد
+    // جديد نضيف بدل ما تفضل تحاول بنفس المحرك الميت من غير فايدة
+    resetTesseractWorkers();
     // لو القراءة فشلت كذا مرة ورا بعض (مش مجرد مرة عابرة)، في مشكلة حقيقية (زي النت) - نوقف
     // ونوضح للمستخدم بدل ما نفضل عالقين على "وجّه الكاميرا" من غير أي تفسير
     cardReceiptScanFailCount++;
@@ -2228,6 +2243,7 @@ async function finalizeCardReceiptCapture(video, guide) {
     ]);
     resultA = resultA.data; resultB = resultB.data;
   } catch (e) {
+    resetTesseractWorkers(); // لو المحرك بايظ من جوّه، نمسحه عشان المحاولة الجاية (بعد ما يدوس "جرب تاني") تعمل واحد جديد
     alert('حصلت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - جرب تاني');
     openCardReceiptOcrCamera();
     return;
