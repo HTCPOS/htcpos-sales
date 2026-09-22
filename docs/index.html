@@ -348,7 +348,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 7:16 ص · d20513</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 22 سبتمبر 7:25 ص · a7f291</div>
   </div>
 </div>
 
@@ -2155,31 +2155,60 @@ function receiptPreprocess(sourceCanvas, variant) {
   const d = imgData.data;
 
   // تحويل لتدرج رمادي
-  const gray = new Uint8ClampedArray(w * h);
+  const gray = new Float64Array(w * h);
   for (let i = 0, p = 0; i < d.length; i += 4, p++) {
     gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
   }
 
-  // شدّ التباين بالاعتماد على Percentile (٢٪ و ٩٨٪) بدل أقصى/أقل بكسل حرفيًا - لو في بريق ضوء
-  // على جلد الإيد الماسكة الإيصال أو نقطة سودة صغيرة، أقصى/أقل بكسل حرفي كانوا هيبوّظوا حسبة
-  // التباين لكل الصورة؛ الـ Percentile بيتجاهل الشواذ القليلة دي وبيركّز على الورقة نفسها
-  const hist = new Uint32Array(256);
-  for (let p = 0; p < gray.length; p++) hist[gray[p]]++;
-  const total = gray.length;
-  let cum = 0, p2 = 0, p98 = 255;
-  for (let v = 0; v < 256; v++) { cum += hist[v]; if (cum >= total * 0.02) { p2 = v; break; } }
-  cum = 0;
-  for (let v = 255; v >= 0; v--) { cum += hist[v]; if (cum >= total * 0.02) { p98 = v; break; } }
-  const range = Math.max(1, p98 - p2);
-
-  const threshold = variant === 'B' ? 0.52 : 0.5; // فرق بسيط ومتعمد بين النسختين عشان الـ Dual Verification تبقى قراءتين مستقلتين فعليًا
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    let v = ((gray[p] - p2) / range) * 255; // شدّ التباين لملء المدى بالكامل، اعتمادًا على Percentile مش القيم الشاذة
-    v = Math.max(0, Math.min(255, v));
-    if (variant !== 'quick') {
-      v = v > 255 * threshold ? 255 : (v < 255 * (threshold - 0.18) ? 0 : v); // Threshold ناعم قريب من الحواف بدل قطع فجائي يهرّس الأرقام
+  if (variant === 'quick') {
+    // نسخة سريعة وخفيفة بس للكشف الأولي أثناء التصوير (مش القراءة النهائية الدقيقة) - تحسين
+    // تباين بسيط بدون الحسابات الأتقل بتاعة الـ Threshold التكيّفي
+    let min = 255, max = 0;
+    for (let p = 0; p < gray.length; p++) { if (gray[p] < min) min = gray[p]; if (gray[p] > max) max = gray[p]; }
+    const range = Math.max(1, max - min);
+    for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+      const v = Math.max(0, Math.min(255, ((gray[p] - min) / range) * 255));
+      d[i] = d[i + 1] = d[i + 2] = v;
     }
-    d[i] = d[i + 1] = d[i + 2] = v;
+    ctx.putImageData(imgData, 0, 0);
+    return out;
+  }
+
+  // Threshold محلي/تكيّفي حقيقي (Adaptive Threshold): المشكلة اللي ظهرت فعليًا في الاختبار إن
+  // حد فاصل واحد (Threshold) للصورة كلها بيتهرّس تمامًا لو في ظل جزئي (زي ظل صباع الإيد الماسكة
+  // الإيصال أو طيّة في الورق) - جزء الصورة المظلم بيتحول أسود بالكامل ويمسح أي نص تحته. الحل:
+  // كل بكسل بيتقارن بمتوسط إضاءة *المنطقة اللي حواليه هو بس*، مش الصورة كلها، فالظل الجزئي
+  // مبيأثرش على باقي الإيصال. بنستخدم Integral Image (صورة تراكمية) عشان نحسب متوسط أي منطقة
+  // مربعة حوالين أي بكسل في خطوة واحدة سريعة بدل ما نلف على كل المنطقة دي لكل بكسل (بطيء جدًا).
+  const integral = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) {
+    let rowSum = 0;
+    for (let x = 0; x < w; x++) {
+      rowSum += gray[y * w + x];
+      integral[(y + 1) * (w + 1) + (x + 1)] = integral[y * (w + 1) + (x + 1)] + rowSum;
+    }
+  }
+  function localMean(cx, cy, r) {
+    const x0 = Math.max(0, cx - r), y0 = Math.max(0, cy - r);
+    const x1 = Math.min(w - 1, cx + r), y1 = Math.min(h - 1, cy + r);
+    const area = (x1 - x0 + 1) * (y1 - y0 + 1);
+    const sum = integral[(y1 + 1) * (w + 1) + (x1 + 1)] - integral[y0 * (w + 1) + (x1 + 1)] - integral[(y1 + 1) * (w + 1) + x0] + integral[y0 * (w + 1) + x0];
+    return sum / area;
+  }
+
+  // نطاق الحساب المحلي (radius) ودرجة التشدد (offset) - فرق متعمد وبسيط بين النسختين A/B عشان
+  // الـ Dual Verification تبقى قراءتين مستقلتين فعليًا (طريقة حساب مختلفة شوية) مش نفس القراءة مكررة
+  const radius = variant === 'B' ? Math.round(Math.max(w, h) * 0.035) : Math.round(Math.max(w, h) * 0.045);
+  const offset = variant === 'B' ? 6 : 10;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const p = y * w + x;
+      const mean = localMean(x, y, radius);
+      const v = gray[p] < (mean - offset) ? 0 : 255; // أغمق من متوسط منطقته المباشرة = حبر، غير كده = ورق
+      const i = p * 4;
+      d[i] = d[i + 1] = d[i + 2] = v;
+    }
   }
   ctx.putImageData(imgData, 0, 0);
   return out;
