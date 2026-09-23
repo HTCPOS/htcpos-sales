@@ -1,29 +1,36 @@
 {
-  "appId": "com.htcpos.sales",
-  "appName": "HTCPOS",
-  "webDir": "www",
-  "zoomEnabled": false,
-  "server": {
-    "url": "https://htcpos.github.io/htcpos-sales/",
-    "hostname": "htcpos.github.io",
-    "cleartext": false,
-    "allowNavigation": [
-      "*.github.io",
-      "*.firebaseio.com",
-      "*.firebasedatabase.app",
-      "*.googleapis.com",
-      "*.gstatic.com",
-      "unpkg.com"
-    ]
-  },
-  "ios": {
-    "contentInset": "never",
-    "backgroundColor": "#F3F5F9",
-    "scrollEnabled": false
-  },
-  "plugins": {
-    "Keyboard": {
-      "resize": "none"
-    }
-  }
+	"appId": "com.htcpos.sales",
+	"appName": "HTCPOS",
+	"webDir": "www",
+	"zoomEnabled": false,
+	"server": {
+		"url": "https://htcpos.github.io/htcpos-sales/",
+		"hostname": "htcpos.github.io",
+		"cleartext": false,
+		"allowNavigation": [
+			"*.github.io",
+			"*.firebaseio.com",
+			"*.firebasedatabase.app",
+			"*.googleapis.com",
+			"*.gstatic.com",
+			"unpkg.com",
+			"cdn.jsdelivr.net",
+			"tessdata.projectnaptha.com"
+		]
+	},
+	"ios": {
+		"contentInset": "never",
+		"backgroundColor": "#F3F5F9",
+		"scrollEnabled": false
+	},
+	"plugins": {
+		"Keyboard": {
+			"resize": "none"
+		}
+	},
+	"packageClassList": [
+		"KeyboardPlugin",
+		"NativeBiometric",
+		"BarcodeScannerPlugin"
+	]
 }
