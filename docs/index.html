@@ -364,7 +364,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 23 سبتمبر 3:14 ص · b6f207</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 23 سبتمبر 3:42 ص · 2eb958</div>
   </div>
 </div>
 
@@ -1005,39 +1005,6 @@ if (localStorage.getItem('faceIdCred') && !localStorage.getItem('faceIdVerified'
   localStorage.removeItem('faceIdEmail');
   localStorage.removeItem('faceIdPass');
 }
-
-// زر تشخيص مباشر على شاشة الدخول - بيوضح بالظبط فين المشكلة خطوة بخطوة
-async function testFaceIdRaw() {
-  let report = [];
-  report.push('Capacitor موجود: ' + (!!window.Capacitor));
-  report.push('isNativePlatform: ' + (window.Capacitor && window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : 'n/a'));
-  const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativeBiometric;
-  report.push('NativeBiometric plugin موجود: ' + (!!plugin));
-  if (!plugin) {
-    alert(report.join('\n'));
-    return;
-  }
-  try {
-    const res = await plugin.isAvailable();
-    report.push('isAvailable() نجح: ' + JSON.stringify(res));
-  } catch (e) {
-    report.push('isAvailable() فشل: ' + (e && e.message ? e.message : JSON.stringify(e)));
-    alert(report.join('\n'));
-    return;
-  }
-  alert(report.join('\n'));
-  try {
-    await plugin.verifyIdentity({
-      reason: 'اختبار بصمة الوجه',
-      title: 'اختبار',
-      subtitle: 'HTC POS',
-      description: 'تأكيد بصمة الوجه'
-    });
-    alert('✅ verifyIdentity() نجح - بصمة الوجه شغالة فعليًا');
-  } catch (e) {
-    alert('❌ verifyIdentity() فشل: ' + (e && e.message ? e.message : JSON.stringify(e)));
-  }
-}
 function faceIdSupported() {
   if (isNativeApp()) return nativeBiometricAvailable;
   return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
@@ -1316,15 +1283,6 @@ function fmtMoney(n) {
   return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 
-function timeAgo(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const diffSec = Math.floor((Date.now() - d.getTime())/1000);
-  if (diffSec < 60) return diffSec + ' ثانية';
-  if (diffSec < 3600) return Math.floor(diffSec/60) + ' دقيقة';
-  return Math.floor(diffSec/3600) + ' ساعة';
-}
-
 function checkOffline() {
   const icon = document.getElementById('offlineIcon');
   if (!latestSummary.lastSync) { icon.style.display = 'none'; return; }
@@ -1552,11 +1510,6 @@ function unlockBodyScroll() {
 }
 function anyModalOpen() {
   return Array.from(document.querySelectorAll('.modalBg')).some(m => m.style.display === 'flex');
-}
-function closeAllModals() {
-  document.querySelectorAll('.modalBg').forEach(m => { if (m.style.display === 'flex') m.style.display = 'none'; });
-  unlockBodyScroll();
-  setActiveNavItem(null);
 }
 function openModal(id) {
   const wasAnyOpen = anyModalOpen();
@@ -2247,20 +2200,27 @@ async function finalizeCardReceiptCapture(video, guide) {
     return;
   }
 
-  // Dual Verification بمحرك Vision وحده (مفيش Tesseract خالص دلوقتي): بنجهز نسختين من نفس
-  // اللقطة بمعالجة تباين مختلفة شوية، ونقرا كل واحدة لوحدها بنفس المحرك الدقيق. لو الاتنين
-  // اتفقوا، الحقل يبقى "متحقق منه" فعليًا؛ لو اختلفوا، مبنخمنش - نطلب مراجعة يدوية
+  // قراءة أولى سريعة بالصورة الخام - في أغلب الحالات دي هتكفي لوحدها لو المبلغ والرقم المرجعي
+  // طلعوا واضحين ومش متعارضين مع نفسهم من غير أي لبس. القراءة التانية (الأبطأ) بتتعمل بس لو
+  // فعلاً محتاجينها - ده بيسرّع الالتقاط بشكل حقيقي وملموس في الحالة العادية (إيصال واضح)
   try {
-    const variantA = receiptPreprocess(finalCanvas, 'A');
-    const variantB = receiptPreprocess(finalCanvas, 'B');
+    const variantA = finalCanvas; // الصورة الخام - أفضل حاجة لـ Vision
     debugImageA = variantA.toDataURL('image/jpeg', 0.85);
-    debugImageB = variantB.toDataURL('image/jpeg', 0.85);
-    const [rA, rB] = await Promise.all([
-      nativeVisionOcrProcess(variantA),
-      nativeVisionOcrProcess(variantB)
-    ]);
-    resultA = rA || { text: '', lines: [] };
-    resultB = rB || { text: '', lines: [] };
+    resultA = (await nativeVisionOcrProcess(variantA)) || { text: '', lines: [] };
+    const quickFieldsA = extractReceiptFields(resultA);
+    const quickAmountOk = quickFieldsA.amount && quickFieldsA.amount.raw_value && !quickFieldsA.amount.ambiguous;
+    const quickRefOk = quickFieldsA.reference_number && quickFieldsA.reference_number.raw_value && !quickFieldsA.reference_number.ambiguous;
+
+    if (quickAmountOk && quickRefOk) {
+      // القراءة الأولى واضحة وكفاية - منضيّعش وقت في قراءة تانية
+      resultB = resultA;
+      debugImageB = debugImageA;
+    } else {
+      // في لبس أو نقص - نعمل قراءة تانية بمعالجة خفيفة مختلفة للمقارنة الحقيقية (Dual Verification)
+      const variantB = receiptLightEnhance(finalCanvas);
+      debugImageB = variantB.toDataURL('image/jpeg', 0.85);
+      resultB = (await nativeVisionOcrProcess(variantB)) || { text: '', lines: [] };
+    }
   } catch (e) {
     alert('حصلت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - جرب تاني');
     openCardReceiptOcrCamera();
@@ -2303,10 +2263,6 @@ async function finalizeCardReceiptCapture(video, guide) {
   openReceiptReviewScreen();
 }
 
-// قراءة مركّزة على منطقة صغيرة بس من الصورة الأصلية (مش المعالَجة) - بنقص حوالين مكان الحقل
-// بس بهامش بسيط، نكبّرها كبير (لأنها بقت صغيرة الحجم فالتكبير مش هيكلف حسابيًا زي ما لو كبّرنا
-// الإيصال كله)، ونشغّل عليها Threshold تكيّفي زي باقي الصورة، وبعدين Tesseract بوضع "سطر واحد"
-// (PSM 7) مع منع أي حرف غير الأرقام والفواصل المسموحة للحقل ده تحديدًا
 function showQuickReceiptToast(msg) {
   const el = document.createElement('div');
   el.textContent = msg;
@@ -2333,7 +2289,10 @@ function buildReceiptOcrJson(fields) {
 
 // معالجة الصورة (Canvas → Canvas): تحويل رمادي + تحسين تباين + Threshold - بدون أي تغيير قد
 // يشوّه شكل الأرقام/الحروف نفسها (زي ما طلب: لا تعدّل الأرقام)
-function receiptPreprocess(sourceCanvas, variant) {
+// تحسين خفيف جدًا للصورة (مش تحويل قسري لأبيض/أسود زي receiptPreprocess تحت، اللي كانت مصممة
+// لمحرك Tesseract الضعيف) - بيرفع التباين شوية بس بيحافظ على تدرج الرمادي الطبيعي، لأن Apple
+// Vision محرك قوي مبني أصلًا على صور طبيعية وبيتأذى من أي تحويل قسري للصورة بدل ما يستفيد منه
+function receiptLightEnhance(sourceCanvas) {
   const w = sourceCanvas.width, h = sourceCanvas.height;
   const out = document.createElement('canvas');
   out.width = w; out.height = h;
@@ -2341,72 +2300,26 @@ function receiptPreprocess(sourceCanvas, variant) {
   ctx.drawImage(sourceCanvas, 0, 0);
   const imgData = ctx.getImageData(0, 0, w, h);
   const d = imgData.data;
-
-  // تحويل لتدرج رمادي
-  const gray = new Float64Array(w * h);
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-  }
-
-  if (variant === 'quick') {
-    // نسخة سريعة للكشف الأولي أثناء التصوير - بنستخدم Percentile (٥٪/٩٥٪) بدل أقصى/أقل بكسل
-    // حرفيًا، عشان لون جلد الإيد أو ظل حوالين الإيصال ميبوّظش حسبة التباين لمنطقة الفحص كلها
-    // (نفس المشكلة اللي اتصلحت في اللقطة النهائية، بس بنسخة أخف حسابيًا تناسب الفحص المتكرر)
-    const hist = new Uint32Array(256);
-    for (let p = 0; p < gray.length; p++) hist[gray[p] | 0]++;
-    const total = gray.length;
-    let cum = 0, p5 = 0, p95 = 255;
-    for (let v = 0; v < 256; v++) { cum += hist[v]; if (cum >= total * 0.05) { p5 = v; break; } }
-    cum = 0;
-    for (let v = 255; v >= 0; v--) { cum += hist[v]; if (cum >= total * 0.05) { p95 = v; break; } }
-    const range = Math.max(1, p95 - p5);
-    for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-      const v = Math.max(0, Math.min(255, ((gray[p] - p5) / range) * 255));
-      d[i] = d[i + 1] = d[i + 2] = v;
-    }
-    ctx.putImageData(imgData, 0, 0);
-    return out;
-  }
-
-  // Threshold محلي/تكيّفي حقيقي (Adaptive Threshold): المشكلة اللي ظهرت فعليًا في الاختبار إن
-  // حد فاصل واحد (Threshold) للصورة كلها بيتهرّس تمامًا لو في ظل جزئي (زي ظل صباع الإيد الماسكة
-  // الإيصال أو طيّة في الورق) - جزء الصورة المظلم بيتحول أسود بالكامل ويمسح أي نص تحته. الحل:
-  // كل بكسل بيتقارن بمتوسط إضاءة *المنطقة اللي حواليه هو بس*، مش الصورة كلها، فالظل الجزئي
-  // مبيأثرش على باقي الإيصال. بنستخدم Integral Image (صورة تراكمية) عشان نحسب متوسط أي منطقة
-  // مربعة حوالين أي بكسل في خطوة واحدة سريعة بدل ما نلف على كل المنطقة دي لكل بكسل (بطيء جدًا).
-  const integral = new Float64Array((w + 1) * (h + 1));
-  for (let y = 0; y < h; y++) {
-    let rowSum = 0;
-    for (let x = 0; x < w; x++) {
-      rowSum += gray[y * w + x];
-      integral[(y + 1) * (w + 1) + (x + 1)] = integral[y * (w + 1) + (x + 1)] + rowSum;
-    }
-  }
-  function localMean(cx, cy, r) {
-    const x0 = Math.max(0, cx - r), y0 = Math.max(0, cy - r);
-    const x1 = Math.min(w - 1, cx + r), y1 = Math.min(h - 1, cy + r);
-    const area = (x1 - x0 + 1) * (y1 - y0 + 1);
-    const sum = integral[(y1 + 1) * (w + 1) + (x1 + 1)] - integral[y0 * (w + 1) + (x1 + 1)] - integral[(y1 + 1) * (w + 1) + x0] + integral[y0 * (w + 1) + x0];
-    return sum / area;
-  }
-
-  // نطاق الحساب المحلي (radius) ودرجة التشدد (offset) - فرق متعمد وبسيط بين النسختين A/B عشان
-  // الـ Dual Verification تبقى قراءتين مستقلتين فعليًا (طريقة حساب مختلفة شوية) مش نفس القراءة مكررة
-  const radius = variant === 'B' ? Math.round(Math.max(w, h) * 0.035) : Math.round(Math.max(w, h) * 0.045);
-  const offset = variant === 'B' ? 6 : 10;
-
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const p = y * w + x;
-      const mean = localMean(x, y, radius);
-      const v = gray[p] < (mean - offset) ? 0 : 255; // أغمق من متوسط منطقته المباشرة = حبر، غير كده = ورق
-      const i = p * 4;
-      d[i] = d[i + 1] = d[i + 2] = v;
+  // شدّ تباين بسيط (١٪ / ٩٩٪ Percentile) - بيحسّن الوضوح شوية من غير ما يهرّس تدرجات الصورة
+  const gray = new Uint8ClampedArray(w * h);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+  const hist = new Uint32Array(256);
+  for (let p = 0; p < gray.length; p++) hist[gray[p]]++;
+  const total = gray.length;
+  let cum = 0, p1 = 0, p99 = 255;
+  for (let v = 0; v < 256; v++) { cum += hist[v]; if (cum >= total * 0.01) { p1 = v; break; } }
+  cum = 0;
+  for (let v = 255; v >= 0; v--) { cum += hist[v]; if (cum >= total * 0.01) { p99 = v; break; } }
+  const range = Math.max(1, p99 - p1);
+  for (let i = 0; i < d.length; i += 4) {
+    for (let c = 0; c < 3; c++) {
+      d[i + c] = Math.max(0, Math.min(255, ((d[i + c] - p1) / range) * 255));
     }
   }
   ctx.putImageData(imgData, 0, 0);
   return out;
 }
+
 
 // تحويل نتيجة Tesseract (الأسطر + الإحداثيات) لحقول الإيصال - Layout-aware مش نص خام بس
 function extractReceiptFields(ocrData) {
@@ -2508,7 +2421,9 @@ function findLineInfoContaining(lines, needle) {
   for (const line of lines) {
     if (line.text && line.text.replace(/\s/g, '').includes(cleanNeedle)) {
       return {
-        bbox: { x0: line.bbox.x0, y0: line.bbox.y0, x1: line.bbox.x1, y1: line.bbox.y1 },
+        // Apple Vision مش بترجع مكان كل سطر (bbox) زي Tesseract - لو مفيش bbox أصلًا نرجّع null
+        // بدل ما نحاول نقرا x0/y0 من حاجة فاضية ويحصل كراش يوقف القراءة كلها من غير أي تفسير
+        bbox: line.bbox ? { x0: line.bbox.x0, y0: line.bbox.y0, x1: line.bbox.x1, y1: line.bbox.y1 } : null,
         confidence: typeof line.confidence === 'number' ? line.confidence : null
       };
     }
