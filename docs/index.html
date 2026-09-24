@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 6:37 م · debug1</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 6:47 م · 2f81ab</div>
   </div>
 </div>
 
@@ -3438,7 +3438,11 @@ function loadCustomers() {
     const purchaseDeposits = ppVal ? Object.entries(ppVal).map(([id, p]) => ({ id, ...p })) : [];
 
     const rows = customers.map(c => {
-      const unpaid = debts.filter(d => d.customerId === c.id && !d.paid);
+      // نفس الإصلاح المطبّق في حساب الزبون: لازم ناخد في الاعتبار الديون اللي اتسددت تلقائيًا
+      // من مجمّع الإيداعات (autoSettled) عشان الرصيد يبقى صح، مش يوري "متزن" غلط. لكن عدد
+      // "الأصناف المستحقة" المعروض للمستخدم لازم يفضل بس الحقيقي (مش شامل اللي اتسدد فعلاً)
+      const genuinelyUnpaid = debts.filter(d => d.customerId === c.id && !d.paid);
+      const unpaid = debts.filter(d => d.customerId === c.id && (!d.paid || d.autoSettled));
       const debtTotal = unpaid.reduce((s, d) => s + Number(d.amount || 0), 0);
       const depositTotal = deposits.filter(p => p.customerId === c.id).reduce((s, p) => s + Number(p.amount || 0), 0);
       const salesNet = debtTotal - depositTotal;
@@ -3449,7 +3453,7 @@ function loadCustomers() {
 
       const net = salesNet - purchaseNet; // موجب = هو مديون لك، سالب = انت مديون له
       window.__customersById[c.id] = c; // لازم نحفظها هنا عشان نافذة التعديل تقدر توصلها من غير ما نمرر نص خام جوه onclick
-      return { ...c, net, count: unpaid.length };
+      return { ...c, net, count: genuinelyUnpaid.length };
     }).sort((a,b) => b.net - a.net);
 
     el.innerHTML = rows.map(c => {
@@ -3851,7 +3855,7 @@ function openCustomerDebt(customerId, customerName) {
   // بنعيد التسوية الشاملة أول ما نفتح الحساب (مش بس وقت الإيداع نفسه) - شبكة أمان: لو لأي سبب
   // حدث إيداع أو دين فات عليه التسوية التلقائية، فتح الحساب نفسه بيصححه فورًا من غير ما تحتاجي
   // تعملي أي حاجة زيادة
-  reconcileSalesAccount(customerId, true).catch(() => {}).then(() => {
+  reconcileSalesAccount(customerId).catch(() => {}).then(() => {
   Promise.all([
     db.ref('data/debts').once('value'),
     db.ref('data/deposits').once('value'),
@@ -3869,7 +3873,12 @@ function openCustomerDebt(customerId, customerName) {
     const allDeposits = depVal ? Object.entries(depVal).map(([id, p]) => ({ id, ...p })) : [];
     const myDeposits = allDeposits.filter(p => p.customerId === customerId).sort((a,b) => new Date(b.at) - new Date(a.at));
 
-    const debtTotal = mine.reduce((s, d) => s + Number(d.amount || 0), 0);
+    // مهم: حساب الرصيد لازم ياخد في الاعتبار أي دين اتسدد تلقائيًا من نفس مجمّع الإيداعات
+    // (autoSettled) - لأن قيمته فعليًا "مستهلكة" من الإيداعات، حتى لو مش ظاهر في قائمة
+    // "الأصناف المستحقة" (لأنه اتسدد وده صح). لو حسبناه بس من "mine" (الأصناف الظاهرة بس)،
+    // هنفتكر إن الإيداعات كلها لسه متاحة رغم إن جزء منها راح فعلاً لدين اتسدد قبل كده - وده
+    // بالظبط اللي كان بيوري "الحساب متزن" رغم وجود دين تاني لسه مستحق فعليًا
+    const debtTotal = myAllDebts.filter(d => !d.paid || d.autoSettled).reduce((s, d) => s + Number(d.amount || 0), 0);
     const depositTotal = myDeposits.reduce((s, p) => s + Number(p.amount || 0), 0);
     const salesNet = debtTotal - depositTotal;
 
@@ -3991,7 +4000,11 @@ function buildUnifiedStatementRows(s, filters) {
     });
   }
   if (f.payment) {
-    s.salesPaid.forEach(d => {
+    // بس الديون اللي اتسددت "يدويًا" (مش تلقائيًا من مجمّع الإيداعات) محتاجة صف "سداد" منفصل
+    // هنا - لأن تسديدها التلقائي أصلًا معوَّض بصفوف الإيداعات نفسها في الحساب، فلو ضفنا صف سداد
+    // زيادة ليها كمان هيتخصم من الرصيد مرتين غلط (وده بالظبط السبب اللي كان بيوري "الحساب متزن"
+    // في حساب الزبون رغم وجود دين تاني لسه مستحق فعليًا - نفس الخطأ بالظبط هنا لو سبناه)
+    s.salesPaid.filter(d => !d.autoSettled).forEach(d => {
       if (d.paidAt) rows.push({ date: d.paidAt, type: 'payment', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
     });
   }
