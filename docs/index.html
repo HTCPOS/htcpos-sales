@@ -229,11 +229,20 @@
   #depositModal { align-items:center; }
   #depositModal .modalSheet { width:calc(100% - 64px); max-width:380px; border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
   #depositModal .modalSheet.dropOut { animation:depositDropOut .32s cubic-bezier(.4,0,.7,1) forwards; }
-  body.keyboard-open #depositModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
+  body.keyboard-open #depositModal { transition:none; }
   #shortageFormModal { align-items:center; }
   #shortageFormModal .modalSheet { width:calc(100% - 64px); max-width:380px; border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
-  body.keyboard-open #shortageFormModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
-  body.keyboard-open #editCustomerModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
+  /* النافذتين دول في نص الشاشة (مش نافذة سفلية) - تغيير المساحة تحتهم كان بيخلي الحركة تبان
+     قافزة فجأة. تحريك النافذة نفسها لفوق شوية بـ transform بدل كده بيدي حركة أنعم بكتير */
+  body.keyboard-open #depositModal .modalSheet,
+  body.keyboard-open #shortageFormModal .modalSheet,
+  body.keyboard-open #editCustomerModal .modalSheet {
+    transform: translateY(calc(var(--kb-h) * -0.32));
+    transition: transform .28s cubic-bezier(.25,.8,.25,1);
+  }
+  #depositModal .modalSheet, #shortageFormModal .modalSheet, #editCustomerModal .modalSheet {
+    transition: transform .28s cubic-bezier(.25,.8,.25,1);
+  }
   body.keyboard-open #customerPickerModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
@@ -391,7 +400,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 11:51 م · 5d3a92</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 12:07 ص · b73e19</div>
   </div>
 </div>
 
