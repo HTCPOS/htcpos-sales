@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 11:36 م · 8c1f4a</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 11:51 م · 5d3a92</div>
   </div>
 </div>
 
@@ -4399,14 +4399,25 @@ function loadShortages() {
     if (myToken !== shortagesLoadToken) return; // تحميل تاني أحدث بدأ وخلص قبل ده - نتجاهل النتيجة المتأخرة دي
     const val = snap.val();
     const classifications = classSnap.val() || {};
-    // بنشيل أي تكرار محتمل لنفس الـID، وبعدين بنفرض التصنيف المحفوظ في مكاننا الخاص (لو موجود)
-    // فوق أي حاجة جايه من جهاز الكاشير - عشان لو هو رجّع يصفّر التصنيف، إحنا لسه فاكرينه
+    // بنفرض التصنيف المحفوظ في مكاننا الخاص (لو موجود) فوق أي حاجة جايه من جهاز الكاشير
     const byId = {};
     if (val) Object.entries(val).forEach(([id, it]) => {
       const saved = classifications[id];
       byId[id] = { id, ...it, source: (saved ? saved.source : it.source) || null, qty: (saved && saved.qty != null) ? saved.qty : it.qty };
     });
-    latestShortages = Object.values(byId);
+    // جهاز الكاشير بيضيف الصنف نفسه أكتر من مرة برقم مختلف كل مرة (لو نفاد المخزون فيه لسه
+    // مستمر). فبندمج أي أصناف بنفس الاسم بالظبط في صنف واحد بس - ولو أي نسخة منهم مصنّفة، الصنف
+    // المدموج ده ياخد تصنيفها (بدل ما يفضل يبان مرتين: مرة مصنّفة ومرة "بدون تصنيف")
+    const byName = {};
+    Object.values(byId).forEach(it => {
+      const key = (it.name || '').trim().toLowerCase();
+      const existing = byName[key];
+      if (!existing) { byName[key] = it; return; }
+      // لو الحالي مصنّف وده مش مصنّف (أو العكس)، نفضّل النسخة المصنّفة ونحتفظ بمعرّفها عشان
+      // زرار "تعديل" يوصل لنفس السجل اللي فعليًا متربط بتصنيفنا المحفوظ
+      if (it.source && !existing.source) byName[key] = it;
+    });
+    latestShortages = Object.values(byName);
     currentShortageSourceFilter = 'unclassified';
     renderShortageSourceTabs();
     renderShortagesList();
@@ -4601,14 +4612,26 @@ function markShortageFulfilled(id) {
     name: it.name, qty: it.qty || null, source: it.source || null, fulfilledAt: new Date().toISOString()
   }).then(() => {
     logActivity('شراء صنف ناقص', it.name);
-    db.ref('data/shortageClassifications/' + id).remove(); // خلصنا من الصنف ده، منداعيش نفضل محتفظين بتصنيفه
-    if (it.isCustom) {
-      db.ref('data/shortages/' + id).remove().then(loadShortages);
-    } else {
-      db.ref('commands/deleteShortage/' + id).set(true).then(() => {
-        setTimeout(loadShortages, 800);
+    // جهاز الكاشير بيضيف نفس الصنف كذا مرة برقم مختلف أحيانًا (شوف loadShortages) - فبنشيل أي
+    // نسخة تانية بنفس الاسم بالظبط كمان، مش بس النسخة الظاهرة، عشان محدش يرجع يظهر تاني لوحده
+    db.ref('data/shortages').once('value').then(snap => {
+      const val = snap.val() || {};
+      const nameKey = (it.name || '').trim().toLowerCase();
+      const matchingIds = Object.entries(val)
+        .filter(([mid, mit]) => (mit.name || '').trim().toLowerCase() === nameKey)
+        .map(([mid]) => mid);
+      if (!matchingIds.length) matchingIds.push(id);
+      matchingIds.forEach(mid => {
+        db.ref('data/shortageClassifications/' + mid).remove();
+        const mit = val[mid] || it;
+        if (mit.isCustom) {
+          db.ref('data/shortages/' + mid).remove();
+        } else {
+          db.ref('commands/deleteShortage/' + mid).set(true);
+        }
       });
-    }
+      setTimeout(loadShortages, 800);
+    });
   });
 }
 function loadReturns() {
