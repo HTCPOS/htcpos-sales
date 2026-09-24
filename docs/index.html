@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 4:36 ص · e2d84a</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 4:50 ص · 6a1e9d</div>
   </div>
 </div>
 
@@ -671,6 +671,32 @@
     <button class="closeM" onclick="closeModal('customerDebtModal')">✕</button>
     <h3 id="customerDebtTitle">حساب الزبون</h3>
     <div id="customerDebtBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="statementFilterModal" onclick="if(event.target===this)closeModal('statementFilterModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('statementFilterModal')">✕</button>
+    <h3>اختر حركات الكشف</h3>
+    <div style="margin:14px 0;">
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
+        <input type="checkbox" id="stmtFilterPurchase" checked style="width:18px;height:18px;">
+        <span style="font-size:13.5px;font-weight:700;">📋 فواتير المبيعات</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
+        <input type="checkbox" id="stmtFilterDeposit" checked style="width:18px;height:18px;">
+        <span style="font-size:13.5px;font-weight:700;">💰 الإيداعات</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
+        <input type="checkbox" id="stmtFilterPayment" checked style="width:18px;height:18px;">
+        <span style="font-size:13.5px;font-weight:700;">✅ المسدد (السداد الجزئي)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;cursor:pointer;">
+        <input type="checkbox" id="stmtFilterPurchaseAccount" checked style="width:18px;height:18px;">
+        <span style="font-size:13.5px;font-weight:700;">🛍️ المشتريات (اللي اشتريته من الزبون)</span>
+      </label>
+    </div>
+    <button onclick="confirmStatementFilterAndOpen()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">فتح الكشف</button>
   </div>
 </div>
 
@@ -3760,7 +3786,7 @@ function openCustomerDebt(customerId, customerName) {
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
-      <button onclick="openCustomerStatementView()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
+      <button onclick="openModal('statementFilterModal')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
       <button onclick="shareStatementView()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
@@ -3837,33 +3863,59 @@ function customerDisplayNumber(customerId) {
 
 // بناء صفوف الحركات الموحّدة (فواتير + إيداعات + سداد) مرتبة بالتاريخ، مع حساب الرصيد المتراكم
 // بعد كل حركة (نفس منطق أي كشف حساب محاسبي حقيقي)
-function buildUnifiedStatementRows(s) {
+function buildUnifiedStatementRows(s, filters) {
+  const f = filters || { purchase: true, deposit: true, payment: true, purchaseAccount: true };
   const rows = [];
-  s.salesDebts.concat(s.salesPaid).forEach(d => {
-    rows.push({ date: d.date, type: 'purchase', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
-  });
-  s.salesDeposits.forEach(p => {
-    rows.push({ date: p.at, type: 'deposit', label: 'إيداع من العميل', sub: p.method || 'نقدي', ref: p.refNumber || '-', amount: Number(p.amount) || 0 });
-  });
-  s.salesPaid.forEach(d => {
-    if (d.paidAt) rows.push({ date: d.paidAt, type: 'payment', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
-  });
+  if (f.purchase) {
+    s.salesDebts.concat(s.salesPaid).forEach(d => {
+      rows.push({ date: d.date, type: 'purchase', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
+    });
+  }
+  if (f.deposit) {
+    s.salesDeposits.forEach(p => {
+      rows.push({ date: p.at, type: 'deposit', label: 'إيداع من العميل', sub: p.method || 'نقدي', ref: p.refNumber || '-', amount: Number(p.amount) || 0 });
+    });
+  }
+  if (f.payment) {
+    s.salesPaid.forEach(d => {
+      if (d.paidAt) rows.push({ date: d.paidAt, type: 'payment', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
+    });
+  }
+  // عمود "مشتريات" منفصل: أصناف اشتريتها إنت من الزبون (عكس المبيعات) - سعر الشراء بتاعها
+  if (f.purchaseAccount) {
+    s.purchaseDebts.concat(s.purchasePaid).forEach(d => {
+      rows.push({ date: d.at, type: 'purchaseAccount', label: d.itemName || 'صنف', sub: 'مشتريات', ref: '-', amount: Number(d.price) || 0 });
+    });
+  }
   rows.sort((a, b) => new Date(a.date) - new Date(b.date));
   let balance = 0;
   rows.forEach(r => {
-    // المشتريات = أصناف اشتراها الزبون بالدين بس (بتزوّد المستحق). السداد والإيداع بيقللوا
-    // المستحق - مفيش أي قيمة بتتحط في عمود المشتريات إلا لو الصف ده فعلاً "شراء بالدين"
-    balance += r.type === 'purchase' ? r.amount : -r.amount;
+    // المبيعات = فواتير بعتها للزبون بالدين (بتزوّد المستحق منه). السداد والإيداع بيقللوا
+    // المستحق. المشتريات (اللي اشتريته منه) بتقلل المستحق منه كمان - لأنها بتتحسب لصالحه
+    // (نفس منطق "الرصيد الإجمالي" المستخدم في باقي التطبيق أصلًا)
+    balance += (r.type === 'purchase') ? r.amount : -r.amount;
     r.balance = balance;
   });
   return rows;
 }
 
-function openCustomerStatementView() {
+function confirmStatementFilterAndOpen() {
+  const filters = {
+    purchase: document.getElementById('stmtFilterPurchase').checked,
+    deposit: document.getElementById('stmtFilterDeposit').checked,
+    payment: document.getElementById('stmtFilterPayment').checked,
+    purchaseAccount: document.getElementById('stmtFilterPurchaseAccount').checked
+  };
+  if (!filters.purchase && !filters.deposit && !filters.payment && !filters.purchaseAccount) { alert('اختار نوع حركة واحد على الأقل'); return; }
+  closeModal('statementFilterModal');
+  openCustomerStatementView(filters);
+}
+
+function openCustomerStatementView(filters) {
   const s = lastCustomerStatement;
   if (!s) return;
   currentStatementViewType = 'customer';
-  const rows = buildUnifiedStatementRows(s);
+  const rows = buildUnifiedStatementRows(s, filters);
   const totalPurchases = rows.filter(r => r.type === 'purchase').reduce((t, r) => t + r.amount, 0);
   const totalDeposits = rows.filter(r => r.type === 'deposit').reduce((t, r) => t + r.amount, 0);
   const totalPayments = rows.filter(r => r.type === 'payment').reduce((t, r) => t + r.amount, 0);
@@ -3882,15 +3934,16 @@ function openCustomerStatementView() {
     const purchaseCell = r.type === 'purchase' ? fmtMoney(r.amount) : '0.00';
     const depositCell = r.type === 'deposit' ? fmtMoney(r.amount) : '0.00';
     const paymentCell = r.type === 'payment' ? fmtMoney(r.amount) : '0.00';
+    const purchaseAccountCell = r.type === 'purchaseAccount' ? fmtMoney(r.amount) : '0.00';
     return `<tr>
       <td><span class="newStmtRowNum">${idx + 1}</span></td>
       <td>${fmtDT(r.date)}</td>
       <td>${escapeHtml(r.ref)}</td>
       <td class="newStmtDesc"><div class="newStmtDescMain">${escapeHtml(r.label)}</div><div class="newStmtDescSub">${escapeHtml(r.sub)}</div></td>
       <td style="color:#2563EB;font-weight:700;">${purchaseCell}</td>
+      <td style="color:#EA580C;font-weight:700;">${purchaseAccountCell}</td>
       <td style="color:#16A34A;font-weight:700;">${depositCell}</td>
       <td style="color:#0D9488;font-weight:700;">${paymentCell}</td>
-      <td style="color:#DC2626;font-weight:800;">${fmtMoney(r.balance)}</td>
       <td style="color:#DC2626;font-weight:800;">${fmtMoney(r.balance)}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="9" style="padding:20px;color:#94A3B8;">مفيش حركات مسجلة في الفترة دي</td></tr>`;
@@ -3920,7 +3973,7 @@ function openCustomerStatementView() {
     </div>
     <div class="newStmtTableWrap">
       <table class="newStmtTable">
-        <thead><tr style="background:#1E293B;"><th style="background:#1E293B;color:#fff;">م</th><th style="background:#1E293B;color:#fff;">التاريخ والوقت</th><th style="background:#1E293B;color:#fff;">رقم الفاتورة</th><th style="background:#1E293B;color:#fff;">البيان</th><th style="background:#1E293B;color:#fff;">المشتريات</th><th style="background:#1E293B;color:#fff;">الإيداعات</th><th style="background:#1E293B;color:#fff;">السداد</th><th style="background:#1E293B;color:#fff;">المديونية</th><th style="background:#1E293B;color:#fff;">الرصيد الإجمالي</th></tr></thead>
+        <thead><tr style="background:#1E293B;"><th style="background:#1E293B;color:#fff;">م</th><th style="background:#1E293B;color:#fff;">التاريخ والوقت</th><th style="background:#1E293B;color:#fff;">رقم الفاتورة</th><th style="background:#1E293B;color:#fff;">البيان</th><th style="background:#1E293B;color:#fff;">المبيعات</th><th style="background:#1E293B;color:#fff;">المشتريات</th><th style="background:#1E293B;color:#fff;">الإيداعات</th><th style="background:#1E293B;color:#fff;">السداد</th><th style="background:#1E293B;color:#fff;">الرصيد الإجمالي</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>
@@ -3929,7 +3982,7 @@ function openCustomerStatementView() {
       <div class="newStmtFooterCard" style="background:#FEF2F2;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><div class="newStmtFooterLabel" style="color:#DC2626;">إجمالي المديونية</div><div class="newStmtFooterAmount" style="color:#DC2626;">${fmtMoney(Math.abs(totalDebtBeforePayment))}</div></div>
       <div class="newStmtFooterCard" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><div class="newStmtFooterLabel" style="color:#0D9488;">إجمالي السداد</div><div class="newStmtFooterAmount" style="color:#0D9488;">${fmtMoney(totalPayments)}</div></div>
       <div class="newStmtFooterCard" style="background:#F0FDF4;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><circle cx="17" cy="14" r="1"/></svg><div class="newStmtFooterLabel" style="color:#16A34A;">إجمالي الإيداعات</div><div class="newStmtFooterAmount" style="color:#16A34A;">${fmtMoney(totalDeposits)}</div></div>
-      <div class="newStmtFooterCard" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg><div class="newStmtFooterLabel" style="color:#2563EB;">إجمالي المشتريات</div><div class="newStmtFooterAmount" style="color:#2563EB;">${fmtMoney(totalPurchases)}</div></div>
+      <div class="newStmtFooterCard" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg><div class="newStmtFooterLabel" style="color:#2563EB;">إجمالي المبيعات</div><div class="newStmtFooterAmount" style="color:#2563EB;">${fmtMoney(totalPurchases)}</div></div>
     </div>
     <div class="newStmtNote"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><div><b style="display:block;color:#1E293B;font-size:10px;margin-bottom:2px;">ملاحظات</b>هذا الكشف يوضح جميع الحركات المالية للعميل خلال الفترة المحددة أعلاه.</div></div>
     <div class="newStmtSignRow"><div class="newStmtSignLine">توقيع المسؤول</div></div>
