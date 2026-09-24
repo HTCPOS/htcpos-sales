@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 11:26 م · f92c7e</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 11:36 م · 8c1f4a</div>
   </div>
 </div>
 
@@ -4392,13 +4392,20 @@ function loadShortages() {
   const el = document.getElementById('shortagesList');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   document.getElementById('shortagesFulfilledSection').innerHTML = '';
-  db.ref('data/shortages').once('value').then(snap => {
+  Promise.all([
+    db.ref('data/shortages').once('value'),
+    db.ref('data/shortageClassifications').once('value')
+  ]).then(([snap, classSnap]) => {
     if (myToken !== shortagesLoadToken) return; // تحميل تاني أحدث بدأ وخلص قبل ده - نتجاهل النتيجة المتأخرة دي
     const val = snap.val();
-    // بنشيل أي تكرار محتمل لنفس الـID (زي لو تحميلين اتلخبطوا قبل كده وسابوا أثر) - بناخد آخر
-    // نسخة بس لكل ID، عشان "الصنف" ميتكررش في القائمة بأكتر من حالة مختلفة
+    const classifications = classSnap.val() || {};
+    // بنشيل أي تكرار محتمل لنفس الـID، وبعدين بنفرض التصنيف المحفوظ في مكاننا الخاص (لو موجود)
+    // فوق أي حاجة جايه من جهاز الكاشير - عشان لو هو رجّع يصفّر التصنيف، إحنا لسه فاكرينه
     const byId = {};
-    if (val) Object.entries(val).forEach(([id, it]) => { byId[id] = { id, ...it }; });
+    if (val) Object.entries(val).forEach(([id, it]) => {
+      const saved = classifications[id];
+      byId[id] = { id, ...it, source: (saved ? saved.source : it.source) || null, qty: (saved && saved.qty != null) ? saved.qty : it.qty };
+    });
     latestShortages = Object.values(byId);
     currentShortageSourceFilter = 'unclassified';
     renderShortageSourceTabs();
@@ -4566,13 +4573,19 @@ function saveShortageForm() {
   if (!name) { alert('اكتب اسم الصنف'); return; }
   const data = { name: name, qty: qty ? Number(qty) : null, source: source || null };
   if (editingShortageId) {
-    db.ref('data/shortages/' + editingShortageId).update(data).then(() => {
+    // بنكتب في مكانين: الصنف نفسه (زي العادي)، وكمان مكان منفصل خاص بالتطبيق بس (محمي من أي
+    // جهاز خارجي ممكن يرجّع يصفّر الصنف الأصلي - التصنيف يفضل محفوظ عندنا حتى لو ده حصل)
+    Promise.all([
+      db.ref('data/shortages/' + editingShortageId).update(data),
+      db.ref('data/shortageClassifications/' + editingShortageId).set({ source: source || null, qty: qty ? Number(qty) : null })
+    ]).then(() => {
       closeModal('shortageFormModal');
       loadShortages();
     }).catch(err => alert('فشل الحفظ: ' + (err && err.message ? err.message : err)));
   } else {
     const newRef = db.ref('data/shortages').push();
     newRef.set({ ...data, isCustom: true, time: new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) }).then(() => {
+      db.ref('data/shortageClassifications/' + newRef.key).set({ source: source || null, qty: qty ? Number(qty) : null });
       logActivity('إضافة صنف جديد للنواقص', name);
       closeModal('shortageFormModal');
       loadShortages();
@@ -4588,6 +4601,7 @@ function markShortageFulfilled(id) {
     name: it.name, qty: it.qty || null, source: it.source || null, fulfilledAt: new Date().toISOString()
   }).then(() => {
     logActivity('شراء صنف ناقص', it.name);
+    db.ref('data/shortageClassifications/' + id).remove(); // خلصنا من الصنف ده، منداعيش نفضل محتفظين بتصنيفه
     if (it.isCustom) {
       db.ref('data/shortages/' + id).remove().then(loadShortages);
     } else {
