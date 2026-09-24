@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 4:17 ص · 2b6f91</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 4:36 ص · e2d84a</div>
   </div>
 </div>
 
@@ -3840,17 +3840,19 @@ function customerDisplayNumber(customerId) {
 function buildUnifiedStatementRows(s) {
   const rows = [];
   s.salesDebts.concat(s.salesPaid).forEach(d => {
-    rows.push({ date: d.date, type: 'purchase', label: 'فاتورة مبيعات', sub: d.itemName || 'منتجات متنوعة', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
+    rows.push({ date: d.date, type: 'purchase', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
   });
   s.salesDeposits.forEach(p => {
     rows.push({ date: p.at, type: 'deposit', label: 'إيداع من العميل', sub: p.method || 'نقدي', ref: p.refNumber || '-', amount: Number(p.amount) || 0 });
   });
   s.salesPaid.forEach(d => {
-    if (d.paidAt) rows.push({ date: d.paidAt, type: 'payment', label: 'سداد جزئي من المديونية', sub: d.itemName || '-', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
+    if (d.paidAt) rows.push({ date: d.paidAt, type: 'payment', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
   });
   rows.sort((a, b) => new Date(a.date) - new Date(b.date));
   let balance = 0;
   rows.forEach(r => {
+    // المشتريات = أصناف اشتراها الزبون بالدين بس (بتزوّد المستحق). السداد والإيداع بيقللوا
+    // المستحق - مفيش أي قيمة بتتحط في عمود المشتريات إلا لو الصف ده فعلاً "شراء بالدين"
     balance += r.type === 'purchase' ? r.amount : -r.amount;
     r.balance = balance;
   });
