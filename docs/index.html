@@ -237,34 +237,42 @@
   body.keyboard-open #customerPickerModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
-  .stmtFrame { border:1.5px solid #E2E8F0; border-radius:14px; padding:10px 9px; margin:4px; box-sizing:border-box; }
-  .stmtHeading { font-size:14px; font-weight:800; color:#1E293B; margin-bottom:9px; padding-bottom:7px; border-bottom:2px solid #1E293B; }
-  .stmtTotal { font-size:12px; font-weight:800; padding:9px; background:#F1F5F9; border-radius:9px; margin-top:10px; text-align:center; }
-  .stmtTable { width:100%; border-collapse:collapse; font-size:9.5px; color:#1E293B; table-layout:fixed; }
-  .stmtTable th { background:#F8FAFC; color:#334155; padding:5px 4px; text-align:right; border-bottom:1px solid #E2E8F0; font-size:8.5px; font-weight:700; word-break:break-word; box-sizing:border-box; }
-  .stmtTable td { padding:5px 4px; border-bottom:1px solid #F1F5F9; word-break:break-word; box-sizing:border-box; }
-  .stmtFooter { margin-top:8px; font-size:9px; color:#94A3B8; text-align:center; }
-  .stmtSectionTitle { font-size:11px; font-weight:800; color:#334155; margin:10px 0 4px; padding-bottom:3px; border-bottom:2px solid #E2E8F0; }
-  .stmtBanner { display:flex; align-items:center; gap:7px; background:linear-gradient(135deg,#1E3A8A,#1D4ED8); color:#fff; border-radius:11px; padding:9px 10px; margin-bottom:8px; box-sizing:border-box; }
-  .stmtBannerIcon { width:26px; height:26px; min-width:26px; border-radius:50%; background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:13px; }
-  .stmtBannerText { flex:1; min-width:0; }
-  .stmtBannerTitle { font-size:12px; font-weight:800; }
-  .stmtBannerSub { font-size:8.5px; opacity:.85; margin-top:1px; }
-  .stmtBannerDate { font-size:7.5px; text-align:center; opacity:.9; line-height:1.4; flex-shrink:0; white-space:nowrap; }
-  .stmtCustomerBox { display:flex; justify-content:space-between; align-items:center; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:6px 9px; margin-bottom:8px; font-size:10px; box-sizing:border-box; }
-  .stmtCustomerLabel { color:#64748B; }
-  .stmtCustomerName { font-weight:800; color:#1E293B; }
-  .stmtStatGrid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:5px; margin-bottom:10px; }
-  .stmtStatCard { border-radius:9px; padding:6px 3px; color:#fff; text-align:center; box-sizing:border-box; min-width:0; }
-  .stmtStatIcon { font-size:11px; margin-bottom:2px; }
-  .stmtStatLabel { font-size:7px; opacity:.9; margin-bottom:2px; line-height:1.2; }
-  .stmtStatAmount { font-size:9px; font-weight:800; word-break:break-word; }
-  .stmtSection { margin-bottom:9px; border-radius:9px; overflow:hidden; border:1px solid #E2E8F0; }
-  .stmtSectionBar { color:#fff; font-size:10px; font-weight:800; padding:6px 9px; }
-  .stmtSectionTotal { padding:6px 9px; font-size:9.5px; font-weight:700; display:flex; justify-content:space-between; }
-  .stmtGrandTotal { margin-top:4px; text-align:center; background:#F1F5F9; border-radius:11px; padding:10px; font-size:11px; font-weight:700; }
-  .stmtGrandTotal span { display:block; font-size:15px; font-weight:800; margin:3px 0; }
-  .stmtGrandTotal small { font-size:9px; font-weight:600; opacity:.8; }
+  /* ============ تصميم كشف الحساب الجديد (طبق الأصل) ============ */
+  .newStmtWrap { background:#fff; border-radius:14px; direction:rtl; }
+  .newStmtHeader { display:flex; align-items:center; justify-content:space-between; padding:4px 2px 14px; }
+  .newStmtHeaderBtn { width:34px; height:34px; border-radius:50%; background:#F1F5F9; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .newStmtLogo { text-align:center; flex:1; }
+  .newStmtLogoText { font-size:16px; font-weight:900; color:#16A34A; letter-spacing:.5px; }
+  .newStmtLogoSub { font-size:9.5px; color:#64748B; margin-top:1px; }
+  .newStmtTitle { text-align:center; font-size:16px; font-weight:800; color:#1E293B; margin:2px 0 14px; }
+  .newStmtTitle::after { content:''; display:block; width:38px; height:3px; background:#16A34A; border-radius:2px; margin:7px auto 0; }
+  .newStmtCustCard { border:1.5px solid #E2E8F0; border-radius:12px; padding:12px; margin-bottom:10px; }
+  .newStmtCustTop { display:flex; align-items:center; gap:10px; }
+  .newStmtAvatar { width:42px; height:42px; border-radius:50%; background:#E0E7FF; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#4338CA; }
+  .newStmtCustName { font-size:14.5px; font-weight:800; color:#1E293B; }
+  .newStmtCustId { font-size:10px; color:#64748B; margin-top:2px; }
+  .newStmtDateRange { display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid #F1F5F9; }
+  .newStmtDateBox { flex:1; background:#F8FAFC; border-radius:8px; padding:6px 8px; text-align:center; }
+  .newStmtDateLabel { font-size:9px; color:#94A3B8; }
+  .newStmtDateVal { font-size:10.5px; font-weight:700; color:#334155; direction:ltr; }
+  .newStmtTableWrap { overflow-x:auto; border:1px solid #E2E8F0; border-radius:12px; margin-bottom:10px; -webkit-overflow-scrolling:touch; }
+  .newStmtTable { width:100%; border-collapse:collapse; font-size:10px; white-space:nowrap; }
+  .newStmtTable th { background:#F8FAFC; padding:9px 7px; font-weight:800; color:#475569; border-bottom:1.5px solid #E2E8F0; text-align:center; }
+  .newStmtTable td { padding:9px 7px; border-bottom:1px solid #F1F5F9; text-align:center; color:#1E293B; }
+  .newStmtTable tr:last-child td { border-bottom:none; }
+  .newStmtRowNum { display:inline-flex; width:18px; height:18px; border-radius:50%; background:#1E293B; color:#fff; font-size:9px; align-items:center; justify-content:center; }
+  .newStmtDesc { text-align:right; }
+  .newStmtDescMain { font-weight:700; color:#334155; }
+  .newStmtDescSub { font-size:8.5px; color:#94A3B8; margin-top:1px; }
+  .newStmtPill { display:inline-block; padding:3px 8px; border-radius:20px; font-weight:800; }
+  .newStmtFooterGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .newStmtFooterCard { border-radius:12px; padding:12px 8px; text-align:center; }
+  .newStmtFooterLabel { font-size:10px; font-weight:700; margin-top:5px; }
+  .newStmtFooterAmount { font-size:14px; font-weight:900; margin-top:3px; }
+  .newStmtNote { background:#EFF6FF; border-radius:10px; padding:10px 12px; font-size:9.5px; color:#3B82F6; display:flex; gap:8px; align-items:flex-start; line-height:1.6; }
+  /* التصميم الجديد بيجيب عنوانه وزرار الرجوع بتاعه (شايفهم جوه newStmtHeader) - العنوان
+     وزرار الإغلاق العاديين بتوع النافذة بقوا زيادة عن اللزوم هنا بس، فبنخفيهم */
+  #statementViewModal > .modalSheet > .closeM, #statementViewModal > .modalSheet > h3 { display:none; }
   .ic { display:inline-block; width:16px; height:16px; background-size:contain; background-repeat:no-repeat; background-position:center; vertical-align:-3px; }
   .ic-bank { background-image:url(data:image/webp;base64,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); }
   .ic-cart { background-image:url(data:image/webp;base64,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); }
@@ -370,7 +378,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 3:05 ص · 1fae82</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 3:37 ص · f1a2c9</div>
   </div>
 </div>
 
@@ -650,19 +658,6 @@
     <button class="closeM" onclick="closeModal('customerDebtModal')">✕</button>
     <h3 id="customerDebtTitle">حساب الزبون</h3>
     <div id="customerDebtBody"></div>
-  </div>
-</div>
-
-<div class="modalBg" id="statementSectionPickerModal" onclick="if(event.target===this)closeModal('statementSectionPickerModal')">
-  <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('statementSectionPickerModal')">✕</button>
-    <h3>اختر أجزاء الكشف</h3>
-    <div style="display:flex;gap:8px;margin:12px 0;">
-      <button onclick="setSectionPickerAll(true)" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:10px;padding:9px;font-weight:700;font-size:12px;cursor:pointer;">تحديد الكل</button>
-      <button onclick="setSectionPickerAll(false)" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:10px;padding:9px;font-weight:700;font-size:12px;cursor:pointer;">إلغاء الكل</button>
-    </div>
-    <div id="statementSectionPickerList"></div>
-    <button onclick="confirmSectionPickerAndOpen()" style="width:100%;margin-top:14px;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;"><span class="ic ic-search"></span> فتح الكشف</button>
   </div>
 </div>
 
@@ -3709,8 +3704,9 @@ function openCustomerDebt(customerId, customerName) {
     db.ref('data/debts').once('value'),
     db.ref('data/deposits').once('value'),
     db.ref('data/purchaseDebts').once('value'),
-    db.ref('data/purchaseDeposits').once('value')
-  ]).then(([debtSnap, depSnap, pdSnap, ppSnap]) => {
+    db.ref('data/purchaseDeposits').once('value'),
+    db.ref('data/customers/' + customerId).once('value')
+  ]).then(([debtSnap, depSnap, pdSnap, ppSnap, custSnap]) => {
     const debtVal = debtSnap.val();
     const allDebts = debtVal ? Object.entries(debtVal).map(([id, d]) => ({ id, ...d })) : [];
     const myAllDebts = allDebts.filter(d => d.customerId === customerId);
@@ -3751,7 +3747,7 @@ function openCustomerDebt(customerId, customerName) {
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
-      <button onclick="openStatementSectionPicker()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
+      <button onclick="openCustomerStatementView()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
       <button onclick="shareStatementView()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
@@ -3796,6 +3792,7 @@ function openCustomerDebt(customerId, customerName) {
 
     lastCustomerStatement = {
       customerId, customerName, combinedNet,
+      customerPhone: (custSnap.val() && custSnap.val().phone) || null,
       salesDebts: mine, salesPaid: paidDebts, salesDeposits: myDeposits,
       purchaseDebts: myPurchases, purchasePaid: paidPurchases, purchaseDeposits: myPurchaseDeposits
     };
@@ -3816,149 +3813,105 @@ function buildStatementRows(s) {
 
 let currentStatementViewType = 'customer';
 
-function buildStmtSectionBlock(icon, label, color, headers, rows, totalLabel, totalAmount) {
-  let html = `<div class="stmtSection">
-    <div class="stmtSectionBar" style="background:${color};">${icon} ${label}</div>
-    <table class="stmtTable"><thead><tr>`;
-  headers.forEach(h => html += `<th>${h}</th>`);
-  html += `</tr></thead><tbody>`;
-  rows.forEach(r => {
-    html += `<tr>`;
-    r.forEach(cell => html += `<td>${escapeHtml(cell)}</td>`);
-    html += `</tr>`;
+// توليد "رقم عميل" ثابت من معرّف الزبون (مفيش رقم عميل متسلسل حقيقي في البيانات، فبنعمل رقم
+// ثابت ومميز لنفس الزبون كل مرة من نفس الـ ID بتاعه - بيبان زي رقم عميل حقيقي في التصميم)
+function customerDisplayNumber(customerId) {
+  let hash = 0;
+  const s = String(customerId || '');
+  for (let i = 0; i < s.length; i++) { hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0; }
+  return String(Math.abs(hash) % 1000000).padStart(6, '0');
+}
+
+// بناء صفوف الحركات الموحّدة (فواتير + إيداعات + سداد) مرتبة بالتاريخ، مع حساب الرصيد المتراكم
+// بعد كل حركة (نفس منطق أي كشف حساب محاسبي حقيقي)
+function buildUnifiedStatementRows(s) {
+  const rows = [];
+  s.salesDebts.concat(s.salesPaid).forEach(d => {
+    rows.push({ date: d.date, type: 'purchase', label: 'فاتورة مبيعات', sub: d.itemName || 'منتجات متنوعة', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
   });
-  html += `</tbody></table>
-    <div class="stmtSectionTotal" style="background:${color}1A;color:${color};">${totalLabel} <b>${fmtMoney(totalAmount)} د.ل</b></div>
-  </div>`;
-  return html;
+  s.salesDeposits.forEach(p => {
+    rows.push({ date: p.at, type: 'deposit', label: 'إيداع من العميل', sub: p.method || 'نقدي', ref: p.refNumber || '-', amount: Number(p.amount) || 0 });
+  });
+  s.salesPaid.forEach(d => {
+    if (d.paidAt) rows.push({ date: d.paidAt, type: 'payment', label: 'سداد جزئي من المديونية', sub: d.itemName || '-', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
+  });
+  rows.sort((a, b) => new Date(a.date) - new Date(b.date));
+  let balance = 0;
+  rows.forEach(r => {
+    balance += r.type === 'purchase' ? r.amount : -r.amount;
+    r.balance = balance;
+  });
+  return rows;
 }
 
-function stmtStatCard(icon, label, amount, color) {
-  return `<div class="stmtStatCard" style="background:${color};">
-    <div class="stmtStatIcon">${icon}</div>
-    <div class="stmtStatLabel">${label}</div>
-    <div class="stmtStatAmount">${fmtMoney(amount)} د.ل</div>
-  </div>`;
-}
-
-const STMT_SECTION_DEFS = [
-  { key: 'salesDebts', label: '<span class="ic ic-moneybag"></span> المبيعات المستحقة' },
-  { key: 'salesPaid', label: '<span class="ic ic-checkgreen"></span> مبيعات مسددة' },
-  { key: 'salesDeposits', label: '<span class="ic ic-cash"></span> الإيداعات' },
-  { key: 'purchaseDebts', label: '<span class="ic ic-packagecheck"></span> المشتريات المستحقة عليك' },
-  { key: 'purchasePaid', label: '<span class="ic ic-checkgreen"></span> مشتريات مسددة' },
-  { key: 'purchaseDeposits', label: '<span class="ic ic-cash"></span> تسديدات المشتريات' },
-];
-let selectedStmtSections = null;
-
-function openStatementSectionPicker() {
+function openCustomerStatementView() {
   const s = lastCustomerStatement;
   if (!s) return;
-  const listEl = document.getElementById('statementSectionPickerList');
-  const available = STMT_SECTION_DEFS.filter(def => s[def.key] && s[def.key].length);
-  if (!available.length) { alert('مفيش أي حركات مسجلة لهذا الحساب'); return; }
-  listEl.innerHTML = available.map(def => `
-    <label style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
-      <input type="checkbox" class="stmtSectionCheckbox" value="${def.key}" checked style="width:18px;height:18px;">
-      <span style="font-size:13.5px;">${def.label}</span>
-    </label>`).join('');
-  openModal('statementSectionPickerModal');
-}
-
-function setSectionPickerAll(checked) {
-  document.querySelectorAll('.stmtSectionCheckbox').forEach(cb => cb.checked = checked);
-}
-
-function confirmSectionPickerAndOpen() {
-  const checked = Array.from(document.querySelectorAll('.stmtSectionCheckbox:checked')).map(cb => cb.value);
-  if (!checked.length) { alert('اختار جزء واحد على الأقل'); return; }
-  selectedStmtSections = checked;
-  closeModal('statementSectionPickerModal');
-  openCustomerStatementView(checked);
-}
-
-function openCustomerStatementView(sectionsFilter) {
-  const s = lastCustomerStatement;
-  if (!s) return;
-  const include = (key) => !sectionsFilter || sectionsFilter.includes(key);
   currentStatementViewType = 'customer';
-  const netLabel = s.combinedNet > 0 ? 'مستحق منه' : s.combinedNet < 0 ? 'مستحق له' : 'الحساب متزن';
-  const netColor = s.combinedNet < 0 ? '#DC2626' : '#16A34A';
+  const rows = buildUnifiedStatementRows(s);
+  const totalPurchases = rows.filter(r => r.type === 'purchase').reduce((t, r) => t + r.amount, 0);
+  const totalDeposits = rows.filter(r => r.type === 'deposit').reduce((t, r) => t + r.amount, 0);
+  const totalPayments = rows.filter(r => r.type === 'payment').reduce((t, r) => t + r.amount, 0);
+  const finalBalance = rows.length ? rows[rows.length - 1].balance : 0;
+  const now = new Date();
   const fmtDT = (iso) => {
     const d = new Date(iso);
-    return d.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'short', year:'numeric' }) + ' &middot; ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
+    return d.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'short', year:'numeric' }) + '<br>' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
   };
-  const sum = (arr, field) => arr.reduce((t, x) => t + Number(x[field] || 0), 0);
-  const totalSalesDue = sum(s.salesDebts, 'amount');
-  const totalDeposits = sum(s.salesDeposits, 'amount');
-  const totalPurchases = sum(s.purchaseDebts, 'price') + sum(s.purchasePaid, 'price');
-  const now = new Date();
+  const firstDate = rows.length ? new Date(rows[0].date) : now;
+  const custNum = customerDisplayNumber(s.customerId);
 
   document.getElementById('statementViewTitle').textContent = 'كشف حساب - ' + s.customerName;
 
-  let html = `<div class="stmtFrame">
-    <div class="stmtBanner">
-      <div class="stmtBannerIcon"><span class="ic ic-customers"></span></div>
-      <div class="stmtBannerText"><div class="stmtBannerTitle">كشف حساب</div><div class="stmtBannerSub">تقرير تفصيلي للحساب</div></div>
-      <div class="stmtBannerDate">${now.toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric'})}<br>${now.toLocaleTimeString('ar-EG-u-nu-latn',{hour:'2-digit',minute:'2-digit'})}</div>
+  const rowsHtml = rows.length ? rows.map((r, idx) => {
+    const purchaseCell = r.type === 'purchase' ? fmtMoney(r.amount) : '0.00';
+    const depositCell = r.type === 'deposit' ? fmtMoney(r.amount) : '0.00';
+    const paymentCell = r.type === 'payment' ? fmtMoney(r.amount) : '0.00';
+    const balanceColor = r.balance > 0 ? '#DC2626' : (r.balance < 0 ? '#16A34A' : '#64748B');
+    const balanceBg = r.balance > 0 ? '#FEE2E2' : (r.balance < 0 ? '#DCFCE7' : '#F1F5F9');
+    return `<tr>
+      <td><span class="newStmtRowNum">${idx + 1}</span></td>
+      <td>${fmtDT(r.date)}</td>
+      <td class="newStmtDesc"><div class="newStmtDescMain">${escapeHtml(r.label)}</div><div class="newStmtDescSub">${escapeHtml(r.sub)}</div></td>
+      <td>${escapeHtml(r.ref)}</td>
+      <td style="color:#DC2626;font-weight:700;">${purchaseCell}</td>
+      <td style="color:#16A34A;font-weight:700;">${depositCell}</td>
+      <td style="color:#2563EB;font-weight:700;">${paymentCell}</td>
+      <td><span class="newStmtPill" style="background:${balanceBg};color:${balanceColor};">${fmtMoney(r.balance)}</span></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" style="padding:20px;color:#94A3B8;">مفيش حركات مسجلة في الفترة دي</td></tr>`;
+
+  const html = `<div class="newStmtWrap">
+    <div class="newStmtHeader">
+      <button class="newStmtHeaderBtn" onclick="closeModal('statementViewModal')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#334155" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="newStmtLogo"><div class="newStmtLogoText">HTC POS</div><div class="newStmtLogoSub">منظومة مبيعات</div></div>
+      <button class="newStmtHeaderBtn" onclick="downloadStatementViewPDF()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h9l3 3v4"/><rect x="4" y="13" width="16" height="7"/><path d="M8 17h2m4 0h2"/></svg></button>
     </div>
-    <div class="stmtCustomerBox"><span class="stmtCustomerLabel">اسم العميل</span><span class="stmtCustomerName">${escapeHtml(s.customerName)}</span></div>
-    <div class="stmtStatGrid">
-      ${stmtStatCard('<span class="ic ic-bank"></span>', 'الرصيد الإجمالي', Math.abs(s.combinedNet), '#7C3AED')}
-      ${stmtStatCard('<span class="ic ic-moneybag"></span>', netLabel, Math.abs(s.combinedNet), netColor)}
-      ${stmtStatCard('<span class="ic ic-cash"></span>', 'الإيداعات', totalDeposits, '#2563EB')}
-      ${stmtStatCard('<span class="ic ic-cart"></span>', 'المشتريات', totalPurchases, '#EA580C')}
-    </div>`;
-
-  let anySectionShown = false;
-  if (s.salesDebts.length && include('salesDebts')) {
-    anySectionShown = true;
-    html += buildStmtSectionBlock('<span class="ic ic-moneybag"></span>', 'المبيعات المستحقة', '#16A34A',
-      ['الصنف', 'رقم الإيصال', 'التاريخ', 'المبلغ'],
-      s.salesDebts.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.date), fmtMoney(d.amount) + ' د.ل']),
-      'إجمالي المبيعات المستحقة', totalSalesDue);
-  }
-  if (s.salesPaid.length && include('salesPaid')) {
-    anySectionShown = true;
-    html += buildStmtSectionBlock('<span class="ic ic-checkgreen"></span>', 'مبيعات مسددة', '#0D9488',
-      ['الصنف', 'رقم الإيصال', 'تاريخ السداد', 'المبلغ'],
-      s.salesPaid.map(d => [d.itemName, d.invoiceNumber || '-', fmtDT(d.paidAt || d.date), fmtMoney(d.amount) + ' د.ل']),
-      'إجمالي المسدد', sum(s.salesPaid, 'amount'));
-  }
-  if (s.salesDeposits.length && include('salesDeposits')) {
-    anySectionShown = true;
-    html += buildStmtSectionBlock('<span class="ic ic-cash"></span>', 'الإيداعات', '#2563EB',
-      ['طريقة الدفع', 'التاريخ', 'المبلغ'],
-      s.salesDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']),
-      'إجمالي الإيداعات', totalDeposits);
-  }
-  if (s.purchaseDebts.length && include('purchaseDebts')) {
-    anySectionShown = true;
-    html += buildStmtSectionBlock('<span class="ic ic-packagecheck"></span>', 'المشتريات المستحقة عليك', '#EA580C',
-      ['الصنف', 'التاريخ', 'المبلغ'],
-      s.purchaseDebts.map(d => [d.itemName, fmtDT(d.at), fmtMoney(d.price) + ' د.ل']),
-      'إجمالي المستحق عليك', sum(s.purchaseDebts, 'price'));
-  }
-  if (s.purchasePaid.length && include('purchasePaid')) {
-    anySectionShown = true;
-    html += buildStmtSectionBlock('<span class="ic ic-checkgreen"></span>', 'مشتريات مسددة', '#0D9488',
-      ['الصنف', 'تاريخ السداد', 'المبلغ'],
-      s.purchasePaid.map(d => [d.itemName, fmtDT(d.paidAt || d.at), fmtMoney(d.price) + ' د.ل']),
-      'إجمالي المسدد', sum(s.purchasePaid, 'price'));
-  }
-  if (s.purchaseDeposits.length && include('purchaseDeposits')) {
-    anySectionShown = true;
-    html += buildStmtSectionBlock('<span class="ic ic-cash"></span>', 'تسديدات المشتريات', '#DC2626',
-      ['طريقة الدفع', 'التاريخ', 'المبلغ'],
-      s.purchaseDeposits.map(p => [p.method || '-', fmtDT(p.at), fmtMoney(p.amount) + ' د.ل']),
-      'إجمالي المسدد', sum(s.purchaseDeposits, 'amount'));
-  }
-  if (!anySectionShown) {
-    html += `<div class="emptyMsg">مفيش أي أقسام اتحددت أو مفيش حركات مسجلة</div>`;
-  }
-
-  html += `<div class="stmtGrandTotal" style="color:${netColor};">الرصيد الإجمالي<br><span>${fmtMoney(Math.abs(s.combinedNet))} د.ل</span><small>(${netLabel})</small></div>`;
-  html += `<div class="stmtFooter">تم الإنشاء: ${now.toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`;
+    <div class="newStmtTitle">كشف حساب عميل</div>
+    <div class="newStmtCustCard">
+      <div class="newStmtCustTop">
+        <div class="newStmtAvatar"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg></div>
+        <div><div class="newStmtCustName">${escapeHtml(s.customerName)}</div><div class="newStmtCustId">${s.customerPhone ? '📞 ' + escapeHtml(s.customerPhone) : 'رقم العميل: ' + custNum}</div></div>
+      </div>
+      <div class="newStmtDateRange">
+        <div class="newStmtDateBox"><div class="newStmtDateLabel">من تاريخ</div><div class="newStmtDateVal">${firstDate.toLocaleDateString('en-GB').split('/').reverse().join('/')}</div></div>
+        <div class="newStmtDateBox"><div class="newStmtDateLabel">إلى تاريخ</div><div class="newStmtDateVal">${now.toLocaleDateString('en-GB').split('/').reverse().join('/')}</div></div>
+      </div>
+    </div>
+    <div class="newStmtTableWrap">
+      <table class="newStmtTable">
+        <thead><tr><th>#</th><th>التاريخ والوقت</th><th>البيان</th><th>الفاتورة رقم</th><th>المشتريات</th><th>الإيداعات</th><th>السداد</th><th>الرصيد المستحق</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+    <div class="newStmtFooterGrid">
+      <div class="newStmtFooterCard" style="background:#F5F3FF;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg><div class="newStmtFooterLabel" style="color:#7C3AED;">الرصيد المستحق</div><div class="newStmtFooterAmount" style="color:#7C3AED;">${fmtMoney(Math.abs(finalBalance))}</div></div>
+      <div class="newStmtFooterCard" style="background:#EFF6FF;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><div class="newStmtFooterLabel" style="color:#2563EB;">إجمالي السداد</div><div class="newStmtFooterAmount" style="color:#2563EB;">${fmtMoney(totalPayments)}</div></div>
+      <div class="newStmtFooterCard" style="background:#F0FDF4;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><circle cx="17" cy="14" r="1"/></svg><div class="newStmtFooterLabel" style="color:#16A34A;">إجمالي الإيداعات</div><div class="newStmtFooterAmount" style="color:#16A34A;">${fmtMoney(totalDeposits)}</div></div>
+      <div class="newStmtFooterCard" style="background:#FEF2F2;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg><div class="newStmtFooterLabel" style="color:#DC2626;">إجمالي المشتريات</div><div class="newStmtFooterAmount" style="color:#DC2626;">${fmtMoney(totalPurchases)}</div></div>
+    </div>
+    <div class="newStmtNote"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><div>جميع المبالغ بالعملة المحلية (د.ل). هذا الكشف يوضح جميع الحركات المالية للعميل خلال الفترة المحددة أعلاه.</div></div>
+  </div>`;
   document.getElementById('statementViewBody').innerHTML = html;
   openModal('statementViewModal');
 }
