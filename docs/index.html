@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 9:10 ص · c85b2e</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 9:24 ص · 7be241</div>
   </div>
 </div>
 
@@ -1840,7 +1840,15 @@ function assignDebtToCustomer(customerId, customerName) {
     pendingDebtItem = null;
     closeModal('customerPickerModal');
     closeModal('itemDetailModal');
-    alert('اتسجل الدين على حساب ' + customerName);
+    // لو الزبون عنده رصيد فايض من إيداعات سابقة (زيادة عن أي أصناف تانية مستحقة)، الدين الجديد
+    // ده يتسدد منه فورًا تلقائيًا - مش لازم يستنى إيداع جديد
+    reconcileSalesAccount(customerId).then(info => {
+      if (info.settledCount > 0) {
+        alert('اتسجل الدين على حساب ' + customerName + '\n\n✅ اتسدد تلقائيًا من رصيد فايض عنده أصلاً');
+      } else {
+        alert('اتسجل الدين على حساب ' + customerName);
+      }
+    }).catch(() => { alert('اتسجل الدين على حساب ' + customerName); });
   });
 }
 
@@ -3600,14 +3608,13 @@ function submitDeposit() {
       if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
     };
 
-    // تسوية تلقائية: بس لإيداعات حساب المبيعات (مش تسديد المشتريات - ده حساب تاني منفصل).
-    // الإيداع بيتطبّق على أقدم الأصناف المستحقة أول بأول لحد ما المبلغ يخلص. أي فايض من الإيداع
-    // بيفضل ظاهر تلقائيًا في "الرصيد الإجمالي" كرصيد لصالح الزبون - مفيش حاجة تانية لازم نعملها،
-    // نفس صيغة الحساب الموجودة أصلاً بتعكسه صح لوحدها
+    // تسوية شاملة: بس لإيداعات حساب المبيعات (مش تسديد المشتريات - ده حساب تاني منفصل). بتحسب
+    // *كل* الإيداعات مجمّعة مع بعض (مش الإيداع ده بس) عشان لو إيداعات صغيرة سابقة + الإيداع ده
+    // مجمّعين كفاية لصنف مستحق، يتسدد - حتى لو كل واحد فيهم لوحده مش كان كفاية وقتها
     if (kind !== 'purchase') {
-      autoSettleDebtsWithDeposit(customerId, depositId, amount).then(info => {
-        if (info.count > 0) {
-          showQuickToast(`✅ اتسدد تلقائيًا ${info.count} صنف بقيمة ${fmtMoney(info.total)} د.ل من الإيداع ده`);
+      reconcileSalesAccount(customerId).then(info => {
+        if (info.settledCount > 0) {
+          showQuickToast(`✅ اتسدد تلقائيًا ${info.settledCount} صنف من إجمالي الإيداعات`);
         }
         finishUp();
       }).catch(err => {
@@ -3622,35 +3629,55 @@ function submitDeposit() {
   });
 }
 
-// بتاخد مبلغ إيداع وتطبّقه على أقدم الأصناف المستحقة (اللي لسه "لم يسدد") واحد واحد لحد ما
-// المبلغ يخلص أو نوصل لصنف قيمته أكبر من الباقي (وقتها بنوقف - الأقدم أولًا معناها منتخطاش صنف
-// قديم عشان نسدد اللي بعده). كل صنف بيتعلّم إنه اتسدد بسبب الإيداع ده بالظبط (paidByDepositId)
-// عشان لو الإيداع اتلغى بعدين، نقدر نرجّع الأصناف دي "لم يسدد" تاني بدل ما تفضل معلّمة مسددة غلط
-async function autoSettleDebtsWithDeposit(customerId, depositId, depositAmount) {
-  const snap = await db.ref('data/debts').once('value');
-  const val = snap.val() || {};
-  const unpaid = Object.entries(val)
-    .map(([id, d]) => ({ id, ...d }))
-    .filter(d => d.customerId === customerId && !d.paid)
-    .sort((a, b) => new Date(a.date) - new Date(b.date)); // الأقدم أولًا
+// تسوية شاملة لحساب مبيعات الزبون: بتحسب *إجمالي كل الإيداعات* بتاعته مع بعض (مش كل إيداع
+// لوحده) وتوزّعهم على الأصناف المستحقة الأقدم أولًا. بتتنفذ من الصفر في كل مرة (مش بتضيف فوق
+// حاجة قديمة) عشان تفضل صح دايمًا مهما كان ترتيب العمليات - إيداعين صغيرين مع بعض ممكن يغطوا
+// صنف كبير حتى لو كل واحد لوحده مش كفاية، وده بالظبط اللي كان ناقص قبل كده.
+// الأصناف اللي اتسددت تلقائيًا معلّمة بـ autoSettled:true (عشان نفرّقها عن اللي اتسددت يدويًا
+// بزرار "تسجيل السداد" - دي منضربهاش خالص، مهما كان الرصيد المتاح)
+async function reconcileSalesAccount(customerId) {
+  const [debtSnap, depSnap] = await Promise.all([
+    db.ref('data/debts').once('value'),
+    db.ref('data/deposits').once('value')
+  ]);
+  const allDebts = Object.entries(debtSnap.val() || {}).map(([id, d]) => ({ id, ...d })).filter(d => d.customerId === customerId);
+  const allDeposits = Object.entries(depSnap.val() || {}).map(([id, p]) => ({ id, ...p })).filter(p => p.customerId === customerId);
+  const totalDeposits = allDeposits.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-  let remaining = depositAmount;
+  // الأصناف المؤهلة للتسوية التلقائية: لسه مستحقة، أو كانت اتسددت تلقائيًا قبل كده (ممكن نرجّعها
+  // "مستحقة" تاني لو الرصيد بقى مش كافي، زي لو إيداع اتلغى). أي صنف اتسدد يدويًا (autoSettled
+  // مش موجودة) منضربهوش خالص مهما حصل.
+  const eligible = allDebts.filter(d => !d.paid || d.autoSettled).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  let remaining = totalDeposits;
+  let stillFilling = true;
   const updates = {};
-  let count = 0, total = 0;
+  let settledCount = 0, revertedCount = 0;
   const paidAt = new Date().toISOString();
-  for (const d of unpaid) {
+
+  for (const d of eligible) {
     const amt = Number(d.amount) || 0;
-    if (amt <= 0) continue;
-    if (remaining + 0.001 < amt) break; // الباقي مش كفاية للصنف ده - نوقف هنا (أقدم أولًا)
-    updates['data/debts/' + d.id + '/paid'] = true;
-    updates['data/debts/' + d.id + '/paidAt'] = paidAt;
-    updates['data/debts/' + d.id + '/paidByDepositId'] = depositId;
-    remaining -= amt;
-    count++;
-    total += amt;
+    let shouldBePaid = false;
+    if (stillFilling && amt > 0 && remaining + 0.001 >= amt) {
+      shouldBePaid = true;
+      remaining -= amt;
+    } else {
+      stillFilling = false; // أول صنف مش كفاية له، نوقف نسدد أي حاجة بعده (حتى لو أرخص) - أقدم أولًا
+    }
+    if (shouldBePaid && !d.paid) {
+      updates['data/debts/' + d.id + '/paid'] = true;
+      updates['data/debts/' + d.id + '/paidAt'] = paidAt;
+      updates['data/debts/' + d.id + '/autoSettled'] = true;
+      settledCount++;
+    } else if (!shouldBePaid && d.paid && d.autoSettled) {
+      updates['data/debts/' + d.id + '/paid'] = false;
+      updates['data/debts/' + d.id + '/paidAt'] = null;
+      updates['data/debts/' + d.id + '/autoSettled'] = null;
+      revertedCount++;
+    }
   }
-  if (count > 0) await db.ref().update(updates);
-  return { count, total };
+  if (settledCount > 0 || revertedCount > 0) await db.ref().update(updates);
+  return { settledCount, revertedCount, remaining };
 }
 
 function startPurchaseDebtEntry() {
@@ -3731,29 +3758,20 @@ function cancelDeposit(depositId, customerId, customerName, kind) {
 
     if (kind === 'purchase') { finishCancel(); return; }
 
-    // لو الإيداع ده كان سدّد أصناف تلقائيًا (شوف autoSettleDebtsWithDeposit)، لازم نرجّعهم
-    // "لم يسدد" تاني الأول قبل ما نمسح الإيداع - وإلا هيفضل عندك أصناف معلّمة "مسددة" من غير أي
-    // إيداع حقيقي وراها، وده بالظبط نوع الخطأ المحاسبي اللي المفروض النظام ده يمنعه
-    db.ref('data/debts').orderByChild('paidByDepositId').equalTo(depositId).once('value').then(debtSnap => {
-      const val = debtSnap.val();
-      if (!val) { finishCancel(); return; }
-      const updates = {};
-      let revertedCount = 0;
-      Object.keys(val).forEach(id => {
-        updates['data/debts/' + id + '/paid'] = false;
-        updates['data/debts/' + id + '/paidAt'] = null;
-        updates['data/debts/' + id + '/paidByDepositId'] = null;
-        revertedCount++;
-      });
-      db.ref().update(updates).then(() => {
-        if (revertedCount > 0) showQuickToast(`↩️ رجّعنا ${revertedCount} صنف لحالة "لم يسدد" لأن الإيداع اللي سدّدهم اتلغى`);
-        finishCancel();
+    // بعد ما نمسح الإيداع، بنشغّل التسوية الشاملة تاني من الصفر - هي اللي هتكتشف تلقائيًا إن
+    // إجمالي الإيداعات بقى أقل، وترجّع أي صنف مبقاش الرصيد كافي له لحالة "لم يسدد" تاني
+    db.ref(path + depositId).remove().then(() => {
+      logActivity('إلغاء إيداع', amountLabel + ' - ' + customerName);
+      reconcileSalesAccount(customerId).then(info => {
+        if (info.revertedCount > 0) showQuickToast(`↩️ رجّعنا ${info.revertedCount} صنف لحالة "لم يسدد" بعد إلغاء الإيداع`);
+        if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
+        if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
       }).catch(err => {
-        // فشل الإرجاع - مهم نوقف هنا ونوضح بدل ما نكمل نمسح الإيداع ونسيب الأصناف "مسددة" غلط
-        alert('مقدرناش نرجّع الأصناف اللي اتسددت من الإيداع ده لحالة "لم يسدد" - الإيداع لسه موجود ولسه ممسوحش، عشان منضيعش البيانات. جرب تاني: ' + (err && err.message ? err.message : err));
+        alert('اتلغى الإيداع، لكن حصلت مشكلة وقت إعادة حساب الأصناف المستحقة تلقائيًا: ' + (err && err.message ? err.message : err) + '\n\nراجعي الأصناف يدويًا للتأكد.');
+        if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
       });
     }).catch(err => {
-      alert('حصلت مشكلة وقت فحص الأصناف المرتبطة بالإيداع ده - الإيداع لسه موجود من غير أي تغيير. جرب تاني: ' + (err && err.message ? err.message : err));
+      alert('حصلت مشكلة وقت مسح الإيداع: ' + (err && err.message ? err.message : err));
     });
   });
 }
