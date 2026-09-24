@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 11:17 م · shdebug3</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 11:26 م · f92c7e</div>
   </div>
 </div>
 
@@ -4386,19 +4386,20 @@ let latestShortages = [];
 let currentShortageSourceFilter = 'all';
 let editingShortageId = null;
 
+let shortagesLoadToken = 0; // شبكة أمان ضد تحميلين متزاحمين على بعض: لو تحميل جديد بدأ، أي تحميل قديم لسه شغال بنتجاهل نتيجته لو رجعت متأخرة
 function loadShortages() {
+  const myToken = ++shortagesLoadToken;
   const el = document.getElementById('shortagesList');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   document.getElementById('shortagesFulfilledSection').innerHTML = '';
   db.ref('data/shortages').once('value').then(snap => {
+    if (myToken !== shortagesLoadToken) return; // تحميل تاني أحدث بدأ وخلص قبل ده - نتجاهل النتيجة المتأخرة دي
     const val = snap.val();
-    latestShortages = val ? Object.entries(val).map(([id, it]) => ({ id, ...it })) : [];
-    // تشخيص مؤقت: لو فيه أكتر من صنف بنفس الاسم بـID مختلف (نسخة مكررة)، هيبان هنا واضح
-    const dupCheck = latestShortages.filter(it => (it.name || '').includes('FLEX A02'));
-    if (dupCheck.length) {
-      alert('كل الأصناف اللي اسمها فيه "FLEX A02" في القاعدة دلوقتي (' + dupCheck.length + ' نسخة):\n\n' +
-        dupCheck.map(it => `ID=${JSON.stringify(it.id)} (طول=${it.id.length})\nsource=${JSON.stringify(it.source)}\nqty=${JSON.stringify(it.qty)}`).join('\n---\n'));
-    }
+    // بنشيل أي تكرار محتمل لنفس الـID (زي لو تحميلين اتلخبطوا قبل كده وسابوا أثر) - بناخد آخر
+    // نسخة بس لكل ID، عشان "الصنف" ميتكررش في القائمة بأكتر من حالة مختلفة
+    const byId = {};
+    if (val) Object.entries(val).forEach(([id, it]) => { byId[id] = { id, ...it }; });
+    latestShortages = Object.values(byId);
     currentShortageSourceFilter = 'unclassified';
     renderShortageSourceTabs();
     renderShortagesList();
@@ -4565,15 +4566,10 @@ function saveShortageForm() {
   if (!name) { alert('اكتب اسم الصنف'); return; }
   const data = { name: name, qty: qty ? Number(qty) : null, source: source || null };
   if (editingShortageId) {
-    const idForDebug = editingShortageId;
     db.ref('data/shortages/' + editingShortageId).update(data).then(() => {
-      // تشخيص مؤقت: نتأكد بالدليل إيه اللي فعليًا اتخزن في قاعدة البيانات فور الحفظ مباشرة
-      db.ref('data/shortages/' + idForDebug).once('value').then(checkSnap => {
-        alert('اتبعت للحفظ: ' + JSON.stringify(data) + '\n\nاللي فعليًا في القاعدة فور الحفظ: ' + JSON.stringify(checkSnap.val()));
-        closeModal('shortageFormModal');
-        loadShortages();
-      });
-    }).catch(err => alert('فشل الحفظ نفسه: ' + (err && err.message ? err.message : err)));
+      closeModal('shortageFormModal');
+      loadShortages();
+    }).catch(err => alert('فشل الحفظ: ' + (err && err.message ? err.message : err)));
   } else {
     const newRef = db.ref('data/shortages').push();
     newRef.set({ ...data, isCustom: true, time: new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) }).then(() => {
