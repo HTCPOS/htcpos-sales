@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 4:50 ص · 6a1e9d</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 8:47 ص · f3d791</div>
   </div>
 </div>
 
@@ -3881,9 +3881,12 @@ function buildUnifiedStatementRows(s, filters) {
       if (d.paidAt) rows.push({ date: d.paidAt, type: 'payment', label: d.itemName || 'صنف', sub: 'فاتورة مبيعات', ref: d.invoiceNumber || '-', amount: Number(d.amount) || 0 });
     });
   }
-  // عمود "مشتريات" منفصل: أصناف اشتريتها إنت من الزبون (عكس المبيعات) - سعر الشراء بتاعها
+  // عمود "مشتريات" منفصل: أصناف اشتريتها إنت من الزبون (عكس المبيعات) - سعر الشراء بتاعها.
+  // بس اللي لسه "مش مسددة" (نفس بالظبط اللي بيتحسب بيه رصيد حساب الزبون الحقيقي في التطبيق -
+  // لو حطينا المسدد كمان من غير تعويضه، هيتخصم من الرصيد مرتين غلط، وده بالظبط الخطأ اللي
+  // كان موجود وبيسبب فرق بين الرصيد هنا والرصيد الحقيقي في حساب الزبون)
   if (f.purchaseAccount) {
-    s.purchaseDebts.concat(s.purchasePaid).forEach(d => {
+    s.purchaseDebts.forEach(d => {
       rows.push({ date: d.at, type: 'purchaseAccount', label: d.itemName || 'صنف', sub: 'مشتريات', ref: '-', amount: Number(d.price) || 0 });
     });
   }
