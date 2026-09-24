@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 6:08 م · 4ea973</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 6:37 م · debug1</div>
   </div>
 </div>
 
@@ -3635,7 +3635,7 @@ function submitDeposit() {
 // صنف كبير حتى لو كل واحد لوحده مش كفاية، وده بالظبط اللي كان ناقص قبل كده.
 // الأصناف اللي اتسددت تلقائيًا معلّمة بـ autoSettled:true (عشان نفرّقها عن اللي اتسددت يدويًا
 // بزرار "تسجيل السداد" - دي منضربهاش خالص، مهما كان الرصيد المتاح)
-async function reconcileSalesAccount(customerId) {
+async function reconcileSalesAccount(customerId, debugMode) {
   const [debtSnap, depSnap] = await Promise.all([
     db.ref('data/debts').once('value'),
     db.ref('data/deposits').once('value')
@@ -3654,6 +3654,7 @@ async function reconcileSalesAccount(customerId) {
   const updates = {};
   let settledCount = 0, revertedCount = 0;
   const paidAt = new Date().toISOString();
+  const debugLines = [`إجمالي الزبون: ${allDebts.length} دين، ${allDeposits.length} إيداع، مجموع الإيداعات=${totalDeposits}`];
 
   for (const d of eligible) {
     const amt = Number(d.amount) || 0;
@@ -3663,6 +3664,9 @@ async function reconcileSalesAccount(customerId) {
       remaining -= amt;
     } else {
       stillFilling = false; // أول صنف مش كفاية له، نوقف نسدد أي حاجة بعده (حتى لو أرخص) - أقدم أولًا
+    }
+    if (debugMode) {
+      debugLines.push(`[${d.id.slice(-5)}] ${d.itemName||'?'} amount=${JSON.stringify(d.amount)}(${typeof d.amount}) paid=${JSON.stringify(d.paid)}(${typeof d.paid}) autoSettled=${JSON.stringify(d.autoSettled)} date=${d.date} → ${shouldBePaid ? 'هيتسدد' : 'مش هيتسدد'}`);
     }
     if (shouldBePaid && !d.paid) {
       updates['data/debts/' + d.id + '/paid'] = true;
@@ -3677,6 +3681,7 @@ async function reconcileSalesAccount(customerId) {
     }
   }
   if (settledCount > 0 || revertedCount > 0) await db.ref().update(updates);
+  if (debugMode) alert(debugLines.join('\n'));
   return { settledCount, revertedCount, remaining };
 }
 
@@ -3846,7 +3851,7 @@ function openCustomerDebt(customerId, customerName) {
   // بنعيد التسوية الشاملة أول ما نفتح الحساب (مش بس وقت الإيداع نفسه) - شبكة أمان: لو لأي سبب
   // حدث إيداع أو دين فات عليه التسوية التلقائية، فتح الحساب نفسه بيصححه فورًا من غير ما تحتاجي
   // تعملي أي حاجة زيادة
-  reconcileSalesAccount(customerId).catch(() => {}).then(() => {
+  reconcileSalesAccount(customerId, true).catch(() => {}).then(() => {
   Promise.all([
     db.ref('data/debts').once('value'),
     db.ref('data/deposits').once('value'),
