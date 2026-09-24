@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 8:47 ص · f3d791</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 9:10 ص · c85b2e</div>
   </div>
 </div>
 
@@ -3574,6 +3574,8 @@ function submitDeposit() {
   const confirmMsg = (kind === 'purchase' ? 'تأكيد تسديد ' : 'تأكيد إيداع ') + fmtMoney(amount) + ' د.ل (' + method + ') ' + (kind === 'purchase' ? 'لـ' : 'على حساب') + ' "' + customerName + '"؟';
   if (!confirm(confirmMsg)) return;
   const path = kind === 'purchase' ? 'data/purchaseDeposits' : 'data/deposits';
+  const depositRef = db.ref(path).push();
+  const depositId = depositRef.key;
   const record = {
     customerId: customerId,
     customerName: customerName,
@@ -3587,14 +3589,68 @@ function submitDeposit() {
   // لو المستخدم راجع وأكّد بيانات إيصال ماسوح بالكاميرا، نلصقها كاملة مع الإيداع (بدون ما تغيّر
   // أي حقل موجود أصلاً) - مفيدة كأرشيف ودليل لو حصل نزاع على العملية لاحقًا
   if (pendingReceiptOcrJson) record.receiptOcr = pendingReceiptOcrJson;
-  db.ref(path).push().set(record).then(() => {
+  depositRef.set(record).then(() => {
     logActivity(kind === 'purchase' ? 'تسديد مشتريات' : 'إيداع مبلغ', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
     pendingDepositCustomer = null;
     pendingReceiptOcrJson = null;
     closeDepositModalAnimated();
-    if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
-    if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
+
+    const finishUp = () => {
+      if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
+      if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
+    };
+
+    // تسوية تلقائية: بس لإيداعات حساب المبيعات (مش تسديد المشتريات - ده حساب تاني منفصل).
+    // الإيداع بيتطبّق على أقدم الأصناف المستحقة أول بأول لحد ما المبلغ يخلص. أي فايض من الإيداع
+    // بيفضل ظاهر تلقائيًا في "الرصيد الإجمالي" كرصيد لصالح الزبون - مفيش حاجة تانية لازم نعملها،
+    // نفس صيغة الحساب الموجودة أصلاً بتعكسه صح لوحدها
+    if (kind !== 'purchase') {
+      autoSettleDebtsWithDeposit(customerId, depositId, amount).then(info => {
+        if (info.count > 0) {
+          showQuickToast(`✅ اتسدد تلقائيًا ${info.count} صنف بقيمة ${fmtMoney(info.total)} د.ل من الإيداع ده`);
+        }
+        finishUp();
+      }).catch(err => {
+        // مهم نوضح للمستخدم إن التسوية التلقائية فشلت (مش نتجاهلها بصمت) - الإيداع نفسه اتسجل
+        // صح، بس الأصناف المستحقة لسه "لم يسدد" ومحتاجة تسجيل سداد يدوي دلوقتي بدل التلقائي
+        alert('الإيداع اتسجل بنجاح، لكن حصلت مشكلة في التسوية التلقائية للأصناف المستحقة: ' + (err && err.message ? err.message : err) + '\n\nممكن تسجّلي السداد يدويًا لكل صنف من زرار "تسجيل السداد".');
+        finishUp();
+      });
+    } else {
+      finishUp();
+    }
   });
+}
+
+// بتاخد مبلغ إيداع وتطبّقه على أقدم الأصناف المستحقة (اللي لسه "لم يسدد") واحد واحد لحد ما
+// المبلغ يخلص أو نوصل لصنف قيمته أكبر من الباقي (وقتها بنوقف - الأقدم أولًا معناها منتخطاش صنف
+// قديم عشان نسدد اللي بعده). كل صنف بيتعلّم إنه اتسدد بسبب الإيداع ده بالظبط (paidByDepositId)
+// عشان لو الإيداع اتلغى بعدين، نقدر نرجّع الأصناف دي "لم يسدد" تاني بدل ما تفضل معلّمة مسددة غلط
+async function autoSettleDebtsWithDeposit(customerId, depositId, depositAmount) {
+  const snap = await db.ref('data/debts').once('value');
+  const val = snap.val() || {};
+  const unpaid = Object.entries(val)
+    .map(([id, d]) => ({ id, ...d }))
+    .filter(d => d.customerId === customerId && !d.paid)
+    .sort((a, b) => new Date(a.date) - new Date(b.date)); // الأقدم أولًا
+
+  let remaining = depositAmount;
+  const updates = {};
+  let count = 0, total = 0;
+  const paidAt = new Date().toISOString();
+  for (const d of unpaid) {
+    const amt = Number(d.amount) || 0;
+    if (amt <= 0) continue;
+    if (remaining + 0.001 < amt) break; // الباقي مش كفاية للصنف ده - نوقف هنا (أقدم أولًا)
+    updates['data/debts/' + d.id + '/paid'] = true;
+    updates['data/debts/' + d.id + '/paidAt'] = paidAt;
+    updates['data/debts/' + d.id + '/paidByDepositId'] = depositId;
+    remaining -= amt;
+    count++;
+    total += amt;
+  }
+  if (count > 0) await db.ref().update(updates);
+  return { count, total };
 }
 
 function startPurchaseDebtEntry() {
@@ -3664,10 +3720,40 @@ function cancelDeposit(depositId, customerId, customerName, kind) {
     const amountLabel = dep ? fmtMoney(dep.amount) + ' د.ل (' + (dep.method || '') + ')' : '';
     const who = kind === 'purchase' ? 'تسديد "' + customerName + '"' : 'الزبون "' + customerName + '"';
     if (!confirm('تأكيد إلغاء الإيداع ' + amountLabel + ' الخاص بـ ' + who + '؟')) return;
-    db.ref(path + depositId).remove().then(() => {
-      logActivity(kind === 'purchase' ? 'إلغاء تسديد مشتريات' : 'إلغاء إيداع', amountLabel + ' - ' + customerName);
-      if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
-      if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
+
+    const finishCancel = () => {
+      db.ref(path + depositId).remove().then(() => {
+        logActivity(kind === 'purchase' ? 'إلغاء تسديد مشتريات' : 'إلغاء إيداع', amountLabel + ' - ' + customerName);
+        if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
+        if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
+      });
+    };
+
+    if (kind === 'purchase') { finishCancel(); return; }
+
+    // لو الإيداع ده كان سدّد أصناف تلقائيًا (شوف autoSettleDebtsWithDeposit)، لازم نرجّعهم
+    // "لم يسدد" تاني الأول قبل ما نمسح الإيداع - وإلا هيفضل عندك أصناف معلّمة "مسددة" من غير أي
+    // إيداع حقيقي وراها، وده بالظبط نوع الخطأ المحاسبي اللي المفروض النظام ده يمنعه
+    db.ref('data/debts').orderByChild('paidByDepositId').equalTo(depositId).once('value').then(debtSnap => {
+      const val = debtSnap.val();
+      if (!val) { finishCancel(); return; }
+      const updates = {};
+      let revertedCount = 0;
+      Object.keys(val).forEach(id => {
+        updates['data/debts/' + id + '/paid'] = false;
+        updates['data/debts/' + id + '/paidAt'] = null;
+        updates['data/debts/' + id + '/paidByDepositId'] = null;
+        revertedCount++;
+      });
+      db.ref().update(updates).then(() => {
+        if (revertedCount > 0) showQuickToast(`↩️ رجّعنا ${revertedCount} صنف لحالة "لم يسدد" لأن الإيداع اللي سدّدهم اتلغى`);
+        finishCancel();
+      }).catch(err => {
+        // فشل الإرجاع - مهم نوقف هنا ونوضح بدل ما نكمل نمسح الإيداع ونسيب الأصناف "مسددة" غلط
+        alert('مقدرناش نرجّع الأصناف اللي اتسددت من الإيداع ده لحالة "لم يسدد" - الإيداع لسه موجود ولسه ممسوحش، عشان منضيعش البيانات. جرب تاني: ' + (err && err.message ? err.message : err));
+      });
+    }).catch(err => {
+      alert('حصلت مشكلة وقت فحص الأصناف المرتبطة بالإيداع ده - الإيداع لسه موجود من غير أي تغيير. جرب تاني: ' + (err && err.message ? err.message : err));
     });
   });
 }
