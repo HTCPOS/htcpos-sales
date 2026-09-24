@@ -391,7 +391,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 3:59 ص · a5e7d2</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 24 سبتمبر 4:07 ص · 7c3fb8</div>
   </div>
 </div>
 
@@ -3997,41 +3997,26 @@ function downloadStatementViewPDF() {
 
   const body = document.getElementById('statementViewBody');
   const filename = document.getElementById('statementViewTitle').textContent || 'كشف حساب';
-  // نشيل قيود الارتفاع/السكرول مؤقتًا عشان الصورة تاخد المحتوى كامل من غير ما يتقص حتة منه
-  const prevHeight = body.style.height;
-  const prevMaxHeight = body.style.maxHeight;
-  const prevOverflow = body.style.overflow;
-  const prevFlex = body.style.flex;
-  body.style.height = 'auto';
-  body.style.maxHeight = 'none';
-  body.style.overflow = 'visible';
-  body.style.flex = 'none';
-  // الجدول جوه الكشف بينزلق يمين وشمال في الشاشة العادية (عشان الأعمدة كتير) - لو سبناه كده وقت
-  // التصوير، هياخد بس الجزء الظاهر ويقص الباقي. بنشيل قيد الانزلاق مؤقتًا هنا كمان عشان الصورة
-  // تاخد الجدول كامل بكل أعمدته، ونرجّعه زي ما كان بعد ما التصوير يخلص
-  const tableWraps = body.querySelectorAll('.newStmtTableWrap');
-  const prevWrapStyles = [];
-  tableWraps.forEach(w => {
-    prevWrapStyles.push({ el: w, overflow: w.style.overflow, width: w.style.width });
-    w.style.overflow = 'visible';
-    w.style.width = 'max-content';
-  });
-  // مؤشر التحميل بيبان فوق الشاشة كلها، مش جوه العنصر اللي بيتصور، عشان ميبانش في الملف نفسه
-  const toast = showQuickToast('جاري تجهيز الـ PDF...');
 
-  function restoreLayout() {
-    body.style.height = prevHeight;
-    body.style.maxHeight = prevMaxHeight;
-    body.style.overflow = prevOverflow;
-    body.style.flex = prevFlex;
-    prevWrapStyles.forEach(s => { s.el.style.overflow = s.overflow; s.el.style.width = s.width; });
+  // المحاولة القديمة (تشيل قيود الانزلاق من العنصر نفسه بس) ما كانتش كفاية - كان لسه فيه عنصر
+  // جد (أب) تاني بيحاصر العرض. الحل الأضمن: ناخد نسخة كاملة من المحتوى ونحطها في عنصر منفصل
+  // تمامًا، مربوط مباشرة في نهاية الصفحة (مش جوه أي نافذة/قيود)، بعرض ثابت كبير يكفي الجدول
+  // بكل أعمدته من غير أي قص، ونصوّر النسخة دي بس - بعيدة تمامًا عن أي قيد وراثي من نوافذ التطبيق
+  const clone = document.createElement('div');
+  clone.innerHTML = body.innerHTML;
+  clone.style.cssText = 'position:fixed; top:0; left:-99999px; width:900px; background:#fff; padding:16px; box-sizing:border-box; direction:rtl; font-family:inherit; z-index:-1;';
+  document.body.appendChild(clone);
+
+  const toast = showQuickToast('جاري تجهيز الـ PDF...');
+  function cleanup() {
+    if (clone.parentNode) clone.parentNode.removeChild(clone);
     if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
   }
 
   setTimeout(() => {
     try {
-      html2canvas(body, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
-        restoreLayout();
+      html2canvas(clone, { scale: 2, backgroundColor: '#ffffff', width: 900, windowWidth: 900 }).then(canvas => {
+        cleanup();
         try {
           if (!canvas.width || !canvas.height) {
             alert('مقدرناش نجهز الـ PDF: الصفحة طلعت فاضية (مقاسها صفر) - جرب تاني.');
@@ -4039,11 +4024,10 @@ function downloadStatementViewPDF() {
           }
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
           const { jsPDF } = window.jspdf;
-          const pageWidth = 595; // عرض A4 بالنقاط (بت) - ثابت
+          const pageWidth = 842; // عرض A4 بالعرض (Landscape) بالنقاط - أنسب لجدول عريض من غير ما يتقص
           const imgWidth = pageWidth;
           const imgHeight = canvas.height * (imgWidth / canvas.width);
-          // صفحة واحدة بس بارتفاع يساوي المحتوى بالظبط، مش تقسيم على كذا صفحة
-          const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: [pageWidth, imgHeight] });
+          const pdf = new jsPDF({ orientation: 'l', unit: 'pt', format: [pageWidth, imgHeight] });
           pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
           const pdfBlob = pdf.output('blob');
           const pdfFile = new File([pdfBlob], filename + '.pdf', { type: 'application/pdf' });
@@ -4058,11 +4042,11 @@ function downloadStatementViewPDF() {
           alert('حصلت مشكلة وقت بناء ملف الـ PDF نفسه: ' + (innerErr && innerErr.message ? innerErr.message : innerErr));
         }
       }).catch(err => {
-        restoreLayout();
+        cleanup();
         alert('حصلت مشكلة وقت تصوير الصفحة (html2canvas): ' + (err && err.message ? err.message : err));
       });
     } catch (syncErr) {
-      restoreLayout();
+      cleanup();
       alert('حصلت مشكلة فورية قبل حتى ما نبدأ التصوير: ' + (syncErr && syncErr.message ? syncErr.message : syncErr));
     }
   }, 100);
