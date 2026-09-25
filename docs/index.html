@@ -1957,6 +1957,7 @@ function processReceiptOcrBlob(blob) {
       const best = matches.find(m => m[1].length === 4) || matches[0];
       if (best) {
         const num = 'P' + best[1];
+        htcReceiptScanSound();
         document.getElementById('invoiceSearchInput').value = num;
         searchInvoiceByNumber();
       } else {
@@ -2056,6 +2057,70 @@ function cropVideoToGuideCanvas(video, guide, upscale, subRegion) {
   canvas.getContext('2d').drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
+
+/* ==================== HTC POS - مِؤثرات صوتية مدمجة ====================
+   الأصوات مولّدة محليًا عبر Web Audio API، بدون ملفات أو روابط صوت خارجية. */
+let htcAudioContext = null;
+let htcLastScanSoundAt = 0;
+
+function htcGetAudioContext() {
+  try {
+    if (!htcAudioContext) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      htcAudioContext = new Ctx();
+    }
+    if (htcAudioContext.state === 'suspended') htcAudioContext.resume().catch(() => {});
+    return htcAudioContext;
+  } catch (e) { return null; }
+}
+
+function htcTone(freq, duration, type, volume, delay = 0) {
+  const ctx = htcGetAudioContext();
+  if (!ctx) return;
+  const start = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume || 0.035), start + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(start);
+  osc.stop(start + duration + 0.02);
+}
+
+function htcClickSound() {
+  htcTone(1050, 0.045, 'sine', 0.022);
+}
+
+function htcReceiptScanSound() {
+  htcTone(880, 0.075, 'sine', 0.035);
+  htcTone(1320, 0.095, 'sine', 0.028, 0.065);
+}
+
+function htcQrScanSound() {
+  const now = Date.now();
+  if (now - htcLastScanSoundAt < 900) return;
+  htcLastScanSoundAt = now;
+  htcTone(1180, 0.065, 'square', 0.024);
+  htcTone(1680, 0.075, 'sine', 0.024, 0.055);
+}
+
+function htcDepositSuccessSound() {
+  htcTone(660, 0.09, 'sine', 0.032);
+  htcTone(880, 0.11, 'sine', 0.035, 0.08);
+  htcTone(1320, 0.15, 'sine', 0.03, 0.17);
+}
+
+document.addEventListener('click', function(e) {
+  const el = e.target && e.target.closest ? e.target.closest('button, [role="button"], [onclick]') : null;
+  if (!el || el.dataset && el.dataset.noClickSound === '1') return;
+  if (el.closest('input, textarea, select')) return;
+  htcClickSound();
+}, true);
 
 function attemptReceiptOcrScan() {
   if (!receiptOcrScanning) return;
@@ -2636,6 +2701,7 @@ function openReceiptReviewScreen() {
   const panel = document.getElementById('rvDebugPanel');
   if (criticalFailed) { populateReceiptDebugPanel(); panel.style.display = 'block'; }
   else { panel.style.display = 'none'; }
+  htcReceiptScanSound();
   openModal('receiptReviewModal');
 }
 
@@ -3087,6 +3153,8 @@ function onBarcodeScanned(code) {
     if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'مفيش صنف بالباركود ده: ' + code;
     return;
   }
+
+  htcQrScanSound();
 
   if (scanMode === 'increment') {
     const now = Date.now();
@@ -3611,6 +3679,7 @@ function submitDeposit() {
   // أي حقل موجود أصلاً) - مفيدة كأرشيف ودليل لو حصل نزاع على العملية لاحقًا
   if (pendingReceiptOcrJson) record.receiptOcr = pendingReceiptOcrJson;
   depositRef.set(record).then(() => {
+    htcDepositSuccessSound();
     logActivity(kind === 'purchase' ? 'تسديد مشتريات' : 'إيداع مبلغ', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
     pendingDepositCustomer = null;
     pendingReceiptOcrJson = null;
