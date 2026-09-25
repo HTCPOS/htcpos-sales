@@ -404,7 +404,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 10:01 م · e582bf</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 10:13 م · 9b47ce</div>
   </div>
 </div>
 
@@ -687,6 +687,14 @@
   </div>
 </div>
 
+<div class="modalBg" id="soundSettingsModal" onclick="if(event.target===this)closeModal('soundSettingsModal')">
+  <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
+    <button class="closeM" onclick="closeModal('soundSettingsModal')">✕</button>
+    <h3>إعدادات الصوت والاهتزاز</h3>
+    <div id="soundSettingsBody" style="flex:1;overflow-y:auto;margin-top:10px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="mainMenuModal" onclick="if(event.target===this)closeModal('mainMenuModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('mainMenuModal')">✕</button>
@@ -700,7 +708,7 @@
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);">متابعة فتح وإغلاق المنظومة</span>
       </button>
-      <button onclick="closeModal('mainMenuModal');alert('⚙️ الإعدادات - قريبًا، هنظبطها مع بعض بعدين');" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+      <button onclick="closeModal('mainMenuModal');openSoundSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);">الإعدادات</span>
       </button>
@@ -1316,6 +1324,63 @@ function doLogout() {
   if (confirm('تسجيل خروج؟')) { appUnlockedThisSession = false; auth.signOut(); }
 }
 
+// بترسم شاشة إعدادات الصوت والاهتزاز كاملة - كل سياق (النقر، الباركود، الإيصال، إيصال الإيداع)
+// عنده قائمة نغمات يختار منها، وكل نغمة جنبها زرار "اختبار" يسمعها قبل ما يختارها. نفس الفكرة
+// لنمط الاهتزاز، وفي الآخر مفتاح "اهتزاز بس من غير صوت"
+function openSoundSettings() {
+  const s = getSoundSettings();
+  const body = document.getElementById('soundSettingsBody');
+
+  const soundSection = (context, cfg) => {
+    const current = s[context + 'Sound'] || cfg.default;
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="font-size:12.5px;font-weight:800;color:var(--text);margin-bottom:8px;">${cfg.label}</div>
+        ${Object.entries(SOUND_PRESETS).map(([key, preset]) => `
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
+            <input type="radio" name="sound_${context}" value="${key}" ${current === key ? 'checked' : ''} onchange="saveSoundSettings({'${context}Sound':'${key}'})" style="width:17px;height:17px;">
+            <span style="font-size:13px;flex:1;">${preset.label}</span>
+            ${preset.type ? `<button onclick="event.preventDefault();event.stopPropagation();playTonePreset('${key}')" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">🔊 اختبار</button>` : ''}
+          </label>
+        `).join('')}
+      </div>`;
+  };
+
+  const vibCurrent = s.tapVibration || 'light';
+  const vibSection = `
+    <div style="margin-bottom:18px;">
+      <div style="font-size:12.5px;font-weight:800;color:var(--text);margin-bottom:8px;">نمط اهتزاز النقر على الأزرار</div>
+      ${Object.entries(VIBRATION_PRESETS).map(([key, preset]) => `
+        <label style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
+          <input type="radio" name="vib_tap" value="${key}" ${vibCurrent === key ? 'checked' : ''} onchange="saveSoundSettings({tapVibration:'${key}'})" style="width:17px;height:17px;">
+          <span style="font-size:13px;flex:1;">${preset.label}</span>
+          ${preset.style ? `<button onclick="event.preventDefault();event.stopPropagation();playVibrationPreset('${key}')" style="background:#F0FDF4;color:#16A34A;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">📳 اختبار</button>` : ''}
+        </label>
+      `).join('')}
+    </div>`;
+
+  const vibrateOnlyChecked = s.vibrateOnly === true;
+  const toggleSection = `
+    <div style="background:var(--surface2, #F8FAFC);border-radius:12px;padding:13px;margin-bottom:10px;">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" ${vibrateOnlyChecked ? 'checked' : ''} onchange="saveSoundSettings({vibrateOnly:this.checked})" style="width:19px;height:19px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;">استخدام الاهتزاز بس (من غير صوت)</div>
+          <div style="font-size:10.5px;color:var(--textMuted);margin-top:2px;">فعّليه يدويًا وقت ما الجهاز يكون في الوضع الصامت - التطبيق مش عنده طريقة يكتشف ده تلقائيًا</div>
+        </div>
+      </label>
+    </div>`;
+
+  body.innerHTML = toggleSection
+    + soundSection('tap', SOUND_CONTEXTS.tap)
+    + soundSection('qr', SOUND_CONTEXTS.qr)
+    + soundSection('invoice', SOUND_CONTEXTS.invoice)
+    + soundSection('deposit', SOUND_CONTEXTS.deposit)
+    + vibSection;
+
+  openModal('soundSettingsModal');
+}
+
 function openUserAccountInfo() {
   const email = (auth.currentUser && auth.currentUser.email) || 'غير معروف';
   const body = document.getElementById('userAccountBody');
@@ -1479,40 +1544,95 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// اهتزاز خفيف عند الضغط على أي زرار/أيقونة - بيشتغل حتى لو الجهاز في الوضع الصامت (الاهتزاز
-// مختلف عن الصوت). المكتبة الأصلية بتاعة آبل (Haptics) هي الوحيدة اللي بتشتغل فعليًا على آيفون -
-// المتصفحات العادية (زي Safari) مبتدعمش اهتزاز الويب العادي (navigator.vibrate) خالص على آيفون،
-// فبنستخدم نفس أسلوب الجسر اللي التطبيق بيستخدمه لبصمة الوجه وقراءة الصور
-function triggerHaptic() {
-  try {
-    const haptics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
-    if (haptics && haptics.impact) { haptics.impact({ style: 'Light' }); return; }
-  } catch (e) {}
-  if (navigator.vibrate) { try { navigator.vibrate(10); } catch (e) {} } // احتياطي لأندرويد/PWA - مش هيشتغل على آيفون Safari
-}
-// اهتزاز تلقائي لأي زرار أو أيقونة تتدوس في التطبيق كله - مش محتاجين نضيفه يدويًا لكل زرار لوحده
-document.addEventListener('click', (e) => {
-  if (e.target.closest('button, .iconBtn, [onclick]')) triggerHaptic();
-}, true);
+// ===== نظام إعدادات الصوت والاهتزاز - محفوظة على الجهاز نفسه (تفضيل شخصي، مش بيانات مشتركة) =====
 
-// صوت "بييب" قصير وحاد زي أجهزة قراءة الباركود/الكاشير الحقيقية - بنولّده بالكود مباشرة (نغمة
-// صناعية عن طريق Web Audio API) بدل ما نحتاج ملف صوت خارجي منفصل. بيتشغّل عند أي قراءة ناجحة:
-// الباركود، رقم إيصال الفاتورة، وإيصال البطاقة وقت الإيداع
-function playScanBeep() {
+const SOUND_PRESETS = {
+  classic:  { label: 'بييب كلاسيكي',   type: 'square',   freq: 1568, dur: 0.12 },
+  soft:     { label: 'نغمة ناعمة',      type: 'sine',     freq: 900,  dur: 0.16 },
+  double:   { label: 'بييب مزدوج',      type: 'square',   freq: 1400, dur: 0.07, double: true },
+  high:     { label: 'نغمة حادة عالية', type: 'triangle', freq: 2200, dur: 0.09 },
+  low:      { label: 'نغمة هادئة منخفضة', type: 'sine',   freq: 500,  dur: 0.18 },
+  none:     { label: 'بدون صوت',        type: null }
+};
+const VIBRATION_PRESETS = {
+  light:  { label: 'خفيف',    style: 'Light' },
+  medium: { label: 'متوسط',   style: 'Medium' },
+  heavy:  { label: 'قوي',     style: 'Heavy' },
+  double: { label: 'نبضتين',  style: 'Light', double: true },
+  none:   { label: 'بدون اهتزاز', style: null }
+};
+const SOUND_CONTEXTS = {
+  tap:     { label: 'النقر على الأزرار',        default: 'none' },
+  qr:      { label: 'قراءة الباركود / QR',       default: 'classic' },
+  invoice: { label: 'قراءة رقم الإيصال',         default: 'classic' },
+  deposit: { label: 'قراءة إيصال الإيداع',       default: 'double' }
+};
+
+function getSoundSettings() {
+  try { return JSON.parse(localStorage.getItem('soundVibrationSettings')) || {}; } catch (e) { return {}; }
+}
+function saveSoundSettings(patch) {
+  const s = Object.assign(getSoundSettings(), patch);
+  try { localStorage.setItem('soundVibrationSettings', JSON.stringify(s)); } catch (e) {}
+  return s;
+}
+
+// بيشغّل نغمة معينة بذاتها (مش حسب السياق) - مستخدمة في زرار "اختبار" في شاشة الإعدادات
+function playTonePreset(presetKey) {
+  const preset = SOUND_PRESETS[presetKey];
+  if (!preset || !preset.type) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'square'; // نغمة حادة زي صوت أجهزة السكانر الحقيقية بالظبط
-    osc.frequency.value = 1568; // تردد عالي شبيه بصوت "بييب" المعتاد
-    gain.gain.setValueAtTime(0.25, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.12);
+    const playOne = (delayMs) => setTimeout(() => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = preset.type;
+      osc.frequency.value = preset.freq;
+      gain.gain.setValueAtTime(0.28, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + preset.dur);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + preset.dur);
+    }, delayMs);
+    playOne(0);
+    if (preset.double) playOne(140);
   } catch (e) {}
 }
+
+// بيشغّل نغمة الاهتزاز حسب النمط المختار - مستخدمة في زرار "اختبار" وفي الاستخدام الفعلي
+function playVibrationPreset(presetKey) {
+  const preset = VIBRATION_PRESETS[presetKey];
+  if (!preset || !preset.style) return;
+  try {
+    const haptics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+    if (haptics && haptics.impact) {
+      haptics.impact({ style: preset.style });
+      if (preset.double) setTimeout(() => haptics.impact({ style: preset.style }), 130);
+      return;
+    }
+  } catch (e) {}
+  if (navigator.vibrate) { try { navigator.vibrate(preset.double ? [12, 90, 12] : 12); } catch (e) {} }
+}
+
+// النقطة الموحّدة اللي كل الشاشات بتنادي عليها: بتشغّل الصوت والاهتزاز المختارين لنفس السياق مع
+// بعض (إلا لو "اهتزاز بس" مفعّل، وقتها الصوت بيتلغى ويفضل الاهتزاز بس)
+function playFeedback(context) {
+  const s = getSoundSettings();
+  const vibrateOnly = s.vibrateOnly === true;
+  if (!vibrateOnly) {
+    const soundKey = s[context + 'Sound'] || (SOUND_CONTEXTS[context] && SOUND_CONTEXTS[context].default) || 'classic';
+    playTonePreset(soundKey);
+  }
+  if (context === 'tap') {
+    playVibrationPreset(s.tapVibration || 'light');
+  } else if (vibrateOnly) {
+    playVibrationPreset(s.tapVibration || 'light'); // احتياطي حسي وقت "اهتزاز بس" حتى للقراءات
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('button, .iconBtn, [onclick]')) playFeedback('tap');
+}, true);
 
 function fmtMoney(n) {
   n = Number(n || 0);
@@ -2123,7 +2243,7 @@ function processReceiptOcrBlob(blob) {
       // لو لقينا أكتر من رقم محتمل، نفضّل اللي 4 أرقام (الشكل الغالب لرقم الإيصال عندك)
       const best = matches.find(m => m[1].length === 4) || matches[0];
       if (best) {
-        playScanBeep(); // قراءة ناجحة
+        playFeedback('invoice'); // قراءة ناجحة
         const num = 'P' + best[1];
         document.getElementById('invoiceSearchInput').value = num;
         searchInvoiceByNumber();
@@ -2245,7 +2365,7 @@ function attemptReceiptOcrScan() {
       const best = matches.find(m => m[1].length === 4) || matches[0];
       if (best) {
         receiptOcrScanning = false;
-        playScanBeep(); // قراءة ناجحة
+        playFeedback('invoice'); // قراءة ناجحة
         const num = 'P' + best[1];
         document.getElementById('invoiceSearchInput').value = num;
         closeReceiptOcrCamera();
@@ -2366,7 +2486,7 @@ async function attemptCardReceiptOcrScan() {
     const foundCount = [hasAmount, hasCard, hasRef].filter(Boolean).length;
     const statusEl = document.getElementById('cardReceiptOcrStatus');
     if (foundCount >= 2) {
-      playScanBeep(); // لقينا الإيصال - قراءة ناجحة
+      playFeedback('deposit'); // لقينا الإيصال - قراءة ناجحة
       if (statusEl) statusEl.textContent = '✅ لقيت الإيصال - جاري التحليل الدقيق...';
       await finalizeCardReceiptCapture(video, guide);
     } else {
@@ -3266,7 +3386,7 @@ function onBarcodeScanned(code) {
     if (lastIncrementedId === match.id && (now - lastIncrementTime) < 1500) return;
     lastIncrementedId = match.id;
     lastIncrementTime = now;
-    playScanBeep(); // قراءة ناجحة فعليًا (مش تكرار لنفس المسحة) - نفس صوت أجهزة السكانر الحقيقية
+    playFeedback('qr'); // قراءة ناجحة فعليًا (مش تكرار لنفس المسحة)
 
     const current = countSession[match.id] !== undefined ? countSession[match.id] : 0;
     countSession[match.id] = current + 1;
@@ -3282,7 +3402,7 @@ function onBarcodeScanned(code) {
   // وضع الادخال اليدوي
   if (scanLocked) return;
   scanLocked = true;
-  playScanBeep(); // قراءة ناجحة
+  playFeedback('qr'); // قراءة ناجحة
   currentScannedItem = match;
   if (barcodeScannerInstance) { try { barcodeScannerInstance.pause(); } catch(e) {} }
 
