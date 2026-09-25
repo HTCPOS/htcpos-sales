@@ -404,7 +404,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 10:03 ص · d4e621</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 10:01 م · e582bf</div>
   </div>
 </div>
 
@@ -425,7 +425,7 @@
         <button class="iconBtn" id="appThemeToggleBtn" onclick="toggleAppTheme()">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.64 13a9 9 0 1 1-10.63-10.6 1 1 0 0 1 1.11 1.4A7 7 0 0 0 20.24 12a7.1 7.1 0 0 0-.24-1.8 1 1 0 0 1 1.4-1.1 9 9 0 0 1 .24 3.9Z"/></svg>
         </button>
-        <button class="iconBtn" onclick="doLogout()">
+        <button class="iconBtn" onclick="openModal('mainMenuModal')">
           <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>
@@ -684,6 +684,48 @@
     <button class="closeM" onclick="closeModal('customerDebtModal')">✕</button>
     <h3 id="customerDebtTitle">حساب الزبون</h3>
     <div id="customerDebtBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="mainMenuModal" onclick="if(event.target===this)closeModal('mainMenuModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('mainMenuModal')">✕</button>
+    <h3>القائمة</h3>
+    <div style="margin-top:14px;">
+      <button onclick="closeModal('mainMenuModal');openUserAccountInfo();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);">حساب المستخدم</span>
+      </button>
+      <button onclick="closeModal('mainMenuModal');openAttendanceLog();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);">متابعة فتح وإغلاق المنظومة</span>
+      </button>
+      <button onclick="closeModal('mainMenuModal');alert('⚙️ الإعدادات - قريبًا، هنظبطها مع بعض بعدين');" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);">الإعدادات</span>
+      </button>
+      <button onclick="closeModal('mainMenuModal');doLogout();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:#DC2626;">تسجيل خروج</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modalBg" id="userAccountModal" onclick="if(event.target===this)closeModal('userAccountModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('userAccountModal')">✕</button>
+    <h3>حساب المستخدم</h3>
+    <div id="userAccountBody" style="margin-top:14px;"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="attendanceLogModal" onclick="if(event.target===this)closeModal('attendanceLogModal')">
+  <div class="modalSheet" style="height:80vh; display:flex; flex-direction:column;">
+    <button class="closeM" onclick="closeModal('attendanceLogModal')">✕</button>
+    <h3>متابعة فتح وإغلاق المنظومة</h3>
+    <div style="font-size:11.5px;color:var(--textMuted);margin-top:6px;">بيتابع وقت اتصال المنظومة الرئيسية بالنت (من نشاط آخر مزامنة لها) - بيشتغل بس وإنتي فاتحة التطبيق ده، مش مراقبة لحظية دايمة</div>
+    <div id="attendanceLogBody" style="flex:1;overflow-y:auto;margin-top:12px;"></div>
   </div>
 </div>
 
@@ -1240,8 +1282,80 @@ function doLogin() {
   });
 }
 
+// بتتابع اتصال "المنظومة الرئيسية" نفسها بالنت (مش دخولك انتي على التطبيق ده) - عن طريق مراقبة
+// وقت "آخر مزامنة" (lastSync) اللي المنظومة بتسجّله في القاعدة أول ما تكون متصلة ونشطة. لو
+// شفنا وقت مزامنة جديد لسه ما سجّلناهوش، ده معناه المنظومة "شغالة" - نسجّل ده كـ"فتح". ولو
+// عدّى وقت طويل من غير أي مزامنة جديدة، نعتبرها "اتقفلت" ونسجّل "إغلاق" وقت آخر نشاط شوفناه.
+// ده بيشتغل بس وإنتي فاتحة التطبيق - مفيش طريقة تقنية نراقب بيها ونحن التطبيق مقفول (شرحتها ليكي)
+let attendanceState = { lastSeenSync: null, isOpen: false };
+
+function trackMainSystemPresence(syncTime) {
+  if (!syncTime) return;
+  if (syncTime !== attendanceState.lastSeenSync) {
+    if (!attendanceState.isOpen) {
+      db.ref('data/attendanceLog').push().set({ type: 'open', at: syncTime });
+      attendanceState.isOpen = true;
+    }
+    attendanceState.lastSeenSync = syncTime;
+  }
+}
+
+// بتتفحص كل شوية - لو آخر مزامنة شوفناها بقالها وقت طويل من غير أي جديد (20 دقيقة)، نعتبر
+// المنظومة اتقفلت ونسجّل الإغلاق في وقت آخر نشاط حقيقي شوفناه (مش دلوقتي بالظبط)
+function checkMainSystemStillOpen() {
+  if (!attendanceState.isOpen || !attendanceState.lastSeenSync) return;
+  const diffSec = (Date.now() - new Date(attendanceState.lastSeenSync).getTime()) / 1000;
+  if (diffSec > 1200) {
+    db.ref('data/attendanceLog').push().set({ type: 'close', at: attendanceState.lastSeenSync });
+    attendanceState.isOpen = false;
+  }
+}
+setInterval(checkMainSystemStillOpen, 30000);
+
 function doLogout() {
   if (confirm('تسجيل خروج؟')) { appUnlockedThisSession = false; auth.signOut(); }
+}
+
+function openUserAccountInfo() {
+  const email = (auth.currentUser && auth.currentUser.email) || 'غير معروف';
+  const body = document.getElementById('userAccountBody');
+  body.innerHTML = `
+    <div class="searchResultRow"><div class="n">البريد الإلكتروني</div><div class="p" style="direction:ltr;">${escapeHtml(email)}</div></div>
+    <div class="searchResultRow"><div class="n">حالة الجلسة</div><div class="p" style="color:#16A34A;font-weight:800;">✓ متصل</div></div>
+  `;
+  openModal('userAccountModal');
+}
+
+function openAttendanceLog() {
+  const body = document.getElementById('attendanceLogBody');
+  body.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  openModal('attendanceLogModal');
+  db.ref('data/attendanceLog').limitToLast(200).once('value').then(snap => {
+    const val = snap.val();
+    const events = val ? Object.entries(val).map(([id, e]) => ({ id, ...e })) : [];
+    events.sort((a, b) => new Date(b.at) - new Date(a.at));
+    if (!events.length) { body.innerHTML = '<div class="emptyMsg">مفيش أي سجلات لسه</div>'; return; }
+    // بنجمّعهم حسب اليوم عشان يبقوا أسهل في المتابعة
+    const byDay = {};
+    events.forEach(e => {
+      const dayKey = new Date(e.at).toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'long', year:'numeric' });
+      (byDay[dayKey] = byDay[dayKey] || []).push(e);
+    });
+    body.innerHTML = Object.entries(byDay).map(([day, dayEvents]) => `
+      <div style="font-size:12px;font-weight:800;color:var(--textMuted);margin:14px 0 4px;padding-bottom:5px;border-bottom:1.5px solid var(--border2);">${day}</div>
+      ${dayEvents.map(e => `
+        <div class="searchResultRow">
+          <div>
+            <div class="n" style="color:${e.type === 'open' ? '#16A34A' : '#DC2626'};display:flex;align-items:center;gap:5px;">
+              ${e.type === 'open'
+                ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg> المنظومة اتفتحت'
+                : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> المنظومة اتقفلت'}
+            </div>
+          </div>
+          <div class="p" style="direction:ltr;">${new Date(e.at).toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' })}</div>
+        </div>`).join('')}
+    `).join('');
+  }).catch(err => { body.innerHTML = '<div class="emptyMsg">حصلت مشكلة وقت التحميل: ' + (err && err.message ? err.message : err) + '</div>'; });
 }
 
 // التطبيق بيفضل مسجل دخول في الخلفية (Firebase) عشان البيانات تفضل شغالة،
@@ -1418,6 +1532,7 @@ function startListening() {
     latestSummary = snap.val() || {};
     renderSummary();
     checkOffline();
+    trackMainSystemPresence(latestSummary.lastSync);
   });
   db.ref('data/recentInvoices').on('value', snap => {
     const val = snap.val();
@@ -4479,6 +4594,13 @@ let latestShortages = [];
 let currentShortageSourceFilter; // undefined الأول = أول فتح للشاشة (هيتظبط "بدون تصنيف" تلقائي مرة واحدة بس - شوف loadShortages)
 let editingShortageId = null;
 
+// بنحوّل اسم الصنف لمفتاح آمن يصلح كـ Firebase path - بنشيل أي رمز ممنوع (./#$[]) ونستبدله
+// بشرطة، عشان أي اسم غريب مايكسرش الحفظ. بنستخدمه بدل رقم الصنف في كل حاجة بتاعتنا الخاصة
+// (تصنيف، إخفاء بعد الشراء) لأن الاسم ثابت حتى لو جهاز الكاشير غيّر رقم الصنف بعد أي مزامنة
+function shortageNameKey(name) {
+  return (name || '').trim().toLowerCase().replace(/[.#$\[\]\/]/g, '-');
+}
+
 let shortagesLoadToken = 0; // شبكة أمان ضد تحميلين متزاحمين على بعض: لو تحميل جديد بدأ، أي تحميل قديم لسه شغال بنتجاهل نتيجته لو رجعت متأخرة
 function loadShortages() {
   const myToken = ++shortagesLoadToken;
@@ -4500,9 +4622,9 @@ function loadShortages() {
     // بنفرض التصنيف المحفوظ في مكاننا الخاص (لو موجود) فوق أي حاجة جايه من جهاز الكاشير
     const byId = {};
     if (val) Object.entries(val).forEach(([id, it]) => {
-      const nameKey = (it.name || '').trim().toLowerCase();
+      const nameKey = shortageNameKey(it.name);
       if (suppressed[nameKey] && !it.isCustom) return; // متجاهلينه - جهاز الكاشير رجع ضافه بس إحنا عارفين إنه اتشرى
-      const saved = classifications[id];
+      const saved = classifications[nameKey];
       byId[id] = { id, ...it, source: (saved ? saved.source : it.source) || null, qty: (saved && saved.qty != null) ? saved.qty : it.qty };
     });
     // جهاز الكاشير بيضيف الصنف نفسه أكتر من مرة برقم مختلف كل مرة (لو نفاد المخزون فيه لسه
@@ -4670,12 +4792,15 @@ function saveShortageForm() {
   const source = selectedShortageSource;
   if (!name) { alert('اكتب اسم الصنف'); return; }
   const data = { name: name, qty: qty ? Number(qty) : null, source: source || null };
+  const nameKey = shortageNameKey(name);
   if (editingShortageId) {
     // بنكتب في مكانين: الصنف نفسه (زي العادي)، وكمان مكان منفصل خاص بالتطبيق بس (محمي من أي
-    // جهاز خارجي ممكن يرجّع يصفّر الصنف الأصلي - التصنيف يفضل محفوظ عندنا حتى لو ده حصل)
+    // جهاز خارجي ممكن يرجّع يصفّر الصنف الأصلي - التصنيف يفضل محفوظ عندنا حتى لو ده حصل).
+    // بنحفظه بمفتاح الاسم مش رقم الصنف، لأن جهاز الكاشير بيدّي أرقام جديدة كل مرة يتصل بالنت،
+    // لكن الاسم بيفضل ثابت
     Promise.all([
       db.ref('data/shortages/' + editingShortageId).update(data),
-      db.ref('data/shortageClassifications/' + editingShortageId).set({ source: source || null, qty: qty ? Number(qty) : null })
+      db.ref('data/shortageClassifications/' + nameKey).set({ source: source || null, qty: qty ? Number(qty) : null })
     ]).then(() => {
       closeModal('shortageFormModal');
       loadShortages();
@@ -4683,7 +4808,7 @@ function saveShortageForm() {
   } else {
     const newRef = db.ref('data/shortages').push();
     newRef.set({ ...data, isCustom: true, time: new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) }).then(() => {
-      db.ref('data/shortageClassifications/' + newRef.key).set({ source: source || null, qty: qty ? Number(qty) : null });
+      db.ref('data/shortageClassifications/' + nameKey).set({ source: source || null, qty: qty ? Number(qty) : null });
       logActivity('إضافة صنف جديد للنواقص', name);
       closeModal('shortageFormModal');
       loadShortages();
@@ -4695,7 +4820,7 @@ function markShortageFulfilled(id) {
   const it = latestShortages.find(x => x.id === id);
   if (!it) return;
   if (!confirm('تأكيد إنك اشتريت "' + it.name + '"؟')) return;
-  const nameKey = (it.name || '').trim().toLowerCase();
+  const nameKey = shortageNameKey(it.name);
   db.ref('data/shortagesFulfilled').push().set({
     name: it.name, qty: it.qty || null, source: it.source || null, fulfilledAt: new Date().toISOString()
   }).then(() => {
@@ -4703,15 +4828,16 @@ function markShortageFulfilled(id) {
     // بنسجّل الاسم في قائمة "اتشرى" الدائمة - عشان لو جهاز الكاشير رجع ضاف نفس الصنف تاني
     // بعدين (لسه شايفه ناقص عنده)، إحنا نعرف نتجاهله ومنوريهوش تاني كأنه لسه محتاج شراء
     db.ref('data/shortagesSuppressed/' + nameKey).set({ at: new Date().toISOString(), name: it.name });
+    // بنشيل تصنيف الاسم ده (مبقاش محتاجينه بعد الشراء) - مخزّن بمفتاح الاسم دلوقتي، مش رقم الصنف
+    db.ref('data/shortageClassifications/' + nameKey).remove();
     // كمان بنشيل أي نسخة موجودة دلوقتي بنفس الاسم بالظبط، مش بس النسخة الظاهرة
     db.ref('data/shortages').once('value').then(snap => {
       const val = snap.val() || {};
       const matchingIds = Object.entries(val)
-        .filter(([mid, mit]) => (mit.name || '').trim().toLowerCase() === nameKey)
+        .filter(([mid, mit]) => shortageNameKey(mit.name) === nameKey)
         .map(([mid]) => mid);
       if (!matchingIds.length) matchingIds.push(id);
       matchingIds.forEach(mid => {
-        db.ref('data/shortageClassifications/' + mid).remove();
         const mit = val[mid] || it;
         if (mit.isCustom) {
           db.ref('data/shortages/' + mid).remove();
