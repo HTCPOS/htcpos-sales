@@ -404,7 +404,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 9:40 ص · 2c7fd9</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 10:03 ص · d4e621</div>
   </div>
 </div>
 
@@ -4476,7 +4476,7 @@ function loadLowStock() {
   });
 }
 let latestShortages = [];
-let currentShortageSourceFilter = 'all';
+let currentShortageSourceFilter; // undefined الأول = أول فتح للشاشة (هيتظبط "بدون تصنيف" تلقائي مرة واحدة بس - شوف loadShortages)
 let editingShortageId = null;
 
 let shortagesLoadToken = 0; // شبكة أمان ضد تحميلين متزاحمين على بعض: لو تحميل جديد بدأ، أي تحميل قديم لسه شغال بنتجاهل نتيجته لو رجعت متأخرة
@@ -4518,7 +4518,9 @@ function loadShortages() {
       if (it.source && !existing.source) byName[key] = it;
     });
     latestShortages = Object.values(byName);
-    currentShortageSourceFilter = 'unclassified';
+    // بس أول ما الشاشة تتفتح من الأول بنبدأ بـ"بدون تصنيف" - أي تحميل بعد كده (زي بعد ما تشتري
+    // صنف أو تصنّف صنف) لازم يفضل على نفس التبويب اللي إنتي واقفة فيه، مش يرجعك "بدون تصنيف"
+    if (currentShortageSourceFilter === undefined) currentShortageSourceFilter = 'unclassified';
     renderShortageSourceTabs();
     renderShortagesList();
     // (شيلنا استدعاء عرض "تم شراؤها" من هنا بناءً على طلبك - مش محتاجة تشوفي الأصناف اللي
