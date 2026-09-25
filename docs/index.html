@@ -356,41 +356,6 @@
   .rvImageWrap img { display:block; width:100%; height:auto; }
   .rvHighlightBox { position:absolute; border:3px solid #2563EB; border-radius:4px; box-shadow:0 0 0 999px rgba(0,0,0,.35); pointer-events:none; transition:all .15s ease; display:none; }
   .rvSummaryBar { display:flex; flex-direction:column; gap:2px; background:var(--surface2); border-radius:12px; padding:10px 14px; margin-bottom:10px; font-size:12.5px; font-weight:700; }
-
-  /* HTC POS — iOS 26 icon treatment: icon-only, no tile/background */
-  .ic {
-    display:inline-block !important;
-    width:18px !important;
-    height:18px !important;
-    min-width:18px;
-    min-height:18px;
-    padding:0 !important;
-    margin:0;
-    border:0 !important;
-    border-radius:0 !important;
-    background-color:transparent !important;
-    background-repeat:no-repeat !important;
-    background-position:center !important;
-    background-size:contain !important;
-    box-shadow:none !important;
-    vertical-align:-4px;
-    flex:0 0 auto;
-    overflow:visible;
-    filter:drop-shadow(0 1px 1px rgba(15,23,42,.12)) drop-shadow(0 2px 3px rgba(15,23,42,.10));
-  }
-  .searchResultRow .ic,
-  button .ic,
-  .statusChip .ic,
-  .quickItem .ic,
-  .statIcon .ic {
-    flex:0 0 auto;
-  }
-  .searchResultRow button .ic { width:20px !important; height:20px !important; }
-  #depositModal .ic, #receiptOcrCameraModal .ic, #barcodeScannerModal .ic { filter:drop-shadow(0 1px 2px rgba(15,23,42,.14)); }
-  .ic-wallet, .ic-card, .ic-cash, .ic-bank, .ic-cart, .ic-receipt, .ic-packagecheck, .ic-customers, .ic-search, .ic-clock, .ic-moneybag, .ic-qr, .ic-checkgreen, .ic-warning, .ic-xred, .ic-trash {
-    background-color:transparent !important;
-  }
-
 </style>
 </head>
 <body>
@@ -435,7 +400,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 12:07 ص · b73e19</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 8:34 ص · 12e6af</div>
   </div>
 </div>
 
@@ -1992,7 +1957,6 @@ function processReceiptOcrBlob(blob) {
       const best = matches.find(m => m[1].length === 4) || matches[0];
       if (best) {
         const num = 'P' + best[1];
-        htcReceiptScanSound();
         document.getElementById('invoiceSearchInput').value = num;
         searchInvoiceByNumber();
       } else {
@@ -2092,70 +2056,6 @@ function cropVideoToGuideCanvas(video, guide, upscale, subRegion) {
   canvas.getContext('2d').drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
-
-/* ==================== HTC POS - مِؤثرات صوتية مدمجة ====================
-   الأصوات مولّدة محليًا عبر Web Audio API، بدون ملفات أو روابط صوت خارجية. */
-let htcAudioContext = null;
-let htcLastScanSoundAt = 0;
-
-function htcGetAudioContext() {
-  try {
-    if (!htcAudioContext) {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return null;
-      htcAudioContext = new Ctx();
-    }
-    if (htcAudioContext.state === 'suspended') htcAudioContext.resume().catch(() => {});
-    return htcAudioContext;
-  } catch (e) { return null; }
-}
-
-function htcTone(freq, duration, type, volume, delay = 0) {
-  const ctx = htcGetAudioContext();
-  if (!ctx) return;
-  const start = ctx.currentTime + delay;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = type || 'sine';
-  osc.frequency.setValueAtTime(freq, start);
-  gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume || 0.035), start + 0.008);
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(start);
-  osc.stop(start + duration + 0.02);
-}
-
-function htcClickSound() {
-  htcTone(1050, 0.045, 'sine', 0.022);
-}
-
-function htcReceiptScanSound() {
-  htcTone(880, 0.075, 'sine', 0.035);
-  htcTone(1320, 0.095, 'sine', 0.028, 0.065);
-}
-
-function htcQrScanSound() {
-  const now = Date.now();
-  if (now - htcLastScanSoundAt < 900) return;
-  htcLastScanSoundAt = now;
-  htcTone(1180, 0.065, 'square', 0.024);
-  htcTone(1680, 0.075, 'sine', 0.024, 0.055);
-}
-
-function htcDepositSuccessSound() {
-  htcTone(660, 0.09, 'sine', 0.032);
-  htcTone(880, 0.11, 'sine', 0.035, 0.08);
-  htcTone(1320, 0.15, 'sine', 0.03, 0.17);
-}
-
-document.addEventListener('click', function(e) {
-  const el = e.target && e.target.closest ? e.target.closest('button, [role="button"], [onclick]') : null;
-  if (!el || el.dataset && el.dataset.noClickSound === '1') return;
-  if (el.closest('input, textarea, select')) return;
-  htcClickSound();
-}, true);
 
 function attemptReceiptOcrScan() {
   if (!receiptOcrScanning) return;
@@ -2736,7 +2636,6 @@ function openReceiptReviewScreen() {
   const panel = document.getElementById('rvDebugPanel');
   if (criticalFailed) { populateReceiptDebugPanel(); panel.style.display = 'block'; }
   else { panel.style.display = 'none'; }
-  htcReceiptScanSound();
   openModal('receiptReviewModal');
 }
 
@@ -3188,8 +3087,6 @@ function onBarcodeScanned(code) {
     if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'مفيش صنف بالباركود ده: ' + code;
     return;
   }
-
-  htcQrScanSound();
 
   if (scanMode === 'increment') {
     const now = Date.now();
@@ -3714,7 +3611,6 @@ function submitDeposit() {
   // أي حقل موجود أصلاً) - مفيدة كأرشيف ودليل لو حصل نزاع على العملية لاحقًا
   if (pendingReceiptOcrJson) record.receiptOcr = pendingReceiptOcrJson;
   depositRef.set(record).then(() => {
-    htcDepositSuccessSound();
     logActivity(kind === 'purchase' ? 'تسديد مشتريات' : 'إيداع مبلغ', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
     pendingDepositCustomer = null;
     pendingReceiptOcrJson = null;
@@ -4507,14 +4403,21 @@ function loadShortages() {
   document.getElementById('shortagesFulfilledSection').innerHTML = '';
   Promise.all([
     db.ref('data/shortages').once('value'),
-    db.ref('data/shortageClassifications').once('value')
-  ]).then(([snap, classSnap]) => {
+    db.ref('data/shortageClassifications').once('value'),
+    db.ref('data/shortagesSuppressed').once('value')
+  ]).then(([snap, classSnap, suppSnap]) => {
     if (myToken !== shortagesLoadToken) return; // تحميل تاني أحدث بدأ وخلص قبل ده - نتجاهل النتيجة المتأخرة دي
     const val = snap.val();
     const classifications = classSnap.val() || {};
+    // أسماء الأصناف اللي دُست عليها "اشتريته" قبل كده - جهاز الكاشير بيرجع يضيفهم تاني وتاني
+    // طول ما المخزون الحقيقي لسه قليل عنده (مش عارف إنك اشتريتها من مصدر تاني). فبنخفيهم
+    // دايمًا بالاسم، حتى لو رجعوا برقم جديد كل مرة، لحد ما تشتريهم فعليًا من التطبيق تاني
+    const suppressed = suppSnap.val() || {};
     // بنفرض التصنيف المحفوظ في مكاننا الخاص (لو موجود) فوق أي حاجة جايه من جهاز الكاشير
     const byId = {};
     if (val) Object.entries(val).forEach(([id, it]) => {
+      const nameKey = (it.name || '').trim().toLowerCase();
+      if (suppressed[nameKey] && !it.isCustom) return; // متجاهلينه - جهاز الكاشير رجع ضافه بس إحنا عارفين إنه اتشرى
       const saved = classifications[id];
       byId[id] = { id, ...it, source: (saved ? saved.source : it.source) || null, qty: (saved && saved.qty != null) ? saved.qty : it.qty };
     });
@@ -4721,15 +4624,17 @@ function markShortageFulfilled(id) {
   const it = latestShortages.find(x => x.id === id);
   if (!it) return;
   if (!confirm('تأكيد إنك اشتريت "' + it.name + '"؟')) return;
+  const nameKey = (it.name || '').trim().toLowerCase();
   db.ref('data/shortagesFulfilled').push().set({
     name: it.name, qty: it.qty || null, source: it.source || null, fulfilledAt: new Date().toISOString()
   }).then(() => {
     logActivity('شراء صنف ناقص', it.name);
-    // جهاز الكاشير بيضيف نفس الصنف كذا مرة برقم مختلف أحيانًا (شوف loadShortages) - فبنشيل أي
-    // نسخة تانية بنفس الاسم بالظبط كمان، مش بس النسخة الظاهرة، عشان محدش يرجع يظهر تاني لوحده
+    // بنسجّل الاسم في قائمة "اتشرى" الدائمة - عشان لو جهاز الكاشير رجع ضاف نفس الصنف تاني
+    // بعدين (لسه شايفه ناقص عنده)، إحنا نعرف نتجاهله ومنوريهوش تاني كأنه لسه محتاج شراء
+    db.ref('data/shortagesSuppressed/' + nameKey).set({ at: new Date().toISOString(), name: it.name });
+    // كمان بنشيل أي نسخة موجودة دلوقتي بنفس الاسم بالظبط، مش بس النسخة الظاهرة
     db.ref('data/shortages').once('value').then(snap => {
       const val = snap.val() || {};
-      const nameKey = (it.name || '').trim().toLowerCase();
       const matchingIds = Object.entries(val)
         .filter(([mid, mit]) => (mit.name || '').trim().toLowerCase() === nameKey)
         .map(([mid]) => mid);
