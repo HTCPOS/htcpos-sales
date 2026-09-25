@@ -289,6 +289,10 @@
   .newStmtKV + .newStmtKV { border-top:1px solid #F1F5F9; }
   .newStmtKVLabel { color:#94A3B8; }
   .newStmtKVVal { font-weight:800; color:#1E293B; direction:ltr; }
+  /* خانة تاريخ منسّقة - المتصفح بيدّي شكل افتراضي غريب لـ input type=date، فبنتحكم في الشكل
+     يدويًا (ارتفاع ثابت، محاذاة، لون خلفية) عشان تنسجم مع باقي التطبيق */
+  .stmtDateInput { width:100%; height:42px; padding:0 10px; border:1.5px solid #E2E8F0; background:#F8FAFC; border-radius:10px; font-size:13px; font-weight:700; color:#1E293B; box-sizing:border-box; direction:ltr; text-align:center; -webkit-appearance:none; appearance:none; margin-top:3px; }
+  .stmtDateInput::-webkit-date-and-time-value { text-align:center; }
   .newStmtHeaderTop { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
   .newStmtHeaderRight { text-align:left; font-size:9px; color:#64748B; line-height:1.7; }
   .newStmtHeaderRight b { display:block; font-size:10px; color:#1E293B; }
@@ -400,7 +404,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 8:59 ص · 3da871</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 9:10 ص · 4f7c2e</div>
   </div>
 </div>
 
@@ -692,11 +696,11 @@
       <div style="display:flex;gap:8px;margin-top:8px;">
         <div style="flex:1;">
           <label style="font-size:10.5px;color:var(--textMuted2);">من تاريخ</label>
-          <input type="date" id="stmtFilterFromDate" style="width:100%;padding:10px 8px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:13px;margin-top:3px;box-sizing:border-box;">
+          <input type="date" id="stmtFilterFromDate" class="stmtDateInput">
         </div>
         <div style="flex:1;">
           <label style="font-size:10.5px;color:var(--textMuted2);">إلى تاريخ</label>
-          <input type="date" id="stmtFilterToDate" style="width:100%;padding:10px 8px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:13px;margin-top:3px;box-sizing:border-box;">
+          <input type="date" id="stmtFilterToDate" class="stmtDateInput">
         </div>
       </div>
     </div>
@@ -1360,6 +1364,22 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// اهتزاز خفيف عند الضغط على أي زرار/أيقونة - بيشتغل حتى لو الجهاز في الوضع الصامت (الاهتزاز
+// مختلف عن الصوت). المكتبة الأصلية بتاعة آبل (Haptics) هي الوحيدة اللي بتشتغل فعليًا على آيفون -
+// المتصفحات العادية (زي Safari) مبتدعمش اهتزاز الويب العادي (navigator.vibrate) خالص على آيفون،
+// فبنستخدم نفس أسلوب الجسر اللي التطبيق بيستخدمه لبصمة الوجه وقراءة الصور
+function triggerHaptic() {
+  try {
+    const haptics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+    if (haptics && haptics.impact) { haptics.impact({ style: 'Light' }); return; }
+  } catch (e) {}
+  if (navigator.vibrate) { try { navigator.vibrate(10); } catch (e) {} } // احتياطي لأندرويد/PWA - مش هيشتغل على آيفون Safari
+}
+// اهتزاز تلقائي لأي زرار أو أيقونة تتدوس في التطبيق كله - مش محتاجين نضيفه يدويًا لكل زرار لوحده
+document.addEventListener('click', (e) => {
+  if (e.target.closest('button, .iconBtn, [onclick]')) triggerHaptic();
+}, true);
 
 function fmtMoney(n) {
   n = Number(n || 0);
@@ -3930,7 +3950,7 @@ function openCustomerDebt(customerId, customerName) {
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
-      <button onclick="openModal('statementFilterModal')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>
+      <button onclick="openModal('statementFilterModal')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> معاينة</button>
       <button onclick="shareStatementView()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
