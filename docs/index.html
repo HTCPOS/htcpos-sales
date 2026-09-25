@@ -404,7 +404,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 9:10 ص · 4f7c2e</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 9:23 ص · 7e91bc</div>
   </div>
 </div>
 
@@ -1381,6 +1381,25 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('button, .iconBtn, [onclick]')) triggerHaptic();
 }, true);
 
+// صوت "بييب" قصير وحاد زي أجهزة قراءة الباركود/الكاشير الحقيقية - بنولّده بالكود مباشرة (نغمة
+// صناعية عن طريق Web Audio API) بدل ما نحتاج ملف صوت خارجي منفصل. بيتشغّل عند أي قراءة ناجحة:
+// الباركود، رقم إيصال الفاتورة، وإيصال البطاقة وقت الإيداع
+function playScanBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square'; // نغمة حادة زي صوت أجهزة السكانر الحقيقية بالظبط
+    osc.frequency.value = 1568; // تردد عالي شبيه بصوت "بييب" المعتاد
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.12);
+  } catch (e) {}
+}
+
 function fmtMoney(n) {
   n = Number(n || 0);
   return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -1989,6 +2008,7 @@ function processReceiptOcrBlob(blob) {
       // لو لقينا أكتر من رقم محتمل، نفضّل اللي 4 أرقام (الشكل الغالب لرقم الإيصال عندك)
       const best = matches.find(m => m[1].length === 4) || matches[0];
       if (best) {
+        playScanBeep(); // قراءة ناجحة
         const num = 'P' + best[1];
         document.getElementById('invoiceSearchInput').value = num;
         searchInvoiceByNumber();
@@ -2110,6 +2130,7 @@ function attemptReceiptOcrScan() {
       const best = matches.find(m => m[1].length === 4) || matches[0];
       if (best) {
         receiptOcrScanning = false;
+        playScanBeep(); // قراءة ناجحة
         const num = 'P' + best[1];
         document.getElementById('invoiceSearchInput').value = num;
         closeReceiptOcrCamera();
@@ -2230,6 +2251,7 @@ async function attemptCardReceiptOcrScan() {
     const foundCount = [hasAmount, hasCard, hasRef].filter(Boolean).length;
     const statusEl = document.getElementById('cardReceiptOcrStatus');
     if (foundCount >= 2) {
+      playScanBeep(); // لقينا الإيصال - قراءة ناجحة
       if (statusEl) statusEl.textContent = '✅ لقيت الإيصال - جاري التحليل الدقيق...';
       await finalizeCardReceiptCapture(video, guide);
     } else {
@@ -3127,6 +3149,7 @@ function onBarcodeScanned(code) {
     if (lastIncrementedId === match.id && (now - lastIncrementTime) < 1500) return;
     lastIncrementedId = match.id;
     lastIncrementTime = now;
+    playScanBeep(); // قراءة ناجحة فعليًا (مش تكرار لنفس المسحة) - نفس صوت أجهزة السكانر الحقيقية
 
     const current = countSession[match.id] !== undefined ? countSession[match.id] : 0;
     countSession[match.id] = current + 1;
@@ -3142,6 +3165,7 @@ function onBarcodeScanned(code) {
   // وضع الادخال اليدوي
   if (scanLocked) return;
   scanLocked = true;
+  playScanBeep(); // قراءة ناجحة
   currentScannedItem = match;
   if (barcodeScannerInstance) { try { barcodeScannerInstance.pause(); } catch(e) {} }
 
