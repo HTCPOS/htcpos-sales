@@ -400,7 +400,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 8:45 ص · 6bf210</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 8:59 ص · 3da871</div>
   </div>
 </div>
 
@@ -686,8 +686,21 @@
 <div class="modalBg" id="statementFilterModal" onclick="if(event.target===this)closeModal('statementFilterModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('statementFilterModal')">✕</button>
-    <h3>اختر حركات الكشف</h3>
-    <div style="margin:14px 0;">
+    <h3>اختر فترة وحركات الكشف</h3>
+    <div style="margin:14px 0 4px;">
+      <label style="font-size:12px;color:var(--textMuted);font-weight:700;">📅 الفترة الزمنية (اختياري - سيبها فاضية عشان كل الفترة)</label>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--textMuted2);">من تاريخ</label>
+          <input type="date" id="stmtFilterFromDate" style="width:100%;padding:10px 8px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:13px;margin-top:3px;box-sizing:border-box;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--textMuted2);">إلى تاريخ</label>
+          <input type="date" id="stmtFilterToDate" style="width:100%;padding:10px 8px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:13px;margin-top:3px;box-sizing:border-box;">
+        </div>
+      </div>
+    </div>
+    <div style="margin:16px 0 14px;border-top:1px solid var(--border2);padding-top:6px;">
       <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
         <input type="checkbox" id="stmtFilterPurchase" checked style="width:18px;height:18px;">
         <span style="font-size:13.5px;font-weight:700;">📋 فواتير المبيعات</span>
@@ -4043,9 +4056,12 @@ function confirmStatementFilterAndOpen() {
     purchase: document.getElementById('stmtFilterPurchase').checked,
     deposit: document.getElementById('stmtFilterDeposit').checked,
     payment: document.getElementById('stmtFilterPayment').checked,
-    purchaseAccount: document.getElementById('stmtFilterPurchaseAccount').checked
+    purchaseAccount: document.getElementById('stmtFilterPurchaseAccount').checked,
+    fromDate: document.getElementById('stmtFilterFromDate').value || null,
+    toDate: document.getElementById('stmtFilterToDate').value || null
   };
   if (!filters.purchase && !filters.deposit && !filters.payment && !filters.purchaseAccount) { alert('اختار نوع حركة واحد على الأقل'); return; }
+  if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) { alert('تاريخ "من" لازم يكون قبل تاريخ "إلى"'); return; }
   closeModal('statementFilterModal');
   openCustomerStatementView(filters);
 }
@@ -4054,20 +4070,42 @@ function openCustomerStatementView(filters) {
   const s = lastCustomerStatement;
   if (!s) return;
   currentStatementViewType = 'customer';
-  const rows = buildUnifiedStatementRows(s, filters);
+  const f = filters || {};
+  // بنحسب كل الحركات والرصيد المتراكم على كامل تاريخ الحساب الأول (من غير أي فلترة تاريخ) -
+  // عشان الرصيد يفضل دقيق ومربوط بكل حاجة قبل كده، حتى لو هنعرض بس جزء من الفترة
+  const allRows = buildUnifiedStatementRows(s, f);
+  // "الرصيد الافتتاحي" = آخر رصيد متراكم قبل بداية الفترة المختارة (أو صفر لو مفيش فترة محددة
+  // أو دي أول حركة في تاريخ الحساب) - نفس مبدأ أي كشف حساب بنكي حقيقي
+  let openingBalance = 0;
+  if (f.fromDate) {
+    const before = allRows.filter(r => r.date.slice(0, 10) < f.fromDate);
+    if (before.length) openingBalance = before[before.length - 1].balance;
+  }
+  const rows = allRows.filter(r => {
+    const d = r.date.slice(0, 10);
+    if (f.fromDate && d < f.fromDate) return false;
+    if (f.toDate && d > f.toDate) return false;
+    return true;
+  });
   const totalPurchases = rows.filter(r => r.type === 'purchase').reduce((t, r) => t + r.amount, 0);
   const totalDeposits = rows.filter(r => r.type === 'deposit').reduce((t, r) => t + r.amount, 0);
   const totalPayments = rows.filter(r => r.type === 'payment').reduce((t, r) => t + r.amount, 0);
-  const finalBalance = rows.length ? rows[rows.length - 1].balance : 0;
+  const finalBalance = rows.length ? rows[rows.length - 1].balance : openingBalance;
   const now = new Date();
   const fmtDT = (iso) => {
     const d = new Date(iso);
     return d.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'short', year:'numeric' }) + '<br>' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
   };
-  const firstDate = rows.length ? new Date(rows[0].date) : now;
+  const firstDate = f.fromDate ? new Date(f.fromDate) : (allRows.length ? new Date(allRows[0].date) : now);
+  const lastDateShown = f.toDate ? new Date(f.toDate) : now;
   const custNum = customerDisplayNumber(s.customerId);
 
   document.getElementById('statementViewTitle').textContent = 'كشف حساب - ' + s.customerName;
+
+  const openingRowHtml = f.fromDate ? `<tr style="background:#F8FAFC;">
+    <td colspan="7" style="text-align:left;font-weight:800;color:#475569;">الرصيد الافتتاحي (قبل ${f.fromDate})</td>
+    <td style="color:${openingBalance > 0 ? '#DC2626' : (openingBalance < 0 ? '#16A34A' : '#64748B')};font-weight:800;">${fmtMoney(openingBalance)}</td>
+  </tr>` : '';
 
   const rowsHtml = rows.length ? rows.map((r, idx) => {
     const purchaseCell = r.type === 'purchase' ? fmtMoney(r.amount) : '0.00';
@@ -4107,13 +4145,13 @@ function openCustomerStatementView(filters) {
       <div class="newStmt2ColCard">
         <div class="newStmt2ColTitle"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#1E293B" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> الفترة الزمنية</div>
         <div class="newStmtKV"><span class="newStmtKVLabel">من تاريخ</span><span class="newStmtKVVal">${firstDate.toLocaleDateString('en-GB').split('/').reverse().join('/')}</span></div>
-        <div class="newStmtKV"><span class="newStmtKVLabel">إلى تاريخ</span><span class="newStmtKVVal">${now.toLocaleDateString('en-GB').split('/').reverse().join('/')}</span></div>
+        <div class="newStmtKV"><span class="newStmtKVLabel">إلى تاريخ</span><span class="newStmtKVVal">${lastDateShown.toLocaleDateString('en-GB').split('/').reverse().join('/')}</span></div>
       </div>
     </div>
     <div class="newStmtTableWrap">
       <table class="newStmtTable">
         <thead><tr style="background:#1E293B;"><th style="background:#1E293B;color:#fff;">م</th><th style="background:#1E293B;color:#fff;">التاريخ والوقت</th><th style="background:#1E293B;color:#fff;">رقم الفاتورة</th><th style="background:#1E293B;color:#fff;">البيان</th><th style="background:#1E293B;color:#fff;">المبيعات</th><th style="background:#1E293B;color:#fff;">المشتريات</th><th style="background:#1E293B;color:#fff;">الإيداعات</th><th style="background:#1E293B;color:#fff;">السداد</th><th style="background:#1E293B;color:#fff;">الرصيد الإجمالي</th></tr></thead>
-        <tbody>${rowsHtml}</tbody>
+        <tbody>${openingRowHtml}${rowsHtml}</tbody>
       </table>
     </div>
     <div class="newStmtFooterGrid" style="grid-template-columns:1fr 1fr 1fr;">
