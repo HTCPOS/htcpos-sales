@@ -404,7 +404,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 10:40 م · c72f9e</div>
+    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 25 سبتمبر 11:23 م · d4b671</div>
   </div>
 </div>
 
@@ -1333,14 +1333,22 @@ function openSoundSettings() {
 
   const soundSection = (context, cfg) => {
     const current = s[context + 'Sound'] || cfg.default;
+    const volume = s[context + 'Volume'] != null ? s[context + 'Volume'] : 100;
+    // كل قناة بتوري بس النغمات المسموحة ليها (نغمات النقر للنقر بس، نغمات السكانر لقنوات القراءة)
+    const filteredPresets = Object.entries(SOUND_PRESETS).filter(([key, p]) => p.cat === cfg.allowedCat || p.cat === 'both');
     return `
-      <div style="margin-bottom:18px;">
+      <div style="margin-bottom:22px;">
         <div style="font-size:12.5px;font-weight:800;color:var(--text);margin-bottom:8px;">${cfg.label}</div>
-        ${Object.entries(SOUND_PRESETS).map(([key, preset]) => `
+        <div style="display:flex;align-items:center;gap:8px;background:var(--surface2,#F8FAFC);border-radius:10px;padding:8px 12px;margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+          <input type="range" min="0" max="100" value="${volume}" oninput="document.getElementById('vol_${context}_label').textContent=this.value+'%'" onchange="saveSoundSettings({'${context}Volume':Number(this.value)})" style="flex:1;">
+          <span id="vol_${context}_label" style="font-size:11px;color:var(--textMuted);min-width:32px;text-align:left;">${volume}%</span>
+        </div>
+        ${filteredPresets.map(([key, preset]) => `
           <label style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
             <input type="radio" name="sound_${context}" value="${key}" ${current === key ? 'checked' : ''} onchange="saveSoundSettings({'${context}Sound':'${key}'})" style="width:17px;height:17px;">
             <span style="font-size:13px;flex:1;">${preset.label}</span>
-            ${preset.type ? `<button onclick="event.preventDefault();event.stopPropagation();playTonePreset('${key}')" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">🔊 اختبار</button>` : ''}
+            ${preset.type ? `<button onclick="event.preventDefault();event.stopPropagation();playTonePreset('${key}', document.getElementById('vol_${context}_label') ? parseInt(document.getElementById('vol_${context}_label').textContent) : 100)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">🔊 اختبار</button>` : ''}
           </label>
         `).join('')}
       </div>`;
@@ -1547,25 +1555,25 @@ function escapeHtml(str) {
 // ===== نظام إعدادات الصوت والاهتزاز - محفوظة على الجهاز نفسه (تفضيل شخصي، مش بيانات مشتركة) =====
 
 const SOUND_PRESETS = {
-  // ===== نغمات نقر ناعمة وقصيرة (زي أجهزة آيفون وأندرويد الحقيقية) =====
-  tapIos:      { label: 'نقرة آيفون',        type: 'sine',     freq: 1200, dur: 0.025 },
-  tapAndroid:  { label: 'نقرة أندرويد',       type: 'sine',     freq: 750,  dur: 0.03 },
-  tapGlass:    { label: 'نقرة زجاجية',        type: 'triangle', freq: 1500, dur: 0.035 },
-  tapClick:    { label: 'طقطقة خفيفة',        type: 'square',   freq: 300,  dur: 0.02 },
-  tapPop:      { label: 'فرقعة ناعمة',        type: 'sine',     freq: 950,  dur: 0.05 },
-  // ===== نغمات سكانر/قراءة (زي أجهزة الباركود والكاشير الحقيقية) =====
-  classic:     { label: 'بييب كلاسيكي',       type: 'square',   freq: 1568, dur: 0.12 },
-  soft:        { label: 'نغمة ناعمة',         type: 'sine',     freq: 900,  dur: 0.16 },
-  double:      { label: 'بييب مزدوج',         type: 'square',   freq: 1400, dur: 0.07, repeat: 2, gap: 140 },
-  triple:      { label: 'بييب ثلاثي',         type: 'square',   freq: 1500, dur: 0.055, repeat: 3, gap: 100 },
-  high:        { label: 'نغمة حادة عالية',    type: 'triangle', freq: 2200, dur: 0.09 },
-  low:         { label: 'نغمة هادئة منخفضة', type: 'sine',     freq: 500,  dur: 0.18 },
-  sweepUp:     { label: 'نغمة صاعدة',         type: 'sine',     freq: 700,  freqEnd: 1800, dur: 0.15 },
-  sweepDown:   { label: 'نغمة هابطة',         type: 'sine',     freq: 1800, freqEnd: 700,  dur: 0.15 },
-  bell:        { label: 'جرس معدني',          type: 'sine',     freq: 1760, dur: 0.28 },
-  whistle:     { label: 'صفارة قصيرة',        type: 'triangle', freq: 2400, dur: 0.06 },
-  twoTone:     { label: 'نغمة مزدوجة متنوعة', type: 'square',   freq: 1200, freq2: 1800, dur: 0.08, repeat: 2, gap: 110 },
-  none:        { label: 'بدون صوت',           type: null }
+  // ===== نغمات نقر ناعمة وقصيرة (زي أجهزة آيفون وأندرويد الحقيقية) - للنقر بس =====
+  tapIos:      { label: 'نقرة آيفون',        type: 'sine',     freq: 1200, dur: 0.025, cat: 'tap' },
+  tapAndroid:  { label: 'نقرة أندرويد',       type: 'sine',     freq: 750,  dur: 0.03,  cat: 'tap' },
+  tapGlass:    { label: 'نقرة زجاجية',        type: 'triangle', freq: 1500, dur: 0.035, cat: 'tap' },
+  tapClick:    { label: 'طقطقة خفيفة',        type: 'square',   freq: 300,  dur: 0.02,  cat: 'tap' },
+  tapPop:      { label: 'فرقعة ناعمة',        type: 'sine',     freq: 950,  dur: 0.05,  cat: 'tap' },
+  // ===== نغمات سكانر/قراءة (زي أجهزة الباركود والكاشير الحقيقية) - للقراءة بس =====
+  classic:     { label: 'بييب كلاسيكي',       type: 'square',   freq: 1568, dur: 0.12,  cat: 'scan' },
+  soft:        { label: 'نغمة ناعمة',         type: 'sine',     freq: 900,  dur: 0.16,  cat: 'scan' },
+  double:      { label: 'بييب مزدوج',         type: 'square',   freq: 1400, dur: 0.07,  repeat: 2, gap: 140, cat: 'scan' },
+  triple:      { label: 'بييب ثلاثي',         type: 'square',   freq: 1500, dur: 0.055, repeat: 3, gap: 100, cat: 'scan' },
+  high:        { label: 'نغمة حادة عالية',    type: 'triangle', freq: 2200, dur: 0.09,  cat: 'scan' },
+  low:         { label: 'نغمة هادئة منخفضة', type: 'sine',     freq: 500,  dur: 0.18,  cat: 'scan' },
+  sweepUp:     { label: 'نغمة صاعدة',         type: 'sine',     freq: 700,  freqEnd: 1800, dur: 0.15, cat: 'scan' },
+  sweepDown:   { label: 'نغمة هابطة',         type: 'sine',     freq: 1800, freqEnd: 700,  dur: 0.15, cat: 'scan' },
+  bell:        { label: 'جرس معدني',          type: 'sine',     freq: 1760, dur: 0.28,  cat: 'scan' },
+  whistle:     { label: 'صفارة قصيرة',        type: 'triangle', freq: 2400, dur: 0.06,  cat: 'scan' },
+  twoTone:     { label: 'نغمة مزدوجة متنوعة', type: 'square',   freq: 1200, freq2: 1800, dur: 0.08, repeat: 2, gap: 110, cat: 'scan' },
+  none:        { label: 'بدون صوت',           type: null,       cat: 'both' }
 };
 const VIBRATION_PRESETS = {
   light:  { label: 'خفيف',    style: 'LIGHT' },
@@ -1574,11 +1582,13 @@ const VIBRATION_PRESETS = {
   double: { label: 'نبضتين',  style: 'LIGHT', double: true },
   none:   { label: 'بدون اهتزاز', style: null }
 };
+// كل قناة عندها نغماتها المسموحة بس (tap = نغمات النقر، scan = نغمات القراءة) - عشان قنوات
+// القراءة التلاتة متتلخبطش بنغمات النقر الناعمة اللي مالهاش لازمة معاها
 const SOUND_CONTEXTS = {
-  tap:     { label: 'النقر على الأزرار',        default: 'none' },
-  qr:      { label: 'قراءة الباركود / QR',       default: 'classic' },
-  invoice: { label: 'قراءة رقم الإيصال',         default: 'classic' },
-  deposit: { label: 'قراءة إيصال الإيداع',       default: 'double' }
+  tap:     { label: 'النقر على الأزرار',        default: 'none',    allowedCat: 'tap' },
+  qr:      { label: 'قراءة الباركود / QR',       default: 'classic', allowedCat: 'scan' },
+  invoice: { label: 'قراءة رقم الإيصال',         default: 'classic', allowedCat: 'scan' },
+  deposit: { label: 'قراءة إيصال الإيداع',       default: 'double',  allowedCat: 'scan' }
 };
 
 function getSoundSettings() {
@@ -1591,9 +1601,11 @@ function saveSoundSettings(patch) {
 }
 
 // بيشغّل نغمة معينة بذاتها (مش حسب السياق) - مستخدمة في زرار "اختبار" في شاشة الإعدادات
-function playTonePreset(presetKey) {
+function playTonePreset(presetKey, volume) {
   const preset = SOUND_PRESETS[presetKey];
   if (!preset || !preset.type) return;
+  const vol = (volume != null ? volume : 100) / 100 * 0.28; // 0.28 هي أقصى شدة صوت أصلية
+  if (vol <= 0) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const playOne = (delayMs, freq) => setTimeout(() => {
@@ -1603,7 +1615,7 @@ function playTonePreset(presetKey) {
       osc.type = preset.type;
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
       if (preset.freqEnd) osc.frequency.linearRampToValueAtTime(preset.freqEnd, ctx.currentTime + preset.dur);
-      gain.gain.setValueAtTime(0.28, ctx.currentTime);
+      gain.gain.setValueAtTime(vol, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + preset.dur);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + preset.dur);
@@ -1640,7 +1652,8 @@ function playFeedback(context) {
   const vibrateOnly = s.vibrateOnly === true;
   if (!vibrateOnly) {
     const soundKey = s[context + 'Sound'] || (SOUND_CONTEXTS[context] && SOUND_CONTEXTS[context].default) || 'classic';
-    playTonePreset(soundKey);
+    const volume = s[context + 'Volume'] != null ? s[context + 'Volume'] : 100;
+    playTonePreset(soundKey, volume);
   }
   if (context === 'tap') {
     playVibrationPreset(s.tapVibration || 'light');
