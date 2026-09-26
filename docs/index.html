@@ -999,7 +999,6 @@
     </div>
     <div id="incrementFeedback" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:16px; margin-top:12px; text-align:center;">
       <div id="incItemName" style="font-weight:800; font-size:15px; margin-bottom:4px;"></div>
-      <div id="incItemSystemQty" style="font-size:12px; color:var(--textMuted); margin-bottom:8px;"></div>
       <div id="incItemCount" style="font-size:32px; font-weight:900; color:#16A34A;"></div>
       <div style="font-size:11px; color:#94A3B8;">اتعدت لحد دلوقتي</div>
     </div>
@@ -3131,7 +3130,58 @@ function confirmReceiptReview() {
 function searchInvoiceByNumber() {
   const q = document.getElementById('invoiceSearchInput').value.trim();
   if (!q) { alert('اكتب رقم الإيصال او الطلب'); return; }
-  runInvoiceQuery('search', q, 'نتائج البحث عن ' + q);
+  const title = 'نتائج البحث عن ' + q;
+
+  document.getElementById('invoiceResultsTitle').textContent = title;
+  const body = document.getElementById('invoiceResultsBody');
+  body.innerHTML = '<div class="emptyMsg">جاري البحث...</div>';
+  openModal('invoiceResultsModal');
+
+  const pushRef = db.ref('commands/invoiceQuery').push();
+  const pushId = pushRef.key;
+  pushRef.set({ type: 'search', query: q });
+
+  const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
+  const timeout = setTimeout(() => {
+    resultRef.off('value');
+    // الجهاز مش متصل - ندور في النسخة المحفوظة من الأرشيف بدل ما نوقف
+    searchInvoiceOffline(q, body);
+  }, 15000);
+
+  resultRef.on('value', snap => {
+    if (snap.val() === null) return;
+    clearTimeout(timeout);
+    resultRef.off('value');
+    const val = snap.val();
+    const results = val ? Object.values(val) : [];
+    body.innerHTML = renderInvoiceResultsList(results);
+    resultRef.remove();
+  });
+}
+
+function searchInvoiceOffline(q, body) {
+  const numMatch = q.replace(/[^0-9]/g, '');
+  db.ref('data/dailyArchive').once('value').then(snap => {
+    const allDays = snap.val() || {};
+    const matches = [];
+    Object.values(allDays).forEach(dayObj => {
+      Object.values(dayObj || {}).forEach(entry => {
+        if (!entry) return;
+        const numberDigits = String(entry.number || '').replace(/[^0-9]/g, '');
+        const orderDigits = String(entry.orderNo || '').replace(/[^0-9]/g, '');
+        if (numMatch && (numberDigits === numMatch || orderDigits === numMatch)) {
+          matches.push(entry);
+        }
+      });
+    });
+    if (matches.length) {
+      body.innerHTML = '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وممكن تكون قديمة</div>' + renderInvoiceResultsList(matches);
+    } else {
+      body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومفيش نتيجة مطابقة في النسخة المحفوظة</div>';
+    }
+  }).catch(() => {
+    body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+  });
 }
 
 function openAllInvoices() {
@@ -3373,7 +3423,7 @@ function manualLookupSearch() {
     return;
   }
   resEl.style.display = 'block';
-  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer; padding:12px 14px;" onclick="selectManualLookupItem('${it.id}')"><div class="n">${escapeHtml(it.name)}</div><div class="p" style="font-size:11px; color:#94A3B8;">مسجل بالنظام: ${it.stock}${it.barcode ? ' &middot; باركود: ' + escapeHtml(it.barcode) : ' &middot; بدون باركود'}</div></div>`).join('');
+  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer; padding:12px 14px;" onclick="selectManualLookupItem('${it.id}')"><div class="n">${escapeHtml(it.name)}</div><div class="p" style="font-size:11px; color:#94A3B8;">مسجل بالنظام: ${it.stock}</div></div>`).join('');
   resEl.scrollTop = 0;
 }
 
@@ -3391,7 +3441,7 @@ function selectManualLookupItem(itemId) {
 
   document.getElementById('barcodeScanStatus').textContent = '';
   document.getElementById('scanItemName').textContent = match.name;
-  document.getElementById('scanItemSystemQty').textContent = 'مسجل بالنظام: ' + match.stock + (match.barcode ? ' · باركود: ' + match.barcode : '');
+  document.getElementById('scanItemSystemQty').textContent = 'مسجل بالنظام: ' + match.stock;
   const qtyInput = document.getElementById('scanQtyInput');
   qtyInput.value = countSession[match.id] !== undefined ? countSession[match.id] : '';
   document.getElementById('scanCountBox').style.display = 'block';
@@ -3461,14 +3511,8 @@ function onBarcodeScanned(code) {
     updateCountProgress();
     updateScanSessionCount();
 
-    const systemQty = Number(match.stock || 0);
-    const newCount = countSession[match.id];
-    const sysDiff = newCount - systemQty;
-    const sysColor = sysDiff < 0 ? '#DC2626' : (sysDiff > 0 ? '#1D4ED8' : '#16A34A');
-
     document.getElementById('incItemName').textContent = match.name;
-    document.getElementById('incItemSystemQty').innerHTML = 'مسجل بالنظام: <b style="color:' + sysColor + '">' + systemQty + '</b>';
-    document.getElementById('incItemCount').textContent = newCount;
+    document.getElementById('incItemCount').textContent = countSession[match.id];
     document.getElementById('incrementFeedback').style.display = 'block';
     return;
   }
@@ -3482,7 +3526,7 @@ function onBarcodeScanned(code) {
 
   document.getElementById('barcodeScanStatus').textContent = '';
   document.getElementById('scanItemName').textContent = match.name;
-  document.getElementById('scanItemSystemQty').textContent = 'مسجل بالنظام: ' + match.stock + (match.barcode ? ' · باركود: ' + match.barcode : '');
+  document.getElementById('scanItemSystemQty').textContent = 'مسجل بالنظام: ' + match.stock;
   const qtyInput = document.getElementById('scanQtyInput');
   qtyInput.value = countSession[match.id] !== undefined ? countSession[match.id] : '';
   document.getElementById('scanCountBox').style.display = 'block';
@@ -3538,7 +3582,7 @@ function renderInventoryCountList() {
       return `<div class="searchResultRow" style="background:var(--surface2);" data-row-id="${it.id}">
         <div style="flex:1;">
           <div class="n">${escapeHtml(it.name)}</div>
-          <div class="p">مسجل بالنظام: ${systemQty}${it.barcode ? ' &middot; باركود: ' + escapeHtml(it.barcode) : ' &middot; بدون باركود'} &middot; <span class="ic ic-checkgreen"></span> اتعد: ${countedVal} ${missingBadge}</div>
+          <div class="p">مسجل بالنظام: ${systemQty} &middot; <span class="ic ic-checkgreen"></span> اتعد: ${countedVal} ${missingBadge}</div>
         </div>
         <button onclick="editCountedItem(${it.id})" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل</button>
       </div>`;
@@ -3547,7 +3591,7 @@ function renderInventoryCountList() {
     return `<div class="searchResultRow" data-row-id="${it.id}">
       <div style="flex:1;">
         <div class="n">${escapeHtml(it.name)}</div>
-        <div class="p">مسجل بالنظام: ${systemQty} &middot; ${it.barcode ? 'باركود: ' + escapeHtml(it.barcode) : 'بدون باركود'}</div>
+        <div class="p">مسجل بالنظام: ${systemQty}${!it.barcode ? ' &middot; بدون باركود' : ''}</div>
       </div>
       <input type="number" inputmode="numeric" data-item-id="${it.id}" value="" lang="en" placeholder="العدد الفعلي" oninput="setCountValue(${it.id}, this.value)" style="width:90px;padding:8px 10px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:14px;text-align:center;">
     </div>`;
