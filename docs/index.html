@@ -25,6 +25,14 @@
     --bg:#F3F5F9; --surface:#fff; --surface2:#F1F5F9; --text:#1E293B; --textMuted:#64748B; --textMuted2:#94A3B8;
     --border:#EEF1F6; --border2:#F1F5F9; --headerBg:rgba(255,255,255,.75); --navBg:rgba(255,255,255,.8);
   }
+  /* الوضع الليلي: الخانات والقوايم المنسدلة ومنتقي التاريخ بتاعت النظام نفسه بتتلوّن غامق تلقائي
+     بدل ما تفضل مربعات بيضا فوق خلفية غامقة */
+  body.dark-theme { color-scheme:dark; }
+  body.dark-theme .modalBg input[style*="#E2E8F0"],
+  body.dark-theme .modalBg select[style*="#E2E8F0"],
+  body.dark-theme .modalBg textarea[style*="#E2E8F0"],
+  body.dark-theme #app input[style*="#E2E8F0"] { border-color:var(--border) !important; }
+  body.dark-theme .modalBg input::placeholder, body.dark-theme .modalBg textarea::placeholder { color:var(--textMuted2); }
   body.dark-theme {
     --bg:#0B1220; --surface:#1E293B; --surface2:#334155; --text:#F1F5F9; --textMuted:#94A3B8; --textMuted2:#94A3B8;
     --border:#334155; --border2:#334155; --headerBg:rgba(15,23,42,.75); --navBg:rgba(15,23,42,.85);
@@ -282,6 +290,10 @@
   body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet[style^="height:"]:not([style^="height:auto"]) {
     height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px) !important;
   }
+  /* زر الرجوع لنتائج البحث (بطاقة صنف / فحص السعر) */
+  .backToResultsBtn { display:flex; align-items:center; gap:6px; width:100%; margin:4px 0 2px; padding:10px 12px; border:none; border-radius:12px; background:var(--surface2); color:#2563EB; font-weight:800; font-size:13.5px; cursor:pointer; text-align:right; -webkit-tap-highlight-color:transparent; transition:transform .12s ease, background .15s ease; }
+  .backToResultsBtn:active { transform:scale(.985); }
+  .backToResultsBtn .bq { color:var(--textMuted); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1; }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
   /* ============ تصميم كشف الحساب الجديد (طبق الأصل) ============ */
@@ -356,6 +368,10 @@
   .ic-qr { background-image:url(data:image/webp;base64,UklGRhQfAABXRUJQVlA4WAoAAAAQAAAAdwAAdwAAQUxQSBsRAAAB36e2bRvGdv4/u5c9IhJ8JjrjA7GdYBgACROhoYj9f3DWDRH9n4C++DMzuwEs9tlJCZ6xaRcpEpiZMcyFdj6PvQCkMiXSERK3mySDb6WkRUvVP1bVH9uZ2R+F/SEpnhi/bEboBEZSN3BEiAAkqbs7goGgbdsk4c96208hIiYAn0GipVKrUKlSIKqBFqtUKuAKzjZyZZOtjQVBGKjVgFYigio0CpUoNXJW/nuqbduVbNu2Sml9mK219tFaE1DRQ+QwOTwOkEPiUNAITlyHlrDRSsBsSQQRMQGWI0kSHElSw939jn9y4Y9KFAo9DETEBGC7te3YJMlzOs7rvp/nfd+IqK5UWYl2j23btm3btm3btm1PW+W0A+/z3Pd1foiozoiICfgKcm3m3ea45u789SZoLZSXOjOoMx6ffFbzfPpjapeZrHQGFGUAgiCtS/SF/PWJpEhecMChwQY2SBhz3phu7c8dZ46BIIDxOSDK3QjdiP5OEqm6tJdCIMiC2O9BrAuTfzKRY5vbFlDRZwyQSc4hqUjaz1Ikn4tIigkFBdsGb8x5lxBitdDPFplznURQQLBR2665LyBzoIEGGUw/Sa4BWYDAAqQQCDRjs/f2HrE36QMgfqDB+3673NVTBIiQLMiGbcy8nQMKiqwoDgxIo5629UDqEHarCpECpKEGSkjEICYf30CFTAWjEelWxjlBX9Tauiz6pKKWpZYxpO6es2pBdlxoVn1QVKlr7nruM/XdF+fo0vfO/s/DI3PsXoOI5BjEPLze844MwxChbDsf9gZHd5vIMJXma2E03/Oeb/nsY/1+7KMP1x7+hT+bjO4ErUkNu0jpRz78Ax4aXRwIz5/4YR/0Rnc0bLk/fRAc8q0+8q1PlMa6Z017HWe/6jdLEB0FaXOOmleWD/+iIwY7DOEj97zmm7/D3U6fO3VHhnmPz3jtOqXjFgEcrZ/4vc9/eczcDVabnNf+M518ryPXoiIEiDbn6uTdJf+7Dze3k0H9zJve05uGOlgYAR6nG6dO5nEF2KfPuYby8Z57t2NhxVMMwTqf/fq0eitzt+T4OndbFSwlwg4yalltQNPbt7k/DFSlrBBYWFDCefpkSd3CdSdx7cQDKlJIwhYWFOcw7WD449YynRQZrl2vO6sRkARIIvrw9Lfq5RDOLvOV20sKRSjnsCxAPcr/vLLcxk+d64iMxSv+5mM33AIHIAlbmjc+YKuHb6kT53ykIcnKxXBARpry/N89N3yr/YjmtRevaV6MDtNw/ad/851XpYaF3CcspKxv8npZdEvn0h/Z2DJYYtkfvbhDVgYxnfujv+oSIGuNRgQRMqPK+PxvfNdnndhcjYthuTy6CkuGvOeN4FY6Zb38yIaIAOLqr/7VEzt2iVo0XbwUpWv8yDXHhhxxABYv/YHjxzZXi1Vdbj34DjIW9MVzN2ZZrxIG1gtfNFgocPnnXzzPwQqPY3QJSK5l75raRXiNKIi95YtIKr1Q3/IyECZ98pQLoFvH+4vfDqqu//jH/77OnvQioNsGST5asrF4VdNI3kUpZAHC7Y9+9mZ3Cvb3/wSHn1Ku5xEt/u2/DmFqEAHaZwjIAEZOHWQACQUhkJqD9OC/eyywLL/6DUTTNzBPA2j//2t2EqFUSQiFIWQTNt6PkFLI/GDhIG1D49J2WB26nlSgOxP5PIkye5uBXUIiJBlkCMBEoh5yyimZ9LZCIBAhKYXkNmIQPb5EffteMIIt3gRaGWoMdeRSFIg2ebYdcglBpwpvkWGl6dlTwrKasMEo0E+DioTDBO703bNedzOGRR0vkH2PvLI7HfHcp0G9jFW5WNXlUG84Z+9uP/y/N0uLjMiQkIEl/Wk2IoDDu/nNX33VmxGS9N3rtRuYFsVx5GmlzXJbT3WUDUwACsh1f/5P/OVNIdSwsaGwYN/E3gKKT232zH7195+xQ2C08T5WxNbSl+piWGQuNM/pvpMzgwhgyerv/33/v16LsAUW7M372BeQHQESFUDHP/lL5mmyYlnX47qu5lyeGb2eh3OdeWBavN/fPe8+vnlzmOW0MTa9YbDzbhmMbGkZocfrXOc6w6kTKg5O7nXp5aWnM8gg1SBxnbm8I9VCyQ7IqHeMZYduNWMs4wLI0V4blUwwgQvZYwdFJgYUmeJdnTZB9Lln2s7ewBjG7qh3OiCqrKszXABNQ8AkgTR9UccOTKPDNMHEFDhCFFfWljJSzAQHZ2669FesS5fT88ONndApSSKIz5YDIto0AMsxCMgQMl7/x15zJGXnMvkU0y347b/ddJeWL/idpmTGa0LehUxR4DCGieIgOZZEYBQBwS+/tEw9x/Jn/xH7xtru0MvDX/H7Jq/+45f8d3QbPMelISN5l3cRwUxEdG2DTEojwbz8/2/6X6vu/ux3TGpgW+6LHv/6UR/9zd/xxR/5p4VMPI5AGoiIIr7JIIgynyIwoEyJ6FD/9HO/82d/6NM+79FIgLTdQ23j7aWnUGX5aaNGZptDk893YbX5z/8w+yrPt4KIHho4skIgSZR4KS+qHLv62DYgoYYX8/oFCT7MliIVRDgdW5NzMua4xVRBxAaU51sagnIy9AgkQlRIySsvlZA61VyTpkQK9FiW44DDEmpgxLU5hkgac3sw2igoip81n5URkjknXMRDuiCFVnXapbZmW8IEw6Dn9F04F6y7NEw+rh14zTHG5E12K6ggyPNZF5PhAJ358omLQG6XSkVFqGjE7Aokn/3BynWuM4CKqaD3O6PlmGpuBtX25oNPP4wd0BAK1xLuFKnuJEqqVu6n1J1CuAnrBznms5M20zvZZh+EhDGy1qmo17ph28x5j1EHIUiK6DmLQEiXBDF5FS1qEbj43Q7Fklhb/uYcje15e90CDLNgLQhJGFlWxHezDYYce64P0ZoDk/Ve6VukiAQ5SJMgCO/ZEDJgGfrZNEcTKb5ZKD5nzeXjck0aUoCdsYD2IT/M7RYkJC++uV0+xCJIilbqIlqKeg21iP3JD1N3jgHMec0gn0POkWMWdYCoOcMPbc/E3BwNMHiu66hGSkoHUV6RglJqrZeHGSARegLdYc7OPJ4sjMwoPlGpVhDKNTVHAee67ImxO7EEjI/HuRMUQiTSigSpQqt3sin52PI3c3Ye+woCUtglBw7XpZkSo+FzPvZQNyaNH5736yLbHButBREvNB1hvSYG37QW1gOxG2aM0HN2VRbejLLQyCGtkDAYgoOcR57tjjUy0+0FKxEsBBFKkVyjYQPxvkbYA8E+lKOx7JwqwUSpRZlEtC5JAghqGCFYD2D6MGa8P9e5bgQTFGyzQQu55nM1g0ULG+2LJHJzMHAmU3TCMOZaaaWgEildRARFUWN5cD7u0zFj9767fV5T0ObzZla7TI5zirAag/h18+1kYe/Ov/UaFV9pl7cIQkiqaPGecxQQLcOeud8FJJ6m1VMQ3NJlttEsSJgJ+hCXUUDzN9slQ5Kdrz0wErmmZZQcI6FlEeyFBPrcYx0yH+02JRw0IcfxXguzYcYwWxBsngDp0x57FxKaDTE6zsiUj0ZhoLKWiNIkCTQ0RZGfXeRa0N77usE0d9sFIor2NrOZ2NjapEI+BvuJfCxyot003+kTGaKEzgkK2g08iYKg/LwW5Dho974TkWCnoqII6GrM7MrKbkgEyns/iBQXkgwEbyTXLkiLoiANiajMTZhOyugov8SERHQ3fO5yDYKWWIzJmuPetmXjflGIID9vfrAUBli5BkykFIG912F0s+a1UzVQ19lp4jSDzvgcQXP21VsJg+UA8d4YRN29NHDYtPaawTbujAANnOO91GOYcJ5+/498k2WWEArTo4z41iKtyNw+ENPE2QMCZsjCul2MKooiudz5zPurfXhEv+2TfuKrvvgHv+nMLCRMZzB++AwIxTBAEILctG3MVsuQwPRj7/013/ldX/hM4tAil5/yla9z/Nj9H/n197chwmE0oCHoEILMAVEUJkEyAYkIbbRUdbj02z70c97tNV7v477zDbIcksJv9eGbexbt7d4pUgCpwvdOl5mwZQMEGCbA0rvojOtuDJ7e+ENOzA6/3icc73E49Hi9u2+qWLl4nS2FSwo02xQ6l4k0pkmzA4ZADFJKWu4WKxzSax3tJuA1nsEhyeNtQ1Eq7CObaUySWaxWpmG233LDAcQSwnZWNm2Ujt3ZaafjSI9SgNUGhx1tiuKiDAgpLEWbE/mYZcHrzu5z0h0JbcLkXUHWli4pEWUZIal4b0aHRG9GNqbP2Dh94+L9OmPaEmiW767Xvu4NeNUdL17dvfY7es5zTvPlXeXcTY+KpICeHLoBQlaDA+ZeH//QWIQM9uZs68cvPGM8e1Tk3mOYtDE1C5zsPfLi7Xlq9Mhh0ECE5hz0J2I3DOS6a4Kd+z/f4TkbyzpUXXMcuHPae/TFnLn9qy+fT6/r+Tg+tnvmnKvpxZ7n3StPXFqvu0lSRRYSM3xM35WBRetFgPh2azGMtUSZOTOa3K5sL8blF8/Hda7HF3tdgzst58jIoPTW17s7ZB+a5CihEir6puT73difUxoSGvUIR6Ae0LBakeN4HX3qdDpslu6eiq4SfVLPFgDdIYEkAfFoiiCro0DUKJKwRCYqlrrCB0eZcRjAqdKcSJjm3kO9gGMQkjS8W/bA0BzgohQUFQgJCXCRbJnD0AgzDaulTqSEgQ4msDzUAhIQgPSdlyGhujlVCASBAjO5EBaWhcowaZMsJHKUDMIpm1QSZhUhJF1AsC+iyJDK/Lpb0+M61/U4F+A0qlkgWZbDIojGhIuzOIRCKiIjpCix8+yThAr2/paIebIjDmL/9P/TiBAWHtRx3blg0ZJdlnPTG1GLDbssvf7ww+8qCuSbf/dcBoSkWy5spzgi59v//+Pruznb7mrXF5uz4YaotRC0y5rAjHFt1BDqdfEXf/dOGZLRjV+6nQKELwjO7lU/5OjF/569Oc3ZbelFf3h5q0dktN5pTe5PgNWm57z2aqgPD0/+5m83LLn0evVLGYSEcj95/tkxnylicU9jouu+qz//8lWRm5bJtV2aDLGBbG/6Ca8xDMM4ya/RJCDHl70DIwh918uL/qPqiQKbILCAh97n7K/Os7CwmVixRWuUhp69Mx/3To3wJPKtRRDW8GtHSkGQfJux96sXlg4s5G4STOjqHW/7/Jd9mbzfWCZGFsY08GZvttuqGFSuYX+urrw/oxB6glb+9OfqbcB2IFhW3DiV54CMn3ChEZB5LU5u7KxAqKAYGvW3NmoA4lErf+gPubo3TIxtyCBmgRHUrem0NIBz98lGRmgg5B6bf/vdGpAOK73//5XvPMyTgKBIJKv/3lSwGNtmZM41mswf/g3KoTiQJOhzDH11n//noidqcfLj3uXUSj1jWcuRW4//PQNUuUZS0kUl9t/pmd/+ltvCcggVLRY6/8oJv+qhmDTFG7/N657c3LweMwiGs79xouQY0+Xj3G7YK/12n/7cjVUV4UDtxkv/8a8eRlAebUTFjQdO33vvb/7mV4/raOT00iPDck0m6caXJUjt2W9+6p6txVBNmy7+4o///iMhxatSD9AFUZgAns/HkQHHYrVXzIMzi+UajdDMcrEYa8it3fjzx8elwIdH4wRFAUsAZlls7a0rOc7YqUgrcs6oKg0CZbA5ZoIoesTMUUYOBwRE3yvVTxEmm20u17QOx1AgAOO9KcEc8H0XsgsyMMskyREIYRZBFH1AsbCQkffJlowFpAc+rg6fc2iaB+fbBiHXJscwj3YpX2Ytsob0xZNdkibDwqL0xM3dumYE828vzzf0FVkW/Z2kW0v5RzP/7Io83yX20LV/pKOfzrUfYOyyv4TltzE/LpoFM2ab/WZ5CgBWUDgg0g0AALA2AJ0BKngAeAA+tUidSqckIqGz9m6o4BaJbADFhD5Kd7l+TP5VfMhZ/9L8MfRSmq7hc4vo78V3zuPW15k/2Y/Yr3j/Rr/e/UA/YD1qP9B7KPoGfs56bn7JfB7/df+F+4ftM//j2AP/rrpvcF30+ab314yc0FqrfeeKu2VvkoAvzf+78SXco/7/148F37h6gfi2aC/r72Delv6I37YBzcp79DD4ypqqbBmVbL7s7WZYPt/2TLK8zDV/D1SgI3cGCHDoVWGzWYSHsv3rRwfo8EkTpSXEoMqqwFCo4M+uyEBs8Icq/L9vJVP2tlUEpnkspwwCFZJVLH6JfuJ89j2V+603boFltSmMGeu48Fc+IcYc1hI41cERYfMziIqtlrh1deP/ZrdqUruvC/AgVH5EJQSPTuQ8Ehm/QB+7KWHDpK2WKPRQUm/C8Q4vAX1Kc3moJg4z7nOIdT0b1Nvn5W/hgoVri3M3lhWzdjG5Xeq5s42UTkiTaRGu9qaZy23BOhl3Amvv1blT0ymO02nxDMmFSMu74wek3uD9SVdpwmnJo6P/V7GPuu1ZzkKhBRTW+4CyC9VK5BYolYgpH2oOVtogAPvLhQAKZNlcVoVJgAC086v6apfgnAc9qug2Z9E5scKNd1hQjV57oGLw72WGCVcJ4vzXIWjP/1CaraYheLwSmTX968I/8wA5X29kqQZPdGJH5gvCeSpu+IL2iPbz5RSjvGzDQKI5fA9ylkd0SUZPnZ6pyEI2gwXdnc+MMtXZb00i5KqIou8IXHyVj4DrNINv6qxDJGIi3l3jhSGt69dqRPL/yy/ennbPDlePcajAX02oqCTepze4f0qzfrGxPSv7V1W5OX6KzPm73/1kpgLqgyzojHOjSx/dfm1v9a2Xj/tFaSj3p1A9do9aO0DizD/sL/go1Fpby+Idn9Pd4CdvZTY6rnH+ky40gT6hGAnr/HLpJfdVKZgr8TPC4XsAC0eKkR9hZjZFFW9OQX7QTcO7KhM/BA723Pg/2UvSOdYo/A9l3xhCgytVyTg7lQ9teNUgkfHgN3wMydH30svR6CVxGEpHAfxO8UDXiYcX6w1nzGZ/uxTGtsJMlJeA67yfKSryNRqd477O0HdcSXHXOVELHg7HjXm8sQMHZEOR1CCcwMNy7CsJAAv3Z9NhN7/2z7VdQzfOZv5sr9lUkQzBnPUmajv6pwpnow5UBFuSUobO//yB22pfbxGc6lmWfilNvMEmIs7c2gtZKH0i/o7zu3LiASjslw5Qvv+P/PyRadhPgOHz2dF44rqh2nE5yBHW2AFV8VmHmoprSYd2aOAEI4WkwPY8WyLVouShS8x0Y2W6onKnO1gj5b24u6poldpjfjN9WeO/9YyoqIWzn5bfPYW5Hwe8DmxfqkpuyLqu7AYr2IUjh+y8gKtR49Ty8MPSf8KcYD5WP4GmRoTwQfgQhmjVYEfEQtqnUK4P0zX3tj3c7fWiwKVcI4isgPYUY0xeZJI1+CzaogDpsCCXouhRMa0rXOQZXLo2J2KIoNkzDLB3+gv/knfHuX2G/iBaD6ggHAKWpORhqQIYdO521aOkIgSbRxAtQVxfUc1LI0WMvOuuUEUQ2S1xgZzyYxdrLG9EYgTHhCpD7gCDG66MdXuCwXz/zVeWZzQpX5BXIlUtQpL6q9TlWX4+elvsZEPGjsWdMjfsiOEYnKM6hcJWFWbxoSbY0v29zLnwBbvNodF6zM6PqrixTc2dttIU0Km3vPE8SNR/dno9z07f767XlHGl1X0cZUdcPtaLSgVoF4LU3xE/dD+RHuRYL5krsWsXq7p/VSeigosvbuoumXtlgl0imLEjPXKyCO6kj13u2bSyP78vX9ny4i+8Ewg0mBtV76cin5OuE0WjdRKCIlyjsVmNCndn8VROMX39IPv2AOzIBNMlXSuYF+WVn6ijymLNS6bpnh/JLj42HvToZ6nL+Z2rm3wdgRzeugo3rawwktyoNDKta3wBVaHInsWlvDuoR5xRA5C8a7ew3JsJfGiziTR8nOIlLguVn+HtKOAZqvsjLXVGb2Raa9XgHv9AFzeBDr60+4zTxOPlHa/lNgQ2vMY1fFh2jYbFBFakavJDfd5Z9YsBeYdcmOmFK4P0X5yXn20KZpV/Fj5jK2lqpN/4KtGCFhr/CTzd68f9v01fCvm7Oa6wJPckHSyDVTMy3AJZ4zCw8KwzgcBjtxYFoYrPvZv29lA0s/j0VpIZyv0vrIa/eLgBKj1y0nk2XY/6h82t2zaR0+4RT/JwiPn2qUfnS8QCdYWE//vXN/xkeuU2NoFO2ENqJclu47NSiwqTbyusKuBlA+C6BALbDJoPFRWT5U9PeEiIxEU7hegsvc+4cxK3UBlLJPmHrGE2ZUeYR2ir3sgC++FcbKUB4rd8Ktn7tNdsJ90dSpMYav1o3ALEkItvDuIO639xgVS7uECw0JWP/7HntLBLpGqeDNmJBCY66jPiEpZ7kmg27naBNFKLfIdURj/iKh+RJXXKCF7DVuevIRJaDpRekweTEDK+ZZWtOuljWR9fnjJ7BV7IqKRRShorSmPzXQsn1UqOsgk4c0kIlSCXgQzewEVi9uDuOS+wTjxcmn5WpvpjVusp6UxZo6JNJWepYmYBVALPmn/he3ADm2PlJspfc5EcdOrV5znHmPwO/10TWFeOZte99ZtZToDLsYeYmfkIcfEln/MybAwXYi9lrP+zPERrZAg2gF2BwpvRGT7udaeq5t4+PvStblQPLIf8Pb+1rj5S3YHRPfMsGI78gvR/fn40hJc5Ni3HT3eyCR711Venffb5qKQ200TyJYnZfSXDTziMWwq09iQNzoRZnBUAlDsfVXYOF1x3GIcIOxVXs/Lrp+eZDTq+TPzBZTc5tkrztcaU1IqSv9lE9ismL7uDdFnuHUSc31O2VuP668u6Xg8QliQYdTUo8kd+QTw5J585ZLkfHaHYtPsVB1FkJQE+PFBD7EoypA4fTLGApxvpVUSNPlbP91/wP+ZlvpYgfz9lsW2DreqtzEHiyl/OQMACHxoL0IQHULRQ0KJZGjkE6trAdMqa1W+e/I27lykY0YBPCC19YoSf/jvjWEuCaaiwtjPcExtC0Jm9ceXHANjvnEN0zIBnJX3/IpLdh7380kQATbjPww1UbRq1rdpXhNQvSQA0y35lX+63+vYuuCiHm5xHARWs+Q8PVcAUf+hrOwUyZijXAtjQ7WUL6Q2O3fKPkdBnqjDsaRQLPBTHPUGYik0eXpFsQ+DhofEazrm7dUW2iz0ziogJGpiavY3ojHgXf84FMhOFOWH02IewJHFS6DVLd77jWLvKN3aqte9vfRGnbSnm2yn22ySkzq9EdWXIB962TX1QVVBhcpi8wk0Cg7Ofwi2EThxQE+QeNsUFm30kkNZz7mpS4XjtE1bvf6OzVH9fyC/YXv/F8Ii1/iR8I6LxKmpmmQVUheQB3sdErxGqb7V77Kuq1Z9kdd8dKbvfUu+FZyKyWUricuaAZldvsesdDZ2GxuaOT6Hl3IbFQmni5i/3GyHd8IN4Vfe/jWw7FUBWTaQkd5hxSumprdnYPvXxpv0k7RdEqr+rpKP8fROW2t99DUc2UTZzmL1c+XDTfYfXIIC1nkrBdU3r0cY0LkGdEGgvzdnnDKmkDpXDoV6m8C1CIO3b72J0/Eq/T1fUD/sVEfAw1fhINM386rL73+3PruupxqzHVSkeq1kdOVEPO7ponF/yHBZ7unK0B4dJk4Z/om8p8zxxjXTubFQsN0M5gb1IebofX2Y9wdeeZX8JluY8St5cUHSIJ7oNzh2qUUlzsBifzimE5VnUMze+wsh+TD/96bB3/gP+kxXwBZwFUOF4eOD5AoUNjycdb5jSd8d7K8qCDa3vgRYsnY64MEltAjY27BKRvGtHy7UCLD6/bN0pluk9YaJugw8+9sbx1jAaISthi2EaTceRht8X0FySU8w74EYIUa/dr/oFa0exWStY2wrzCGyRGGxamcnIYg/2tLjFetlCAQ5qMWaVN2JA1hMnNIkMInChtjETo99kjc8G+eisrYOqB21nd+wFZfDNZrnsucUwdXzZGwGmbaNP9ztOinqoTuctWl0GYRQHLSG/wUBTa0BuFkQoHHtGwWs7JsCuwvVsCAIqAJvd53nJbePD5BsdZSPkvIm+DpI3cQ4UQq5mNIYSvO1mcdLBP6rscH5SBoUm9qd0pnGT2gZDDXLVx6TmQP6T/Uw1jQScPK8k5bYyIGuxHACjMUpaiPoE7sMz0eEQ/ogqI5ahGPySnIC1m6+a+7yLb/uMMhjAS/o+HBCNVwHCvC84WW8Z++l2g40lRX8MyRtJWYBqpJmaMxT7GNlQ3wIs9UtitUph7E2BGMk67lGMdJdUROOmr/rddNtJPDhEpDZGHw/7oVH8w7KCY2QJFrv61sDtfh4Od06Em6nEHTf+ZQqhBQaGSKs3YyS9fIvzNcHbw1IDHfPvlINP54pfnlERXG4xRvfmqRAcVldvpucEHN3ZThEeijCQEZEAbWiu/+3maZ4oiwK16kZxx5rVM9FrGTPWhVNMoUBtVzJNkJDn2Mjq4LZ99HHPNBJlLVsD/S71yKgtLXLLj9mOHjZt9/phJ/8aCxat0JZSZ+2PVpy3H2S4k8B3j3TO1vk7UbUSq4JBfbufZvT9eC6N4/nTCWTCARUiCrh9ITt970cS4LJAQ4yGTvIGI/wH/XOgINLzLFCoyFukBTEAAAA=); }
   .modalSheet { background:var(--surface); color:var(--text); width:calc(100% - 20px); max-width:480px; border-radius:24px; box-shadow:0 -8px 30px rgba(0,0,0,.18); padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:80vh; overflow:auto; animation:modalSheetSlideIn .3s cubic-bezier(.22,.9,.32,1.1); margin-bottom:18px; }
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
+  /* حد أقصى لطول أي نافذة = الشاشة ناقص الشريط السفلي وناقص منطقة الساعة/النوتش (المنطقة الآمنة).
+     كده النافذة دايمًا بتبدأ تحت شريط الساعة مهما كان طولها المكتوب (85vh / 88vh) أو طول محتواها،
+     والزيادة بتسكرول جوه النافذة. قواعد الكيبورد أدق من دي فبتكسبها وقت ما الكيبورد مفتوح */
+  .modalSheet { max-height:calc(100vh - var(--navbar-h, 76px) - env(safe-area-inset-top) - 30px) !important; }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
   .searchResultRow { padding:12px 8px; border-bottom:1px solid var(--border2); display:flex; justify-content:space-between; align-items:center; }
   .searchResultRow .n { font-weight:700; font-size:14px; color:var(--text); }
@@ -519,7 +535,7 @@
       <div class="statIcon" style="background:#FEF3C7;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/><circle cx="16" cy="17" r="1"/></svg></div>
       <div><div class="num" id="statPurchaseDebts">0</div><div class="lbl">ديون مشتريات</div></div>
     </div>
-    <div class="statCard" onclick="openModal('priceCheckModal')" style="cursor:pointer">
+    <div class="statCard" onclick="openPriceCheckModal()" style="cursor:pointer">
       <div class="statIcon" style="background:#DBEAFE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
       <div><div class="num" id="statProducts">0</div><div class="lbl">فحص سعر</div></div>
     </div>
@@ -636,7 +652,7 @@
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
       <div style="position:relative;">
         <input type="text" id="shortageFormName" placeholder="اسم الصنف" autocomplete="off" oninput="onShortageNameInput()" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
-        <div id="shortageNameDropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;max-height:220px;overflow:auto;z-index:20;box-shadow:0 10px 24px rgba(0,0,0,.1);"></div>
+        <div id="shortageNameDropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:12px;max-height:220px;overflow:auto;z-index:20;box-shadow:0 10px 24px rgba(0,0,0,.1);"></div>
       </div>
       <input type="number" inputmode="numeric" lang="en" id="shortageFormQty" placeholder="الكمية المطلوبة (اختياري)" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
       <div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:4px;">هتجيبه منين؟ (اختياري)</div>
@@ -990,6 +1006,7 @@
       <input type="text" id="priceCheckInput" placeholder="اكتب اسم الصنف أو الباركود..." oninput="priceCheckSearch()">
     </div>
     <div id="priceCheckResults" style="max-height:32vh;overflow:auto;"></div>
+    <div id="priceCheckBackBar" style="display:none;"></div>
     <div id="priceCheckDetail" style="display:none;"></div>
     <a href="#" onclick="event.preventDefault();closeModal('priceCheckModal');openModal('productsModal');" style="display:block;text-align:center;font-size:12px;color:var(--textMuted);margin-top:16px;">تصفح كل المنتجات</a>
   </div>
@@ -1007,6 +1024,7 @@
     <div id="itemCardReaderView" style="display:none; width:100%;min-height:1px;border-radius:14px;overflow:hidden;position:relative;z-index:1; background:#000;"></div>
     <div id="itemCardScanStatus" style="text-align:center;font-size:12px;color:var(--textMuted);margin-bottom:6px;"></div>
     <div id="itemCardResults" style="max-height:30vh;overflow:auto;"></div>
+    <div id="itemCardBackBar" style="display:none;"></div>
     <div id="itemCardDetail" style="display:none;"></div>
   </div>
 </div>
@@ -1071,8 +1089,8 @@
     <div id="barcodeReaderView" style="display:none; width:100%;min-height:1px;border-radius:14px;overflow:hidden;position:relative;z-index:1; background:#000;"></div>
     <div id="barcodeScanStatus" style="text-align:center;font-size:13px;color:var(--textMuted);margin-top:10px;">استخدم البحث اليدوي فوق أو فعّل الكاميرا</div>
     <div id="scanCountBox" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:14px; margin-top:12px;">
-      <div id="scanItemName" style="font-weight:800; font-size:15px; margin-bottom:6px;"></div>
-      <div id="scanItemSystemQty" style="font-size:12px; color:var(--textMuted); margin-bottom:10px;"></div>
+      <div id="scanItemName" style="font-weight:800; font-size:15px; margin-bottom:6px; color:#14532D;"></div>
+      <div id="scanItemSystemQty" style="font-size:12px; color:#475569; margin-bottom:10px;"></div>
       <div style="display:flex; gap:8px; align-items:center;">
         <input type="number" inputmode="numeric" id="scanQtyInput" lang="en" placeholder="العدد الفعلي" onkeydown="if(event.key==='Enter')confirmScanAndNext()" style="flex:1; padding:12px; border:1.5px solid #E2E8F0; border-radius:12px; font-size:18px; text-align:center;">
         <button onclick="confirmScanAndNext()" style="background:#16A34A; color:#fff; border:none; border-radius:12px; padding:12px 18px; font-weight:800; font-size:14px; cursor:pointer; white-space:nowrap;">✓ التالي</button>
@@ -1080,9 +1098,9 @@
       <button onclick="closeBarcodeScanner()" style="width:100%; margin-top:8px; background:#FEE2E2; color:#DC2626; border:none; border-radius:12px; padding:10px; font-weight:700; font-size:12px; cursor:pointer;">✕ إلغاء ورجوع</button>
     </div>
     <div id="incrementFeedback" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:16px; margin-top:12px; text-align:center;">
-      <div id="incItemName" style="font-weight:800; font-size:15px; margin-bottom:4px;"></div>
+      <div id="incItemName" style="font-weight:800; font-size:15px; margin-bottom:4px; color:#14532D;"></div>
       <div id="incItemCount" style="font-size:32px; font-weight:900; color:#16A34A;"></div>
-      <div style="font-size:11px; color:#94A3B8;">اتعدت لحد دلوقتي</div>
+      <div style="font-size:11px; color:#64748B;">اتعدت لحد دلوقتي</div>
     </div>
     <div id="scanSessionCount" style="text-align:center; font-size:12px; color:#94A3B8; margin-top:10px;"></div>
   </div>
@@ -2216,6 +2234,17 @@ function openModal(id) {
 function closeModal(id) {
   document.getElementById(id).style.display = 'none';
   if (!anyModalOpen()) { unlockBodyScroll(); setActiveNavItem(null); }
+  onModalClosed(id);
+}
+function isModalOpen(id) {
+  const el = document.getElementById(id);
+  return !!(el && el.style.display === 'flex');
+}
+// لما نرجع لقايمة من نافذة تفاصيل كانت مفتوحة فوقها، نحدّث القايمة عشان يبان أي تغيير حصل جوه التفاصيل
+function onModalClosed(id) {
+  if (id === 'customerDebtModal' && isModalOpen('purchaseDebtsModal')) {
+    try { loadPurchaseDebts(); } catch (e) {}
+  }
 }
 // تبديل نضيف بين أقسام الشريط السفلي: يقفل أي نافذة مفتوحة قبل ما يفتح الجديدة، عشان التنقل
 // يبقى سلس من غير ما نافذتين يتراكبوا فوق بعض
@@ -3970,9 +3999,39 @@ function startWebCameraScan() {
   }
 }
 
+let priceCheckResultsScroll = 0;
+
+function openPriceCheckModal() {
+  document.getElementById('priceCheckInput').value = '';
+  const resEl = document.getElementById('priceCheckResults');
+  resEl.innerHTML = '';
+  resEl.style.display = '';
+  document.getElementById('priceCheckDetail').style.display = 'none';
+  document.getElementById('priceCheckDetail').innerHTML = '';
+  renderPriceCheckBackBar(false);
+  priceCheckResultsScroll = 0;
+  openModal('priceCheckModal');
+}
+
+function renderPriceCheckBackBar(show) {
+  const bar = document.getElementById('priceCheckBackBar');
+  const q = (document.getElementById('priceCheckInput').value || '').trim();
+  if (!show || !q) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.innerHTML = backToResultsBarHtml('priceCheckBackToResults()', q);
+  bar.style.display = 'block';
+}
+
+function priceCheckBackToResults() {
+  const keep = priceCheckResultsScroll;
+  priceCheckSearch();
+  document.getElementById('priceCheckResults').scrollTop = keep;
+}
+
 function priceCheckSearch() {
   const q = document.getElementById('priceCheckInput').value.trim().toLowerCase();
   const resEl = document.getElementById('priceCheckResults');
+  resEl.style.display = '';
+  renderPriceCheckBackBar(false);
   document.getElementById('priceCheckDetail').style.display = 'none';
   document.getElementById('priceCheckDetail').innerHTML = '';
   if (!q) { resEl.innerHTML = ''; return; }
@@ -3987,7 +4046,12 @@ function priceCheckSearch() {
 function showPriceCheckDetail(itemId) {
   const it = latestItems['i' + itemId];
   if (!it) return;
-  document.getElementById('priceCheckResults').innerHTML = '';
+  const resEl = document.getElementById('priceCheckResults');
+  if (resEl.style.display !== 'none' && resEl.innerHTML) priceCheckResultsScroll = resEl.scrollTop;
+  resEl.style.display = 'none';
+  renderPriceCheckBackBar(true);
+  const sIn = document.getElementById('priceCheckInput');
+  if (document.activeElement === sIn) sIn.blur();
   const d = document.getElementById('priceCheckDetail');
   d.style.display = 'block';
   d.innerHTML = `
@@ -4031,9 +4095,37 @@ let itemCardScannerInstance = null;
 let itemCardLastScannedId = null;
 let itemCardLastScanTime = 0;
 
+// زر "رجوع لنتائج البحث": بيظهر فوق تفاصيل الصنف طول ما فيه كلمة بحث، وبيرجع لنفس القايمة ونفس مكان السكرول
+function backToResultsBarHtml(onclickJs, query) {
+  return `<button type="button" class="backToResultsBtn" onclick="${onclickJs}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg><span style="flex-shrink:0;">رجوع لنتائج البحث</span><span class="bq">«${escapeHtml(query)}»</span></button>`;
+}
+
+let itemCardResultsScroll = 0;
+
+function renderItemCardBackBar(show) {
+  const bar = document.getElementById('itemCardBackBar');
+  const q = (document.getElementById('itemCardSearchInput').value || '').trim();
+  if (!show || !q) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.innerHTML = backToResultsBarHtml('itemCardBackToResults()', q);
+  bar.style.display = 'block';
+}
+
+function itemCardBackToResults() {
+  // لو فيه تعديل مفتوح وفيه خانات اتغيرت ومحدش ضغط حفظ، نسأل الأول
+  const d = document.getElementById('itemCardDetail');
+  const dirty = Array.from(d.querySelectorAll('input')).some(i => !i.disabled && i.value !== i.defaultValue);
+  if (dirty && !confirm('فيه تعديل ما اتحفظش. ترجع لنتائج البحث من غير حفظ؟')) return;
+  const keep = itemCardResultsScroll;
+  itemCardManualSearch(); // بيبني القايمة من جديد بالقيم الحالية (لو صنف اتعدل تبان قيمته الجديدة)
+  document.getElementById('itemCardResults').scrollTop = keep;
+}
+
 function openItemCardModal() {
   document.getElementById('itemCardSearchInput').value = '';
   document.getElementById('itemCardResults').innerHTML = '';
+  document.getElementById('itemCardResults').style.display = '';
+  renderItemCardBackBar(false);
+  itemCardResultsScroll = 0;
   document.getElementById('itemCardDetail').style.display = 'none';
   document.getElementById('itemCardDetail').innerHTML = '';
   document.getElementById('itemCardScanStatus').textContent = '';
@@ -4047,6 +4139,8 @@ function openItemCardModal() {
 function itemCardManualSearch() {
   const q = document.getElementById('itemCardSearchInput').value.trim().toLowerCase();
   const resEl = document.getElementById('itemCardResults');
+  resEl.style.display = '';
+  renderItemCardBackBar(false);
   document.getElementById('itemCardDetail').style.display = 'none';
   document.getElementById('itemCardDetail').innerHTML = '';
   if (!q) { resEl.innerHTML = ''; return; }
@@ -4061,8 +4155,13 @@ function itemCardManualSearch() {
 function showItemCardDetail(itemId) {
   const it = latestItems['i' + itemId];
   if (!it) return;
-  document.getElementById('itemCardResults').innerHTML = '';
-  document.getElementById('itemCardSearchInput').value = '';
+  // ما بنمسحش كلمة البحث ولا النتايج - بنخبيهم بس، عشان زر الرجوع يرجّعهم زي ما هم
+  const resEl = document.getElementById('itemCardResults');
+  if (resEl.style.display !== 'none' && resEl.innerHTML) itemCardResultsScroll = resEl.scrollTop;
+  resEl.style.display = 'none';
+  renderItemCardBackBar(true);
+  const sIn = document.getElementById('itemCardSearchInput');
+  if (document.activeElement === sIn) sIn.blur();
   const d = document.getElementById('itemCardDetail');
   d.style.display = 'block';
   d.innerHTML = `
@@ -5081,7 +5180,7 @@ function renderPurchaseDebtsSuppliers() {
     .sort((a,b) => a.name.localeCompare(b.name));
   el.innerHTML = groups.map(g => {
     const total = g.items.reduce((sum, it) => sum + Number(it.price || 0), 0);
-    return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('purchaseDebtsModal');openCustomerDebt('${g.id}','${g.name.replace(/'/g,"")}')">
+    return `<div class="searchResultRow" style="cursor:pointer" onclick="openCustomerDebt('${g.id}','${g.name.replace(/'/g,"")}')">
       <div style="flex:1;min-width:0;">
         <div class="n">${escapeHtml(g.name)}</div>
         <div class="p">${g.items.length} صنف</div>
@@ -5985,7 +6084,7 @@ function onShortageNameInput() {
   const results = items.filter(it => (it.name || '').toLowerCase().includes(q)).slice(0, 8);
   if (!results.length) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
   dd.style.display = 'block';
-  dd.innerHTML = results.map(it => `<div onclick="selectShortageNameSuggestion('${it.name.replace(/'/g, "\\'")}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #F1F5F9;font-size:13.5px;">${escapeHtml(it.name)}</div>`).join('');
+  dd.innerHTML = results.map(it => `<div onclick="selectShortageNameSuggestion('${it.name.replace(/'/g, "\\'")}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border2);font-size:13.5px;">${escapeHtml(it.name)}</div>`).join('');
 }
 function selectShortageNameSuggestion(name) {
   document.getElementById('shortageFormName').value = name;
@@ -6331,7 +6430,7 @@ function doSearch() {
   const results = items.filter(it => (it.name||'').toLowerCase().includes(q));
   if (!results.length) { el.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
   el.innerHTML = results.slice(0,50).map(it => `
-    <div class="searchResultRow" style="cursor:pointer" onclick="closeModal('searchModal');showItemDetail(${it.id})">
+    <div class="searchResultRow" style="cursor:pointer" onclick="showItemDetail(${it.id})">
       <div class="n">${escapeHtml(it.name)}</div>
       <div class="p">${fmtMoney(it.price)} د.ل | متبقي: ${it.stock}</div>
     </div>`).join('');
