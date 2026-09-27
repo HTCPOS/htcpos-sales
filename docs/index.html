@@ -418,7 +418,7 @@
       </button>
       <h1>منظومة المبيعات</h1>
       <div style="display:flex; gap:8px;">
-        <button class="iconBtn" id="offlineIcon" onclick="alert('⚠️ جهاز المحل غير متصل حاليًا — البيانات آخر تحديث معروف')">
+        <button class="iconBtn" id="offlineIcon" onclick="openModal('errorsModal')">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M2 8.5 12 3l10 5.5-2 3.2L12 7.7 4 11.7Zm10 3.3c2.9 0 5.6 1.1 7.6 3l-2.2 3a7.9 7.9 0 0 0-10.8 0l-2.2-3c2-1.9 4.7-3 7.6-3Zm0 6.4a4.6 4.6 0 0 1 3.4 1.5L12 22l-3.4-2.3A4.6 4.6 0 0 1 12 18.2Z"/></svg>
           <span class="dot"></span>
         </button>
@@ -443,6 +443,11 @@
   </div>
 
   <div id="scrollArea">
+  <div id="cashierStatusBar" onclick="openModal('errorsModal')" style="display:none;margin:12px 16px 0;border-radius:12px;padding:10px 12px;font-size:12.5px;font-weight:700;cursor:pointer;align-items:center;gap:8px;">
+    <span id="cashierStatusDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;"></span>
+    <span id="cashierStatusText" style="flex:1;"></span>
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </div>
   <div style="position:relative; margin:14px 16px;">
     <div class="searchBox" style="margin:0;">
       <span><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
@@ -543,6 +548,7 @@
     <div class="quickItem" onclick="openModal('missingItemsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div><div class="ql">المفقودات</div></div>
     <div class="quickItem" onclick="openModal('activityLogModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l2 3v15H6V6Z"/><path d="M9 11h6M9 15h6"/></svg></div><div class="ql">سجل الحركات</div></div>
     <div class="quickItem" onclick="openNotesModal()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#CA8A04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4Z"/><path d="M17 4v3h3"/><path d="M8 11h8M8 15h5"/></svg></div><div class="ql">الملاحظات</div></div>
+    <div class="quickItem" onclick="openModal('errorsModal')" style="position:relative;"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg></div><div class="ql">الأخطاء</div><span class="badge" id="errorsBadge" style="display:none;top:6px;left:6px;">0</span></div>
   </div>
   </div>
 
@@ -1046,6 +1052,19 @@
     <button class="closeM" onclick="closeModal('missingItemsModal')">✕</button>
     <h3>المفقودات</h3>
     <div id="missingItemsBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="errorsModal" onclick="if(event.target===this)closeModal('errorsModal')">
+  <div class="modalSheet" style="max-height:85vh;">
+    <button class="closeM" onclick="closeModal('errorsModal')">✕</button>
+    <h3>الأخطاء وحالة الكاشير</h3>
+    <div id="errorsStatusCard" style="border-radius:12px;padding:12px;margin:10px 0;font-size:13px;font-weight:700;line-height:1.7;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
+      <span style="font-size:12px;color:var(--textMuted);font-weight:700;">آخر الأخطاء (الأحدث فوق)</span>
+      <button onclick="clearErrorLog()" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;">مسح الكل</button>
+    </div>
+    <div id="errorsBody"></div>
   </div>
 </div>
 
@@ -1748,7 +1767,126 @@ function checkOffline() {
 }
 setInterval(checkOffline, 5000);
 
+// ============ الأخطاء وحالة الكاشير ============
+// السكريبت على الكمبيوتر بيبعت نبضة كل 15 ثانية على data/scriptStatus، وكل خطأ بيحصل
+// (مع مكانه وسببه والحل المقترح) على data/errorLog. هنا بنعرضهم بوضوح عشان الحل يبقى سريع.
+let scriptStatus = null;
+let serverTimeOffset = 0;
+let errorLogEntries = [];
+
+function startErrorMonitoring() {
+  db.ref('.info/serverTimeOffset').on('value', snap => { serverTimeOffset = snap.val() || 0; });
+  db.ref('data/scriptStatus').on('value', snap => { scriptStatus = snap.val(); renderCashierStatus(); });
+  db.ref('data/errorLog').limitToLast(100).on('value', snap => {
+    const val = snap.val() || {};
+    errorLogEntries = Object.keys(val).map(k => Object.assign({ key: k }, val[k])).reverse();
+    updateErrorsBadge();
+    if (document.getElementById('errorsModal').style.display === 'flex') { renderErrorsModal(); markErrorsSeen(); }
+  });
+}
+setInterval(renderCashierStatus, 10000);
+
+function ageText(sec) {
+  if (sec < 60) return 'من ثواني';
+  const m = Math.floor(sec / 60);
+  if (m < 60) return 'من ' + m + ' دقيقة';
+  const h = Math.floor(m / 60);
+  if (h < 24) return 'من ' + h + ' ساعة';
+  return 'من ' + Math.floor(h / 24) + ' يوم';
+}
+
+// بيرجع حالة الكاشير: لون + جملة + سبب + حل
+function getCashierState() {
+  if (!navigator.onLine) return { color:'#DC2626', bg:'#FEF2F2', title:'الجوال مقطوع عن النت', reason:'التطبيق مش قادر يوصل للبيانات.', fix:'شغّل الواي فاي أو بيانات الجوال.' };
+  if (!scriptStatus || !scriptStatus.lastSeen) return { color:'#64748B', bg:'#F1F5F9', title:'لسه ما وصلت أي نبضة من الكاشير', reason:'السكريبت الجديد لسه ما اشتغلش على الكمبيوتر.', fix:'شغّل ملف StoreSalesAlert.ps1 الجديد على جهاز الكاشير.' };
+  const sec = Math.max(0, (Date.now() + serverTimeOffset - scriptStatus.lastSeen) / 1000);
+  if (sec > 60) return { color:'#DC2626', bg:'#FEF2F2', title:'الكاشير غير متصل — آخر اتصال ' + ageText(sec), reason:'جهاز الكاشير مقطوع عن النت، أو الكمبيوتر مطفي، أو نافذة السكريبت اتقفلت.', fix:'تأكد إن الكمبيوتر شغال ومتصل بالنت، وإن نافذة السكريبت (الشاشة الزرقاء) مفتوحة. التعديلات محفوظة وبتتنفذ أول ما يرجع.' };
+  if (scriptStatus.dbOk === false) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت شغال بس قاعدة البيانات ما تستجيب', reason:scriptStatus.dbError || 'سبب غير معروف', fix:scriptStatus.dbFix || 'افتح برنامج الكاشير وتأكد إنه شغال.' };
+  return { color:'#16A34A', bg:'#F0FDF4', title:'الكاشير متصل وكل شي شغال', reason:'', fix:'' };
+}
+
+function renderCashierStatus() {
+  const bar = document.getElementById('cashierStatusBar');
+  if (!bar) return;
+  const st = getCashierState();
+  bar.style.display = 'flex';
+  bar.style.background = st.bg;
+  bar.style.color = st.color;
+  document.getElementById('cashierStatusDot').style.background = st.color;
+  document.getElementById('cashierStatusText').textContent = st.title;
+  if (document.getElementById('errorsModal').style.display === 'flex') renderErrorsStatusCard();
+}
+
+function renderErrorsStatusCard() {
+  const st = getCashierState();
+  const el = document.getElementById('errorsStatusCard');
+  el.style.background = st.bg;
+  el.style.color = st.color;
+  el.innerHTML = '● ' + escapeHtml(st.title) +
+    (st.reason ? '<div style="color:var(--text);font-weight:600;margin-top:4px;"><b>السبب:</b> ' + escapeHtml(st.reason) + '</div>' : '') +
+    (st.fix ? '<div style="color:var(--text);font-weight:600;"><b>الحل:</b> ' + escapeHtml(st.fix) + '</div>' : '');
+}
+
+function renderErrorsModal() {
+  renderErrorsStatusCard();
+  const el = document.getElementById('errorsBody');
+  if (!errorLogEntries.length) { el.innerHTML = '<div class="emptyMsg">مفيش أخطاء ✓</div>'; return; }
+  el.innerHTML = errorLogEntries.map(e => `
+    <div style="border:1px solid var(--border);border-right:4px solid #DC2626;border-radius:12px;padding:11px 12px;margin-bottom:9px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+        <div style="font-weight:800;font-size:13.5px;">${escapeHtml(e.where || 'خطأ')}</div>
+        <div style="font-size:11px;color:var(--textMuted);white-space:nowrap;">${escapeHtml(e.time || '')}</div>
+      </div>
+      <div style="font-size:12.5px;margin-top:6px;line-height:1.7;background:#F0FDF4;color:#166534;border-radius:8px;padding:7px 9px;"><b>الحل:</b> ${escapeHtml(e.fix || '')}</div>
+      <details style="margin-top:6px;">
+        <summary style="font-size:11px;color:var(--textMuted);cursor:pointer;">نص الخطأ الأصلي</summary>
+        <div style="font-size:11px;direction:ltr;text-align:left;color:var(--textMuted);word-break:break-word;margin-top:4px;user-select:text;">${escapeHtml(e.msg || '')}</div>
+        <button onclick="copyErrorText('${e.key}')" style="margin-top:6px;background:var(--surface2);color:var(--text);border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">نسخ</button>
+      </details>
+    </div>`).join('');
+}
+
+function copyErrorText(key) {
+  const e = errorLogEntries.find(x => x.key === key);
+  if (!e) return;
+  const txt = (e.time || '') + ' | ' + (e.where || '') + '\n' + (e.msg || '');
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('اتنسخ ✓')).catch(() => prompt('انسخ النص:', txt));
+  else prompt('انسخ النص:', txt);
+}
+
+function getErrorsSeenKey() { try { return localStorage.getItem('errorsSeenKey') || ''; } catch (e) { return ''; } }
+function markErrorsSeen() {
+  if (errorLogEntries.length) { try { localStorage.setItem('errorsSeenKey', errorLogEntries[0].key); } catch (e) {} }
+  updateErrorsBadge();
+}
+function updateErrorsBadge() {
+  const seen = getErrorsSeenKey();
+  const n = errorLogEntries.filter(e => e.key > seen).length;
+  const b = document.getElementById('errorsBadge');
+  if (b) { b.textContent = n > 99 ? '99+' : n; b.style.display = n ? 'flex' : 'none'; }
+}
+
+function clearErrorLog() {
+  if (!confirm('مسح كل الأخطاء؟')) return;
+  db.ref('data/errorLog').remove().catch(err => alert('ما قدرت أمسح: ' + (err && err.message ? err.message : err)));
+}
+
+// أخطاء التطبيق نفسه (مش السكريبت) بتتسجل في نفس السجل
+function clientErrorFix(m) {
+  m = String(m || '');
+  if (!navigator.onLine || /network|offline|disconnect/i.test(m)) return 'الجوال مقطوع عن النت - شغّل النت وحاول تاني';
+  if (/permission|denied/i.test(m)) return 'حسابك ما عنده صلاحية - سجّل خروج وادخل تاني';
+  return 'حاول تاني، ولو تكرر انسخ نص الخطأ وابعته للمبرمج';
+}
+function logClientError(where, msg) {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const time = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  db.ref('data/errorLog').push().set({ time, where: where + ' (الجوال)', msg: String(msg || ''), fix: clientErrorFix(msg) }).catch(() => {});
+}
+
 function startListening() {
+  startErrorMonitoring();
   db.ref('data/summary').on('value', snap => {
     latestSummary = snap.val() || {};
     renderSummary();
@@ -2008,6 +2146,7 @@ function openModal(id) {
   if (id === 'customersModal') loadCustomers();
   if (id === 'missingItemsModal') loadMissingItems();
   if (id === 'activityLogModal') loadActivityLog();
+  if (id === 'errorsModal') { renderErrorsModal(); markErrorsSeen(); }
   if (id === 'purchaseDebtsModal') loadPurchaseDebts();
   if (id === 'zeroPriceModal') loadZeroPriceModal();
 }
@@ -2056,6 +2195,7 @@ function editFieldLabel(field) {
   if (field === 'cost') return 'سعر الشراء';
   if (field === 'wholesale') return 'سعر الجملة';
   if (field === 'qty') return 'الكمية';
+  if (field === 'name') return 'اسم الصنف';
   return field;
 }
 
@@ -2124,7 +2264,7 @@ function renderAlertsList() {
     if (e.type === 'edit') {
       const it = latestItems['i' + e.itemId];
       const name = it ? it.name : ('صنف #' + e.itemId);
-      const valStr = e.field === 'qty' ? (e.newValue + ' قطعة') : (fmtMoney(e.newValue) + ' د.ل');
+      const valStr = e.field === 'qty' ? (e.newValue + ' قطعة') : e.field === 'name' ? escapeHtml(String(e.newValue)) : (fmtMoney(e.newValue) + ' د.ل');
       return `<div style="display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid #F1F5F9;">
         <div style="width:40px;height:40px;border-radius:10px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
         <div style="flex:1;min-width:0;">
@@ -3562,7 +3702,7 @@ function updatePriceCheckTotal() {
 }
 
 // ============ بطاقة صنف - بحث/مسح مستقل تمامًا عن كاميرا البيع والجرد، بيعرض بيانات
-// الصنف بس من غير أي تعديل عليه ولا أي تأثير على مسح البيع أو الجرد ============
+// الصنف مع زر تعديل (الاسم والكمية والأسعار - الباركود ثابت) ومن غير أي تأثير على مسح البيع أو الجرد ============
 let itemCardScannerInstance = null;
 let itemCardLastScannedId = null;
 let itemCardLastScanTime = 0;
@@ -3624,8 +3764,155 @@ function showItemCardDetail(itemId) {
         <span style="color:var(--textMuted);font-size:13px;">سعر القطاعي (القطعة)</span>
         <span style="font-weight:700;">${fmtMoney(it.price)} د.ل</span>
       </div>
+      <button onclick="openItemCardEdit(${it.id})" style="width:100%;margin-top:14px;background:#7C3AED;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل الصنف</button>
+      <div id="itemCardEditStatus" data-item-id="${it.id}" style="text-align:center;font-size:12px;font-weight:700;margin-top:8px;line-height:1.7;"></div>
     </div>
   `;
+  renderItemCardEditStatus(it.id);
+}
+
+// ============ تعديل الصنف من بطاقة الصنف ============
+// بيعدّل: الاسم، الكمية، سعر الشراء (التكلفة)، سعر الجملة، سعر القطاعي.
+// الباركود ثابت ومش بيتبعت للسيرفر خالص. التعديل بيتبعت كأمر على commands/editItem
+// والسكريبت على الكمبيوتر بينفذه على قاعدة البيانات ويعيد مزامنة الأصناف فورًا.
+function itemCardEditRow(label, id, value, isText, disabledNote) {
+  return `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <label for="${id}" style="display:block;color:var(--textMuted);font-size:12px;font-weight:700;margin-bottom:5px;">${label}</label>
+      <input id="${id}" ${isText ? 'type="text"' : 'type="number" inputmode="decimal" step="any" min="0"'} value="${isText ? escapeHtml(String(value || '')) : (Number(value) || 0)}" ${disabledNote ? 'disabled' : ''}
+        style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;font-weight:700;background:var(--surface);color:var(--text);text-align:right;${disabledNote ? 'opacity:.5;' : ''}">
+      ${disabledNote ? `<div style="font-size:11px;color:#B45309;font-weight:700;margin-top:4px;">${disabledNote}</div>` : ''}
+    </div>`;
+}
+
+// حالة آخر تعديل لكل صنف (بتفضل ظاهرة حتى لو قفلت البطاقة وفتحتها تاني)
+const itemCardEditStatusMap = {};
+const itemCardEditListeners = {};
+
+function setItemCardEditStatus(itemId, html, color) {
+  itemCardEditStatusMap[itemId] = { html, color };
+  renderItemCardEditStatus(itemId);
+}
+function renderItemCardEditStatus(itemId) {
+  const st = document.getElementById('itemCardEditStatus');
+  const info = itemCardEditStatusMap[itemId];
+  if (!st || !info || String(st.dataset.itemId) !== String(itemId)) return;
+  st.style.color = info.color;
+  st.innerHTML = info.html;
+}
+
+// بيستنى رد السكريبت على الكمبيوتر ويعرض نتيجة كل خانة بالظبط
+function watchItemCardEditResult(itemId, reqId) {
+  if (itemCardEditListeners[itemId]) { itemCardEditListeners[itemId].ref.off('value', itemCardEditListeners[itemId].cb); clearTimeout(itemCardEditListeners[itemId].timer); }
+  const ref = db.ref('data/editResults/' + itemId);
+  const timer = setTimeout(() => {
+    setItemCardEditStatus(itemId, '⏳ التعديل محفوظ بس الكاشير لسه ما ردّش.<br><span style="font-weight:600;">السبب غالبًا: جهاز الكاشير مقطوع عن النت أو السكريبت مقفول. هيتنفذ تلقائي أول ما يشتغل.</span>', '#B45309');
+  }, 20000);
+  const cb = snap => {
+    const r = snap.val();
+    if (!r || String(r.reqId) !== String(reqId)) return;
+    clearTimeout(timer);
+    const res = r.results || {};
+    const failed = Object.keys(res).filter(k => !res[k].ok);
+    if (!failed.length) {
+      setItemCardEditStatus(itemId, '✓ اتنفذ على الكاشير', '#16A34A');
+    } else {
+      const lines = failed.map(k => '✗ ' + escapeHtml(editFieldLabel(k)) + ': ' + escapeHtml(res[k].msg || 'سبب غير معروف')).join('<br>');
+      const okCount = Object.keys(res).length - failed.length;
+      setItemCardEditStatus(itemId, (okCount ? '✓ باقي التعديلات اتنفذت<br>' : '') + lines, r.retrying ? '#B45309' : '#DC2626');
+    }
+    if (!r.retrying) { ref.off('value', cb); delete itemCardEditListeners[itemId]; }
+  };
+  ref.on('value', cb);
+  itemCardEditListeners[itemId] = { ref, cb, timer };
+}
+
+function openItemCardEdit(itemId) {
+  const it = latestItems['i' + itemId];
+  if (!it) return;
+  const d = document.getElementById('itemCardDetail');
+  d.style.display = 'block';
+  d.innerHTML = `
+    <div style="background:var(--surface2);border-radius:14px;padding:16px;margin-top:10px;">
+      <div style="font-weight:800;font-size:16px;margin-bottom:8px;">تعديل الصنف</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--textMuted);font-size:13px;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> الباركود (ثابت)</span>
+        <span style="font-weight:700;">${it.barcode ? escapeHtml(String(it.barcode)) : '—'}</span>
+      </div>
+      ${itemCardEditRow('اسم الصنف', 'icEditName', it.name, true)}
+      ${itemCardEditRow('الكمية المتبقية', 'icEditQty', it.stock)}
+      ${itemCardEditRow('سعر الشراء (التكلفة) د.ل', 'icEditCost', it.cost)}
+      ${itemCardEditRow('سعر الجملة د.ل', 'icEditWholesale', it.wholesale, false, it.barcode ? '' : 'الصنف ما له باركود فعّال، سعر الجملة ما يتعدل')}
+      ${itemCardEditRow('سعر القطاعي (القطعة) د.ل', 'icEditPrice', it.price)}
+      <div id="itemCardEditError" style="color:#DC2626;font-size:12px;font-weight:700;text-align:center;margin-top:8px;"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="saveItemCardEdit(${it.id})" style="flex:2;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">حفظ التعديل</button>
+        <button onclick="showItemCardDetail(${it.id})" style="flex:1;background:#FEE2E2;color:#DC2626;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">إلغاء</button>
+      </div>
+    </div>
+  `;
+}
+
+function saveItemCardEdit(itemId) {
+  const it = latestItems['i' + itemId];
+  if (!it) return;
+  const errEl = document.getElementById('itemCardEditError');
+  errEl.textContent = '';
+
+  const name = document.getElementById('icEditName').value.replace(/[\r\n|]+/g, ' ').trim();
+  const nums = {
+    qty:       document.getElementById('icEditQty').value,
+    cost:      document.getElementById('icEditCost').value,
+    wholesale: document.getElementById('icEditWholesale').value,
+    price:     document.getElementById('icEditPrice').value
+  };
+  if (!name) { errEl.textContent = 'اسم الصنف مايبقاش فاضي'; return; }
+  for (const k in nums) {
+    const v = String(nums[k]).trim();
+    if (v === '' || isNaN(Number(v)) || Number(v) < 0) { errEl.textContent = 'اكتب رقم صحيح في ' + editFieldLabel(k); return; }
+    nums[k] = Number(v);
+  }
+
+  // بنبعت بس الحقول اللي اتغيرت فعلًا
+  const changes = {};
+  if (name !== String(it.name || '')) changes.name = name;
+  if (nums.qty !== Number(it.stock || 0)) changes.qty = nums.qty;
+  if (nums.cost !== Number(it.cost || 0)) changes.cost = nums.cost;
+  if (it.barcode && nums.wholesale !== Number(it.wholesale || 0)) changes.wholesale = nums.wholesale;
+  if (nums.price !== Number(it.price || 0)) changes.price = nums.price;
+
+  if (!Object.keys(changes).length) { showItemCardDetail(itemId); return; }
+
+  // الكمية بتتبعت كفرق (زيادة/نقص) مش كرقم نهائي، والفرق بيتجمع على السيرفر بـ increment.
+  // كده لو الكاشير مقطوع وباع قطع قبل ما التعديل يوصله، مبيعاته ما تضيعش:
+  // رصيد 10 → كتبت 20 (فرق +10) → الكاشير باع 3 (بقى 7) → لما يتصل يبقى 17.
+  const payload = {};
+  Object.keys(changes).forEach(k => { if (k !== 'qty') payload[k] = changes[k]; });
+  if ('qty' in changes) {
+    const delta = Math.round((changes.qty - Number(it.stock || 0)) * 1000) / 1000;
+    payload.qtyDelta = firebase.database.ServerValue.increment(delta);
+  }
+  const reqId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  payload.reqId = reqId;
+
+  const oldName = it.name;
+  db.ref('commands/editItem/' + itemId).update(payload).then(() => {
+    // تحديث مؤقت على الشاشة لحد ما السيرفر يأكد ويعيد المزامنة
+    if ('name' in changes) it.name = changes.name;
+    if ('qty' in changes) it.stock = changes.qty;
+    if ('cost' in changes) it.cost = changes.cost;
+    if ('wholesale' in changes) it.wholesale = changes.wholesale;
+    if ('price' in changes) it.price = changes.price;
+    const summary = Object.keys(changes).map(k => editFieldLabel(k) + ': ' + (k === 'name' ? changes[k] : k === 'qty' ? changes[k] : fmtMoney(changes[k]) + ' د.ل')).join(' - ');
+    logActivity('تعديل صنف', oldName + ' ← ' + summary);
+    setItemCardEditStatus(itemId, '… اتبعت التعديل، في انتظار تأكيد الكاشير', '#2563EB');
+    showItemCardDetail(itemId);
+    watchItemCardEditResult(itemId, reqId);
+  }).catch(err => {
+    const m = (err && err.message ? err.message : String(err));
+    errEl.textContent = 'فشل إرسال التعديل: ' + m + ' ← ' + clientErrorFix(m);
+    logClientError('إرسال تعديل صنف من التطبيق', m);
+  });
 }
 
 // كاميرا مستقلة تمامًا (نسخة منفصلة من Html5Qrcode) - عشان متأثرش خالص على كاميرا البيع
@@ -3941,6 +4228,7 @@ function finishInventoryCount() {
   db.ref('data/lastCountDate').once('value').then(snap => {
     const prevDate = snap.val() || null;
     const nowIso = new Date().toISOString();
+    const countTs = Date.now();
     const sessionItems = [];
     let missingCount = 0;
 
@@ -3951,9 +4239,9 @@ function finishInventoryCount() {
       const diff = countedQty - systemQty;
       sessionItems.push({ itemId, name: it.name, systemQty, countedQty, diff });
 
-      if (diff !== 0) {
-        db.ref('commands/updateStock/' + itemId).set(countedQty);
-      }
+      // الجرد بيتبعت مع وقت الجرد، والسكريبت بيطرح المبيعات ويضيف المرتجعات اللي حصلت بعد
+      // الوقت ده - فلو الكاشير كان مقطوع وباع بعد الجرد، مبيعاته ما تضيعش
+      db.ref('commands/updateStock/' + itemId).set({ qty: countedQty, at: countTs });
       if (diff < 0) {
         missingCount++;
         db.ref('data/missingItems').push().set({
