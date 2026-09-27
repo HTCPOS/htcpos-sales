@@ -2275,7 +2275,18 @@ function runInvoiceQuery(type, query, title, filterFn, summaryFn) {
   const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
   const timeout = setTimeout(() => {
     resultRef.off('value');
-    body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل او مافيش رد - حاول تاني</div>';
+    if (type === 'all') {
+      fetchFullArchiveFlat().then(flat => {
+        let results = flat.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 200);
+        if (filterFn) results = results.filter(filterFn);
+        const summaryHtml = summaryFn ? summaryFn(results) : '';
+        body.innerHTML = offlineNoteHtml('جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة') + summaryHtml + renderInvoiceResultsList(results);
+      }).catch(() => {
+        body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+      });
+    } else {
+      body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل او مافيش رد - حاول تاني</div>';
+    }
   }, 15000);
 
   resultRef.on('value', snap => {
@@ -3159,23 +3170,61 @@ function searchInvoiceByNumber() {
   });
 }
 
+// ============ أدوات مشتركة لقراءة الأرشيف المحفوظ وقت ما جهاز المحل يكون مش رادّ ============
+function todayDateStr() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
+function offlineNoteHtml(text) {
+  return '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> ' + text + '</div>';
+}
+
+// أرشيف يوم واحد بس - مصفوفة فواتير/مرتجعات (أو فاضية لو مفيش)
+function fetchArchiveDay(dateStr) {
+  return db.ref('data/dailyArchive/' + dateStr).once('value').then(snap => {
+    const val = snap.val();
+    return val ? Object.values(val) : [];
+  });
+}
+
+// كل الأرشيف (كل الأيام) مفلطح في مصفوفة واحدة - يستخدم وقت البحث برقم من غير معرفة التاريخ
+function fetchFullArchiveFlat() {
+  return db.ref('data/dailyArchive').once('value').then(snap => {
+    const allDays = snap.val() || {};
+    const flat = [];
+    Object.values(allDays).forEach(dayObj => {
+      Object.values(dayObj || {}).forEach(entry => { if (entry) flat.push(entry); });
+    });
+    return flat;
+  });
+}
+
+// أرشيف كل الأيام الواقعة بين تاريخين (شاملين الطرفين) - يستخدم في تقارير الفترة
+function fetchArchiveRange(fromStr, toStr) {
+  return db.ref('data/dailyArchive').once('value').then(snap => {
+    const allDays = snap.val() || {};
+    const flat = [];
+    Object.keys(allDays).forEach(d => {
+      if (d >= fromStr && d <= toStr) {
+        Object.values(allDays[d] || {}).forEach(entry => { if (entry) flat.push(entry); });
+      }
+    });
+    return flat;
+  });
+}
+
 function searchInvoiceOffline(q, body) {
   const numMatch = q.replace(/[^0-9]/g, '');
-  db.ref('data/dailyArchive').once('value').then(snap => {
-    const allDays = snap.val() || {};
-    const matches = [];
-    Object.values(allDays).forEach(dayObj => {
-      Object.values(dayObj || {}).forEach(entry => {
-        if (!entry) return;
-        const numberDigits = String(entry.number || '').replace(/[^0-9]/g, '');
-        const orderDigits = String(entry.orderNo || '').replace(/[^0-9]/g, '');
-        if (numMatch && (numberDigits === numMatch || orderDigits === numMatch)) {
-          matches.push(entry);
-        }
-      });
+  fetchFullArchiveFlat().then(flat => {
+    const matches = flat.filter(entry => {
+      const numberDigits = String(entry.number || '').replace(/[^0-9]/g, '');
+      const orderDigits = String(entry.orderNo || '').replace(/[^0-9]/g, '');
+      return numMatch !== '' && (numberDigits === numMatch || orderDigits === numMatch);
     });
     if (matches.length) {
-      body.innerHTML = '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وممكن تكون قديمة</div>' + renderInvoiceResultsList(matches);
+      body.innerHTML = offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وممكن تكون قديمة') + renderInvoiceResultsList(matches);
     } else {
       body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومفيش نتيجة مطابقة في النسخة المحفوظة</div>';
     }
@@ -4758,8 +4807,22 @@ function checkDebtReturns(debts, customerId, customerName) {
     const pushId = pushRef.key;
     pushRef.set({ type: 'search', query: digits });
 
+    const applyIfReturned = (saleEntry) => {
+      if (!saleEntry || !saleEntry.hasReturn) return;
+      debts.filter(d => d.invoiceNumber === invNum).forEach(d => {
+        const rowEl = document.getElementById('debtRow_' + d.id);
+        if (rowEl) rowEl.outerHTML = renderDebtRow(d, customerId, customerName, true);
+      });
+    };
+
     const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
-    const timeout = setTimeout(() => { resultRef.off('value'); }, 15000);
+    const timeout = setTimeout(() => {
+      resultRef.off('value');
+      // الجهاز مش رادّ - ندوّر في الأرشيف المحفوظ بدل ما نسيب الفاتورة من غير فحص
+      fetchFullArchiveFlat().then(flat => {
+        applyIfReturned(flat.find(r => r && r.type === 'sale' && r.number === invNum));
+      }).catch(() => {});
+    }, 15000);
 
     resultRef.on('value', snap => {
       if (snap.val() === null) return;
@@ -4768,14 +4831,7 @@ function checkDebtReturns(debts, customerId, customerName) {
       const val = snap.val();
       const results = val ? Object.values(val) : [];
       resultRef.remove();
-
-      const saleEntry = results.find(r => r.type === 'sale' && r.number === invNum);
-      if (!saleEntry || !saleEntry.hasReturn) return;
-
-      debts.filter(d => d.invoiceNumber === invNum).forEach(d => {
-        const rowEl = document.getElementById('debtRow_' + d.id);
-        if (rowEl) rowEl.outerHTML = renderDebtRow(d, customerId, customerName, true);
-      });
+      applyIfReturned(results.find(r => r.type === 'sale' && r.number === invNum));
     });
   });
 }
@@ -5087,6 +5143,32 @@ function markShortageFulfilled(id) {
     });
   });
 }
+function renderReturnsList(returns, el, notePrefix) {
+  window.__invoicesById = window.__invoicesById || {};
+  returns.forEach(inv => { window.__invoicesById[inv.id] = inv; });
+  if (!returns.length) { el.innerHTML = (notePrefix || '') + '<div class="emptyMsg">لا يوجد مرتجعات اليوم</div>'; return; }
+  const sorted = returns.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = (notePrefix || '') + sorted.map(inv => {
+    const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => escapeHtml(i.name)).join('، ') : '';
+    return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('returnsModal');showInvoiceDetail(window.__invoicesById['${inv.id}'])">
+      <div>
+        <div class="n">رقم الإرجاع: ${inv.number}</div>
+        ${itemsStr ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px;">${itemsStr}</div>` : ''}
+      </div>
+      <div class="p">${fmtMoney(inv.amount)} د.ل</div>
+    </div>`;
+  }).join('');
+}
+
+function loadReturnsOffline(el) {
+  fetchArchiveDay(todayDateStr()).then(dayEntries => {
+    const returns = dayEntries.filter(e => e && e.type === 'return');
+    renderReturnsList(returns, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة'));
+  }).catch(() => {
+    el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+  });
+}
+
 function loadReturns() {
   const el = document.getElementById('returnsList');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
@@ -5098,7 +5180,7 @@ function loadReturns() {
   const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
   const timeout = setTimeout(() => {
     resultRef.off('value');
-    el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل او مافيش رد - حاول تاني</div>';
+    loadReturnsOffline(el);
   }, 15000);
 
   resultRef.on('value', snap => {
@@ -5107,21 +5189,8 @@ function loadReturns() {
     resultRef.off('value');
     const val = snap.val();
     const returns = val ? Object.values(val) : [];
-    window.__invoicesById = window.__invoicesById || {};
-    returns.forEach(inv => { window.__invoicesById[inv.id] = inv; });
-    if (!returns.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد مرتجعات اليوم</div>'; resultRef.remove(); return; }
-    const sorted = returns.sort((a,b) => new Date(b.date) - new Date(a.date));
-    el.innerHTML = sorted.map(inv => {
-      const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => escapeHtml(i.name)).join('، ') : '';
-      return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('returnsModal');showInvoiceDetail(window.__invoicesById['${inv.id}'])">
-        <div>
-          <div class="n">رقم الإرجاع: ${inv.number}</div>
-          ${itemsStr ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px;">${itemsStr}</div>` : ''}
-        </div>
-        <div class="p">${fmtMoney(inv.amount)} د.ل</div>
-      </div>`;
-    }).join('');
     resultRef.remove();
+    renderReturnsList(returns, el, '');
   });
 }
 let currentReportPeriod = 'day';
@@ -5147,6 +5216,38 @@ function reportRangeForPeriod(period) {
   return { from: fmt(from), to: fmt(now) };
 }
 
+function renderPeriodReport(r, period, el, notePrefix) {
+  const periodLabel = { day:'اليوم', week:'آخر 7 أيام', month:'من أول الشهر', year:'من أول السنة' }[period];
+  const net = (Number(r.totalSales)||0) - (Number(r.returnsTotal)||0);
+  el.innerHTML = (notePrefix || '') + `
+    <div class="searchResultRow"><div class="n">الفترة</div><div class="p">${periodLabel}</div></div>
+    <div class="searchResultRow"><div class="n">إجمالي المبيعات</div><div class="p">${fmtMoney(r.totalSales)} د.ل</div></div>
+    <div class="searchResultRow"><div class="n">عدد الفواتير</div><div class="p">${r.orderCount ?? 0}</div></div>
+    <div class="searchResultRow"><div class="n">عدد المرتجعات</div><div class="p">${r.returnsCount ?? 0}</div></div>
+    <div class="searchResultRow"><div class="n">قيمة المرتجعات</div><div class="p">${fmtMoney(r.returnsTotal)} د.ل</div></div>
+    <div class="searchResultRow"><div class="n">صافي المبيعات</div><div class="p">${fmtMoney(net)} د.ل</div></div>
+  `;
+}
+
+function loadReportForPeriodOffline(period, range, el) {
+  fetchArchiveRange(range.from, range.to).then(flat => {
+    let totalSales = 0, returnsTotal = 0, orderCount = 0, returnsCount = 0;
+    flat.forEach(entry => {
+      if (!entry) return;
+      if (entry.type === 'return') {
+        returnsTotal += Number(entry.amount || 0);
+        returnsCount++;
+      } else {
+        totalSales += Number(entry.amount || 0);
+        orderCount++;
+      }
+    });
+    renderPeriodReport({ totalSales, returnsTotal, orderCount, returnsCount }, period, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - الأرقام من آخر نسخة محفوظة'));
+  }).catch(() => {
+    el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+  });
+}
+
 function loadReportForPeriod(period) {
   const el = document.getElementById('reportsBody');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
@@ -5159,7 +5260,7 @@ function loadReportForPeriod(period) {
   const resultRef = db.ref('data/reportQueryResults/' + pushId);
   const timeout = setTimeout(() => {
     resultRef.off('value');
-    el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل او مافيش رد - حاول تاني</div>';
+    loadReportForPeriodOffline(period, range, el);
   }, 15000);
 
   resultRef.on('value', snap => {
@@ -5167,17 +5268,8 @@ function loadReportForPeriod(period) {
     clearTimeout(timeout);
     resultRef.off('value');
     const r = snap.val() || {};
-    const periodLabel = { day:'اليوم', week:'آخر 7 أيام', month:'من أول الشهر', year:'من أول السنة' }[period];
-    const net = (Number(r.totalSales)||0) - (Number(r.returnsTotal)||0);
-    el.innerHTML = `
-      <div class="searchResultRow"><div class="n">الفترة</div><div class="p">${periodLabel}</div></div>
-      <div class="searchResultRow"><div class="n">إجمالي المبيعات</div><div class="p">${fmtMoney(r.totalSales)} د.ل</div></div>
-      <div class="searchResultRow"><div class="n">عدد الفواتير</div><div class="p">${r.orderCount ?? 0}</div></div>
-      <div class="searchResultRow"><div class="n">عدد المرتجعات</div><div class="p">${r.returnsCount ?? 0}</div></div>
-      <div class="searchResultRow"><div class="n">قيمة المرتجعات</div><div class="p">${fmtMoney(r.returnsTotal)} د.ل</div></div>
-      <div class="searchResultRow"><div class="n">صافي المبيعات</div><div class="p">${fmtMoney(net)} د.ل</div></div>
-    `;
     resultRef.remove();
+    renderPeriodReport(r, period, el, '');
   });
 }
 
