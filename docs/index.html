@@ -586,7 +586,10 @@
     <button class="closeM" onclick="closeModal('shortageFormModal')">✕</button>
     <h3 id="shortageFormTitle">إضافة صنف جديد للنواقص</h3>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
-      <input type="text" id="shortageFormName" placeholder="اسم الصنف" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+      <div style="position:relative;">
+        <input type="text" id="shortageFormName" placeholder="اسم الصنف" autocomplete="off" oninput="onShortageNameInput()" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
+        <div id="shortageNameDropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;max-height:220px;overflow:auto;z-index:20;box-shadow:0 10px 24px rgba(0,0,0,.1);"></div>
+      </div>
       <input type="number" inputmode="numeric" lang="en" id="shortageFormQty" placeholder="الكمية المطلوبة (اختياري)" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
       <div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:4px;">هتجيبه منين؟ (اختياري)</div>
       <div style="display:flex;gap:8px;">
@@ -4987,8 +4990,9 @@ function loadShortages() {
   Promise.all([
     db.ref('data/shortages').once('value'),
     db.ref('data/shortageClassifications').once('value'),
-    db.ref('data/shortagesSuppressed').once('value')
-  ]).then(([snap, classSnap, suppSnap]) => {
+    db.ref('data/shortagesSuppressed').once('value'),
+    db.ref('data/manualShortages').once('value')
+  ]).then(([snap, classSnap, suppSnap, manualSnap]) => {
     if (myToken !== shortagesLoadToken) return; // تحميل تاني أحدث بدأ وخلص قبل ده - نتجاهل النتيجة المتأخرة دي
     const val = snap.val();
     const classifications = classSnap.val() || {};
@@ -4996,6 +5000,7 @@ function loadShortages() {
     // طول ما المخزون الحقيقي لسه قليل عنده (مش عارف إنك اشتريتها من مصدر تاني). فبنخفيهم
     // دايمًا بالاسم، حتى لو رجعوا برقم جديد كل مرة، لحد ما تشتريهم فعليًا من التطبيق تاني
     const suppressed = suppSnap.val() || {};
+    const manualVal = manualSnap.val() || {};
     // بنفرض التصنيف المحفوظ في مكاننا الخاص (لو موجود) فوق أي حاجة جايه من جهاز الكاشير
     const byId = {};
     if (val) Object.entries(val).forEach(([id, it]) => {
@@ -5003,6 +5008,11 @@ function loadShortages() {
       if (suppressed[nameKey] && !it.isCustom) return; // متجاهلينه - جهاز الكاشير رجع ضافه بس إحنا عارفين إنه اتشرى
       const saved = classifications[nameKey];
       byId[id] = { id, ...it, source: (saved ? saved.source : it.source) || null, qty: (saved && saved.qty != null) ? saved.qty : it.qty };
+    });
+    // الأصناف اللي اتكتبت يدوي - مخزّنة في مسارها المستقل (data/manualShortages)، بعيد خالص
+    // عن أي حاجة بيكتبها أو بيمسحها جهاز الكاشير، عشان متختفيش زي ما كان بيحصل قبل كده
+    Object.entries(manualVal).forEach(([id, it]) => {
+      byId[id] = { id, ...it, isCustom: true };
     });
     // جهاز الكاشير بيضيف الصنف نفسه أكتر من مرة برقم مختلف كل مرة (لو نفاد المخزون فيه لسه
     // مستمر). فبندمج أي أصناف بنفس الاسم بالظبط في صنف واحد بس - ولو أي نسخة منهم مصنّفة، الصنف
@@ -5144,6 +5154,9 @@ function openAddShortageForm(existingId) {
   const nameInput = document.getElementById('shortageFormName');
   const qtyInput = document.getElementById('shortageFormQty');
   const titleEl = document.getElementById('shortageFormTitle');
+  const nameDropdown = document.getElementById('shortageNameDropdown');
+  nameDropdown.style.display = 'none';
+  nameDropdown.innerHTML = '';
   if (editingShortageId) {
     const it = latestShortages.find(x => x.id === editingShortageId);
     titleEl.textContent = 'تعديل بيانات الصنف';
@@ -5163,6 +5176,33 @@ function openAddShortageForm(existingId) {
   setTimeout(() => nameInput.focus(), 150);
 }
 
+// اقتراحات اسم الصنف وقت الكتابة اليدوية في النواقص - بتدور في قاعدة بيانات الأصناف الحقيقية
+// (latestItems) وبتفلتر بحسب الحروف المكتوبة أول بأول. لو الاسم مش موجود، تقدر تكمل كتابته
+// عادي وهيتحفظ برضه - القائمة دي للمساعدة بس، مش شرط تختار منها
+function onShortageNameInput() {
+  const dd = document.getElementById('shortageNameDropdown');
+  const q = document.getElementById('shortageFormName').value.trim().toLowerCase();
+  if (!q) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
+  const items = Object.values(latestItems || {});
+  const results = items.filter(it => (it.name || '').toLowerCase().includes(q)).slice(0, 8);
+  if (!results.length) { dd.style.display = 'none'; dd.innerHTML = ''; return; }
+  dd.style.display = 'block';
+  dd.innerHTML = results.map(it => `<div onclick="selectShortageNameSuggestion('${it.name.replace(/'/g, "\\'")}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #F1F5F9;font-size:13.5px;">${escapeHtml(it.name)}</div>`).join('');
+}
+function selectShortageNameSuggestion(name) {
+  document.getElementById('shortageFormName').value = name;
+  const dd = document.getElementById('shortageNameDropdown');
+  dd.style.display = 'none';
+  dd.innerHTML = '';
+}
+document.addEventListener('click', function(e) {
+  const box = document.getElementById('shortageFormName');
+  const dd = document.getElementById('shortageNameDropdown');
+  if (dd && box && !box.contains(e.target) && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
 function saveShortageForm() {
   const name = document.getElementById('shortageFormName').value.trim();
   const qty = document.getElementById('shortageFormQty').value.trim();
@@ -5171,25 +5211,35 @@ function saveShortageForm() {
   const data = { name: name, qty: qty ? Number(qty) : null, source: source || null };
   const nameKey = shortageNameKey(name);
   if (editingShortageId) {
-    // بنكتب في مكانين: الصنف نفسه (زي العادي)، وكمان مكان منفصل خاص بالتطبيق بس (محمي من أي
-    // جهاز خارجي ممكن يرجّع يصفّر الصنف الأصلي - التصنيف يفضل محفوظ عندنا حتى لو ده حصل).
-    // بنحفظه بمفتاح الاسم مش رقم الصنف، لأن جهاز الكاشير بيدّي أرقام جديدة كل مرة يتصل بالنت،
-    // لكن الاسم بيفضل ثابت
-    Promise.all([
-      db.ref('data/shortages/' + editingShortageId).update(data),
-      db.ref('data/shortageClassifications/' + nameKey).set({ source: source || null, qty: qty ? Number(qty) : null })
-    ]).then(() => {
-      closeModal('shortageFormModal');
-      loadShortages();
-    }).catch(err => alert('فشل الحفظ: ' + (err && err.message ? err.message : err)));
+    const editingItem = latestShortages.find(x => x.id === editingShortageId);
+    if (editingItem && editingItem.isCustom) {
+      // صنف يدوي بالكامل - بيتعدل في مساره المستقل (data/manualShortages) بس، بعيد خالص عن
+      // أي حاجة بيكتبها جهاز الكاشير
+      db.ref('data/manualShortages/' + editingShortageId).update({ ...data, isCustom: true }).then(() => {
+        closeModal('shortageFormModal');
+        loadShortages();
+      }).catch(err => alert('فشل الحفظ: ' + (err && err.message ? err.message : err)));
+    } else {
+      // صنف جاي من جهاز الكاشير - يفضل زي ما كان: تحديث الصنف نفسه + تصنيف منفصل بمفتاح
+      // الاسم (محمي من إعادة الكتابة لو جهاز الكاشير رجّع ضاف الصنف برقم جديد)
+      Promise.all([
+        db.ref('data/shortages/' + editingShortageId).update(data),
+        db.ref('data/shortageClassifications/' + nameKey).set({ source: source || null, qty: qty ? Number(qty) : null })
+      ]).then(() => {
+        closeModal('shortageFormModal');
+        loadShortages();
+      }).catch(err => alert('فشل الحفظ: ' + (err && err.message ? err.message : err)));
+    }
   } else {
-    const newRef = db.ref('data/shortages').push();
+    // صنف جديد بيتكتب يدوي - دايمًا يترخزن في المسار المستقل data/manualShortages، سواء
+    // كان الاسم ده موجود أصلًا في قاعدة بيانات الأصناف (اخترته من قائمة الاقتراحات) أو اسم
+    // جديد تمامًا كتبته إنت بنفسك. المسار ده جهاز الكاشير مش عارف بوجوده أصلًا، فمش هيلمسه
+    const newRef = db.ref('data/manualShortages').push();
     newRef.set({ ...data, isCustom: true, time: new Date().toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) }).then(() => {
-      db.ref('data/shortageClassifications/' + nameKey).set({ source: source || null, qty: qty ? Number(qty) : null });
       logActivity('إضافة صنف جديد للنواقص', name);
       closeModal('shortageFormModal');
       loadShortages();
-    });
+    }).catch(err => alert('فشل الحفظ: ' + (err && err.message ? err.message : err)));
   }
 }
 
@@ -5207,21 +5257,25 @@ function markShortageFulfilled(id) {
     db.ref('data/shortagesSuppressed/' + nameKey).set({ at: new Date().toISOString(), name: it.name });
     // بنشيل تصنيف الاسم ده (مبقاش محتاجينه بعد الشراء) - مخزّن بمفتاح الاسم دلوقتي، مش رقم الصنف
     db.ref('data/shortageClassifications/' + nameKey).remove();
-    // كمان بنشيل أي نسخة موجودة دلوقتي بنفس الاسم بالظبط، مش بس النسخة الظاهرة
-    db.ref('data/shortages').once('value').then(snap => {
+    // كمان بنشيل أي نسخة موجودة دلوقتي بنفس الاسم بالظبط، مش بس النسخة الظاهرة - بندور في
+    // مسار جهاز الكاشير والمسار اليدوي المستقل مع بعض
+    Promise.all([
+      db.ref('data/shortages').once('value'),
+      db.ref('data/manualShortages').once('value')
+    ]).then(([snap, manualSnap]) => {
       const val = snap.val() || {};
-      const matchingIds = Object.entries(val)
+      const manualVal = manualSnap.val() || {};
+      const matchingCashierIds = Object.entries(val)
         .filter(([mid, mit]) => shortageNameKey(mit.name) === nameKey)
         .map(([mid]) => mid);
-      if (!matchingIds.length) matchingIds.push(id);
-      matchingIds.forEach(mid => {
-        const mit = val[mid] || it;
-        if (mit.isCustom) {
-          db.ref('data/shortages/' + mid).remove();
-        } else {
-          db.ref('commands/deleteShortage/' + mid).set(true);
-        }
-      });
+      const matchingManualIds = Object.entries(manualVal)
+        .filter(([mid, mit]) => shortageNameKey(mit.name) === nameKey)
+        .map(([mid]) => mid);
+      if (!matchingCashierIds.length && !matchingManualIds.length) {
+        if (it.isCustom) matchingManualIds.push(id); else matchingCashierIds.push(id);
+      }
+      matchingCashierIds.forEach(mid => db.ref('commands/deleteShortage/' + mid).set(true));
+      matchingManualIds.forEach(mid => db.ref('data/manualShortages/' + mid).remove());
       setTimeout(loadShortages, 800);
     });
   });
