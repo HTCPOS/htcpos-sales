@@ -492,6 +492,10 @@
       <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
       <div><div class="num" id="statZeroPrice">0</div><div class="lbl">بيع بسعر 0</div></div>
     </div>
+    <div class="statCard" onclick="openItemCardModal()" style="cursor:pointer">
+      <div class="statIcon" style="background:#E0F2FE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="M7 13h4"/><path d="M7 16h2"/></svg></div>
+      <div><div class="num" style="font-size:14px;">بطاقة صنف</div><div class="lbl">بحث/مسح صنف</div></div>
+    </div>
     <div class="statCard" id="shortagesRow" onclick="openModal('shortagesModal')" style="cursor:pointer; grid-column:span 2;">
       <svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
       <div class="statIcon" style="background:#FFEDD5;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5"/><path d="M12 12v4m0 0 2-2m-2 2-2-2"/></svg></div>
@@ -941,6 +945,22 @@
     <div id="priceCheckResults" style="max-height:32vh;overflow:auto;"></div>
     <div id="priceCheckDetail" style="display:none;"></div>
     <a href="#" onclick="event.preventDefault();closeModal('priceCheckModal');openModal('productsModal');" style="display:block;text-align:center;font-size:12px;color:var(--textMuted);margin-top:16px;">تصفح كل المنتجات</a>
+  </div>
+</div>
+
+<div class="modalBg" id="itemCardModal" onclick="if(event.target===this)closeItemCardModal()">
+  <div class="modalSheet" style="height:88vh;">
+    <button class="closeM" onclick="closeItemCardModal()">✕</button>
+    <h3>بطاقة صنف</h3>
+    <div class="searchBox" style="margin:12px 0;">
+      <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+      <input type="text" id="itemCardSearchInput" placeholder="اكتب اسم الصنف أو الباركود..." oninput="itemCardManualSearch()">
+    </div>
+    <div id="itemCardStartCameraBtn" onclick="startItemCardCameraScan()" style="display:flex; align-items:center; justify-content:center; text-align:center; background:none; border:none; padding:8px 0; cursor:pointer;"><span class="ic ic-qr" style="width:60px;height:60px;"></span></div>
+    <div id="itemCardReaderView" style="display:none; width:100%;min-height:1px;border-radius:14px;overflow:hidden;position:relative;z-index:1; background:#000;"></div>
+    <div id="itemCardScanStatus" style="text-align:center;font-size:12px;color:var(--textMuted);margin-bottom:6px;"></div>
+    <div id="itemCardResults" style="max-height:30vh;overflow:auto;"></div>
+    <div id="itemCardDetail" style="display:none;"></div>
   </div>
 </div>
 
@@ -3541,6 +3561,152 @@ function updatePriceCheckTotal() {
   totalEl.textContent = 'الإجمالي: ' + fmtMoney(price * qty) + ' د.ل';
 }
 
+// ============ بطاقة صنف - بحث/مسح مستقل تمامًا عن كاميرا البيع والجرد، بيعرض بيانات
+// الصنف بس من غير أي تعديل عليه ولا أي تأثير على مسح البيع أو الجرد ============
+let itemCardScannerInstance = null;
+let itemCardLastScannedId = null;
+let itemCardLastScanTime = 0;
+
+function openItemCardModal() {
+  document.getElementById('itemCardSearchInput').value = '';
+  document.getElementById('itemCardResults').innerHTML = '';
+  document.getElementById('itemCardDetail').style.display = 'none';
+  document.getElementById('itemCardDetail').innerHTML = '';
+  document.getElementById('itemCardScanStatus').textContent = '';
+  document.getElementById('itemCardStartCameraBtn').style.display = 'flex';
+  document.getElementById('itemCardReaderView').style.display = 'none';
+  document.getElementById('itemCardReaderView').innerHTML = '';
+  itemCardLastScannedId = null;
+  openModal('itemCardModal');
+}
+
+function itemCardManualSearch() {
+  const q = document.getElementById('itemCardSearchInput').value.trim().toLowerCase();
+  const resEl = document.getElementById('itemCardResults');
+  document.getElementById('itemCardDetail').style.display = 'none';
+  document.getElementById('itemCardDetail').innerHTML = '';
+  if (!q) { resEl.innerHTML = ''; return; }
+  const items = Object.values(latestItems || {});
+  if (!items.length) { resEl.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت</div>'; return; }
+  const matches = items.filter(it => (String(it.barcode || '').trim().toLowerCase() === q) || (String(it.name || '').toLowerCase().includes(q))).slice(0, 20);
+  if (!matches.length) { resEl.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
+  resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer" onclick="showItemCardDetail(${it.id})"><div class="n">${escapeHtml(it.name)}</div><div class="p">متبقي: ${it.stock}</div></div>`).join('');
+  resEl.scrollTop = 0;
+}
+
+function showItemCardDetail(itemId) {
+  const it = latestItems['i' + itemId];
+  if (!it) return;
+  document.getElementById('itemCardResults').innerHTML = '';
+  document.getElementById('itemCardSearchInput').value = '';
+  const d = document.getElementById('itemCardDetail');
+  d.style.display = 'block';
+  d.innerHTML = `
+    <div style="background:var(--surface2);border-radius:14px;padding:16px;margin-top:10px;">
+      <div style="font-weight:800;font-size:16px;margin-bottom:12px;">${escapeHtml(it.name)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--textMuted);font-size:13px;">الباركود</span>
+        <span style="font-weight:700;">${it.barcode ? escapeHtml(String(it.barcode)) : '—'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--textMuted);font-size:13px;">الكمية المتبقية</span>
+        <span style="font-weight:700;">${it.stock}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--textMuted);font-size:13px;">سعر الشراء (التكلفة)</span>
+        <span style="font-weight:700;">${fmtMoney(it.cost)} د.ل</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--textMuted);font-size:13px;">سعر الجملة</span>
+        <span style="font-weight:700;">${fmtMoney(it.wholesale)} د.ل</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;">
+        <span style="color:var(--textMuted);font-size:13px;">سعر القطاعي (القطعة)</span>
+        <span style="font-weight:700;">${fmtMoney(it.price)} د.ل</span>
+      </div>
+    </div>
+  `;
+}
+
+// كاميرا مستقلة تمامًا (نسخة منفصلة من Html5Qrcode) - عشان متأثرش خالص على كاميرا البيع
+// أو كاميرا الجرد ولا تشترك معاهم في أي متغير أو حالة
+function startItemCardCameraScan() {
+  document.getElementById('itemCardStartCameraBtn').style.display = 'none';
+  document.getElementById('itemCardReaderView').style.display = 'block';
+  document.getElementById('itemCardScanStatus').textContent = 'بيحاول يوصل للكاميرا...';
+  try {
+    itemCardScannerInstance = new Html5Qrcode('itemCardReaderView', {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF
+      ]
+    });
+    itemCardScannerInstance.start(
+      { facingMode: 'environment' },
+      { fps: 15, qrbox: (viewfinderWidth, viewfinderHeight) => {
+          const w = Math.floor(viewfinderWidth * 0.92);
+          const h = Math.floor(viewfinderHeight * 0.75);
+          return { width: w, height: h };
+        }, disableFlip: true,
+        videoConstraints: { facingMode: 'environment', width: { ideal: 1080 }, height: { ideal: 1920 }, advanced: [{ focusMode: 'continuous' }] } },
+      (decodedText) => { onItemCardBarcodeScanned(decodedText); },
+      () => {}
+    ).then(() => {
+      document.getElementById('itemCardScanStatus').textContent = 'وجّه الكاميرا على الباركود';
+    }).catch(err => {
+      document.getElementById('itemCardScanStatus').textContent = 'مقدرناش نوصل للكاميرا (' + (err && err.message ? err.message : err) + ') - استخدم البحث اليدوي فوق بدل الكاميرا.';
+      document.getElementById('itemCardStartCameraBtn').style.display = 'flex';
+      document.getElementById('itemCardReaderView').style.display = 'none';
+    });
+  } catch (err) {
+    document.getElementById('itemCardScanStatus').textContent = 'مكتبة الكاميرا ماتحملتش صح - استخدم البحث اليدوي فوق لحد ما تحلها.';
+    document.getElementById('itemCardStartCameraBtn').style.display = 'flex';
+    document.getElementById('itemCardReaderView').style.display = 'none';
+  }
+}
+
+function onItemCardBarcodeScanned(code) {
+  const items = Object.values(latestItems || {});
+  if (!items.length) {
+    document.getElementById('itemCardScanStatus').textContent = 'البيانات لسه ما توصلتش من السيرفر - تأكد إن الجهاز متصل بالنت';
+    return;
+  }
+  const scannedCode = String(code || '').trim();
+  const match = items.find(it => String(it.barcode || '').trim() === scannedCode);
+  if (!match) {
+    document.getElementById('itemCardScanStatus').textContent = 'مفيش صنف بالباركود ده: ' + code;
+    return;
+  }
+  const now = Date.now();
+  // منع تكرار نفس المسحة خلال أقل من ثانيتين (نفس الباركود لسه في نطاق الكاميرا)
+  if (itemCardLastScannedId === match.id && (now - itemCardLastScanTime) < 2000) return;
+  itemCardLastScannedId = match.id;
+  itemCardLastScanTime = now;
+  playFeedback('qr');
+  showItemCardDetail(match.id);
+  document.getElementById('itemCardScanStatus').textContent = 'اتلقى: ' + match.name + ' - وجّه على صنف تاني أو اقفل النافذة';
+}
+
+function closeItemCardModal() {
+  if (itemCardScannerInstance) {
+    try {
+      itemCardScannerInstance.stop().then(() => {
+        try { itemCardScannerInstance.clear(); } catch(e) {}
+        itemCardScannerInstance = null;
+      }).catch(() => { itemCardScannerInstance = null; });
+    } catch (e) { itemCardScannerInstance = null; }
+  }
+  itemCardLastScannedId = null;
+  closeModal('itemCardModal');
+}
+
 function manualLookupSearch() {
   const q = (document.getElementById('manualLookupInput').value || '').trim().toLowerCase();
   const resEl = document.getElementById('manualLookupResults');
@@ -5043,7 +5209,11 @@ function renderShortageSourceTabs() {
   const tabs = [{ key: 'unclassified', label: 'بدون تصنيف' }, ...sources.map(s => ({ key: s, label: s }))];
   tabsEl.innerHTML = tabs.map(t => `<button class="alertTab${currentShortageSourceFilter === t.key ? ' active' : ''}" onclick="setShortageSourceFilter('${t.key.replace(/'/g,"")}')">${t.label}</button>`).join('') +
     `<button onclick="openShortagesListView()" style="background:#F1F5F9;color:#334155;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> فتح</button>` +
-    `<button onclick="shareShortagesList()" style="background:#DBEAFE;color:#2563EB;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> نسخ/إرسال</button>`;
+    `<button onclick="shareShortagesList()" style="background:#DBEAFE;color:#2563EB;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> نسخ/إرسال</button>` +
+    // زرار "شراء الكل" بيبان بس لما تكون واقف على تبويب مصدر حقيقي (محلي/الصين) - مش على "بدون تصنيف"
+    (currentShortageSourceFilter !== 'unclassified'
+      ? `<button onclick="buyAllShortagesInCurrentFilter()" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> شراء الكل</button>`
+      : '');
 }
 
 function setShortageSourceFilter(key) {
@@ -5243,12 +5413,11 @@ function saveShortageForm() {
   }
 }
 
-function markShortageFulfilled(id) {
-  const it = latestShortages.find(x => x.id === id);
-  if (!it) return;
-  if (!confirm('تأكيد إنك اشتريت "' + it.name + '"؟')) return;
+// نواة عملية "اشتريته" - مستقلة عن التأكيد وعن تحديث الشاشة، عشان نقدر نستخدمها لصنف واحد
+// أو لمجموعة أصناف مع بعض (زرار "شراء الكل") من غير ما نكرر نفس الخطوات
+function fulfillShortageItem(it) {
   const nameKey = shortageNameKey(it.name);
-  db.ref('data/shortagesFulfilled').push().set({
+  return db.ref('data/shortagesFulfilled').push().set({
     name: it.name, qty: it.qty || null, source: it.source || null, fulfilledAt: new Date().toISOString()
   }).then(() => {
     logActivity('شراء صنف ناقص', it.name);
@@ -5259,7 +5428,7 @@ function markShortageFulfilled(id) {
     db.ref('data/shortageClassifications/' + nameKey).remove();
     // كمان بنشيل أي نسخة موجودة دلوقتي بنفس الاسم بالظبط، مش بس النسخة الظاهرة - بندور في
     // مسار جهاز الكاشير والمسار اليدوي المستقل مع بعض
-    Promise.all([
+    return Promise.all([
       db.ref('data/shortages').once('value'),
       db.ref('data/manualShortages').once('value')
     ]).then(([snap, manualSnap]) => {
@@ -5272,13 +5441,32 @@ function markShortageFulfilled(id) {
         .filter(([mid, mit]) => shortageNameKey(mit.name) === nameKey)
         .map(([mid]) => mid);
       if (!matchingCashierIds.length && !matchingManualIds.length) {
-        if (it.isCustom) matchingManualIds.push(id); else matchingCashierIds.push(id);
+        if (it.isCustom) matchingManualIds.push(it.id); else matchingCashierIds.push(it.id);
       }
-      matchingCashierIds.forEach(mid => db.ref('commands/deleteShortage/' + mid).set(true));
-      matchingManualIds.forEach(mid => db.ref('data/manualShortages/' + mid).remove());
-      setTimeout(loadShortages, 800);
+      const deletions = [];
+      matchingCashierIds.forEach(mid => deletions.push(db.ref('commands/deleteShortage/' + mid).set(true)));
+      matchingManualIds.forEach(mid => deletions.push(db.ref('data/manualShortages/' + mid).remove()));
+      return Promise.all(deletions);
     });
   });
+}
+
+function markShortageFulfilled(id) {
+  const it = latestShortages.find(x => x.id === id);
+  if (!it) return;
+  if (!confirm('تأكيد إنك اشتريت "' + it.name + '"؟')) return;
+  fulfillShortageItem(it).then(() => setTimeout(loadShortages, 800));
+}
+
+// زرار "شراء الكل" - بيشتغل بس على التبويب الحالي (محلي أو الصين)، مش على "بدون تصنيف"
+function buyAllShortagesInCurrentFilter() {
+  if (currentShortageSourceFilter === 'unclassified') return;
+  const items = latestShortages.filter(it => it.source === currentShortageSourceFilter);
+  if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
+  if (!confirm('تأكيد إنك اشتريت كل أصناف "' + currentShortageSourceFilter + '" (' + items.length + ' صنف)؟')) return;
+  Promise.all(items.map(it => fulfillShortageItem(it))).then(() => {
+    loadShortages();
+  }).catch(err => alert('حصل خطأ أثناء الحفظ: ' + (err && err.message ? err.message : err)));
 }
 function renderReturnsByDayBlock(dateStr, returns) {
   window.__invoicesById = window.__invoicesById || {};
