@@ -602,6 +602,11 @@
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('returnsModal')">✕</button>
     <h3>المرتجعات</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="date" id="returnsFrom" style="flex:1;">
+      <input type="date" id="returnsTo" style="flex:1;">
+      <button onclick="loadReturnsRange()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">عرض</button>
+    </div>
     <div id="returnsList"><div class="emptyMsg">لا يوجد بيانات</div></div>
   </div>
 </div>
@@ -5221,12 +5226,10 @@ function markShortageFulfilled(id) {
     });
   });
 }
-function renderReturnsList(returns, el, notePrefix) {
+function renderReturnsByDayBlock(dateStr, returns) {
   window.__invoicesById = window.__invoicesById || {};
-  returns.forEach(inv => { window.__invoicesById[inv.id] = inv; });
-  if (!returns.length) { el.innerHTML = (notePrefix || '') + '<div class="emptyMsg">لا يوجد مرتجعات اليوم</div>'; return; }
-  const sorted = returns.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
-  el.innerHTML = (notePrefix || '') + sorted.map(inv => {
+  returns.forEach(inv => { if (inv) window.__invoicesById[inv.id] = inv; });
+  const itemsHtml = returns.length ? returns.map(inv => {
     const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => escapeHtml(i.name)).join('، ') : '';
     return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('returnsModal');showInvoiceDetail(window.__invoicesById['${inv.id}'])">
       <div>
@@ -5235,30 +5238,55 @@ function renderReturnsList(returns, el, notePrefix) {
       </div>
       <div class="p">${fmtMoney(inv.amount)} د.ل</div>
     </div>`;
-  }).join('');
+  }).join('') : '<div class="emptyMsg" style="padding:6px 0;">لا يوجد مرتجعات</div>';
+  return `<div style="font-size:12px;font-weight:700;color:#64748B;margin:14px 0 6px;">${dateStr}</div>` + itemsHtml;
 }
 
-function loadReturnsOffline(el) {
-  fetchArchiveDay(todayDateStr()).then(dayEntries => {
-    const returns = dayEntries.filter(e => e && e.type === 'return');
-    renderReturnsList(returns, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة'));
+// بيعرض كل يوم في المدى المطلوبة في خانة لوحده (حتى لو مفيش مرتجعات فيه)، من الأحدث للأقدم
+function renderReturnsGroupedByDate(fromStr, toStr, allReturns, el, notePrefix) {
+  const byDate = {};
+  allReturns.forEach(inv => {
+    if (!inv) return;
+    const d = (inv.date || '').slice(0, 10);
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(inv);
+  });
+  const pad = n => String(n).padStart(2, '0');
+  const start = new Date(fromStr + 'T00:00:00');
+  const end = new Date(toStr + 'T00:00:00');
+  let html = notePrefix || '';
+  for (let cur = new Date(end); cur >= start; cur.setDate(cur.getDate() - 1)) {
+    const dStr = cur.getFullYear() + '-' + pad(cur.getMonth() + 1) + '-' + pad(cur.getDate());
+    html += renderReturnsByDayBlock(dStr, byDate[dStr] || []);
+  }
+  el.innerHTML = html;
+}
+
+function loadReturnsOffline(fromStr, toStr, el) {
+  fetchArchiveRange(fromStr, toStr).then(flat => {
+    const returns = flat.filter(e => e && e.type === 'return');
+    renderReturnsGroupedByDate(fromStr, toStr, returns, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة'));
   }).catch(() => {
     el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
   });
 }
 
-function loadReturns() {
+function loadReturnsRange() {
+  const fromStr = document.getElementById('returnsFrom').value;
+  const toStr = document.getElementById('returnsTo').value;
   const el = document.getElementById('returnsList');
+  if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية</div>'; return; }
+  if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية لازم يكون قبل تاريخ النهاية</div>'; return; }
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
 
   const pushRef = db.ref('commands/invoiceQuery').push();
   const pushId = pushRef.key;
-  pushRef.set({ type: 'returnsToday', query: '' });
+  pushRef.set({ type: 'byRange', from: fromStr, to: toStr, query: '' });
 
   const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
   const timeout = setTimeout(() => {
     resultRef.off('value');
-    loadReturnsOffline(el);
+    loadReturnsOffline(fromStr, toStr, el);
   }, 15000);
 
   resultRef.on('value', snap => {
@@ -5266,10 +5294,22 @@ function loadReturns() {
     clearTimeout(timeout);
     resultRef.off('value');
     const val = snap.val();
-    const returns = val ? Object.values(val) : [];
+    const results = val ? Object.values(val) : [];
     resultRef.remove();
-    renderReturnsList(returns, el, '');
+    const returns = results.filter(e => e && e.type === 'return');
+    renderReturnsGroupedByDate(fromStr, toStr, returns, el, '');
   });
+}
+
+function loadReturns() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const defaultFrom = new Date(now);
+  defaultFrom.setDate(defaultFrom.getDate() - 6);
+  document.getElementById('returnsFrom').value = fmt(defaultFrom);
+  document.getElementById('returnsTo').value = fmt(now);
+  loadReturnsRange();
 }
 let currentReportPeriod = 'day';
 function setReportPeriod(period) {
