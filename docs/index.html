@@ -243,7 +243,45 @@
   #depositModal .modalSheet, #shortageFormModal .modalSheet, #editCustomerModal .modalSheet {
     transition: transform .28s cubic-bezier(.25,.8,.25,1);
   }
-  body.keyboard-open #customerPickerModal { padding-bottom:var(--kb-h); transition:padding-bottom .15s; }
+  /* نافذة اختيار الزبون: الجزء الفوقاني (العنوان والملاحظة وخانة البحث) ثابت ودايمًا ظاهر،
+     والقائمة بس هي اللي بتسكرول. لما الكيبورد يفتح النافذة بتصغر على المساحة اللي فوقه بالظبط
+     بدل ما تندفع لفوق وتطلع برا الشاشة */
+  #customerPickerModal .cpSheet { display:flex; flex-direction:column; height:75vh; max-height:75vh; overflow:hidden; padding-bottom:calc(10px + env(safe-area-inset-bottom)); transition:height .24s cubic-bezier(.25,.8,.25,1), max-height .24s cubic-bezier(.25,.8,.25,1); }
+  #customerPickerModal .cpHead { flex-shrink:0; }
+  #customerPickerModal .cpHead h3 { margin-bottom:12px; }
+  #customerPickerModal .cpField { margin:4px 0 10px; }
+  #customerPickerModal .cpField label { display:block; font-size:12px; color:var(--textMuted); font-weight:700; margin-bottom:6px; }
+  #customerPickerModal .cpField input,
+  #customerPickerModal .cpSearch input { width:100%; box-sizing:border-box; padding:12px 14px; border:1.5px solid var(--border, #E2E8F0); border-radius:12px; font-size:16px; background:var(--surface); color:var(--text); outline:none; transition:border-color .15s; }
+  #customerPickerModal .cpField input:focus,
+  #customerPickerModal .cpSearch input:focus { border-color:#2563EB; }
+  #customerPickerModal .cpSearch { position:relative; margin-bottom:10px; }
+  #customerPickerModal .cpSearch input { padding-right:40px; padding-left:40px; }
+  #customerPickerModal .cpSearchIc { position:absolute; right:13px; top:50%; transform:translateY(-50%); color:var(--textMuted); pointer-events:none; }
+  #customerPickerModal .cpClear { display:none; position:absolute; left:8px; top:50%; transform:translateY(-50%); width:26px; height:26px; border-radius:50%; border:none; background:var(--surface2); color:var(--textMuted); font-size:11px; cursor:pointer; }
+  #customerPickerModal .cpSearch.hasText .cpClear { display:block; }
+  #customerPickerModal .cpList { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; border-top:1px solid var(--border, #F1F5F9); }
+  #customerPickerModal .cpAddRow { display:flex; align-items:center; gap:10px; margin:10px 0 4px; padding:12px 14px; border:1.5px dashed #93C5FD; border-radius:12px; background:rgba(37,99,235,.07); color:#2563EB; font-weight:800; font-size:14px; cursor:pointer; }
+  #customerPickerModal .cpAddRow .cpPlus { width:26px; height:26px; border-radius:50%; background:#2563EB; color:#fff; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+  #customerPickerModal .cpCount { font-size:11px; color:var(--textMuted); padding:8px 2px 2px; }
+  #customerPickerModal .cpRow mark { background:rgba(250,204,21,.35); color:inherit; border-radius:3px; padding:0 1px; }
+  body.keyboard-open #customerPickerModal { bottom:0; padding-bottom:var(--kb-h); }
+  body.keyboard-open #customerPickerModal .cpSheet { height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px); max-height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px); margin-bottom:8px; }
+
+  /* ===== إصلاح موحد لكل النوافذ السفلية مع الكيبورد =====
+     لما الكيبورد يفتح: النافذة بتقعد على المساحة اللي فوقه بالظبط بدل ما تندفع لفوق وتطلع برا الشاشة.
+     النوافذ اللي طولها ثابت بتاخد المساحة المتاحة كلها (وقوايمها بتسكرول جواها)،
+     والنوافذ المرنة بتفضل بحجمها لو صغيرة ومش بتكبر من غير داعي.
+     النوافذ الوسطية (الإيداع / النواقص / تعديل الزبون) ونافذة ادراج الزبون ليها معالجة خاصة بيها */
+  .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet { transition:height .24s cubic-bezier(.25,.8,.25,1), max-height .24s cubic-bezier(.25,.8,.25,1); }
+  body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) { bottom:0; padding-bottom:var(--kb-h); }
+  body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet {
+    max-height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px) !important;
+    margin-bottom:8px;
+  }
+  body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet[style^="height:"]:not([style^="height:auto"]) {
+    height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px) !important;
+  }
   @keyframes depositDropIn { from { transform:translateY(-110%); } to { transform:translateY(0); } }
   @keyframes depositDropOut { to { transform:translateY(130vh); opacity:.3; } }
   /* ============ تصميم كشف الحساب الجديد (طبق الأصل) ============ */
@@ -828,18 +866,21 @@
 </div>
 
 <div class="modalBg" id="customerPickerModal" onclick="if(event.target===this)closeModal('customerPickerModal')">
-  <div class="modalSheet" style="height:75vh;">
-    <button class="closeM" onclick="closeModal('customerPickerModal')">✕</button>
-    <h3 id="customerPickerTitle">ادراج في حساب زبون</h3>
-    <div style="margin:14px 0 10px;">
-      <label style="font-size:12px;color:var(--textMuted);font-weight:700;">ملاحظة على الصنف (اختياري)</label>
-      <input type="text" id="debtItemNoteInput" placeholder="مثال: هيدفع آخر الشهر" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;margin-top:6px;box-sizing:border-box;">
+  <div class="modalSheet cpSheet">
+    <div class="cpHead">
+      <button class="closeM" onclick="closeModal('customerPickerModal')">✕</button>
+      <h3 id="customerPickerTitle">ادراج في حساب زبون</h3>
+      <div id="debtNoteWrap" class="cpField">
+        <label for="debtItemNoteInput">ملاحظة على الصنف (اختياري)</label>
+        <input type="text" id="debtItemNoteInput" placeholder="مثال: هيدفع آخر الشهر" enterkeyhint="next" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('newCustomerNameInput').focus();}">
+      </div>
+      <div class="cpSearch">
+        <svg class="cpSearchIc" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="text" id="newCustomerNameInput" placeholder="ابحث عن زبون أو اكتب اسم جديد..." enterkeyhint="done" autocomplete="off" autocorrect="off" spellcheck="false" oninput="filterCustomerPicker()" onkeydown="if(event.key==='Enter'){event.preventDefault();customerPickerEnter();}">
+        <button type="button" id="cpClearBtn" class="cpClear" onclick="clearCustomerPickerSearch()" aria-label="مسح">✕</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <input type="text" id="newCustomerNameInput" placeholder="اسم زبون جديد..." style="flex:1;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;">
-      <button onclick="addNewCustomerAndAssign()" style="background:#2563EB;color:#fff;border:none;border-radius:12px;padding:0 18px;font-weight:700;font-size:13px;cursor:pointer;">إضافة</button>
-    </div>
-    <div id="customerPickerList"></div>
+    <div id="customerPickerList" class="cpList"></div>
   </div>
 </div>
 
@@ -985,6 +1026,7 @@
     <div style="background:#EFF6FF;color:#1D4ED8;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
       اكتب العدد الفعلي اللي عديته لكل صنف، أو استخدم الكاميرا لمسح الباركود. الأصناف اللي فيها فرق هتتعدل تلقائي وتتسجل في المفقودات.
     </div>
+    <div id="countDraftBanner"></div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <input type="text" id="countFilterInput" placeholder="فلترة الأصناف..." style="flex:1;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
       <button onclick="openBarcodeScanner()" style="background:none;border:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span class="ic ic-qr" style="width:44px;height:44px;"></span></button>
@@ -1547,6 +1589,8 @@ if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.is
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
       setTimeout(() => scrollIntoViewIfCovered(active, kh), 50);
     }
+    // بعد ما حركة تصغير النافذة تخلص (.24 ثانية)
+    setTimeout(ensureFocusedFieldVisible, 300);
   });
   Keyboard.addListener('keyboardWillHide', () => {
     document.body.classList.remove('keyboard-open');
@@ -1565,8 +1609,27 @@ document.addEventListener('focusin', (e) => {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
     setTimeout(() => scrollIntoViewIfCovered(t), 250);
+    // لو الكيبورد مفتوح أصلًا والمستخدم نقل لخانة تانية جوه نافذة
+    if (document.body.classList.contains('keyboard-open')) setTimeout(ensureFocusedFieldVisible, 80);
   }
 });
+
+// بعد ما النافذة تصغر على المساحة اللي فوق الكيبورد: لو الخانة اللي بيكتب فيها بقت مستخبية
+// (فوق حدود النافذة أو تحت الكيبورد) نحركها لنص المساحة الظاهرة - زي خانات العد جوه قايمة الجرد
+function ensureFocusedFieldVisible() {
+  const el = document.activeElement;
+  if (!el || !(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) return;
+  const sheet = el.closest('.modalSheet');
+  if (!sheet) return;
+  const kh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb-h')) || 0;
+  const sr = sheet.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  const visTop = Math.max(sr.top, 0) + 8;
+  const visBottom = Math.min(sr.bottom, window.innerHeight - kh) - 8;
+  if (r.top < visTop || r.bottom > visBottom) {
+    try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { el.scrollIntoView(); }
+  }
+}
 
 function enterApp() {
   appUnlockedThisSession = true;
@@ -2311,35 +2374,141 @@ function openSupplierPickerForPurchase(itemName, price) {
   openCustomerPickerList();
 }
 
+let customerPickerAll = [];
+let customerPickerShown = [];
+let customerPickerBusy = false;
+
+// توحيد الكتابة العربية للبحث: أ/إ/آ = ا ، ة = ه ، ى = ي ، ومن غير تشكيل أو مدّ
+function normalizeArabicName(str) {
+  return String(str || '')
+    .toLowerCase()
+    .replace(/[\u064B-\u0652\u0640]/g, '')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function openCustomerPickerList() {
   // بيتفتح أحيانًا فوق نافذة تانية مفتوحة (زي ديون المشتريات) - بننقله لآخر الصفحة
   // كل مرة عشان يفضل هو الظاهر فوق مهما كانت النافذة التانية مكتوبة قبله في الكود
   document.body.appendChild(document.getElementById('customerPickerModal'));
+  const isPurchase = customerPickerMode === 'purchaseDebt';
+  document.getElementById('debtNoteWrap').style.display = isPurchase ? 'none' : '';
+  document.getElementById('newCustomerNameInput').placeholder = isPurchase ? 'ابحث عن محل أو اكتب اسم جديد...' : 'ابحث عن زبون أو اكتب اسم جديد...';
   document.getElementById('newCustomerNameInput').value = '';
   document.getElementById('debtItemNoteInput').value = '';
+  document.querySelector('#customerPickerModal .cpSearch').classList.remove('hasText');
+  customerPickerAll = [];
+  customerPickerBusy = false;
   const listEl = document.getElementById('customerPickerList');
   listEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   openModal('customerPickerModal');
   db.ref('data/customers').once('value').then(snap => {
     const val = snap.val();
-    const customers = val ? Object.entries(val).map(([id, c]) => ({ id, ...c })) : [];
-    if (!customers.length) {
-      listEl.innerHTML = '<div class="emptyMsg">مفيش زبائن مسجلين، ضيف واحد فوق</div>';
-      return;
-    }
-    const sorted = customers.sort((a,b) => (a.name||'').localeCompare(b.name||''));
-    listEl.innerHTML = sorted.map(c => `<div class="searchResultRow" style="cursor:pointer" onclick="onCustomerPicked('${c.id}','${(c.name||'').replace(/'/g,"")}')"><div class="n">${escapeHtml(c.name)}</div></div>`).join('');
+    customerPickerAll = val ? Object.entries(val).map(([id, c]) => ({ id, name: String((c && c.name) || ''), norm: normalizeArabicName(c && c.name) })) : [];
+    customerPickerAll.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+    filterCustomerPicker();
+  }).catch(err => {
+    listEl.innerHTML = '<div class="emptyMsg">ما قدرناش نحمّل الزبائن - تأكد من النت وجرب تاني</div>';
+    logClientError('تحميل قائمة الزبائن', err && err.message ? err.message : String(err));
   });
 }
 
+function highlightCustomerMatch(name, q) {
+  if (!q) return escapeHtml(name);
+  // تمييز الجزء المطابق لو الكتابة مطابقة حرفيًا (من غير توحيد) - غير كده نعرض الاسم عادي
+  const i = name.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return escapeHtml(name);
+  return escapeHtml(name.slice(0, i)) + '<mark>' + escapeHtml(name.slice(i, i + q.length)) + '</mark>' + escapeHtml(name.slice(i + q.length));
+}
+
+function filterCustomerPicker() {
+  const input = document.getElementById('newCustomerNameInput');
+  const raw = (input.value || '').trim();
+  const q = normalizeArabicName(raw);
+  document.querySelector('#customerPickerModal .cpSearch').classList.toggle('hasText', raw.length > 0);
+  const listEl = document.getElementById('customerPickerList');
+  const isPurchase = customerPickerMode === 'purchaseDebt';
+
+  let matches = customerPickerAll;
+  if (q) {
+    matches = customerPickerAll.filter(c => c.norm.includes(q));
+    matches = matches.slice().sort((a, b) => {
+      const as = a.norm.startsWith(q) ? 0 : 1;
+      const bs = b.norm.startsWith(q) ? 0 : 1;
+      return as - bs || a.name.localeCompare(b.name, 'ar');
+    });
+  }
+  customerPickerShown = matches;
+  const exact = q && customerPickerAll.some(c => c.norm === q);
+
+  let html = '';
+  if (raw && !exact) {
+    html += `<div class="cpAddRow" onclick="addNewCustomerAndAssign()"><span class="cpPlus">+</span><span>إضافة «${escapeHtml(raw)}» ${isPurchase ? 'كمحل جديد' : 'كزبون جديد'}</span></div>`;
+  }
+  if (!customerPickerAll.length) {
+    html += `<div class="emptyMsg">${isPurchase ? 'مفيش محلات مسجلة' : 'مفيش زبائن مسجلين'} - اكتب الاسم فوق وضيفه</div>`;
+  } else if (!matches.length) {
+    html += `<div class="emptyMsg">مفيش اسم مطابق</div>`;
+  } else {
+    if (q) html += `<div class="cpCount">${matches.length} نتيجة</div>`;
+    html += matches.map((c, i) => `<div class="searchResultRow cpRow" style="cursor:pointer" onclick="pickCustomerFromList(${i})"><div class="n">${highlightCustomerMatch(c.name, raw)}</div></div>`).join('');
+  }
+  listEl.innerHTML = html;
+  listEl.scrollTop = 0;
+}
+
+function clearCustomerPickerSearch() {
+  const input = document.getElementById('newCustomerNameInput');
+  input.value = '';
+  filterCustomerPicker();
+  input.focus();
+}
+
+function customerPickerEnter() {
+  const raw = (document.getElementById('newCustomerNameInput').value || '').trim();
+  if (!raw) return;
+  const q = normalizeArabicName(raw);
+  const exact = customerPickerAll.find(c => c.norm === q);
+  if (exact) { pickCustomer(exact); return; }
+  if (customerPickerShown.length === 1) { pickCustomer(customerPickerShown[0]); return; }
+  addNewCustomerAndAssign();
+}
+
+function pickCustomerFromList(index) {
+  const c = customerPickerShown[index];
+  if (c) pickCustomer(c);
+}
+
+function pickCustomer(c) {
+  if (customerPickerBusy) return;
+  // نقفل الكيبورد الأول عشان رسالة التأكيد تظهر نضيفة
+  try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
+  onCustomerPicked(c.id, c.name);
+}
+
 function addNewCustomerAndAssign() {
+  if (customerPickerBusy) return;
   const nameInput = document.getElementById('newCustomerNameInput');
-  const name = nameInput.value.trim();
-  if (!name) { alert('اكتب الاسم الأول'); return; }
+  const name = nameInput.value.trim().replace(/\s+/g, ' ');
+  if (!name) { alert('اكتب الاسم الأول'); nameInput.focus(); return; }
+  // حماية من التكرار: لو الاسم موجود فعلًا (حتى لو مكتوب بشكل مختلف شوية) نختار الموجود
+  const existing = customerPickerAll.find(c => c.norm === normalizeArabicName(name));
+  if (existing) { pickCustomer(existing); return; }
+  try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
+  customerPickerBusy = true;
   const newRef = db.ref('data/customers').push();
   newRef.set({ name: name, createdAt: new Date().toISOString() }).then(() => {
     logActivity('إضافة زبون', name);
+    customerPickerAll.push({ id: newRef.key, name: name, norm: normalizeArabicName(name) });
+    customerPickerBusy = false;
     onCustomerPicked(newRef.key, name);
+  }).catch(err => {
+    customerPickerBusy = false;
+    alert('ما قدرناش نضيف الاسم - تأكد من النت وجرب تاني');
+    logClientError('إضافة زبون', err && err.message ? err.message : String(err));
   });
 }
 
@@ -3552,7 +3721,162 @@ function browseInvoicesByDate() {
 }
 
 /* ================= الجرد اليومي ================= */
+// الجرد بيتحفظ أول بأول كمسودة في Firebase (data/countDraft) + نسخة على الجوال نفسه،
+// فالخروج من الشاشة أو قفل التطبيق ما يضيعش العد، وأكتر من جوال يقدروا يجردوا مع بعض.
+// كل صنف ليه وقت آخر عد (at) بيتبعت للكاشير، فبيطرح بالظبط المبيعات اللي حصلت بعد عده.
 let countSession = {};
+let countTimes = {};
+let countDraftId = null;
+let countDraftStartedAt = null;
+let countDraftListening = false;
+const COUNT_DRAFT_LOCAL_KEY = 'countDraftLocal';
+
+function countNow() { return Date.now() + (typeof serverTimeOffset === 'number' ? serverTimeOffset : 0); }
+
+function saveCountDraftLocal() {
+  try {
+    const items = {};
+    Object.keys(countSession).forEach(id => { items[id] = { qty: countSession[id], at: countTimes[id] || countNow() }; });
+    localStorage.setItem(COUNT_DRAFT_LOCAL_KEY, JSON.stringify({ id: countDraftId, startedAt: countDraftStartedAt, items: items }));
+  } catch (e) {}
+}
+function loadCountDraftLocal() {
+  try { return JSON.parse(localStorage.getItem(COUNT_DRAFT_LOCAL_KEY) || 'null'); } catch (e) { return null; }
+}
+function clearCountDraftLocal() {
+  try { localStorage.removeItem(COUNT_DRAFT_LOCAL_KEY); } catch (e) {}
+}
+
+function ensureCountDraft() {
+  if (countDraftId) return;
+  countDraftId = 'd' + countNow() + '_' + Math.random().toString(36).slice(2, 7);
+  countDraftStartedAt = countNow();
+  db.ref('data/countDraft').update({ id: countDraftId, startedAt: countDraftStartedAt });
+}
+
+function draftSetCount(itemId, qty) {
+  ensureCountDraft();
+  const at = countNow();
+  countSession[itemId] = qty;
+  countTimes[itemId] = at;
+  saveCountDraftLocal();
+  db.ref('data/countDraft/items/' + itemId).set({ qty: qty, at: at });
+}
+
+function draftIncrementCount(itemId) {
+  ensureCountDraft();
+  const at = countNow();
+  countSession[itemId] = (countSession[itemId] !== undefined ? Number(countSession[itemId]) : 0) + 1;
+  countTimes[itemId] = at;
+  saveCountDraftLocal();
+  // increment عشان لو جوالين بيمسحوا نفس الصنف في نفس الوقت، المسحتين يتحسبوا
+  db.ref('data/countDraft/items/' + itemId).update({ qty: firebase.database.ServerValue.increment(1), at: at });
+}
+
+function draftRemoveCount(itemId) {
+  delete countSession[itemId];
+  delete countTimes[itemId];
+  saveCountDraftLocal();
+  db.ref('data/countDraft/items/' + itemId).remove();
+}
+
+function applyCountDraftSnapshot(d) {
+  const items = (d && d.items) || {};
+  countSession = {};
+  countTimes = {};
+  Object.keys(items).forEach(id => {
+    const v = items[id];
+    if (v && v.qty !== undefined && v.qty !== null) {
+      countSession[id] = Number(v.qty);
+      countTimes[id] = Number(v.at) || null;
+    }
+  });
+  countDraftId = (d && d.id) ? d.id : null;
+  countDraftStartedAt = (d && d.startedAt) ? d.startedAt : null;
+  saveCountDraftLocal();
+  refreshCountDraftUi();
+}
+
+function startCountDraftSync() {
+  if (countDraftListening) return;
+  countDraftListening = true;
+  const local = loadCountDraftLocal();
+  Promise.all([db.ref('data/countDraft').once('value'), db.ref('data/countDraftClosedId').once('value')]).then(res => {
+    const remote = res[0].val();
+    const closedId = res[1].val();
+    const localItems = (local && local.items) || {};
+    if (local && local.id && local.id !== closedId && Object.keys(localItems).length) {
+      if (!remote) {
+        // المسودة مش على السيرفر (التطبيق اتقفل والنت مقطوع قبل ما تترفع) - نرجعها من نسخة الجوال
+        db.ref('data/countDraft').set({ id: local.id, startedAt: local.startedAt || countNow(), items: localItems });
+      } else if (remote.id === local.id) {
+        // نفس الجرد: أي صنف اتعد على الجوال ده بعد آخر نسخة على السيرفر نرفعه
+        const upd = {};
+        const rItems = remote.items || {};
+        Object.keys(localItems).forEach(id => {
+          const r = rItems[id];
+          const l = localItems[id];
+          if (!r || (Number(l.at) || 0) > (Number(r.at) || 0)) upd['items/' + id] = l;
+        });
+        if (Object.keys(upd).length) db.ref('data/countDraft').update(upd);
+      }
+    }
+    db.ref('data/countDraft').on('value', snap => applyCountDraftSnapshot(snap.val()));
+  }).catch(err => {
+    countDraftListening = false;
+    logClientError && logClientError('مزامنة مسودة الجرد', err);
+  });
+}
+
+function refreshCountDraftUi() {
+  try { updateCountProgress(); } catch (e) {}
+  try { updateScanSessionCount(); } catch (e) {}
+  renderCountDraftBanner();
+  const modal = document.getElementById('inventoryCountModal');
+  if (!modal || modal.style.display !== 'flex') return;
+  const scanner = document.getElementById('barcodeScannerModal');
+  if (scanner && scanner.style.display === 'flex') return; // بيترسم لما الكاميرا تتقفل
+  const list = document.getElementById('inventoryCountList');
+  const ae = document.activeElement;
+  if (list && ae && list.contains(ae)) return; // المستخدم بيكتب - ما نعيدش الرسم عشان ما تضيعش الكتابة
+  const keepScroll = list ? list.scrollTop : 0;
+  renderInventoryCountList();
+  if (list) list.scrollTop = keepScroll;
+}
+
+function renderCountDraftBanner() {
+  const el = document.getElementById('countDraftBanner');
+  if (!el) return;
+  const n = Object.keys(countSession).length;
+  if (!n) { el.innerHTML = ''; return; }
+  let since = '';
+  if (countDraftStartedAt) {
+    const dt = new Date(countDraftStartedAt);
+    since = ' من ' + dt.toLocaleDateString('ar-EG-u-nu-latn') + ' الساعة ' + dt.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
+  }
+  el.innerHTML = `<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:10px 12px;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <span>📝 جرد مفتوح${since} — ${n} صنف. العد محفوظ، كمّل من مكان ما وقفت.</span>
+    <button onclick="cancelInventoryCount()" style="background:#fff;color:#DC2626;border:1px solid #FCA5A5;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">إلغاء الجرد</button>
+  </div>`;
+}
+
+function closeCountDraft() {
+  if (countDraftId) db.ref('data/countDraftClosedId').set(countDraftId);
+  db.ref('data/countDraft').remove();
+  countSession = {};
+  countTimes = {};
+  countDraftId = null;
+  countDraftStartedAt = null;
+  clearCountDraftLocal();
+  try { updateCountProgress(); } catch (e) {}
+  renderCountDraftBanner();
+}
+
+function cancelInventoryCount() {
+  if (!confirm('إلغاء الجرد؟ كل الأصناف اللي اتعدت في الجرد ده هتتمسح، ومش هيتبعت أي تعديل للكاشير.')) return;
+  closeCountDraft();
+  renderInventoryCountList();
+}
 let barcodeScannerInstance = null;
 
 let currentScannedItem = null;
@@ -4094,8 +4418,7 @@ function onBarcodeScanned(code) {
     lastIncrementTime = now;
     playFeedback('qr'); // قراءة ناجحة فعليًا (مش تكرار لنفس المسحة)
 
-    const current = countSession[match.id] !== undefined ? countSession[match.id] : 0;
-    countSession[match.id] = current + 1;
+    draftIncrementCount(match.id);
     updateCountProgress();
     updateScanSessionCount();
 
@@ -4125,7 +4448,7 @@ function confirmScanAndNext() {
   if (!currentScannedItem) return;
   const val = document.getElementById('scanQtyInput').value;
   if (val !== '') {
-    countSession[currentScannedItem.id] = Number(val);
+    draftSetCount(currentScannedItem.id, Number(val));
   }
   updateCountProgress();
   updateScanSessionCount();
@@ -4138,11 +4461,26 @@ function confirmScanAndNext() {
 }
 
 function openInventoryCount() {
-  countSession = {};
+  // ما بنمسحش العد: بنعرض المسودة المحفوظة (من الجوال فورًا، وبعدين من السيرفر أول ما يرد)
+  if (!countDraftListening) {
+    const local = loadCountDraftLocal();
+    if (local && local.items) {
+      countSession = {};
+      countTimes = {};
+      Object.keys(local.items).forEach(id => {
+        const v = local.items[id];
+        if (v && v.qty !== undefined && v.qty !== null) { countSession[id] = Number(v.qty); countTimes[id] = Number(v.at) || null; }
+      });
+      countDraftId = local.id || null;
+      countDraftStartedAt = local.startedAt || null;
+    }
+  }
   document.getElementById('countFilterInput').value = '';
   openModal('inventoryCountModal');
   renderInventoryCountList();
   updateCountProgress();
+  renderCountDraftBanner();
+  startCountDraftSync();
 }
 
 function renderInventoryCountList() {
@@ -4211,7 +4549,7 @@ document.addEventListener('input', function(e) {
 });
 
 function setCountValue(itemId, val) {
-  if (val === '') { delete countSession[itemId]; } else { countSession[itemId] = Number(val); }
+  if (val === '') { draftRemoveCount(itemId); } else { draftSetCount(itemId, Number(val)); }
   updateCountProgress();
 }
 
@@ -4228,7 +4566,7 @@ function finishInventoryCount() {
   db.ref('data/lastCountDate').once('value').then(snap => {
     const prevDate = snap.val() || null;
     const nowIso = new Date().toISOString();
-    const countTs = Date.now();
+    const countTs = countNow();
     const sessionItems = [];
     let missingCount = 0;
 
@@ -4241,7 +4579,9 @@ function finishInventoryCount() {
 
       // الجرد بيتبعت مع وقت الجرد، والسكريبت بيطرح المبيعات ويضيف المرتجعات اللي حصلت بعد
       // الوقت ده - فلو الكاشير كان مقطوع وباع بعد الجرد، مبيعاته ما تضيعش
-      db.ref('commands/updateStock/' + itemId).set({ qty: countedQty, at: countTs });
+      // وقت عد الصنف ده بالذات (مش وقت إنهاء الجرد)، عشان مبيعاته بعد العد تتطرح صح
+      const itemAt = Number(countTimes[itemId]) || countTs;
+      db.ref('commands/updateStock/' + itemId).set({ qty: countedQty, at: itemAt });
       if (diff < 0) {
         missingCount++;
         db.ref('data/missingItems').push().set({
@@ -4265,7 +4605,7 @@ function finishInventoryCount() {
     } else {
       alert('تم الجرد. مفيش أي نواقص');
     }
-    countSession = {};
+    closeCountDraft();
   });
 }
 
