@@ -5937,6 +5937,7 @@ function runReportQuery(range, period, el, rangeLabel) {
     resultRef.off('value');
     const r = snap.val() || {};
     resultRef.remove();
+    if (r.error) { el.innerHTML = '<div class="emptyMsg">⚠️ ' + escapeHtml(r.error) + '</div>'; return; }
     renderPeriodReport(r, period, el, '', rangeLabel);
   });
 }
