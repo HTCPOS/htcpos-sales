@@ -2261,7 +2261,7 @@ function renderInvoiceResultsList(results) {
     const receiptLabel = isReturn ? 'رقم الإرجاع: ' : 'رقم الإيصال: ';
     const returnBadge = (!isReturn && inv.hasReturn) ? ' <span style="background:#FEE2E2;color:#DC2626;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;">مرتجع</span>' : '';
     const itemNames = (inv.items && inv.items.length) ? inv.items.map(it => escapeHtml(it.name)).join('، ') : '';
-    return `<div class="invoiceRow" onclick="closeModal('invoiceResultsModal');showInvoiceDetail(window.__invoicesById['${inv.id}'])" style="cursor:pointer">
+    return `<div class="invoiceRow" onclick="showInvoiceDetail(window.__invoicesById['${inv.id}'])" style="cursor:pointer">
       ${renderInvIcon(idx, isReturn, inv.number)}
       <div class="invInfo">
         <div class="num">${receiptLabel}${inv.number}${returnBadge}</div>
@@ -5231,7 +5231,7 @@ function renderReturnsByDayBlock(dateStr, returns) {
   returns.forEach(inv => { if (inv) window.__invoicesById[inv.id] = inv; });
   const itemsHtml = returns.length ? returns.map(inv => {
     const itemsStr = (inv.items && inv.items.length) ? inv.items.map(i => escapeHtml(i.name)).join('، ') : '';
-    return `<div class="searchResultRow" style="cursor:pointer" onclick="closeModal('returnsModal');showInvoiceDetail(window.__invoicesById['${inv.id}'])">
+    return `<div class="searchResultRow" style="cursor:pointer" onclick="showInvoiceDetail(window.__invoicesById['${inv.id}'])">
       <div>
         <div class="n">رقم الإرجاع: ${inv.number}</div>
         ${itemsStr ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px;">${itemsStr}</div>` : ''}
