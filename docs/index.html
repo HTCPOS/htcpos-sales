@@ -615,6 +615,12 @@
       <button class="alertTab reportTab" data-period="week" onclick="setReportPeriod('week')">أسبوعي</button>
       <button class="alertTab reportTab" data-period="month" onclick="setReportPeriod('month')">شهري</button>
       <button class="alertTab reportTab" data-period="year" onclick="setReportPeriod('year')">سنوي</button>
+      <button class="alertTab reportTab" data-period="range" onclick="setReportPeriod('range')">نطاق مخصص</button>
+    </div>
+    <div id="reportRangeInputs" style="display:none;gap:8px;margin-bottom:12px;">
+      <input type="date" id="reportRangeFrom" style="flex:1;">
+      <input type="date" id="reportRangeTo" style="flex:1;">
+      <button onclick="loadCustomRangeReport()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">عرض</button>
     </div>
     <div id="reportsBody"><div class="emptyMsg">لا يوجد بيانات</div></div>
   </div>
@@ -3233,8 +3239,80 @@ function searchInvoiceOffline(q, body) {
   });
 }
 
+function renderInvoicesGroupedByDate(results, notePrefix) {
+  window.__invoicesById = window.__invoicesById || {};
+  (results || []).forEach(inv => { if (inv) window.__invoicesById[inv.id] = inv; });
+  if (!results || !results.length) return (notePrefix || '') + '<div class="emptyMsg">مفيش فواتير في المدة دي</div>';
+  const sorted = results.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const groups = {};
+  const order = [];
+  sorted.forEach(inv => {
+    const d = (inv.date || '').slice(0, 10) || 'غير معروف';
+    if (!groups[d]) { groups[d] = []; order.push(d); }
+    groups[d].push(inv);
+  });
+  let html = notePrefix || '';
+  order.forEach(d => {
+    html += `<div style="font-size:12px;font-weight:700;color:#64748B;margin:14px 0 6px;">${d}</div>`;
+    html += renderInvoiceResultsList(groups[d]);
+  });
+  return html;
+}
+
+function loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl) {
+  fetchArchiveRange(fromStr, toStr).then(flat => {
+    resultsEl.innerHTML = renderInvoicesGroupedByDate(flat, offlineNoteHtml('جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة'));
+  }).catch(() => {
+    resultsEl.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+  });
+}
+
+function loadAllInvoicesRange() {
+  const fromStr = document.getElementById('allInvoicesFrom').value;
+  const toStr = document.getElementById('allInvoicesTo').value;
+  const resultsEl = document.getElementById('allInvoicesResults');
+  if (!fromStr || !toStr) { resultsEl.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية</div>'; return; }
+  if (fromStr > toStr) { resultsEl.innerHTML = '<div class="emptyMsg">تاريخ البداية لازم يكون قبل تاريخ النهاية</div>'; return; }
+  resultsEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+
+  const pushRef = db.ref('commands/invoiceQuery').push();
+  const pushId = pushRef.key;
+  pushRef.set({ type: 'byRange', from: fromStr, to: toStr, query: '' });
+
+  const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
+  const timeout = setTimeout(() => {
+    resultRef.off('value');
+    loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl);
+  }, 15000);
+
+  resultRef.on('value', snap => {
+    if (snap.val() === null) return;
+    clearTimeout(timeout);
+    resultRef.off('value');
+    const val = snap.val();
+    const results = val ? Object.values(val) : [];
+    resultRef.remove();
+    resultsEl.innerHTML = renderInvoicesGroupedByDate(results, '');
+  });
+}
+
 function openAllInvoices() {
-  runInvoiceQuery('all', '', 'كل الفواتير (آخر 200)');
+  document.getElementById('invoiceResultsTitle').textContent = 'كل الفواتير';
+  const body = document.getElementById('invoiceResultsBody');
+  const now = new Date();
+  const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const defaultFrom = new Date(now);
+  defaultFrom.setDate(defaultFrom.getDate() - 29);
+  body.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="date" id="allInvoicesFrom" value="${fmt(defaultFrom)}" style="flex:1;">
+      <input type="date" id="allInvoicesTo" value="${fmt(now)}" style="flex:1;">
+      <button onclick="loadAllInvoicesRange()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">عرض</button>
+    </div>
+    <div id="allInvoicesResults"><div class="emptyMsg">جاري التحميل...</div></div>
+  `;
+  openModal('invoiceResultsModal');
+  loadAllInvoicesRange();
 }
 
 function computeDaySummaryHtml(results) {
@@ -5199,7 +5277,28 @@ function setReportPeriod(period) {
   document.querySelectorAll('.reportTab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.period === period);
   });
+  document.getElementById('reportRangeInputs').style.display = (period === 'range') ? 'flex' : 'none';
+  if (period === 'range') {
+    const el = document.getElementById('reportsBody');
+    const fromEl = document.getElementById('reportRangeFrom');
+    const toEl = document.getElementById('reportRangeTo');
+    if (fromEl.value && toEl.value) {
+      loadCustomRangeReport();
+    } else {
+      el.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية واضغط عرض</div>';
+    }
+    return;
+  }
   loadReportForPeriod(period);
+}
+
+function loadCustomRangeReport() {
+  const fromStr = document.getElementById('reportRangeFrom').value;
+  const toStr = document.getElementById('reportRangeTo').value;
+  const el = document.getElementById('reportsBody');
+  if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية</div>'; return; }
+  if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية لازم يكون قبل تاريخ النهاية</div>'; return; }
+  runReportQuery({ from: fromStr, to: toStr }, 'range', el, 'من ' + fromStr + ' إلى ' + toStr);
 }
 
 function reportRangeForPeriod(period) {
@@ -5216,8 +5315,8 @@ function reportRangeForPeriod(period) {
   return { from: fmt(from), to: fmt(now) };
 }
 
-function renderPeriodReport(r, period, el, notePrefix) {
-  const periodLabel = { day:'اليوم', week:'آخر 7 أيام', month:'من أول الشهر', year:'من أول السنة' }[period];
+function renderPeriodReport(r, period, el, notePrefix, rangeLabel) {
+  const periodLabel = rangeLabel || { day:'اليوم', week:'آخر 7 أيام', month:'من أول الشهر', year:'من أول السنة' }[period];
   const net = (Number(r.totalSales)||0) - (Number(r.returnsTotal)||0);
   el.innerHTML = (notePrefix || '') + `
     <div class="searchResultRow"><div class="n">الفترة</div><div class="p">${periodLabel}</div></div>
@@ -5229,7 +5328,7 @@ function renderPeriodReport(r, period, el, notePrefix) {
   `;
 }
 
-function loadReportForPeriodOffline(period, range, el) {
+function loadReportForPeriodOffline(period, range, el, rangeLabel) {
   fetchArchiveRange(range.from, range.to).then(flat => {
     let totalSales = 0, returnsTotal = 0, orderCount = 0, returnsCount = 0;
     flat.forEach(entry => {
@@ -5242,16 +5341,15 @@ function loadReportForPeriodOffline(period, range, el) {
         orderCount++;
       }
     });
-    renderPeriodReport({ totalSales, returnsTotal, orderCount, returnsCount }, period, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - الأرقام من آخر نسخة محفوظة'));
+    renderPeriodReport({ totalSales, returnsTotal, orderCount, returnsCount }, period, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - الأرقام من آخر نسخة محفوظة'), rangeLabel);
   }).catch(() => {
     el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
   });
 }
 
-function loadReportForPeriod(period) {
-  const el = document.getElementById('reportsBody');
+// نواة مشتركة لأي تقرير فترة - سواء تبويب جاهز (يومي/أسبوعي...) أو نطاق مخصص من تاريخ لتاريخ
+function runReportQuery(range, period, el, rangeLabel) {
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
-  const range = reportRangeForPeriod(period);
 
   const pushRef = db.ref('commands/reportQuery').push();
   const pushId = pushRef.key;
@@ -5260,7 +5358,7 @@ function loadReportForPeriod(period) {
   const resultRef = db.ref('data/reportQueryResults/' + pushId);
   const timeout = setTimeout(() => {
     resultRef.off('value');
-    loadReportForPeriodOffline(period, range, el);
+    loadReportForPeriodOffline(period, range, el, rangeLabel);
   }, 15000);
 
   resultRef.on('value', snap => {
@@ -5269,8 +5367,14 @@ function loadReportForPeriod(period) {
     resultRef.off('value');
     const r = snap.val() || {};
     resultRef.remove();
-    renderPeriodReport(r, period, el, '');
+    renderPeriodReport(r, period, el, '', rangeLabel);
   });
+}
+
+function loadReportForPeriod(period) {
+  const el = document.getElementById('reportsBody');
+  const range = reportRangeForPeriod(period);
+  runReportQuery(range, period, el);
 }
 
 function loadReports() {
