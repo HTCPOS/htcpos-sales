@@ -1823,8 +1823,8 @@ function renderErrorsStatusCard() {
   el.style.background = st.bg;
   el.style.color = st.color;
   el.innerHTML = '● ' + escapeHtml(st.title) +
-    (st.reason ? '<div style="color:var(--text);font-weight:600;margin-top:4px;"><b>السبب:</b> ' + escapeHtml(st.reason) + '</div>' : '') +
-    (st.fix ? '<div style="color:var(--text);font-weight:600;"><b>الحل:</b> ' + escapeHtml(st.fix) + '</div>' : '');
+    (st.reason ? '<div style="color:#1E293B;font-weight:600;margin-top:4px;"><b>السبب:</b> ' + escapeHtml(st.reason) + '</div>' : '') +
+    (st.fix ? '<div style="color:#1E293B;font-weight:600;"><b>الحل:</b> ' + escapeHtml(st.fix) + '</div>' : '');
 }
 
 function renderErrorsModal() {
