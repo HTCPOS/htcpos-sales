@@ -2045,9 +2045,13 @@ const itemCardOfferLabel = {};
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.7.0';
+const APP_VERSION = '2.7.1';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.7.1', date: '2026-09-29', items: [
+    'لو الكاشير بطيء في الرد، التطبيق يظل ينتظر النتيجة الحية ويستبدل بها نتيجة النسخة المحفوظة تلقائيًا فور وصولها',
+    'الفواتير الجديدة التي لم تصل للنسخة المحفوظة بعد لم تعد تظهر كـ "غير موجود" أثناء انتظار الكاشير'
+  ] },
   { v: '2.7.0', date: '2026-09-29', items: [
     'البحث في الفواتير أصبح فوريًا: إذا كان الكاشير مغلقًا يبحث في النسخة المحفوظة مباشرة، وإذا كان يعمل يعرض نتيجة سريعة ثم يحدّثها من الكاشير',
     'الأرشيف يُحمَّل مرة واحدة ثم يصبح كل بحث فوريًا، مع عرض الوقت الذي استغرقه البحث',
@@ -3318,9 +3322,11 @@ function runInvoiceQuery(type, query, title, filterFn, summaryFn) {
         const summaryHtml = summaryFn ? summaryFn(results) : '';
         body.innerHTML = archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة') + summaryHtml + renderInvoiceResultsList(results) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
       }).catch(() => {
-        if (ctx.live || ctx.prelim) return;
+        if (ctx.live || stillWaitingCashier(ctx)) return;
         body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
       });
+    } else if (ctx.waitingLive) {
+      body.innerHTML = '<div class="emptyMsg">الكاشير بطيء في الرد، ما زال البحث جاريًا...</div>';
     } else if (!ctx.prelim) {
       body.innerHTML = '<div class="emptyMsg">الكاشير غير متصل - هذه القائمة تحتاج الكاشير. حاول مرة أخرى لما يرجع.</div>';
     }
@@ -4233,7 +4239,7 @@ function cashierLooksOnline() {
 }
 
 function newQueryCtx() {
-  return { t0: (window.performance && performance.now) ? performance.now() : Date.now(), live: false, prelim: false, timer: null };
+  return { t0: (window.performance && performance.now) ? performance.now() : Date.now(), live: false, prelim: false, waitingLive: false, timer: null };
 }
 
 function queryElapsedSec(ctx) {
@@ -4248,7 +4254,13 @@ function queryTimeHtml(ctx, source) {
 
 function archiveNote(ctx, offlineText) {
   if (ctx && ctx.prelim) return offlineNoteHtml('نتيجة سريعة من النسخة المحفوظة — جاري التحديث من الكاشير...');
+  if (ctx && ctx.waitingLive) return offlineNoteHtml('الكاشير بطيء في الرد — هذه نتيجة النسخة المحفوظة، وستتحدث تلقائيًا فور وصول رد الكاشير');
   return offlineNoteHtml(offlineText);
+}
+
+// لسه مستنيين رد الكاشير (في الأول، أو بعد مهلة الـ 8 ثواني لو الكاشير بطيء)
+function stillWaitingCashier(ctx) {
+  return !!(ctx && (ctx.prelim || ctx.waitingLive));
 }
 
 // بيثبّت إن النتيجة الحية وصلت (عشان النسخة المحفوظة ما تكتبش فوقها)
@@ -4270,9 +4282,17 @@ function runWithCashier(ctx, sendFn, offlineFn, timeoutMs) {
   const cancel = sendFn();
   ctx.timer = setTimeout(() => {
     if (ctx.live) return;
-    try { cancel(); } catch (e) {}
+    // الكاشير بطيء: بنثبّت نتيجة النسخة المحفوظة، بس بنفضل مستنيين الرد الحي
+    // ولو وصل متأخر بيستبدل النتيجة تلقائيًا (مهم للفواتير الجديدة اللي لسه ما وصلتش للنسخة المحفوظة)
     ctx.prelim = false;
+    ctx.waitingLive = true;
     offlineFn();
+    ctx.timer = setTimeout(() => {
+      if (ctx.live) return;
+      try { cancel(); } catch (e) {}
+      ctx.waitingLive = false;
+      offlineFn();
+    }, 52000);
   }, timeoutMs || 8000);
 }
 
@@ -4350,13 +4370,13 @@ function searchInvoiceOffline(q, body, ctx) {
     });
     if (matches.length) {
       body.innerHTML = archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وقد تكون قديمة') + renderInvoiceResultsList(matches) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
-    } else if (ctx.prelim) {
-      body.innerHTML = '<div class="emptyMsg">غير موجود في النسخة المحفوظة — جاري البحث في الكاشير...</div>';
+    } else if (stillWaitingCashier(ctx)) {
+      body.innerHTML = '<div class="emptyMsg">غير موجود في النسخة المحفوظة — ' + (ctx.prelim ? 'جاري البحث في الكاشير...' : 'الكاشير بطيء في الرد، ما زال البحث جاريًا...') + '</div>';
     } else {
       body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نتيجة مطابقة في النسخة المحفوظة</div>' + queryTimeHtml(ctx, 'من النسخة المحفوظة');
     }
   }).catch(() => {
-    if (ctx.live || ctx.prelim) return;
+    if (ctx.live || stillWaitingCashier(ctx)) return;
     body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
@@ -4387,7 +4407,7 @@ function loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl, ctx) {
     if (ctx.live) return;
     resultsEl.innerHTML = renderInvoicesGroupedByDate(flat, archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة')) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
   }).catch(() => {
-    if (ctx.live || ctx.prelim) return;
+    if (ctx.live || stillWaitingCashier(ctx)) return;
     resultsEl.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
@@ -4481,11 +4501,13 @@ function browseInvoicesByDate() {
       if (ctx.live) return;
       if (archived.length) {
         body.innerHTML = archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - هذه آخر نسخة محفوظة وقد تكون ناقصة') + computeDaySummaryHtml(archived) + renderInvoiceResultsList(archived) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
+      } else if (ctx.waitingLive) {
+        body.innerHTML = '<div class="emptyMsg">لا يوجد نسخة محفوظة لهذا اليوم — الكاشير بطيء في الرد، ما زال البحث جاريًا...</div>';
       } else if (!ctx.prelim) {
         body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نسخة محفوظة لهذا اليوم</div>' + queryTimeHtml(ctx, 'من النسخة المحفوظة');
       }
     }).catch(() => {
-      if (ctx.live || ctx.prelim) return;
+      if (ctx.live || stillWaitingCashier(ctx)) return;
       body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
     });
   };
@@ -7307,7 +7329,7 @@ function loadReturnsOffline(fromStr, toStr, el, ctx) {
     renderReturnsGroupedByDate(fromStr, toStr, returns, el, archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة'));
     el.insertAdjacentHTML('beforeend', queryTimeHtml(ctx, 'من النسخة المحفوظة'));
   }).catch(() => {
-    if (ctx.live || ctx.prelim) return;
+    if (ctx.live || stillWaitingCashier(ctx)) return;
     el.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
@@ -7510,7 +7532,7 @@ function loadReportForPeriodOffline(period, range, el, rangeLabel, ctx) {
     renderPeriodReport({ totalSales, returnsTotal, orderCount, returnsCount }, period, el, archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - الأرقام من آخر نسخة محفوظة'), rangeLabel);
     el.insertAdjacentHTML('beforeend', queryTimeHtml(ctx, 'من النسخة المحفوظة'));
   }).catch(() => {
-    if (ctx.live || ctx.prelim) return;
+    if (ctx.live || stillWaitingCashier(ctx)) return;
     el.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
