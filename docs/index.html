@@ -290,6 +290,60 @@
   body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet[style^="height:"]:not([style^="height:auto"]) {
     height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px) !important;
   }
+  /* كل المنتجات: القايمة بس اللي بتسكرول، وبتتحمّل على دفعات */
+  #productsModal .modalSheet { display:flex; flex-direction:column; overflow:hidden; }
+  #productsList { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+  .plCount { font-size:11.5px; color:var(--textMuted); font-weight:800; padding:2px 2px 8px; }
+  /* طباعة الباركود */
+  .lsPreviewBox { background:repeating-conic-gradient(var(--surface2) 0 25%, transparent 0 50%) 50%/14px 14px; border-radius:14px; padding:14px; display:flex; justify-content:center; align-items:center; min-height:120px; }
+  .lblCanvas { display:block; max-width:100%; max-height:190px; width:auto; height:auto; background:#fff; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.18); image-rendering:pixelated; }
+  .lsSec { font-size:12.5px; color:var(--textMuted); font-weight:800; margin:18px 0 8px; }
+  .lsChips { display:flex; flex-wrap:wrap; gap:6px; }
+  .lsChip { border:1.5px solid var(--border); background:var(--surface); color:var(--text); border-radius:20px; padding:6px 12px; font-weight:800; font-size:12.5px; cursor:pointer; direction:ltr; }
+  .lsChip.on { border-color:#2563EB; background:rgba(37,99,235,.1); color:#2563EB; }
+  .lsGrid3, .lsGrid2 { display:grid; gap:8px; margin-top:10px; }
+  .lsGrid3 { grid-template-columns:1fr 1fr 1fr; }
+  .lsGrid2 { grid-template-columns:1fr 1fr; }
+  .lsGrid3 label span, .lsGrid2 label span { display:block; font-size:11.5px; color:var(--textMuted); font-weight:700; margin-bottom:4px; }
+  .lsTpls { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8px; }
+  .lsTpl { border:2px solid var(--border); background:var(--surface); border-radius:12px; padding:8px 6px 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .lsTpl.on { border-color:#2563EB; box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+  .lsTplCanvas { width:100%; height:auto; max-height:70px; object-fit:contain; background:#fff; border-radius:4px; image-rendering:pixelated; }
+  .lsTplName { font-size:11.5px; font-weight:800; color:var(--text); }
+  .lsCheck { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--text); padding:7px 0; cursor:pointer; }
+  .lsCheck input { width:18px; height:18px; }
+  .lpStep { width:46px; height:44px; border:none; border-radius:10px; background:var(--surface2); color:var(--text); font-size:22px; font-weight:800; cursor:pointer; flex-shrink:0; }
+  /* حول التطبيق */
+  .abHead { text-align:center; padding:6px 0 14px; border-bottom:1px solid var(--border); }
+  .abHead img { height:46px; width:auto; display:block; margin:0 auto 8px; }
+  .abName { font-size:17px; font-weight:900; color:var(--text); }
+  .abVer { display:inline-block; margin-top:6px; background:rgba(37,99,235,.1); color:#2563EB; font-weight:800; font-size:12px; border-radius:20px; padding:4px 12px; }
+  .abRow { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 2px; border-bottom:1px solid var(--border2); font-size:13px; }
+  .abRow .k { color:var(--textMuted); font-weight:700; flex-shrink:0; }
+  .abRow .v { color:var(--text); font-weight:800; text-align:left; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:ltr; }
+  .abCopy { border:none; background:var(--surface2); color:#2563EB; font-weight:800; font-size:11.5px; border-radius:8px; padding:5px 9px; cursor:pointer; flex-shrink:0; }
+  .abSec { font-size:12px; color:var(--textMuted); font-weight:800; margin:16px 0 6px; }
+  .abLog { background:var(--surface2); border-radius:12px; padding:10px 14px; }
+  .abLog li { font-size:12.5px; color:var(--text); line-height:1.8; margin-right:14px; }
+  /* سجل تعديلات الأصناف */
+  .logTabs { display:flex; gap:6px; background:var(--surface2); padding:4px; border-radius:12px; margin-top:4px; }
+  .logTab { flex:1; border:none; background:transparent; color:var(--textMuted); font-weight:800; font-size:13px; padding:9px 6px; border-radius:9px; cursor:pointer; transition:background .15s,color .15s; }
+  .logTab.active { background:var(--surface); color:#2563EB; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .ehCard { border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:10px; background:var(--surface); }
+  .ehCard.undone { opacity:.62; }
+  .ehTop { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .ehName { font-weight:800; font-size:14.5px; color:var(--text); }
+  .ehTime { font-size:11.5px; color:var(--textMuted); white-space:nowrap; text-align:left; }
+  .ehBadge { display:inline-block; font-size:10.5px; font-weight:800; border-radius:6px; padding:2px 7px; margin-top:4px; }
+  .ehRow { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed var(--border); font-size:13px; }
+  .ehRow:last-child { border-bottom:none; }
+  .ehRow .lbl { color:var(--textMuted); font-weight:700; }
+  .ehRow .val { font-weight:800; color:var(--text); display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .ehRow .old { color:var(--textMuted); text-decoration:line-through; font-weight:600; }
+  .ehFoot { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; }
+  .ehStatus { font-size:12px; font-weight:700; }
+  .ehUndo { border:1.5px solid #FCA5A5; background:#FEF2F2; color:#DC2626; border-radius:10px; padding:7px 12px; font-weight:800; font-size:12.5px; cursor:pointer; white-space:nowrap; }
+  .ehUndo:disabled { opacity:.5; cursor:default; }
   /* زر الرجوع لنتائج البحث (بطاقة صنف / فحص السعر) */
   .backToResultsBtn { display:flex; align-items:center; gap:6px; width:100%; margin:4px 0 2px; padding:10px 12px; border:none; border-radius:12px; background:var(--surface2); color:#2563EB; font-weight:800; font-size:13.5px; cursor:pointer; text-align:right; -webkit-tap-highlight-color:transparent; transition:transform .12s ease, background .15s ease; }
   .backToResultsBtn:active { transform:scale(.985); }
@@ -432,7 +486,7 @@
     <div id="faceIdLockCard" style="display:none;">
       <p id="faceIdLockEmail" style="margin-bottom:22px;"></p>
       <button class="faceIdBtn" id="faceIdPrimaryBtn" style="display:flex; margin-top:0;" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>الدخول ببصمة الوجه</span><span>‹</span></button>
-      <button onclick="showPasswordForm()" style="margin-top:16px; background:none; border:none; color:#4ADE80; font-size:13px; font-weight:700; cursor:pointer;">تسجيل الدخول بطريقة تانية</button>
+      <button onclick="showPasswordForm()" style="margin-top:16px; background:none; border:none; color:#4ADE80; font-size:13px; font-weight:700; cursor:pointer;">تسجيل الدخول بطريقة أخرى</button>
       <div id="loginErrorLock" style="color:#F87171; font-size:13px; margin-top:10px; min-height:18px;"></div>
     </div>
 
@@ -486,13 +540,13 @@
     </header>
 
     <div id="notifBanner" style="display:none; background:#EFF6FF; color:#1D4ED8; font-size:13px; font-weight:700; padding:12px 16px; align-items:center; justify-content:space-between; gap:10px;">
-      <span style="display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2a6 6 0 0 0-6 6v3.09c0 .78-.31 1.53-.85 2.09L4 14.5c-.83.85-.24 2.29.94 2.29h14.12c1.18 0 1.77-1.44.94-2.29l-1.15-1.32a2.94 2.94 0 0 1-.85-2.09V8a6 6 0 0 0-6-6Zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z"/></svg> فعّل الإشعارات عشان توصلك تنبيهات فورية</span>
+      <span style="display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2a6 6 0 0 0-6 6v3.09c0 .78-.31 1.53-.85 2.09L4 14.5c-.83.85-.24 2.29.94 2.29h14.12c1.18 0 1.77-1.44.94-2.29l-1.15-1.32a2.94 2.94 0 0 1-.85-2.09V8a6 6 0 0 0-6-6Zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Z"/></svg> فعّل الإشعارات حتى تصلك تنبيهات فورية</span>
       <button onclick="requestNotificationPermission();document.getElementById('notifBanner').style.display='none';updateTopOffset();" style="background:#2563EB;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">تفعيل</button>
     </div>
 
     <div id="offlineBanner" style="display:none; background:#FEF2F2; color:#B91C1C; font-size:13px; font-weight:700; padding:12px 16px; align-items:center; justify-content:center; gap:8px;">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.9a5 5 0 0 1 7 0"/><path d="m2 2 20 20"/><path d="M12 20h.01"/></svg>
-      <span>مفيش اتصال بالإنترنت الآن - أي تعديل مش هيتحفظ لحد ما يرجع الاتصال</span>
+      <span>لا يوجد اتصال بالإنترنت الآن - أي تعديل لن يُحفظ حتى يرجع الاتصال</span>
     </div>
   </div>
 
@@ -585,7 +639,7 @@
     <div class="searchBox" style="margin:0;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
       <input type="date" id="invoiceDateInput" lang="en" style="flex:1;border:none;outline:none;font-size:14px;background:transparent;">
-      <button onclick="browseInvoicesByDate()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">تصفح اليوم ده</button>
+      <button onclick="browseInvoicesByDate()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">تصفح هذا اليوم</button>
     </div>
   </div>
   <div class="invoiceList" id="invoiceList">
@@ -626,9 +680,9 @@
 <div class="modalBg" id="zeroPriceModal" onclick="if(event.target===this)closeModal('zeroPriceModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('zeroPriceModal')">✕</button>
-    <h3>أصناف اتباعت بسعر 0</h3>
+    <h3>أصناف بيعت بسعر 0</h3>
     <div style="background:#FEF2F2;color:#B91C1C;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
-      دي فواتير محتاجة تتراجع وتتصحح من برنامج الكاشير نفسه - هنا بس للتنبيه.
+      هذه فواتير تحتاج مراجعة وتصحيح من برنامج الكاشير نفسه - هنا للتنبيه فقط.
     </div>
     <div id="zeroPriceList"><div class="emptyMsg">لا يوجد بيانات</div></div>
   </div>
@@ -655,7 +709,7 @@
         <div id="shortageNameDropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:var(--surface);color:var(--text);border:1.5px solid var(--border);border-radius:12px;max-height:220px;overflow:auto;z-index:20;box-shadow:0 10px 24px rgba(0,0,0,.1);"></div>
       </div>
       <input type="number" inputmode="numeric" lang="en" id="shortageFormQty" placeholder="الكمية المطلوبة (اختياري)" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
-      <div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:4px;">هتجيبه منين؟ (اختياري)</div>
+      <div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:4px;">من أين ستحضره؟ (اختياري)</div>
       <div style="display:flex;gap:8px;">
         <button type="button" id="shortageSourceLocalBtn" onclick="setShortageFormSource('محلي')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">محلي</button>
         <button type="button" id="shortageSourceChinaBtn" onclick="setShortageFormSource('الصين')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">الصين</button>
@@ -731,9 +785,9 @@
     <h3>كل المنتجات</h3>
     <div class="searchBox" style="margin:0 0 12px;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-      <input type="text" id="productsFilterInput" placeholder="فلترة..." oninput="renderProductsList()">
+      <input type="text" id="productsFilterInput" placeholder="ابحث بالاسم أو الباركود..." autocomplete="off" oninput="renderProductsListDebounced()">
     </div>
-    <div id="productsList"><div class="emptyMsg">جاري التحميل...</div></div>
+    <div id="productsList" onscroll="onProductsListScroll()"><div class="emptyMsg">جاري التحميل...</div></div>
   </div>
 </div>
 
@@ -765,6 +819,103 @@
   </div>
 </div>
 
+<div class="modalBg" id="debtReminderModal" onclick="if(event.target===this)closeModal('debtReminderModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('debtReminderModal')">✕</button>
+    <h3>تذكير بالدين على واتساب</h3>
+    <div id="drTo" style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin:-4px 0 10px;"></div>
+    <div id="drPreview" style="white-space:pre-wrap;background:#DCF8C6;color:#111B21;border-radius:14px 14px 4px 14px;padding:12px 14px;font-size:13.5px;line-height:1.75;box-shadow:0 1px 2px rgba(0,0,0,.12);"></div>
+    <button type="button" id="drPdfBtn" onclick="debtReminderPdfAction()" style="width:100%;margin-top:14px;background:#25D366;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;"></button>
+    <div id="drPdfHint" style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:6px;line-height:1.6;"></div>
+    <button type="button" onclick="debtReminderTextOnly()" style="width:100%;margin-top:10px;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13.5px;cursor:pointer;">💬 رسالة فقط (يفتح محادثة الزبون مباشرة)</button>
+  </div>
+</div>
+
+<div class="modalBg" id="labelSettingsModal" onclick="if(event.target===this)closeModal('labelSettingsModal')">
+  <div class="modalSheet" style="height:88vh;overflow-y:auto;">
+    <button class="closeM" onclick="closeModal('labelSettingsModal')">✕</button>
+    <h3>إعدادات طباعة الباركود</h3>
+    <div class="lsPreviewBox"><div id="lsPreview"></div></div>
+    <div id="lsPreviewInfo" style="text-align:center;font-size:11.5px;color:var(--textMuted);font-weight:700;margin-top:6px;"></div>
+    <div id="lsWarn" style="text-align:center;font-size:12px;color:#B45309;font-weight:700;margin-top:4px;"></div>
+
+    <div class="lsSec">مقاس الملصق</div>
+    <div id="lsPresets" class="lsChips"></div>
+    <div class="lsGrid3">
+      <label><span>العرض (مم)</span><input id="lsW" type="number" inputmode="decimal" step="0.5" min="10" max="120" lang="en" oninput="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"></label>
+      <label><span>الطول (مم)</span><input id="lsH" type="number" inputmode="decimal" step="0.5" min="8" max="200" lang="en" oninput="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"></label>
+      <label><span>المسافة بين الملصقات</span><input id="lsGap" type="number" inputmode="decimal" step="0.5" min="0" max="20" lang="en" oninput="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"></label>
+    </div>
+
+    <div class="lsSec">القالب</div>
+    <input type="hidden" id="lsTemplateVal" value="standard">
+    <div id="lsTemplates" class="lsTpls"></div>
+
+    <div class="lsSec">محتوى الملصق</div>
+    <label class="lsCheck"><input type="checkbox" id="lsShowName" onchange="refreshLabelSettingsPreview()"> اسم الصنف</label>
+    <label class="lsCheck"><input type="checkbox" id="lsShowPrice" onchange="refreshLabelSettingsPreview()"> السعر</label>
+    <label class="lsCheck"><input type="checkbox" id="lsShowStore" onchange="refreshLabelSettingsPreview()"> اسم المحل</label>
+    <div class="lsGrid2">
+      <label><span>اسم المحل</span><input id="lsStoreName" type="text" maxlength="40" placeholder="مثال: HTC Store" oninput="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"></label>
+      <label><span>العملة</span><input id="lsCurrency" type="text" maxlength="8" placeholder="د.ل" oninput="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"></label>
+    </div>
+
+    <div class="lsSec">معايرة الطباعة</div>
+    <div class="lsGrid2">
+      <label><span>إزاحة أفقية (مم)</span><input id="lsOffX" type="number" inputmode="decimal" step="0.5" min="-10" max="10" lang="en" oninput="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"></label>
+      <label><span>إزاحة رأسية (مم)</span><input id="lsOffY" type="number" inputmode="decimal" step="0.5" min="-10" max="10" lang="en" oninput="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"></label>
+    </div>
+    <label class="lsCheck"><input type="checkbox" id="lsRotate" onchange="refreshLabelSettingsPreview()"> اقلب الملصق 180° (لو يظهر مقلوب)</label>
+    <div class="lsGrid2">
+      <label><span>دقة الطابعة</span><select id="lsDpi" onchange="refreshLabelSettingsPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);"><option value="203">203 نقطة (XP-365B)</option><option value="300">300 نقطة</option></select></label>
+      <label><span>اسم الطابعة</span><input id="lsPrinter" type="text" maxlength="80" placeholder="فارغ = تلقائيًا" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);direction:ltr;text-align:right;"></label>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button type="button" onclick="saveLabelSettings()" style="flex:1;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">✓ حفظ الإعدادات</button>
+      <button type="button" id="lsTestBtn" onclick="labelTestPrint()" style="flex:1;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">🖨️ طباعة تجريبية</button>
+    </div>
+    <div id="lsStatus" style="text-align:center;font-size:12.5px;font-weight:700;margin-top:10px;line-height:1.7;"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="labelPrintModal" onclick="if(event.target===this)closeModal('labelPrintModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('labelPrintModal')">✕</button>
+    <h3>🏷️ طباعة باركود</h3>
+    <div id="lpName" style="font-weight:800;font-size:14.5px;color:var(--text);margin:-6px 0 10px;"></div>
+    <div class="lsPreviewBox"><div id="lpPreview"></div></div>
+    <div id="lpInfo" style="text-align:center;font-size:11.5px;color:var(--textMuted);font-weight:700;margin-top:6px;"></div>
+    <div id="lpWarn" style="text-align:center;font-size:12px;color:#B45309;font-weight:700;margin-top:4px;"></div>
+    <label style="display:block;margin-top:12px;font-size:12px;color:var(--textMuted);font-weight:700;">القالب
+      <select id="lpTemplate" onchange="refreshLabelPrintPreview()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);margin-top:6px;"></select>
+    </label>
+    <div style="margin-top:12px;font-size:12px;color:var(--textMuted);font-weight:700;">عدد الملصقات</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+      <button type="button" class="lpStep" onclick="changeLabelCopies(-1)">−</button>
+      <input id="lpCopies" type="number" inputmode="numeric" min="1" max="500" lang="en" value="1" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);text-align:center;font-weight:800;flex:1;">
+      <button type="button" class="lpStep" onclick="changeLabelCopies(1)">+</button>
+    </div>
+    <div class="lsChips" style="margin-top:8px;">
+      <button type="button" class="lsChip" onclick="document.getElementById('lpCopies').value=5">5</button>
+      <button type="button" class="lsChip" onclick="document.getElementById('lpCopies').value=10">10</button>
+      <button type="button" class="lsChip" onclick="document.getElementById('lpCopies').value=20">20</button>
+      <button type="button" class="lsChip" onclick="document.getElementById('lpCopies').value=50">50</button>
+    </div>
+    <button type="button" id="lpPrintBtn" onclick="submitLabelPrint()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;">🖨️ طباعة</button>
+    <div id="lpStatus" style="text-align:center;font-size:12.5px;font-weight:700;margin-top:10px;line-height:1.7;"></div>
+    <button type="button" onclick="closeModal('labelPrintModal');openLabelSettings();" style="width:100%;margin-top:8px;background:none;border:none;color:var(--textMuted);font-weight:700;font-size:12.5px;cursor:pointer;padding:8px;">⚙️ إعدادات الطباعة والمقاس</button>
+  </div>
+</div>
+
+<div class="modalBg" id="aboutModal" onclick="if(event.target===this)closeModal('aboutModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('aboutModal')">✕</button>
+    <h3>حول التطبيق</h3>
+    <div id="aboutBody"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="generalSettingsModal" onclick="if(event.target===this)closeModal('generalSettingsModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('generalSettingsModal')">✕</button>
@@ -775,7 +926,18 @@
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">إعدادات الصوت والاهتزاز</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
-      <div style="padding:16px 6px;font-size:12px;color:var(--textMuted);text-align:center;">باقي إعدادات التطبيق هتتضاف هنا تباعًا</div>
+      <button onclick="closeModal('generalSettingsModal');openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">إعدادات طباعة الباركود</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <button onclick="closeModal('generalSettingsModal');openAboutApp();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".6" fill="#2563EB"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">حول التطبيق</span>
+        <span id="settingsVersionTag" style="font-size:12px;color:var(--textMuted);font-weight:700;"></span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <div style="padding:16px 6px;font-size:12px;color:var(--textMuted);text-align:center;">باقي إعدادات التطبيق ستُضاف هنا تباعًا</div>
     </div>
   </div>
 </div>
@@ -825,7 +987,7 @@
   <div class="modalSheet" style="height:80vh; display:flex; flex-direction:column;">
     <button class="closeM" onclick="closeModal('attendanceLogModal')">✕</button>
     <h3>متابعة فتح وإغلاق المنظومة</h3>
-    <div style="font-size:11.5px;color:var(--textMuted);margin-top:6px;">بيتابع وقت اتصال المنظومة الرئيسية بالنت (من نشاط آخر مزامنة لها) - بيشتغل بس وإنتي فاتحة التطبيق ده، مش مراقبة لحظية دايمة</div>
+    <div style="font-size:11.5px;color:var(--textMuted);margin-top:6px;">يتابع وقت اتصال المنظومة الرئيسية بالنت (من نشاط آخر مزامنة لها) - يعمل فقط أثناء فتح التطبيق، وليس مراقبة لحظية دائمة</div>
     <div id="attendanceLogBody" style="flex:1;overflow-y:auto;margin-top:12px;"></div>
   </div>
 </div>
@@ -835,7 +997,7 @@
     <button class="closeM" onclick="closeModal('statementFilterModal')">✕</button>
     <h3>اختر فترة وحركات الكشف</h3>
     <div style="margin:14px 0 4px;">
-      <label style="font-size:12px;color:var(--textMuted);font-weight:700;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> الفترة الزمنية (اختياري - سيبها فاضية عشان كل الفترة)</label>
+      <label style="font-size:12px;color:var(--textMuted);font-weight:700;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> الفترة الزمنية (اختياري - اتركها فارغة لعرض كل الفترة)</label>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <div style="flex:1;">
           <label style="font-size:10.5px;color:var(--textMuted2);">من تاريخ</label>
@@ -862,7 +1024,7 @@
       </label>
       <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;cursor:pointer;">
         <input type="checkbox" id="stmtFilterPurchaseAccount" checked style="width:18px;height:18px;">
-        <span style="font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> المشتريات (اللي اشتريته من الزبون)</span>
+        <span style="font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg> المشتريات (ما اشتريته من الزبون)</span>
       </label>
     </div>
     <button onclick="confirmStatementFilterAndOpen()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">فتح الكشف</button>
@@ -888,7 +1050,7 @@
       <h3 id="customerPickerTitle">ادراج في حساب زبون</h3>
       <div id="debtNoteWrap" class="cpField">
         <label for="debtItemNoteInput">ملاحظة على الصنف (اختياري)</label>
-        <input type="text" id="debtItemNoteInput" placeholder="مثال: هيدفع آخر الشهر" enterkeyhint="next" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('newCustomerNameInput').focus();}">
+        <input type="text" id="debtItemNoteInput" placeholder="مثال: سيدفع آخر الشهر" enterkeyhint="next" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('newCustomerNameInput').focus();}">
       </div>
       <div class="cpSearch">
         <svg class="cpSearchIc" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -951,14 +1113,14 @@
     <div style="position:relative;background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
       <video id="cardReceiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
       <div id="cardReceiptOcrGuide" style="position:absolute;top:28%;left:14%;right:14%;height:42%;border:3px solid #22C55E;border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none;"></div>
-      <div style="position:absolute;top:calc(28% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">حط من "المبلغ" لحد "الرقم المرجعي" جوه الإطار</div>
+      <div style="position:absolute;top:calc(28% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">ضع من "المبلغ" حتى "الرقم المرجعي" داخل الإطار</div>
     </div>
-    <div id="cardReceiptOcrStatus" style="font-size:13px;color:#2563EB;font-weight:700;text-align:center;margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> بيدور على المبلغ والرقم المرجعي... حرّك الكاميرا شوية</div>
+    <div id="cardReceiptOcrStatus" style="font-size:13px;color:#2563EB;font-weight:700;text-align:center;margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> جاري البحث عن المبلغ والرقم المرجعي... حرّك الكاميرا قليلًا</div>
   </div>
 </div>
 
 <!-- شاشة مراجعة استخراج بيانات إيصال البطاقة - بتظهر بعد ما الكاميرا تاخد لقطة نهائية واضحة،
-     قبل ما أي قيمة تتحفظ. كل حقل لازم يتراجع/يتأكد يدويًا لو مش verified. -->
+     قبل ما أي قيمة تتحفظ. كل حقل يجب يتراجع/يتأكد يدويًا لو غير verified. -->
 <div class="modalBg" id="receiptReviewModal" onclick="if(event.target===this)return;">
   <div class="modalSheet" style="display:flex; flex-direction:column;">
     <button class="closeM" onclick="cancelReceiptReview()">✕</button>
@@ -985,7 +1147,7 @@
     <button class="closeM" onclick="closeModal('purchaseDebtsModal')">✕</button>
     <h3>ديون مشتريات</h3>
     <div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
-      بضاعة اشتريتها من برا ولسه ما سددتهاش ولا دخلتها في المنظومة - اكتب اسم الصنف والسعر، وبعدين اختار المحل من قائمة الزبائن.
+      بضاعة اشتريتها من الخارج ولم تسددها بعد ولم تدخلها في المنظومة - اكتب اسم الصنف والسعر، ثم اختر المحل من قائمة الزبائن.
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
       <input type="text" id="purchaseDebtItemInput" placeholder="اسم الصنف" style="padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;box-sizing:border-box;">
@@ -1042,7 +1204,7 @@
     <button class="closeM" onclick="closeModal('inventoryCountModal')">✕</button>
     <h3>الجرد اليومي</h3>
     <div style="background:#EFF6FF;color:#1D4ED8;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
-      اكتب العدد الفعلي اللي عديته لكل صنف، أو استخدم الكاميرا لمسح الباركود. الأصناف اللي فيها فرق هتتعدل تلقائي وتتسجل في المفقودات.
+      اكتب العدد الفعلي الذي عددته لكل صنف، أو استخدم الكاميرا لمسح الباركود. الأصناف التي فيها فرق ستُعدَّل تلقائيًا وتُسجَّل في المفقودات.
     </div>
     <div id="countDraftBanner"></div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -1051,7 +1213,7 @@
     </div>
     <div id="inventoryCountList" style="height:45vh;overflow:auto;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid #F1F5F9;">
-      <span id="countProgress" style="font-size:12px;color:var(--textMuted);">0 صنف اتعد</span>
+      <span id="countProgress" style="font-size:12px;color:var(--textMuted);">0 صنف عُدّ</span>
       <button onclick="finishInventoryCount()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:800;font-size:14px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> إنهاء الجرد</button>
     </div>
   </div>
@@ -1064,10 +1226,10 @@
     <div style="position:relative;background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
       <video id="receiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
       <div id="receiptOcrGuide" style="position:absolute;top:38%;left:20%;right:20%;height:16%;border:3px solid #22C55E;border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none;"></div>
-      <div style="position:absolute;top:calc(38% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">حط رقم الإيصال جوه الإطار الأخضر بس</div>
+      <div style="position:absolute;top:calc(38% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">ضع رقم الإيصال داخل الإطار الأخضر فقط</div>
     </div>
-    <div id="receiptOcrStatus" style="font-size:13px;color:#2563EB;font-weight:700;text-align:center;margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> بيدور على الرقم... حرّك الكاميرا شوية لحد ما يبقى واضح</div>
-    <button onclick="closeReceiptOcrCamera();document.getElementById('receiptOcrFileInput').click()" style="width:100%;background:none;color:#2563EB;border:none;padding:8px;font-weight:700;font-size:13px;cursor:pointer;">اختيار صورة من المعرض بدل الكاميرا</button>
+    <div id="receiptOcrStatus" style="font-size:13px;color:#2563EB;font-weight:700;text-align:center;margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> جاري البحث عن الرقم... حرّك الكاميرا قليلًا حتى يصبح واضحًا</div>
+    <button onclick="closeReceiptOcrCamera();document.getElementById('receiptOcrFileInput').click()" style="width:100%;background:none;color:#2563EB;border:none;padding:8px;font-weight:700;font-size:13px;cursor:pointer;">اختيار صورة من المعرض بدلًا من الكاميرا</button>
     <input type="file" id="receiptOcrFileInput" accept="image/*" style="display:none;" onchange="handleReceiptOcrFile(event)">
   </div>
 </div>
@@ -1082,7 +1244,7 @@
       <button onclick="closeBarcodeScanner()" style="background:#FEE2E2; color:#DC2626; border:none; border-radius:10px; padding:10px 14px; font-weight:800; font-size:12px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
     </div>
     <div style="position:relative; margin-bottom:10px;">
-      <input type="text" id="manualLookupInput" placeholder="اكتب اسم الصنف أو الباركود يدويًا (من غير كاميرا)..." oninput="manualLookupSearch()" style="width:100%; padding:12px 14px; border:1.5px solid #E2E8F0; border-radius:12px; font-size:14px; box-sizing:border-box;">
+      <input type="text" id="manualLookupInput" placeholder="اكتب اسم الصنف أو الباركود يدويًا (بدون كاميرا)..." oninput="manualLookupSearch()" style="width:100%; padding:12px 14px; border:1.5px solid #E2E8F0; border-radius:12px; font-size:14px; box-sizing:border-box;">
       <div id="manualLookupResults" class="dropPopover" style="display:none; position:absolute; top:52px; left:0; right:0; background:var(--surface); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:260px; overflow:auto;"></div>
     </div>
     <div id="startCameraBtn" onclick="startCameraScan()" style="display:flex; align-items:center; justify-content:center; text-align:center; background:none; border:none; padding:16px 0; cursor:pointer;"><span class="ic ic-qr" style="width:96px;height:96px;"></span></div>
@@ -1100,7 +1262,7 @@
     <div id="incrementFeedback" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:16px; margin-top:12px; text-align:center;">
       <div id="incItemName" style="font-weight:800; font-size:15px; margin-bottom:4px; color:#14532D;"></div>
       <div id="incItemCount" style="font-size:32px; font-weight:900; color:#16A34A;"></div>
-      <div style="font-size:11px; color:#64748B;">اتعدت لحد دلوقتي</div>
+      <div style="font-size:11px; color:#64748B;">عُدّت حتى الآن</div>
     </div>
     <div id="scanSessionCount" style="text-align:center; font-size:12px; color:#94A3B8; margin-top:10px;"></div>
   </div>
@@ -1132,9 +1294,11 @@
   <div class="modalSheet" style="max-height:85vh;">
     <button class="closeM" onclick="closeModal('activityLogModal')">✕</button>
     <h3>سجل حركات التطبيق</h3>
-    <div style="background:#EFF6FF;color:#1D4ED8;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
-      كل عملية إضافة دين، سداد، ترجيع، أو تعديل في الزبائن — بالوقت والتاريخ (ما عدا الجرد).
+    <div class="logTabs">
+      <button type="button" id="logTabEdits" class="logTab active" onclick="switchActivityLogTab('edits')">تعديلات الأصناف</button>
+      <button type="button" id="logTabAll" class="logTab" onclick="switchActivityLogTab('all')">كل الحركات</button>
     </div>
+    <div id="activityLogInfo" style="background:#EFF6FF;color:#1D4ED8;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;"></div>
     <div id="activityLogBody"></div>
   </div>
 </div>
@@ -1209,7 +1373,7 @@ function setupNotifications() {
 }
 
 function requestNotificationPermission() {
-  if (!('Notification' in window)) { alert('المتصفح ده مش بيدعم الإشعارات'); return; }
+  if (!('Notification' in window)) { alert('هذا المتصفح لا يدعم الإشعارات'); return; }
   Notification.requestPermission().then(perm => {
     if (perm === 'granted') {
       navigator.serviceWorker.ready.then(reg => {
@@ -1217,7 +1381,7 @@ function requestNotificationPermission() {
         registerFcmToken(messaging, reg);
       });
     } else {
-      alert('لازم توافق على الإشعارات عشان تستقبل تنبيهات');
+      alert('يجب أن توافق على الإشعارات حتى تستقبل تنبيهات');
     }
   });
 }
@@ -1310,23 +1474,23 @@ async function initFaceId() {
 initFaceId();
 
 async function registerFaceId(email, password) {
-  if (!faceIdSupported()) { alert('بصمة الوجه مش متاحة على الجهاز ده دلوقتي'); return; }
+  if (!faceIdSupported()) { alert('بصمة الوجه غير متاحة على هذا الجهاز الآن'); return; }
   if (isNativeApp()) {
     try {
       const plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.NativeBiometric;
-      if (!plugin) { alert('مكتبة بصمة الوجه مش موجودة في النسخة دي من التطبيق'); return; }
+      if (!plugin) { alert('مكتبة بصمة الوجه غير موجودة في هذه النسخة من التطبيق'); return; }
       await plugin.verifyIdentity({
         reason: 'تفعيل تسجيل الدخول ببصمة الوجه',
         title: 'تفعيل بصمة الوجه',
         subtitle: 'HTC POS',
-        description: 'أكّد بصمة وجهك عشان تفعّل الدخول السريع'
+        description: 'أكّد بصمة وجهك حتى تفعّل الدخول السريع'
       });
       localStorage.setItem('faceIdCred', 'native');
       localStorage.setItem('faceIdEmail', b64encode(email));
       localStorage.setItem('faceIdPass', b64encode(password));
       localStorage.setItem('faceIdVerified', '1');
       checkFaceIdAvailable();
-      alert('✅ اتفعّلت بصمة الوجه بنجاح');
+      alert('✅ تفعّلت بصمة الوجه بنجاح');
     } catch (e) {
       alert('❌ فشل تفعيل بصمة الوجه: ' + (e && e.message ? e.message : JSON.stringify(e)));
     }
@@ -1414,7 +1578,7 @@ function doLogin() {
     }
     enterApp();
   }).catch(err => {
-    errBox.textContent = 'بيانات دخول غلط';
+    errBox.textContent = 'بيانات دخول خاطئة';
   });
 }
 
@@ -1460,6 +1624,484 @@ function openGeneralSettings() {
 }
 
 let pendingSoundSettings = {}; // تغييرات مؤقتة لحد ما يتم الضغط على "حفظ" - لو قفلتي الشاشة من غيره، التغييرات بتتلغي
+
+/* ================= طباعة الباركود (ملصقات) =================
+   الملصق بيترسم هنا في التطبيق كصورة بدقة الطابعة بالظبط (203 نقطة/بوصة للـ XP-365B)،
+   فالمعاينة = اللي هيتطبع بالظبط، والعربي بيطلع صح. الصورة بتتبعت للسكريبت على الكاشير
+   (commands/printLabels) وهو بيطبعها على الطابعة بمقاس الملصق. الباركود Code128 (بيقراه أي قارئ). */
+const C128 = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
+
+// Code128 أوتوماتيك: Code C للأرقام (باركود أقصر وأوضح)، Code B لأي نص إنجليزي
+function code128Modules(text) {
+  const t = String(text);
+  const vals = [];
+  if (/^\d+$/.test(t) && t.length >= 2) {
+    vals.push(105);
+    const even = t.length - (t.length % 2);
+    for (let i = 0; i < even; i += 2) vals.push(Number(t.substr(i, 2)));
+    if (t.length % 2) { vals.push(100); vals.push(t.charCodeAt(t.length - 1) - 32); }
+  } else {
+    vals.push(104);
+    for (const ch of t) {
+      const c = ch.charCodeAt(0);
+      if (c < 32 || c > 126) throw new Error('الباركود فيه حرف غير مدعوم: ' + ch);
+      vals.push(c - 32);
+    }
+  }
+  let sum = vals[0];
+  for (let i = 1; i < vals.length; i++) sum += vals[i] * i;
+  vals.push(sum % 103);
+  let w = '';
+  vals.forEach(v => { w += C128[v]; });
+  w += C128[106];
+  return w.split('').map(Number);
+}
+
+const LABEL_TEMPLATES = [
+  { id: 'standard',    name: 'قياسي',       desc: 'الاسم، الباركود، والسعر' },
+  { id: 'priceBig',    name: 'السعر بارز',  desc: 'سعر كبير فوق والباركود تحت' },
+  { id: 'barcodeOnly', name: 'باركود كبير', desc: 'باركود واضح ورقمه' },
+  { id: 'compact',     name: 'بدون سعر',    desc: 'الاسم والباركود فقط' },
+  { id: 'shelf',       name: 'ملصق رف',     desc: 'سعر كبير جدًا وباركود صغير' }
+];
+const LABEL_PRESETS = [[40, 30], [50, 25], [50, 30], [38, 25], [60, 40], [30, 20], [58, 40], [70, 50]];
+const LABEL_DEFAULTS = { widthMm: 40, heightMm: 30, gapMm: 2, dpi: 203, template: 'standard', showName: true, showPrice: true, showStoreName: false, storeName: '', currency: 'د.ل', rotate: 0, offsetXmm: 0, offsetYmm: 0, printer: '' };
+const LABEL_SAMPLE = { name: 'صنف تجريبي Sample', price: 12.5, barcode: '1234567890128' };
+const LABEL_FONT = '"Segoe UI", Tahoma, -apple-system, "Geeza Pro", Arial, sans-serif';
+
+let labelSettings = Object.assign({}, LABEL_DEFAULTS);
+let labelSettingsLoaded = false;
+try { const c = JSON.parse(localStorage.getItem('labelSettings') || 'null'); if (c) labelSettings = Object.assign({}, LABEL_DEFAULTS, c); } catch (e) {}
+
+function ensureLabelSettingsLoaded() {
+  if (labelSettingsLoaded) return Promise.resolve(labelSettings);
+  return db.ref('data/labelSettings').once('value').then(snap => {
+    const v = snap.val();
+    if (v) labelSettings = Object.assign({}, LABEL_DEFAULTS, v);
+    labelSettingsLoaded = true;
+    try { localStorage.setItem('labelSettings', JSON.stringify(labelSettings)); } catch (e) {}
+    return labelSettings;
+  }).catch(() => labelSettings);
+}
+
+function labelNum(v, def, min, max) {
+  const n = Number(String(v).replace(',', '.'));
+  if (!isFinite(n)) return def;
+  return Math.min(max, Math.max(min, n));
+}
+
+// ---- الرسم ----
+function labelFitFont(ctx, text, maxW, maxSize, minSize, weight) {
+  let size = Math.floor(maxSize);
+  while (size > minSize) {
+    ctx.font = weight + ' ' + size + 'px ' + LABEL_FONT;
+    if (ctx.measureText(text).width <= maxW) return size;
+    size--;
+  }
+  ctx.font = weight + ' ' + Math.floor(minSize) + 'px ' + LABEL_FONT;
+  return Math.floor(minSize);
+}
+
+function labelEllipsis(ctx, text, maxW) {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+
+function labelDrawText(ctx, text, box, weight, maxLines) {
+  if (!text) return;
+  const maxSingle = box.h * 0.86;
+  const minSingle = Math.max(9, box.h * 0.5);
+  let size = labelFitFont(ctx, text, box.w, maxSingle, minSingle, weight);
+  ctx.font = weight + ' ' + size + 'px ' + LABEL_FONT;
+  const cx = box.x + box.w / 2;
+  if (ctx.measureText(text).width <= box.w || maxLines < 2) {
+    ctx.fillText(labelEllipsis(ctx, text, box.w), cx, box.y + box.h / 2);
+    return;
+  }
+  // سطرين: بنقسم عند أقرب مسافة للنص
+  size = Math.max(8, Math.floor(box.h * 0.44));
+  ctx.font = weight + ' ' + size + 'px ' + LABEL_FONT;
+  const words = text.split(/\s+/);
+  let l1 = '', i = 0;
+  for (; i < words.length; i++) {
+    const tryL = l1 ? l1 + ' ' + words[i] : words[i];
+    if (ctx.measureText(tryL).width > box.w && l1) break;
+    l1 = tryL;
+  }
+  const l2 = words.slice(i).join(' ');
+  ctx.fillText(labelEllipsis(ctx, l1, box.w), cx, box.y + box.h * 0.27);
+  if (l2) ctx.fillText(labelEllipsis(ctx, l2, box.w), cx, box.y + box.h * 0.75);
+}
+
+function labelDrawBarcode(ctx, code, box) {
+  const mods = code128Modules(code);
+  const sum = mods.reduce((a, b) => a + b, 0);
+  let mw = Math.floor(box.w / (sum + 20)); // مع مسافة هادية 10 موديول كل ناحية
+  let warn = '';
+  if (mw < 1) mw = Math.floor(box.w / sum);
+  if (mw < 1) { mw = 1; warn = 'الملصق ضيق على هذا الباركود - قد لا يقرأه القارئ. جرّب مقاس أعرض.'; }
+  else if (mw < 2) warn = 'الباركود رفيع على هذا المقاس - جرّبه بالقارئ، ولو لم يقرأه اختر ملصق أعرض.';
+  let x = Math.round(box.x + (box.w - sum * mw) / 2);
+  for (let i = 0; i < mods.length; i++) {
+    const w = mods[i] * mw;
+    if (i % 2 === 0) ctx.fillRect(x, Math.round(box.y), w, Math.round(box.h));
+    x += w;
+  }
+  return warn;
+}
+
+// بيرجع { canvas, warning }
+function renderLabelCanvas(item, st, templateOverride) {
+  const s = Object.assign({}, LABEL_DEFAULTS, st || {});
+  const dpi = Number(s.dpi) || 203;
+  const pxmm = dpi / 25.4;
+  const W = Math.max(40, Math.round(s.widthMm * pxmm));
+  const H = Math.max(30, Math.round(s.heightMm * pxmm));
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  if (Number(s.rotate) === 180) { ctx.translate(W, H); ctx.rotate(Math.PI); }
+  ctx.translate(Math.round((Number(s.offsetXmm) || 0) * pxmm), Math.round((Number(s.offsetYmm) || 0) * pxmm));
+  ctx.fillStyle = '#000';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const pad = Math.max(4, Math.round(1.3 * pxmm));
+  const inner = { x: pad, y: pad, w: W - pad * 2, h: H - pad * 2 };
+  const tpl = templateOverride || s.template || 'standard';
+  const code = item.barcode ? String(item.barcode).trim() : '';
+  let validCode = !!code;
+  if (validCode) { try { code128Modules(code); } catch (e) { validCode = false; } }
+  const priceText = fmtMoney(Number(item.price) || 0) + ' ' + (s.currency || '');
+
+  const R = {
+    standard:    [['store', .11], ['name', .24], ['barcode', .36], ['digits', .11], ['price', .22]],
+    priceBig:    [['store', .11], ['price', .32], ['name', .16], ['barcode', .32], ['digits', .11]],
+    barcodeOnly: [['store', .11], ['name', .15], ['barcode', .6], ['digits', .15]],
+    compact:     [['store', .11], ['name', .3], ['barcode', .45], ['digits', .14]],
+    shelf:       [['store', .11], ['name', .28], ['price', .44], ['barcode', .16], ['digits', .1]]
+  }[tpl] || [];
+  const rows = R.filter(([t]) => {
+    if (t === 'store') return s.showStoreName && String(s.storeName || '').trim();
+    if (t === 'name') return s.showName && item.name;
+    if (t === 'price') return s.showPrice && tpl !== 'compact';
+    if (t === 'barcode' || t === 'digits') return validCode;
+    return true;
+  });
+  const totalW = rows.reduce((a, r) => a + r[1], 0) || 1;
+  const gap = Math.round(pxmm * 0.6);
+  const usableH = inner.h - gap * Math.max(0, rows.length - 1);
+  let y = inner.y;
+  let warning = '';
+  rows.forEach(([t, wgt]) => {
+    const h = usableH * wgt / totalW;
+    const box = { x: inner.x, y: y, w: inner.w, h: h };
+    if (t === 'store') labelDrawText(ctx, String(s.storeName).trim(), box, '700', 1);
+    else if (t === 'name') labelDrawText(ctx, String(item.name), box, '800', 2);
+    else if (t === 'price') labelDrawText(ctx, priceText, box, '900', 1);
+    else if (t === 'barcode') warning = labelDrawBarcode(ctx, code, box) || warning;
+    else if (t === 'digits') {
+      try { ctx.direction = 'ltr'; } catch (e) {}
+      labelDrawText(ctx, code, box, '700', 1);
+      try { ctx.direction = 'inherit'; } catch (e) {}
+    }
+    y += h + gap;
+  });
+  ctx.restore();
+  if (code && !validCode) warning = 'الباركود فيه حروف غير مدعومة، فطُبع الملصق بدون باركود.';
+  if (!code && ['barcodeOnly', 'compact'].includes(tpl)) warning = 'هذا الصنف ما له باركود مسجل في الكاشير - اختر قالب "ملصق رف" أو "السعر بارز".';
+
+  // أبيض وأسود صافي - الطابعة الحرارية ما بتطبعش رمادي، فبنحسم كل نقطة من هنا عشان النتيجة تبقى حادة
+  const img = ctx.getImageData(0, 0, W, H);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = (d[i] + d[i + 1] + d[i + 2]) / 3 < 160 ? 0 : 255;
+    d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return { canvas: cv, warning: warning };
+}
+
+function labelPreviewInto(el, canvas) {
+  el.innerHTML = '';
+  canvas.className = 'lblCanvas';
+  el.appendChild(canvas);
+}
+
+function scriptSupports(feature) {
+  if (!scriptStatus || !scriptStatus.features) return false;
+  const f = Array.isArray(scriptStatus.features) ? scriptStatus.features : Object.values(scriptStatus.features);
+  return f.includes(feature);
+}
+
+// ---- إعدادات الطباعة ----
+function openLabelSettings() {
+  openModal('labelSettingsModal');
+  ensureLabelSettingsLoaded().then(() => { fillLabelSettingsForm(); refreshLabelSettingsPreview(); });
+  fillLabelSettingsForm();
+  refreshLabelSettingsPreview();
+}
+
+function fillLabelSettingsForm() {
+  const s = labelSettings;
+  document.getElementById('lsW').value = s.widthMm;
+  document.getElementById('lsH').value = s.heightMm;
+  document.getElementById('lsGap').value = s.gapMm;
+  document.getElementById('lsShowName').checked = !!s.showName;
+  document.getElementById('lsShowPrice').checked = !!s.showPrice;
+  document.getElementById('lsShowStore').checked = !!s.showStoreName;
+  document.getElementById('lsStoreName').value = s.storeName || '';
+  document.getElementById('lsCurrency').value = s.currency || '';
+  document.getElementById('lsOffX').value = s.offsetXmm;
+  document.getElementById('lsOffY').value = s.offsetYmm;
+  document.getElementById('lsRotate').checked = Number(s.rotate) === 180;
+  document.getElementById('lsDpi').value = String(s.dpi || 203);
+  document.getElementById('lsPrinter').value = s.printer || '';
+  document.getElementById('lsTemplateVal').value = s.template || 'standard';
+  renderLabelPresetChips();
+  renderLabelTemplateCards();
+}
+
+function readLabelSettingsForm() {
+  return Object.assign({}, labelSettings, {
+    widthMm: labelNum(document.getElementById('lsW').value, labelSettings.widthMm, 10, 120),
+    heightMm: labelNum(document.getElementById('lsH').value, labelSettings.heightMm, 8, 200),
+    gapMm: labelNum(document.getElementById('lsGap').value, 2, 0, 20),
+    showName: document.getElementById('lsShowName').checked,
+    showPrice: document.getElementById('lsShowPrice').checked,
+    showStoreName: document.getElementById('lsShowStore').checked,
+    storeName: document.getElementById('lsStoreName').value.trim().slice(0, 40),
+    currency: document.getElementById('lsCurrency').value.trim().slice(0, 8),
+    offsetXmm: labelNum(document.getElementById('lsOffX').value, 0, -10, 10),
+    offsetYmm: labelNum(document.getElementById('lsOffY').value, 0, -10, 10),
+    rotate: document.getElementById('lsRotate').checked ? 180 : 0,
+    dpi: Number(document.getElementById('lsDpi').value) || 203,
+    printer: document.getElementById('lsPrinter').value.trim().slice(0, 80),
+    template: document.getElementById('lsTemplateVal').value || 'standard'
+  });
+}
+
+function renderLabelPresetChips() {
+  const w = Number(document.getElementById('lsW').value), h = Number(document.getElementById('lsH').value);
+  const isPreset = LABEL_PRESETS.some(p => p[0] === w && p[1] === h);
+  document.getElementById('lsPresets').innerHTML = LABEL_PRESETS.map(p =>
+    `<button type="button" class="lsChip${p[0] === w && p[1] === h ? ' on' : ''}" onclick="pickLabelPreset(${p[0]},${p[1]})">${p[0]}×${p[1]}</button>`
+  ).join('') + `<button type="button" class="lsChip${isPreset ? '' : ' on'}" onclick="document.getElementById('lsW').focus()">مقاس يدوي</button>`;
+}
+
+function pickLabelPreset(w, h) {
+  document.getElementById('lsW').value = w;
+  document.getElementById('lsH').value = h;
+  refreshLabelSettingsPreview();
+}
+
+function renderLabelTemplateCards() {
+  const cur = document.getElementById('lsTemplateVal').value || 'standard';
+  const st = readLabelSettingsForm();
+  const el = document.getElementById('lsTemplates');
+  el.innerHTML = '';
+  LABEL_TEMPLATES.forEach(t => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'lsTpl' + (t.id === cur ? ' on' : '');
+    card.onclick = () => { document.getElementById('lsTemplateVal').value = t.id; refreshLabelSettingsPreview(); };
+    const r = renderLabelCanvas(LABEL_SAMPLE, st, t.id);
+    r.canvas.className = 'lsTplCanvas';
+    card.appendChild(r.canvas);
+    const n = document.createElement('div');
+    n.className = 'lsTplName';
+    n.textContent = t.name;
+    card.appendChild(n);
+    el.appendChild(card);
+  });
+}
+
+function refreshLabelSettingsPreview() {
+  const st = readLabelSettingsForm();
+  const r = renderLabelCanvas(LABEL_SAMPLE, st);
+  labelPreviewInto(document.getElementById('lsPreview'), r.canvas);
+  const tplName = (LABEL_TEMPLATES.find(t => t.id === st.template) || {}).name || '';
+  document.getElementById('lsPreviewInfo').textContent = st.widthMm + '×' + st.heightMm + ' مم — ' + tplName + ' — ' + r.canvas.width + '×' + r.canvas.height + ' نقطة';
+  document.getElementById('lsWarn').textContent = r.warning || '';
+  renderLabelPresetChips();
+  renderLabelTemplateCards();
+}
+
+function saveLabelSettings() {
+  const st = readLabelSettingsForm();
+  labelSettings = st;
+  try { localStorage.setItem('labelSettings', JSON.stringify(st)); } catch (e) {}
+  db.ref('data/labelSettings').set(st).then(() => {
+    labelSettingsLoaded = true;
+    showQuickToast('تم حفظ إعدادات الطباعة ✓', true);
+  }).catch(err => {
+    alert('حُفظت على هذا الجوال فقط - تعذّر رفعها: ' + (err && err.message ? err.message : err));
+  });
+}
+
+function labelTestPrint() {
+  const st = readLabelSettingsForm();
+  const r = renderLabelCanvas(LABEL_SAMPLE, st);
+  sendLabelPrintJob([{ itemId: 'test', name: LABEL_SAMPLE.name, copies: 1, png: r.canvas.toDataURL('image/png').split(',')[1] }], st, document.getElementById('lsStatus'), document.getElementById('lsTestBtn'));
+}
+
+// ---- طباعة صنف ----
+let labelPrintItemId = null;
+
+function openLabelPrint(itemId) {
+  const it = latestItems['i' + itemId];
+  if (!it) return;
+  labelPrintItemId = itemId;
+  if (itemCardOfferLabel[itemId]) { delete itemCardOfferLabel[itemId]; }
+  document.getElementById('lpName').textContent = it.name;
+  document.getElementById('lpCopies').value = 1;
+  document.getElementById('lpStatus').innerHTML = '';
+  const sel = document.getElementById('lpTemplate');
+  sel.innerHTML = LABEL_TEMPLATES.map(t => `<option value="${t.id}">${t.name} — ${t.desc}</option>`).join('');
+  sel.value = it.barcode ? (labelSettings.template || 'standard') : 'shelf';
+  openModal('labelPrintModal');
+  refreshLabelPrintPreview();
+  ensureLabelSettingsLoaded().then(() => {
+    if (it.barcode) sel.value = labelSettings.template || 'standard';
+    refreshLabelPrintPreview();
+  });
+}
+
+function refreshLabelPrintPreview() {
+  const it = latestItems['i' + labelPrintItemId];
+  if (!it) return;
+  const tpl = document.getElementById('lpTemplate').value;
+  const r = renderLabelCanvas({ name: it.name, price: it.price, barcode: it.barcode }, labelSettings, tpl);
+  labelPreviewInto(document.getElementById('lpPreview'), r.canvas);
+  document.getElementById('lpInfo').textContent = labelSettings.widthMm + '×' + labelSettings.heightMm + ' مم' + (it.barcode ? ' — باركود ' + it.barcode : ' — الصنف ما له باركود مسجل');
+  document.getElementById('lpWarn').textContent = r.warning || '';
+}
+
+function changeLabelCopies(d) {
+  const el = document.getElementById('lpCopies');
+  el.value = Math.min(500, Math.max(1, (parseInt(el.value, 10) || 1) + d));
+}
+
+function submitLabelPrint() {
+  const it = latestItems['i' + labelPrintItemId];
+  if (!it) return;
+  const copies = Math.min(500, Math.max(1, parseInt(document.getElementById('lpCopies').value, 10) || 1));
+  document.getElementById('lpCopies').value = copies;
+  const tpl = document.getElementById('lpTemplate').value;
+  const r = renderLabelCanvas({ name: it.name, price: it.price, barcode: it.barcode }, labelSettings, tpl);
+  sendLabelPrintJob([{ itemId: String(it.id), name: String(it.name), copies: copies, png: r.canvas.toDataURL('image/png').split(',')[1] }], labelSettings, document.getElementById('lpStatus'), document.getElementById('lpPrintBtn'));
+}
+
+// ---- إرسال للكاشير ----
+function sendLabelPrintJob(jobs, st, statusEl, btn) {
+  if (!scriptSupports('printLabels')) {
+    statusEl.innerHTML = '<span style="color:#B45309;">⚠️ السكريبت على الكاشير لم يُحدَّث بعد لدعم الطباعة. المعاينة والإعدادات تعمل من الآن، والطباعة ستعمل بعد تحديث السكريبت.</span>';
+    return;
+  }
+  const total = jobs.reduce((a, j) => a + j.copies, 0);
+  const ref = db.ref('commands/printLabels').push();
+  const payload = {
+    at: Date.now() + (typeof serverTimeOffset === 'number' ? serverTimeOffset : 0),
+    widthMm: st.widthMm, heightMm: st.heightMm, gapMm: st.gapMm, dpi: st.dpi,
+    printer: st.printer || '', jobs: jobs
+  };
+  if (btn) btn.disabled = true;
+  statusEl.innerHTML = '<span style="color:#2563EB;">… تم إرسال ' + total + ' ملصق للكاشير، في انتظار الطباعة</span>';
+  ref.set(payload).then(() => {
+    const resRef = db.ref('data/printResults/' + ref.key);
+    const timer = setTimeout(() => {
+      statusEl.innerHTML = '<span style="color:#B45309;">⏳ الكاشير لم يرد بعد. غالبًا الكمبيوتر مقطوع عن النت أو السكريبت متوقف - الطلب يُلغى تلقائيًا لو لم يُطبع خلال 10 دقائق حتى لا يطبع فجأة لاحقًا.</span>';
+      if (btn) btn.disabled = false;
+    }, 30000);
+    const cb = snap => {
+      const r = snap.val();
+      if (!r) return;
+      clearTimeout(timer);
+      resRef.off('value', cb);
+      resRef.remove().catch(() => {});
+      if (btn) btn.disabled = false;
+      if (r.ok) {
+        statusEl.innerHTML = '<span style="color:#16A34A;">✓ طُبع ' + (r.printed || total) + ' ملصق</span>';
+        logActivity('طباعة باركود', jobs.map(j => j.name + ' × ' + j.copies).join(' - '));
+      } else {
+        statusEl.innerHTML = '<span style="color:#DC2626;">✗ لم يُطبع: ' + escapeHtml(r.msg || 'سبب غير معروف') + '</span>';
+      }
+    };
+    resRef.on('value', cb);
+  }).catch(err => {
+    if (btn) btn.disabled = false;
+    const m = err && err.message ? err.message : String(err);
+    statusEl.innerHTML = '<span style="color:#DC2626;">✗ تعذّر إرسال الطلب: ' + escapeHtml(m) + '</span>';
+    logClientError('إرسال طلب طباعة باركود', m);
+  });
+}
+
+const itemCardOfferLabel = {};
+
+/* ================= حول التطبيق ================= */
+const APP_VERSION = '2.6.0';
+const APP_BUILD_DATE = '2026-09-28';
+const APP_CHANGELOG = [
+  'تذكير الزبائن بالديون على واتساب مع كشف حساب PDF',
+  'سجل تعديلات الأصناف (القديم ← الجديد) مع زر تراجع',
+  'الجرد يُحفظ أول بأول، ويمكن أن يتم من أكثر من جوال معًا',
+  'زر رجوع لنتائج البحث في بطاقة الصنف وفحص السعر',
+  'كل النوافذ مضبوطة مع الكيبورد وشريط الساعة (بدون تشوه)',
+  'بحث ذكي وحماية من التكرار في اختيار الزبون',
+  'تعديل الأسعار يصل لشاشة البيع في الكاشير مباشرة',
+  'شاشة الأخطاء وحالة الكاشير مع السبب والحل'
+];
+
+function appRunModeLabel() {
+  if (isNativeApp()) return 'تطبيق الآيفون (App Store)';
+  const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+  return standalone ? 'تطبيق ويب على الشاشة الرئيسية' : 'المتصفح';
+}
+
+function copyTextToClipboard(text, okMsg) {
+  const done = () => { try { showQuickToast(okMsg || 'نُسخ ✓', true); } catch (e) {} };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => prompt('انسخ من هنا:', text));
+  } else {
+    prompt('انسخ من هنا:', text);
+  }
+}
+
+function openAboutApp() {
+  const u = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser : null;
+  const st = getCashierState();
+  let lastSeen = '—';
+  if (scriptStatus && scriptStatus.lastSeen) {
+    const d = new Date(scriptStatus.lastSeen);
+    lastSeen = d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
+  }
+  const build = new Date(APP_BUILD_DATE + 'T12:00:00');
+  const buildStr = build.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' });
+  const isDark = document.body.classList.contains('dark-theme');
+  document.getElementById('aboutBody').innerHTML = `
+    <div class="abHead">
+      <img src="htc-pos-logo.png" alt="" onerror="this.style.display='none'">
+      <div class="abName">منظومة المبيعات</div>
+      <div class="abVer">الإصدار ${APP_VERSION} — ${buildStr}</div>
+    </div>
+    <div class="abSec">الحساب والتشغيل</div>
+    <div class="abRow"><span class="k">الحساب</span><span class="v">${escapeHtml(u && u.email ? u.email : '—')}</span></div>
+    <div class="abRow"><span class="k">رقم الحساب (UID)</span><span class="v" style="font-size:11.5px;">${escapeHtml(u ? u.uid : '—')}</span>${u ? `<button type="button" class="abCopy" onclick="copyTextToClipboard('${u.uid}','رقم الحساب نُسخ ✓')">نسخ</button>` : ''}</div>
+    <div class="abRow"><span class="k">طريقة التشغيل</span><span class="v" style="direction:rtl;">${appRunModeLabel()}</span></div>
+    <div class="abRow"><span class="k">المظهر</span><span class="v" style="direction:rtl;">${isDark ? 'ليلي' : 'نهاري'}</span></div>
+    <div class="abSec">الكاشير</div>
+    <div class="abRow"><span class="k">الحالة</span><span class="v" style="direction:rtl;color:${st.color};white-space:normal;">${escapeHtml(st.title)}</span></div>
+    <div class="abRow"><span class="k">آخر اتصال</span><span class="v" style="direction:rtl;">${lastSeen}</span></div>
+    <div class="abSec">الجديد في الإصدار ${APP_VERSION}</div>
+    <div class="abLog"><ul style="margin:0;padding:0;">${APP_CHANGELOG.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}</ul></div>
+  `;
+  openModal('aboutModal');
+}
 
 function openSoundSettings() {
   pendingSoundSettings = Object.assign({}, getSoundSettings()); // نسخة مستقلة نشتغل عليها من غير ما نلمس المحفوظ فعليًا
@@ -1508,8 +2150,8 @@ function openSoundSettings() {
       <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
         <input type="checkbox" ${vibrateOnlyChecked ? 'checked' : ''} onchange="pendingSoundSettings.vibrateOnly=this.checked;" style="width:19px;height:19px;">
         <div>
-          <div style="font-size:13px;font-weight:700;">استخدام الاهتزاز بس (من غير صوت)</div>
-          <div style="font-size:10.5px;color:var(--textMuted);margin-top:2px;">فعّليه يدويًا وقت ما الجهاز يكون في الوضع الصامت - التطبيق مش عنده طريقة يكتشف ده تلقائيًا</div>
+          <div style="font-size:13px;font-weight:700;">استخدام الاهتزاز فقط (بدون صوت)</div>
+          <div style="font-size:10.5px;color:var(--textMuted);margin-top:2px;">فعّله يدويًا عندما يكون الجهاز في الوضع الصامت - التطبيق ليس لديه طريقة يكتشف ذلك تلقائيًا</div>
         </div>
       </label>
     </div>`;
@@ -1533,7 +2175,7 @@ function openSoundSettings() {
 function commitSoundSettings() {
   saveSoundSettings(pendingSoundSettings);
   closeModal('soundSettingsModal');
-  showQuickToast('✅ اتحفظت إعدادات الصوت والاهتزاز');
+  showQuickToast('✅ تم حفظ إعدادات الصوت والاهتزاز');
 }
 
 function openUserAccountInfo() {
@@ -1554,7 +2196,7 @@ function openAttendanceLog() {
     const val = snap.val();
     const events = val ? Object.entries(val).map(([id, e]) => ({ id, ...e })) : [];
     events.sort((a, b) => new Date(b.at) - new Date(a.at));
-    if (!events.length) { body.innerHTML = '<div class="emptyMsg">مفيش أي سجلات لسه</div>'; return; }
+    if (!events.length) { body.innerHTML = '<div class="emptyMsg">لا يوجد أي سجلات بعد</div>'; return; }
     // بنجمّعهم حسب اليوم عشان يبقوا أسهل في المتابعة
     const byDay = {};
     events.forEach(e => {
@@ -1568,14 +2210,14 @@ function openAttendanceLog() {
           <div>
             <div class="n" style="color:${e.type === 'open' ? '#16A34A' : '#DC2626'};display:flex;align-items:center;gap:5px;">
               ${e.type === 'open'
-                ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg> المنظومة اتفتحت'
-                : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> المنظومة اتقفلت'}
+                ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg> المنظومة فُتحت'
+                : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> المنظومة أُغلقت'}
             </div>
           </div>
           <div class="p" style="direction:ltr;">${new Date(e.at).toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' })}</div>
         </div>`).join('')}
     `).join('');
-  }).catch(err => { body.innerHTML = '<div class="emptyMsg">حصلت مشكلة وقت التحميل: ' + (err && err.message ? err.message : err) + '</div>'; });
+  }).catch(err => { body.innerHTML = '<div class="emptyMsg">حدثت مشكلة وقت التحميل: ' + (err && err.message ? err.message : err) + '</div>'; });
 }
 
 // التطبيق بيفضل مسجل دخول في الخلفية (Firebase) عشان البيانات تفضل شغالة،
@@ -1878,12 +2520,12 @@ function ageText(sec) {
 
 // بيرجع حالة الكاشير: لون + جملة + سبب + حل
 function getCashierState() {
-  if (!navigator.onLine) return { color:'#DC2626', bg:'#FEF2F2', title:'الجوال مقطوع عن النت', reason:'التطبيق مش قادر يوصل للبيانات.', fix:'شغّل الواي فاي أو بيانات الجوال.' };
-  if (!scriptStatus || !scriptStatus.lastSeen) return { color:'#64748B', bg:'#F1F5F9', title:'لسه ما وصلت أي نبضة من الكاشير', reason:'السكريبت الجديد لسه ما اشتغلش على الكمبيوتر.', fix:'شغّل ملف StoreSalesAlert.ps1 الجديد على جهاز الكاشير.' };
+  if (!navigator.onLine) return { color:'#DC2626', bg:'#FEF2F2', title:'الجوال مقطوع عن النت', reason:'التطبيق غير قادر على الوصول للبيانات.', fix:'شغّل الواي فاي أو بيانات الجوال.' };
+  if (!scriptStatus || !scriptStatus.lastSeen) return { color:'#64748B', bg:'#F1F5F9', title:'لم تصل أي نبضة بعد من الكاشير', reason:'السكريبت الجديد لم يعمل بعد على الكمبيوتر.', fix:'شغّل ملف StoreSalesAlert.ps1 الجديد على جهاز الكاشير.' };
   const sec = Math.max(0, (Date.now() + serverTimeOffset - scriptStatus.lastSeen) / 1000);
-  if (sec > 60) return { color:'#DC2626', bg:'#FEF2F2', title:'الكاشير غير متصل — آخر اتصال ' + ageText(sec), reason:'جهاز الكاشير مقطوع عن النت، أو الكمبيوتر مطفي، أو نافذة السكريبت اتقفلت.', fix:'تأكد إن الكمبيوتر شغال ومتصل بالنت، وإن نافذة السكريبت (الشاشة الزرقاء) مفتوحة. التعديلات محفوظة وبتتنفذ أول ما يرجع.' };
-  if (scriptStatus.dbOk === false) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت شغال بس قاعدة البيانات ما تستجيب', reason:scriptStatus.dbError || 'سبب غير معروف', fix:scriptStatus.dbFix || 'افتح برنامج الكاشير وتأكد إنه شغال.' };
-  return { color:'#16A34A', bg:'#F0FDF4', title:'الكاشير متصل وكل شي شغال', reason:'', fix:'' };
+  if (sec > 60) return { color:'#DC2626', bg:'#FEF2F2', title:'الكاشير غير متصل — آخر اتصال ' + ageText(sec), reason:'جهاز الكاشير مقطوع عن النت، أو الكمبيوتر مطفأ، أو نافذة السكريبت أُغلقت.', fix:'تأكد أن الكمبيوتر يعمل ومتصل بالنت. السكريبت يعمل مخفيًا تلقائيًا مع الكمبيوتر - إن لم يعمل، أعد تشغيل الكمبيوتر أو شغّل أمر run.txt. التعديلات محفوظة وبتتنفذ فور عودته.' };
+  if (scriptStatus.dbOk === false) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت يعمل لكن قاعدة البيانات لا تستجيب', reason:scriptStatus.dbError || 'سبب غير معروف', fix:scriptStatus.dbFix || 'افتح برنامج الكاشير وتأكد أنه يعمل.' };
+  return { color:'#16A34A', bg:'#F0FDF4', title:'الكاشير متصل وكل شيء يعمل', reason:'', fix:'' };
 }
 
 function renderCashierStatus() {
@@ -1911,7 +2553,7 @@ function renderErrorsStatusCard() {
 function renderErrorsModal() {
   renderErrorsStatusCard();
   const el = document.getElementById('errorsBody');
-  if (!errorLogEntries.length) { el.innerHTML = '<div class="emptyMsg">مفيش أخطاء ✓</div>'; return; }
+  if (!errorLogEntries.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد أخطاء ✓</div>'; return; }
   el.innerHTML = errorLogEntries.map(e => `
     <div style="border:1px solid var(--border);border-right:4px solid #DC2626;border-radius:12px;padding:11px 12px;margin-bottom:9px;">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
@@ -1931,7 +2573,7 @@ function copyErrorText(key) {
   const e = errorLogEntries.find(x => x.key === key);
   if (!e) return;
   const txt = (e.time || '') + ' | ' + (e.where || '') + '\n' + (e.msg || '');
-  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('اتنسخ ✓')).catch(() => prompt('انسخ النص:', txt));
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('نُسخ ✓')).catch(() => prompt('انسخ النص:', txt));
   else prompt('انسخ النص:', txt);
 }
 
@@ -1955,9 +2597,9 @@ function clearErrorLog() {
 // أخطاء التطبيق نفسه (مش السكريبت) بتتسجل في نفس السجل
 function clientErrorFix(m) {
   m = String(m || '');
-  if (!navigator.onLine || /network|offline|disconnect/i.test(m)) return 'الجوال مقطوع عن النت - شغّل النت وحاول تاني';
-  if (/permission|denied/i.test(m)) return 'حسابك ما عنده صلاحية - سجّل خروج وادخل تاني';
-  return 'حاول تاني، ولو تكرر انسخ نص الخطأ وابعته للمبرمج';
+  if (!navigator.onLine || /network|offline|disconnect/i.test(m)) return 'الجوال مقطوع عن النت - شغّل النت وحاول مرة أخرى';
+  if (/permission|denied/i.test(m)) return 'حسابك ليس لديه صلاحية - سجّل الخروج ثم ادخل مرة أخرى';
+  return 'حاول مرة أخرى، ولو تكرر انسخ نص الخطأ وأرسله للمبرمج';
 }
 function logClientError(where, msg) {
   const now = new Date();
@@ -2068,7 +2710,7 @@ function updateCombinedAlertBadge() {
     document.getElementById('alertBannerBox').style.display = 'flex';
     const parts = [];
     if (visibleLowStock > 0) parts.push(visibleLowStock + ' منتج نفد أو على وشك النفاد');
-    if (visibleZeroPrice > 0) parts.push(visibleZeroPrice + ' صنف اتباع بسعر 0');
+    if (visibleZeroPrice > 0) parts.push(visibleZeroPrice + ' صنف بيع بسعر 0');
     document.getElementById('alertBannerText').textContent = 'لديك ' + parts.join(' و ');
   } else {
     alertBadge.style.display = 'none';
@@ -2079,7 +2721,7 @@ function updateCombinedAlertBadge() {
 function loadZeroPriceModal() {
   const el = document.getElementById('zeroPriceList');
   const visible = latestZeroPriceSales.filter(it => !latestDismissedZeroPrice[it.id]);
-  if (!visible.length) { el.innerHTML = '<div class="emptyMsg">مفيش أصناف اتباعت بسعر 0</div>'; return; }
+  if (!visible.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد أصناف بيعت بسعر 0</div>'; return; }
   const sorted = visible.sort((a,b) => new Date(b.date) - new Date(a.date));
   el.innerHTML = sorted.map(it => `<div class="searchResultRow">
     <div style="flex:1;min-width:0;">
@@ -2227,6 +2869,7 @@ function openModal(id) {
   if (id === 'customersModal') loadCustomers();
   if (id === 'missingItemsModal') loadMissingItems();
   if (id === 'activityLogModal') loadActivityLog();
+  if (id === 'generalSettingsModal') { const vt = document.getElementById('settingsVersionTag'); if (vt) vt.textContent = 'v' + APP_VERSION; }
   if (id === 'errorsModal') { renderErrorsModal(); markErrorsSeen(); }
   if (id === 'purchaseDebtsModal') loadPurchaseDebts();
   if (id === 'zeroPriceModal') loadZeroPriceModal();
@@ -2328,7 +2971,7 @@ function renderAlertsList() {
   const filtered = currentAlertFilter === 'all' ? allAlertEvents : allAlertEvents.filter(e => e.type === currentAlertFilter);
 
   if (!filtered.length) {
-    el.innerHTML = '<div class="emptyMsg">مفيش تنبيهات من النوع ده</div>';
+    el.innerHTML = '<div class="emptyMsg">لا يوجد تنبيهات من هذا النوع</div>';
     return;
   }
 
@@ -2399,7 +3042,7 @@ function openCustomerPicker(itemInfo) {
 function openSupplierPickerForPurchase(itemName, price) {
   customerPickerMode = 'purchaseDebt';
   pendingPurchaseDebtDraft = { itemName: itemName, price: price };
-  document.getElementById('customerPickerTitle').textContent = 'اختر المحل اللي اشتريت منه';
+  document.getElementById('customerPickerTitle').textContent = 'اختر المحل الذي اشتريت منه';
   openCustomerPickerList();
 }
 
@@ -2440,7 +3083,7 @@ function openCustomerPickerList() {
     customerPickerAll.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
     filterCustomerPicker();
   }).catch(err => {
-    listEl.innerHTML = '<div class="emptyMsg">ما قدرناش نحمّل الزبائن - تأكد من النت وجرب تاني</div>';
+    listEl.innerHTML = '<div class="emptyMsg">تعذّر تحميل الزبائن - تأكد من النت وحاول مرة أخرى</div>';
     logClientError('تحميل قائمة الزبائن', err && err.message ? err.message : String(err));
   });
 }
@@ -2478,9 +3121,9 @@ function filterCustomerPicker() {
     html += `<div class="cpAddRow" onclick="addNewCustomerAndAssign()"><span class="cpPlus">+</span><span>إضافة «${escapeHtml(raw)}» ${isPurchase ? 'كمحل جديد' : 'كزبون جديد'}</span></div>`;
   }
   if (!customerPickerAll.length) {
-    html += `<div class="emptyMsg">${isPurchase ? 'مفيش محلات مسجلة' : 'مفيش زبائن مسجلين'} - اكتب الاسم فوق وضيفه</div>`;
+    html += `<div class="emptyMsg">${isPurchase ? 'لا يوجد محلات مسجلة' : 'لا يوجد زبائن مسجلين'} - اكتب الاسم في الأعلى وأضفه</div>`;
   } else if (!matches.length) {
-    html += `<div class="emptyMsg">مفيش اسم مطابق</div>`;
+    html += `<div class="emptyMsg">لا يوجد اسم مطابق</div>`;
   } else {
     if (q) html += `<div class="cpCount">${matches.length} نتيجة</div>`;
     html += matches.map((c, i) => `<div class="searchResultRow cpRow" style="cursor:pointer" onclick="pickCustomerFromList(${i})"><div class="n">${highlightCustomerMatch(c.name, raw)}</div></div>`).join('');
@@ -2536,7 +3179,7 @@ function addNewCustomerAndAssign() {
     onCustomerPicked(newRef.key, name);
   }).catch(err => {
     customerPickerBusy = false;
-    alert('ما قدرناش نضيف الاسم - تأكد من النت وجرب تاني');
+    alert('تعذّر إضافة الاسم - تأكد من النت وحاول مرة أخرى');
     logClientError('إضافة زبون', err && err.message ? err.message : String(err));
   });
 }
@@ -2579,11 +3222,11 @@ function assignDebtToCustomer(customerId, customerName) {
     // ده يتسدد منه فورًا تلقائيًا - مش لازم يستنى إيداع جديد
     reconcileSalesAccount(customerId).then(info => {
       if (info.settledCount > 0) {
-        alert('اتسجل الدين على حساب ' + customerName + '\n\n✅ اتسدد تلقائيًا من رصيد فايض عنده أصلاً');
+        alert('تم تسجيل الدين على حساب ' + customerName + '\n\n✅ سُدّد تلقائيًا من رصيد فائض عنده أصلاً');
       } else {
-        alert('اتسجل الدين على حساب ' + customerName);
+        alert('تم تسجيل الدين على حساب ' + customerName);
       }
-    }).catch(() => { alert('اتسجل الدين على حساب ' + customerName); });
+    }).catch(() => { alert('تم تسجيل الدين على حساب ' + customerName); });
   });
 }
 
@@ -2612,7 +3255,7 @@ function finalizePurchaseDebt(customerId, customerName) {
 /* ================= بحث الفواتير (كل قاعدة البيانات) ================= */
 function renderInvoiceResultsList(results) {
   if (!results || !results.length) {
-    return '<div class="emptyMsg">مفيش نتائج</div>';
+    return '<div class="emptyMsg">لا يوجد نتائج</div>';
   }
   const sorted = [...results].sort((a,b) => new Date(b.date) - new Date(a.date));
   window.__invoicesById = window.__invoicesById || {};
@@ -2654,10 +3297,10 @@ function runInvoiceQuery(type, query, title, filterFn, summaryFn) {
         const summaryHtml = summaryFn ? summaryFn(results) : '';
         body.innerHTML = offlineNoteHtml('جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة') + summaryHtml + renderInvoiceResultsList(results);
       }).catch(() => {
-        body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+        body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
       });
     } else {
-      body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل او مافيش رد - حاول تاني</div>';
+      body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل او لا يوجد رد - حاول مرة أخرى</div>';
     }
   }, 15000);
 
@@ -2676,7 +3319,7 @@ function runInvoiceQuery(type, query, title, filterFn, summaryFn) {
 
 function processReceiptOcrBlob(blob) {
   if (!isVisionOcrAvailable()) {
-    alert('قارئ الصور (Apple Vision) مش موجود في نسخة التطبيق دي. تأكد إن آخر نسخة IPA فيها المكتبة الجديدة وثبّتها تاني.');
+    alert('قارئ الصور (Apple Vision) غير موجود في هذه النسخة من التطبيق. تأكد أن آخر نسخة IPA فيها المكتبة الجديدة وثبّتها مرة أخرى.');
     return;
   }
   const toast = showQuickToast('جاري قراءة رقم الإيصال...', false);
@@ -2698,7 +3341,7 @@ function processReceiptOcrBlob(blob) {
         document.getElementById('invoiceSearchInput').value = num;
         searchInvoiceByNumber();
       } else {
-        const manual = prompt('مقدرتش أتأكد من الرقم بوضوح. القراءة طلعت كده:\n"' + text.trim().slice(0, 120) + '"\n\nاكتب رقم الإيصال بنفسك:', '');
+        const manual = prompt('لم أتمكن من التأكد من الرقم بوضوح. القراءة ظهرت هكذا:\n"' + text.trim().slice(0, 120) + '"\n\nاكتب رقم الإيصال بنفسك:', '');
         if (manual && manual.trim()) {
           document.getElementById('invoiceSearchInput').value = manual.trim();
           searchInvoiceByNumber();
@@ -2706,10 +3349,10 @@ function processReceiptOcrBlob(blob) {
       }
     } catch (err) {
       if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
-      alert('حصلت مشكلة وقت قراءة الصورة: ' + (err && err.message ? err.message : err));
+      alert('حدثت مشكلة وقت قراءة الصورة: ' + (err && err.message ? err.message : err));
     }
   };
-  img.onerror = () => { if (toast && toast.parentNode) toast.parentNode.removeChild(toast); alert('مقدرناش نفتح الصورة دي'); };
+  img.onerror = () => { if (toast && toast.parentNode) toast.parentNode.removeChild(toast); alert('تعذّر فتح هذه الصورة'); };
   img.src = URL.createObjectURL(blob);
 }
 
@@ -2737,7 +3380,7 @@ function openReceiptOcrCamera() {
       scheduleReceiptOcrScan();
     })
     .catch(err => {
-      alert('مقدرناش نفتح الكاميرا: ' + (err && err.message ? err.message : err) + '\nممكن تجرب "اختيار صورة" بدل كده.');
+      alert('تعذّر فتح الكاميرا: ' + (err && err.message ? err.message : err) + '\nيمكنك تجربة "اختيار صورة" بدلًا من ذلك.');
       closeReceiptOcrCamera();
     });
 }
@@ -2802,7 +3445,7 @@ function attemptReceiptOcrScan() {
   if (!video || !video.videoWidth) { scheduleReceiptOcrScan(); return; }
   if (!isVisionOcrAvailable()) {
     receiptOcrScanning = false;
-    alert('قارئ الصور (Apple Vision) مش موجود في نسخة التطبيق دي. تأكد إن آخر نسخة IPA فيها المكتبة الجديدة وثبّتها تاني.');
+    alert('قارئ الصور (Apple Vision) غير موجود في هذه النسخة من التطبيق. تأكد أن آخر نسخة IPA فيها المكتبة الجديدة وثبّتها مرة أخرى.');
     closeReceiptOcrCamera();
     return;
   }
@@ -2868,7 +3511,7 @@ function openCardReceiptOcrCamera() {
   // (شيلنا تسخين Tesseract المسبق من هنا - قارئ الإيصال بقى بيعتمد على Apple Vision المحلي
   // اللي مش محتاج تجهيز/تحميل زي ده خالص)
   const statusEl = document.getElementById('cardReceiptOcrStatus');
-  if (statusEl) statusEl.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6"/></svg> وجّه الكاميرا على الإيصال كامل جوه الإطار';
+  if (statusEl) statusEl.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6"/></svg> وجّه الكاميرا على الإيصال كامل داخل الإطار';
   const video = document.getElementById('cardReceiptOcrVideo');
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1920 }, advanced: [{ focusMode: 'continuous' }] } })
     .then(stream => {
@@ -2879,7 +3522,7 @@ function openCardReceiptOcrCamera() {
       scheduleCardReceiptOcrScan();
     })
     .catch(err => {
-      alert('مقدرناش نفتح الكاميرا: ' + (err && err.message ? err.message : err));
+      alert('تعذّر فتح الكاميرا: ' + (err && err.message ? err.message : err));
       closeCardReceiptOcrCamera();
     });
 }
@@ -2917,7 +3560,7 @@ async function attemptCardReceiptOcrScan() {
     // بنظام قديم كان بايظ أصلًا. الرسالة دي بتبقى واضحة إن المشكلة "المكتبة مش متركبة صح" -
     // يعني لازم نسخة IPA جديدة فيها @jcesarmobile/capacitor-ocr متضافة فعليًا في البناء
     cardReceiptOcrScanning = false;
-    alert('قارئ الصور الجديد (Apple Vision) مش موجود في نسخة التطبيق دي.\n\nده معناه إن البناء الأخير اللي ثبّتّه لسه مش فيه المكتبة الجديدة، أو إن البناء اتعمل قبل ما نضيفها. تأكد إن آخر نسخة IPA اترفعت من نفس الملفات اللي جهّزناها (package.json المحدّث) وإن الـ GitHub Action خلص بنجاح، وثبّت النسخة دي تاني.');
+    alert('قارئ الصور الجديد (Apple Vision) غير موجود في هذه النسخة من التطبيق.\n\nهذا يعني إن البناء الأخير الذي ثبّتّه لا يحتوي بعد على المكتبة الجديدة، أو أن البناء تم قبل إضافتها. تأكد أن آخر نسخة IPA رُفعت من نفس الملفات التي جهّزناها (package.json المحدّث) وأن الـ GitHub Action انتهى بنجاح، وثبّت هذه النسخة مرة أخرى.');
     closeCardReceiptOcrCamera();
     return;
   }
@@ -2940,7 +3583,7 @@ async function attemptCardReceiptOcrScan() {
       if (statusEl) statusEl.textContent = '✅ لقيت الإيصال - جاري التحليل الدقيق...';
       await finalizeCardReceiptCapture(video, guide);
     } else {
-      if (statusEl) statusEl.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6"/></svg> وجّه الكاميرا على الإيصال كامل جوه الإطار';
+      if (statusEl) statusEl.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6"/></svg> وجّه الكاميرا على الإيصال كامل داخل الإطار';
       scheduleCardReceiptOcrScan();
     }
   } catch (e) {
@@ -2948,7 +3591,7 @@ async function attemptCardReceiptOcrScan() {
     if (cardReceiptScanFailCount >= 10) {
       cardReceiptOcrScanning = false;
       const errMsg = (e && e.message) ? e.message : String(e);
-      alert('مقدرناش نشغّل قارئ الصور دلوقتي.\n\nتفاصيل تقنية: ' + errMsg + '\n\nاقفل الكاميرا وجرب تاني بعد شوية. لو استمرت المشكلة، ابعت سكرين شوت من الرسالة دي.');
+      alert('تعذّر تشغيل قارئ الصور الآن.\n\nتفاصيل تقنية: ' + errMsg + '\n\nأغلق الكاميرا وحاول مرة أخرى بعد قليل. لو استمرت المشكلة، أرسل لقطة شاشة من هذه الرسالة.');
       closeCardReceiptOcrCamera();
       return;
     }
@@ -2991,7 +3634,7 @@ async function finalizeCardReceiptCapture(video, guide) {
   let resultA, resultB, debugImageA, debugImageB;
 
   if (!isVisionOcrAvailable()) {
-    alert('قارئ الصور الجديد (Apple Vision) مش موجود في نسخة التطبيق دي.\n\nتأكد إن آخر نسخة IPA اترفعت من نفس الملفات اللي جهّزناها (package.json المحدّث) وإن الـ GitHub Action خلص بنجاح، وثبّت النسخة دي تاني.');
+    alert('قارئ الصور الجديد (Apple Vision) غير موجود في هذه النسخة من التطبيق.\n\nتأكد أن آخر نسخة IPA رُفعت من نفس الملفات التي جهّزناها (package.json المحدّث) وأن الـ GitHub Action انتهى بنجاح، وثبّت هذه النسخة مرة أخرى.');
     openCardReceiptOcrCamera();
     return;
   }
@@ -3011,7 +3654,7 @@ async function finalizeCardReceiptCapture(video, guide) {
     resultA = rA || { text: '', lines: [] };
     resultB = rB || { text: '', lines: [] };
   } catch (e) {
-    alert('حصلت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - جرب تاني');
+    alert('حدثت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - حاول مرة أخرى');
     openCardReceiptOcrCamera();
     return;
   }
@@ -3026,8 +3669,8 @@ async function finalizeCardReceiptCapture(video, guide) {
     // بيانات تشخيص فقط (مش بتتحفظ في قاعدة البيانات خالص) - بتتعرض في شاشة المراجعة لو حابب
     // تتأكد إيه اللي القارئ شافه فعليًا، مفيدة لو حقل معيّن مش بيتقرا صح
     debug: {
-      textA: (resultA && resultA.text) || '(فاضي)',
-      textB: (resultB && resultB.text) || '(فاضي)',
+      textA: (resultA && resultA.text) || '(فارغ)',
+      textB: (resultB && resultB.text) || '(فارغ)',
       imageA: debugImageA,
       imageB: debugImageB
     }
@@ -3045,7 +3688,7 @@ async function finalizeCardReceiptCapture(video, guide) {
     document.getElementById('depositDateInput').value = merged.datetime.value;
     pendingReceiptOcrJson = buildReceiptOcrJson(merged);
     receiptCaptureState = null;
-    showQuickReceiptToast('✅ اتعبّى المبلغ والرقم المرجعي والتاريخ تلقائيًا');
+    showQuickReceiptToast('✅ تعبّأ المبلغ والرقم المرجعي والتاريخ تلقائيًا');
     return;
   }
 
@@ -3472,7 +4115,7 @@ function retakeReceiptPhoto() {
 }
 
 function cancelReceiptReview() {
-  if (!confirm('تجاهل بيانات الإيصال اللي اتقرأت؟')) return;
+  if (!confirm('تجاهل بيانات الإيصال التي تمت قراءتها؟')) return;
   receiptCaptureState = null;
   closeModal('receiptReviewModal');
 }
@@ -3489,7 +4132,7 @@ function confirmReceiptReview() {
   });
   if (stillBlocking.length) {
     const names = stillBlocking.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ');
-    alert('اكتب القيمة يدويًا في الحقل ده قبل ما تكمل: ' + names);
+    alert('اكتب القيمة يدويًا في هذا الحقل قبل المتابعة: ' + names);
     return;
   }
 
@@ -3596,19 +4239,19 @@ function searchInvoiceOffline(q, body) {
       return numMatch !== '' && (numberDigits === numMatch || orderDigits === numMatch);
     });
     if (matches.length) {
-      body.innerHTML = offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وممكن تكون قديمة') + renderInvoiceResultsList(matches);
+      body.innerHTML = offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وقد تكون قديمة') + renderInvoiceResultsList(matches);
     } else {
-      body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومفيش نتيجة مطابقة في النسخة المحفوظة</div>';
+      body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نتيجة مطابقة في النسخة المحفوظة</div>';
     }
   }).catch(() => {
-    body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+    body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
 
 function renderInvoicesGroupedByDate(results, notePrefix) {
   window.__invoicesById = window.__invoicesById || {};
   (results || []).forEach(inv => { if (inv) window.__invoicesById[inv.id] = inv; });
-  if (!results || !results.length) return (notePrefix || '') + '<div class="emptyMsg">مفيش فواتير في المدة دي</div>';
+  if (!results || !results.length) return (notePrefix || '') + '<div class="emptyMsg">لا يوجد فواتير في هذه المدة</div>';
   const sorted = results.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   const groups = {};
   const order = [];
@@ -3629,7 +4272,7 @@ function loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl) {
   fetchArchiveRange(fromStr, toStr).then(flat => {
     resultsEl.innerHTML = renderInvoicesGroupedByDate(flat, offlineNoteHtml('جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة'));
   }).catch(() => {
-    resultsEl.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+    resultsEl.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
 
@@ -3637,8 +4280,8 @@ function loadAllInvoicesRange() {
   const fromStr = document.getElementById('allInvoicesFrom').value;
   const toStr = document.getElementById('allInvoicesTo').value;
   const resultsEl = document.getElementById('allInvoicesResults');
-  if (!fromStr || !toStr) { resultsEl.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية</div>'; return; }
-  if (fromStr > toStr) { resultsEl.innerHTML = '<div class="emptyMsg">تاريخ البداية لازم يكون قبل تاريخ النهاية</div>'; return; }
+  if (!fromStr || !toStr) { resultsEl.innerHTML = '<div class="emptyMsg">اختر تاريخ البداية والنهاية</div>'; return; }
+  if (fromStr > toStr) { resultsEl.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
   resultsEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
 
   const pushRef = db.ref('commands/invoiceQuery').push();
@@ -3710,7 +4353,7 @@ function computeDaySummaryHtml(results) {
 
 function browseInvoicesByDate() {
   const dateVal = document.getElementById('invoiceDateInput').value;
-  if (!dateVal) { alert('اختار تاريخ الأول'); return; }
+  if (!dateVal) { alert('اختر تاريخ الأول'); return; }
   const dateLabel = new Date(dateVal + 'T00:00:00').toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'long', year:'numeric' });
   const title = 'فواتير يوم ' + dateLabel;
 
@@ -3731,9 +4374,9 @@ function browseInvoicesByDate() {
       const val = snap.val();
       const archived = val ? Object.values(val) : [];
       if (archived.length) {
-        body.innerHTML = '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> جهاز المحل غير متصل حاليًا - دي آخر نسخة محفوظة وممكن تكون ناقصة</div>' + computeDaySummaryHtml(archived) + renderInvoiceResultsList(archived);
+        body.innerHTML = '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> جهاز المحل غير متصل حاليًا - هذه آخر نسخة محفوظة وقد تكون ناقصة</div>' + computeDaySummaryHtml(archived) + renderInvoiceResultsList(archived);
       } else {
-        body.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومفيش نسخة محفوظة لليوم ده</div>';
+        body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نسخة محفوظة لهذا اليوم</div>';
       }
     });
   }, 15000);
@@ -3902,7 +4545,7 @@ function closeCountDraft() {
 }
 
 function cancelInventoryCount() {
-  if (!confirm('إلغاء الجرد؟ كل الأصناف اللي اتعدت في الجرد ده هتتمسح، ومش هيتبعت أي تعديل للكاشير.')) return;
+  if (!confirm('إلغاء الجرد؟ كل الأصناف التي عُدّت في هذا الجرد ستُحذف، ولن يُرسل أي تعديل للكاشير.')) return;
   closeCountDraft();
   renderInventoryCountList();
 }
@@ -3958,7 +4601,7 @@ function startCameraScan() {
 function startWebCameraScan() {
   document.getElementById('startCameraBtn').style.display = 'none';
   document.getElementById('barcodeReaderView').style.display = 'block';
-  document.getElementById('barcodeScanStatus').textContent = 'بيحاول يوصل للكاميرا...';
+  document.getElementById('barcodeScanStatus').textContent = 'جاري الوصول للكاميرا...';
   try {
     barcodeScannerInstance = new Html5Qrcode('barcodeReaderView', {
       formatsToSupport: [
@@ -3988,12 +4631,12 @@ function startWebCameraScan() {
     ).then(() => {
       document.getElementById('barcodeScanStatus').textContent = 'وجّه الكاميرا على الباركود';
     }).catch(err => {
-      document.getElementById('barcodeScanStatus').textContent = 'مقدرناش نوصل للكاميرا (' + (err && err.message ? err.message : err) + ') - تأكد من السماح بالإذن. تقدر تستخدم مربع "البحث اليدوي" فوق من غير كاميرا.';
+      document.getElementById('barcodeScanStatus').textContent = 'تعذّر الوصول للكاميرا (' + (err && err.message ? err.message : err) + ') - تأكد من السماح بالإذن. يمكنك استخدام مربع "البحث اليدوي" فوق بدون كاميرا.';
       document.getElementById('startCameraBtn').style.display = 'block';
       document.getElementById('barcodeReaderView').style.display = 'none';
     });
   } catch (err) {
-    document.getElementById('barcodeScanStatus').textContent = 'مكتبة الكاميرا ماتحملتش صح (' + (err && err.message ? err.message : err) + ') - تأكد من الاتصال بالنت وحدّث الصفحة. تقدر تستخدم البحث اليدوي فوق لحد ما تحلها.';
+    document.getElementById('barcodeScanStatus').textContent = 'مكتبة الكاميرا لم تُحمَّل بشكل صحيح (' + (err && err.message ? err.message : err) + ') - تأكد من الاتصال بالنت وحدّث الصفحة. يمكنك استخدام البحث اليدوي فوق حتى تُحل المشكلة.';
     document.getElementById('startCameraBtn').style.display = 'block';
     document.getElementById('barcodeReaderView').style.display = 'none';
   }
@@ -4036,9 +4679,9 @@ function priceCheckSearch() {
   document.getElementById('priceCheckDetail').innerHTML = '';
   if (!q) { resEl.innerHTML = ''; return; }
   const items = Object.values(latestItems || {});
-  if (!items.length) { resEl.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت</div>'; return; }
+  if (!items.length) { resEl.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد</div>'; return; }
   const matches = items.filter(it => (String(it.barcode || '').trim().toLowerCase() === q) || (String(it.name || '').toLowerCase().includes(q))).slice(0, 20);
-  if (!matches.length) { resEl.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
+  if (!matches.length) { resEl.innerHTML = '<div class="emptyMsg">لا يوجد نتائج</div>'; return; }
   resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer" onclick="showPriceCheckDetail(${it.id})"><div class="n">${escapeHtml(it.name)}</div><div class="p">متبقي: ${it.stock}</div></div>`).join('');
   resEl.scrollTop = 0;
 }
@@ -4114,7 +4757,7 @@ function itemCardBackToResults() {
   // لو فيه تعديل مفتوح وفيه خانات اتغيرت ومحدش ضغط حفظ، نسأل الأول
   const d = document.getElementById('itemCardDetail');
   const dirty = Array.from(d.querySelectorAll('input')).some(i => !i.disabled && i.value !== i.defaultValue);
-  if (dirty && !confirm('فيه تعديل ما اتحفظش. ترجع لنتائج البحث من غير حفظ؟')) return;
+  if (dirty && !confirm('يوجد تعديل لم يُحفظ. الرجوع لنتائج البحث بدون حفظ؟')) return;
   const keep = itemCardResultsScroll;
   itemCardManualSearch(); // بيبني القايمة من جديد بالقيم الحالية (لو صنف اتعدل تبان قيمته الجديدة)
   document.getElementById('itemCardResults').scrollTop = keep;
@@ -4145,9 +4788,9 @@ function itemCardManualSearch() {
   document.getElementById('itemCardDetail').innerHTML = '';
   if (!q) { resEl.innerHTML = ''; return; }
   const items = Object.values(latestItems || {});
-  if (!items.length) { resEl.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت</div>'; return; }
+  if (!items.length) { resEl.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد</div>'; return; }
   const matches = items.filter(it => (String(it.barcode || '').trim().toLowerCase() === q) || (String(it.name || '').toLowerCase().includes(q))).slice(0, 20);
-  if (!matches.length) { resEl.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
+  if (!matches.length) { resEl.innerHTML = '<div class="emptyMsg">لا يوجد نتائج</div>'; return; }
   resEl.innerHTML = matches.map(it => `<div class="searchResultRow" style="cursor:pointer" onclick="showItemCardDetail(${it.id})"><div class="n">${escapeHtml(it.name)}</div><div class="p">متبقي: ${it.stock}</div></div>`).join('');
   resEl.scrollTop = 0;
 }
@@ -4189,6 +4832,8 @@ function showItemCardDetail(itemId) {
       </div>
       <button onclick="openItemCardEdit(${it.id})" style="width:100%;margin-top:14px;background:#7C3AED;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل الصنف</button>
       <div id="itemCardEditStatus" data-item-id="${it.id}" style="text-align:center;font-size:12px;font-weight:700;margin-top:8px;line-height:1.7;"></div>
+      ${itemCardOfferLabel[it.id] ? `<button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:#FEF3C7;color:#B45309;border:1.5px dashed #F59E0B;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;">🏷️ اطبع ملصق بالسعر الجديد</button>` : ''}
+      <button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#2563EB;border:1.5px solid #BFDBFE;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;">🏷️ طباعة باركود</button>
     </div>
   `;
   renderItemCardEditStatus(it.id);
@@ -4229,7 +4874,7 @@ function watchItemCardEditResult(itemId, reqId) {
   if (itemCardEditListeners[itemId]) { itemCardEditListeners[itemId].ref.off('value', itemCardEditListeners[itemId].cb); clearTimeout(itemCardEditListeners[itemId].timer); }
   const ref = db.ref('data/editResults/' + itemId);
   const timer = setTimeout(() => {
-    setItemCardEditStatus(itemId, '⏳ التعديل محفوظ بس الكاشير لسه ما ردّش.<br><span style="font-weight:600;">السبب غالبًا: جهاز الكاشير مقطوع عن النت أو السكريبت مقفول. هيتنفذ تلقائي أول ما يشتغل.</span>', '#B45309');
+    setItemCardEditStatus(itemId, '⏳ التعديل محفوظ لكن الكاشير لم يرد بعد.<br><span style="font-weight:600;">السبب غالبًا: جهاز الكاشير مقطوع عن النت أو السكريبت مغلق. سيُنفَّذ تلقائيًا فور تشغيله.</span>', '#B45309');
   }, 20000);
   const cb = snap => {
     const r = snap.val();
@@ -4238,11 +4883,11 @@ function watchItemCardEditResult(itemId, reqId) {
     const res = r.results || {};
     const failed = Object.keys(res).filter(k => !res[k].ok);
     if (!failed.length) {
-      setItemCardEditStatus(itemId, '✓ اتنفذ على الكاشير', '#16A34A');
+      setItemCardEditStatus(itemId, '✓ نُفّذ على الكاشير', '#16A34A');
     } else {
       const lines = failed.map(k => '✗ ' + escapeHtml(editFieldLabel(k)) + ': ' + escapeHtml(res[k].msg || 'سبب غير معروف')).join('<br>');
       const okCount = Object.keys(res).length - failed.length;
-      setItemCardEditStatus(itemId, (okCount ? '✓ باقي التعديلات اتنفذت<br>' : '') + lines, r.retrying ? '#B45309' : '#DC2626');
+      setItemCardEditStatus(itemId, (okCount ? '✓ باقي التعديلات نُفّذت<br>' : '') + lines, r.retrying ? '#B45309' : '#DC2626');
     }
     if (!r.retrying) { ref.off('value', cb); delete itemCardEditListeners[itemId]; }
   };
@@ -4289,7 +4934,7 @@ function saveItemCardEdit(itemId) {
     wholesale: document.getElementById('icEditWholesale').value,
     price:     document.getElementById('icEditPrice').value
   };
-  if (!name) { errEl.textContent = 'اسم الصنف مايبقاش فاضي'; return; }
+  if (!name) { errEl.textContent = 'اسم الصنف لا يمكن أن يكون فارغًا'; return; }
   for (const k in nums) {
     const v = String(nums[k]).trim();
     if (v === '' || isNaN(Number(v)) || Number(v) < 0) { errEl.textContent = 'اكتب رقم صحيح في ' + editFieldLabel(k); return; }
@@ -4319,6 +4964,7 @@ function saveItemCardEdit(itemId) {
   payload.reqId = reqId;
 
   const oldName = it.name;
+  const oldVals = { name: String(it.name || ''), qty: Number(it.stock || 0), cost: Number(it.cost || 0), wholesale: Number(it.wholesale || 0), price: Number(it.price || 0) };
   db.ref('commands/editItem/' + itemId).update(payload).then(() => {
     // تحديث مؤقت على الشاشة لحد ما السيرفر يأكد ويعيد المزامنة
     if ('name' in changes) it.name = changes.name;
@@ -4328,7 +4974,11 @@ function saveItemCardEdit(itemId) {
     if ('price' in changes) it.price = changes.price;
     const summary = Object.keys(changes).map(k => editFieldLabel(k) + ': ' + (k === 'name' ? changes[k] : k === 'qty' ? changes[k] : fmtMoney(changes[k]) + ' د.ل')).join(' - ');
     logActivity('تعديل صنف', oldName + ' ← ' + summary);
-    setItemCardEditStatus(itemId, '… اتبعت التعديل، في انتظار تأكيد الكاشير', '#2563EB');
+    const histChanges = {};
+    Object.keys(changes).forEach(k => { histChanges[k] = { from: oldVals[k], to: changes[k] }; });
+    recordEditHistory(itemId, oldName, histChanges, reqId, 'app', null);
+    if ('price' in changes) itemCardOfferLabel[itemId] = true;
+    setItemCardEditStatus(itemId, '… تم إرسال التعديل، في انتظار تأكيد الكاشير', '#2563EB');
     showItemCardDetail(itemId);
     watchItemCardEditResult(itemId, reqId);
   }).catch(err => {
@@ -4343,7 +4993,7 @@ function saveItemCardEdit(itemId) {
 function startItemCardCameraScan() {
   document.getElementById('itemCardStartCameraBtn').style.display = 'none';
   document.getElementById('itemCardReaderView').style.display = 'block';
-  document.getElementById('itemCardScanStatus').textContent = 'بيحاول يوصل للكاميرا...';
+  document.getElementById('itemCardScanStatus').textContent = 'جاري الوصول للكاميرا...';
   try {
     itemCardScannerInstance = new Html5Qrcode('itemCardReaderView', {
       formatsToSupport: [
@@ -4371,12 +5021,12 @@ function startItemCardCameraScan() {
     ).then(() => {
       document.getElementById('itemCardScanStatus').textContent = 'وجّه الكاميرا على الباركود';
     }).catch(err => {
-      document.getElementById('itemCardScanStatus').textContent = 'مقدرناش نوصل للكاميرا (' + (err && err.message ? err.message : err) + ') - استخدم البحث اليدوي فوق بدل الكاميرا.';
+      document.getElementById('itemCardScanStatus').textContent = 'تعذّر الوصول للكاميرا (' + (err && err.message ? err.message : err) + ') - استخدم البحث اليدوي فوق بدلًا من الكاميرا.';
       document.getElementById('itemCardStartCameraBtn').style.display = 'flex';
       document.getElementById('itemCardReaderView').style.display = 'none';
     });
   } catch (err) {
-    document.getElementById('itemCardScanStatus').textContent = 'مكتبة الكاميرا ماتحملتش صح - استخدم البحث اليدوي فوق لحد ما تحلها.';
+    document.getElementById('itemCardScanStatus').textContent = 'مكتبة الكاميرا لم تُحمَّل بشكل صحيح - استخدم البحث اليدوي فوق حتى تُحل المشكلة.';
     document.getElementById('itemCardStartCameraBtn').style.display = 'flex';
     document.getElementById('itemCardReaderView').style.display = 'none';
   }
@@ -4385,13 +5035,13 @@ function startItemCardCameraScan() {
 function onItemCardBarcodeScanned(code) {
   const items = Object.values(latestItems || {});
   if (!items.length) {
-    document.getElementById('itemCardScanStatus').textContent = 'البيانات لسه ما توصلتش من السيرفر - تأكد إن الجهاز متصل بالنت';
+    document.getElementById('itemCardScanStatus').textContent = 'البيانات لم تصل بعد من السيرفر - تأكد أن الجهاز متصل بالنت';
     return;
   }
   const scannedCode = String(code || '').trim();
   const match = items.find(it => String(it.barcode || '').trim() === scannedCode);
   if (!match) {
-    document.getElementById('itemCardScanStatus').textContent = 'مفيش صنف بالباركود ده: ' + code;
+    document.getElementById('itemCardScanStatus').textContent = 'لا يوجد صنف بهذا الباركود: ' + code;
     return;
   }
   const now = Date.now();
@@ -4401,7 +5051,7 @@ function onItemCardBarcodeScanned(code) {
   itemCardLastScanTime = now;
   playFeedback('qr');
   showItemCardDetail(match.id);
-  document.getElementById('itemCardScanStatus').textContent = 'اتلقى: ' + match.name + ' - وجّه على صنف تاني أو اقفل النافذة';
+  document.getElementById('itemCardScanStatus').textContent = 'وُجد: ' + match.name + ' - وجّه على صنف آخر أو أغلق النافذة';
 }
 
 function closeItemCardModal() {
@@ -4424,13 +5074,13 @@ function manualLookupSearch() {
   const items = Object.values(latestItems || {});
   if (!items.length) {
     resEl.style.display = 'block';
-    resEl.innerHTML = '<div class="emptyMsg" style="padding:14px;">البيانات لسه ما توصلتش من السيرفر - تأكد إن الجهاز متصل بالنت وجرب تاني بعد شوية</div>';
+    resEl.innerHTML = '<div class="emptyMsg" style="padding:14px;">البيانات لم تصل بعد من السيرفر - تأكد أن الجهاز متصل بالنت وحاول مرة أخرى بعد قليل</div>';
     return;
   }
   const matches = items.filter(it => (String(it.barcode || '').trim().toLowerCase() === q) || (String(it.name || '').trim().toLowerCase().includes(q))).slice(0, 20);
   if (!matches.length) {
     resEl.style.display = 'block';
-    resEl.innerHTML = '<div class="emptyMsg" style="padding:14px;">مفيش نتائج</div>';
+    resEl.innerHTML = '<div class="emptyMsg" style="padding:14px;">لا يوجد نتائج</div>';
     return;
   }
   resEl.style.display = 'block';
@@ -4493,19 +5143,19 @@ function forceCloseScanner() {
 
 function updateScanSessionCount() {
   const n = Object.keys(countSession).length;
-  document.getElementById('scanSessionCount').textContent = n > 0 ? ('اتعد ' + n + ' صنف في الجلسة دي') : '';
+  document.getElementById('scanSessionCount').textContent = n > 0 ? ('عُدّ ' + n + ' صنف في هذه الجلسة') : '';
 }
 
 function onBarcodeScanned(code) {
   const items = Object.values(latestItems || {});
   if (!items.length) {
-    if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'البيانات لسه ما توصلتش من السيرفر - تأكد إن الجهاز متصل بالنت';
+    if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'البيانات لم تصل بعد من السيرفر - تأكد أن الجهاز متصل بالنت';
     return;
   }
   const scannedCode = String(code || '').trim();
   const match = items.find(it => String(it.barcode || '').trim() === scannedCode);
   if (!match) {
-    if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'مفيش صنف بالباركود ده: ' + code;
+    if (!scanLocked) document.getElementById('barcodeScanStatus').textContent = 'لا يوجد صنف بهذا الباركود: ' + code;
     return;
   }
 
@@ -4586,7 +5236,7 @@ function renderInventoryCountList() {
   const el = document.getElementById('inventoryCountList');
   const filterVal = (document.getElementById('countFilterInput').value || '').trim().toLowerCase();
   const items = Object.values(latestItems || {});
-  if (!items.length) { el.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت</div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد</div>'; return; }
   const filtered = filterVal ? items.filter(it => (it.name||'').toLowerCase().includes(filterVal)) : items;
   const sorted = filtered.sort((a,b) => {
     const aCounted = countSession[a.id] !== undefined ? 1 : 0;
@@ -4607,7 +5257,7 @@ function renderInventoryCountList() {
       return `<div class="searchResultRow" style="background:var(--surface2);" data-row-id="${it.id}">
         <div style="flex:1;">
           <div class="n">${escapeHtml(it.name)}</div>
-          <div class="p">مسجل بالنظام: ${systemQty} &middot; <span class="ic ic-checkgreen"></span> اتعد: ${countedVal} ${missingBadge}</div>
+          <div class="p">مسجل بالنظام: ${systemQty} &middot; <span class="ic ic-checkgreen"></span> عُدّ: ${countedVal} ${missingBadge}</div>
         </div>
         <button onclick="editCountedItem(${it.id})" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل</button>
       </div>`;
@@ -4654,13 +5304,13 @@ function setCountValue(itemId, val) {
 
 function updateCountProgress() {
   const n = Object.keys(countSession).length;
-  document.getElementById('countProgress').textContent = n + ' صنف اتعد';
+  document.getElementById('countProgress').textContent = n + ' صنف عُدّ';
 }
 
 function finishInventoryCount() {
   const entries = Object.entries(countSession);
-  if (!entries.length) { alert('مفيش أصناف اتعدت لسه'); return; }
-  if (!confirm('تأكيد إنهاء الجرد؟ الفروقات هتتصحح في النظام وتتسجل في المفقودات.')) return;
+  if (!entries.length) { alert('لا يوجد أصناف عُدّت بعد'); return; }
+  if (!confirm('تأكيد إنهاء الجرد؟ الفروقات ستُصحَّح في النظام وتُسجَّل في المفقودات.')) return;
 
   db.ref('data/lastCountDate').once('value').then(snap => {
     const prevDate = snap.val() || null;
@@ -4700,9 +5350,9 @@ function finishInventoryCount() {
 
     closeModal('inventoryCountModal');
     if (missingCount > 0) {
-      alert('تم الجرد. فيه ' + missingCount + ' صنف ناقص اتسجل في المفقودات للمراجعة.');
+      alert('تم الجرد. يوجد ' + missingCount + ' صنف ناقص سُجّل في المفقودات للمراجعة.');
     } else {
-      alert('تم الجرد. مفيش أي نواقص');
+      alert('تم الجرد. لا يوجد أي نواقص');
     }
     closeCountDraft();
   });
@@ -4714,7 +5364,7 @@ function loadMissingItems() {
   db.ref('data/missingItems').once('value').then(snap => {
     const val = snap.val();
     const items = val ? Object.entries(val).map(([id, m]) => ({ id, ...m })) : [];
-    if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش مفقودات مسجلة</div>'; return; }
+    if (!items.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد مفقودات مسجلة</div>'; return; }
     const sorted = items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
     el.innerHTML = sorted.map(m => {
       const fromStr = m.fromDate ? new Date(m.fromDate).toLocaleDateString('ar-EG-u-nu-latn') : 'أول جرد';
@@ -4746,10 +5396,10 @@ function loadNotesList() {
   db.ref('data/notes').once('value').then(snap => {
     const val = snap.val();
     const notes = val ? Object.entries(val).map(([id, n]) => ({ id, ...n })) : [];
-    if (!notes.length) { el.innerHTML = '<div class="emptyMsg">لسه مفيش ملاحظات</div>'; return; }
+    if (!notes.length) { el.innerHTML = '<div class="emptyMsg">لا توجد ملاحظات بعد</div>'; return; }
     const sorted = notes.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     el.innerHTML = sorted.map(n => {
-      const firstLine = (n.text || '').split('\n')[0].slice(0, 60) || '(ملاحظة فاضية)';
+      const firstLine = (n.text || '').split('\n')[0].slice(0, 60) || '(ملاحظة فارغة)';
       const dateStr = n.updatedAt ? new Date(n.updatedAt).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
       return `<div class="searchResultRow" style="cursor:pointer;" onclick="openNoteEditor('${n.id}')">
         <div style="flex:1;min-width:0;">
@@ -4793,7 +5443,7 @@ function closeNoteEditor() {
 
 function saveNote() {
   const text = document.getElementById('noteEditorTextarea').value.trim();
-  if (!text) { alert('اكتب حاجة الأول'); return; }
+  if (!text) { alert('اكتب شيئًا أولًا'); return; }
   const now = new Date().toISOString();
   if (editingNoteId) {
     db.ref('data/notes/' + editingNoteId).update({ text: text, updatedAt: now }).then(closeNoteEditor);
@@ -4803,7 +5453,7 @@ function saveNote() {
 }
 
 function deleteNote(noteId) {
-  if (!confirm('تأكيد حذف الملاحظة دي؟')) return;
+  if (!confirm('تأكيد حذف هذه الملاحظة؟')) return;
   db.ref('data/notes/' + noteId).remove().then(loadNotesList);
 }
 
@@ -4815,13 +5465,182 @@ function logActivity(action, detail) {
   }).catch(() => {});
 }
 
+/* ================= سجل تعديلات الأصناف + تراجع =================
+   كل تعديل صنف من التطبيق بيتسجل في data/editHistory بالقيمة القديمة والجديدة لكل خانة.
+   التراجع بيبعت أمر تعديل عادي (نفس طريق بطاقة الصنف) بالقيم القديمة:
+   - السعر/الجملة/التكلفة/الاسم: بترجع للقيمة القديمة بالظبط
+   - الكمية: بترجع بالفرق العكسي (increment) عشان المبيعات اللي حصلت بعد التعديل ما تضيعش */
+let activityLogTab = 'edits';
+let editHistoryCache = {};
+
+function recordEditHistory(itemId, itemName, changes, reqId, source, undoOf) {
+  const ref = db.ref('data/editHistory').push();
+  const entry = { at: new Date().toISOString(), itemId: String(itemId), itemName: String(itemName || ''), changes: changes, reqId: reqId, source: source };
+  if (undoOf) entry.undoOf = undoOf;
+  ref.set(entry).catch(err => logClientError('تسجيل تعديل في السجل', err && err.message ? err.message : String(err)));
+  watchEditResultForHistory(itemId, reqId, ref.key);
+  return ref.key;
+}
+
+// بنستنى رد الكاشير على الطلب ده بالذات ونسجله جوه السجل، عشان الحالة تفضل ظاهرة حتى بعد ما التطبيق يتقفل
+function watchEditResultForHistory(itemId, reqId, key) {
+  const ref = db.ref('data/editResults/' + itemId);
+  const cb = snap => {
+    const r = snap.val();
+    if (!r || String(r.reqId) !== String(reqId) || r.retrying) return;
+    ref.off('value', cb);
+    const res = r.results || {};
+    const failed = {};
+    Object.keys(res).forEach(k => { if (!res[k].ok) failed[k] = String(res[k].msg || 'سبب غير معروف'); });
+    db.ref('data/editHistory/' + key + '/result').set({ ok: !Object.keys(failed).length, failed: failed, at: new Date().toISOString() }).catch(() => {});
+  };
+  ref.on('value', cb);
+}
+
+function switchActivityLogTab(tab) {
+  activityLogTab = tab;
+  document.getElementById('logTabEdits').classList.toggle('active', tab === 'edits');
+  document.getElementById('logTabAll').classList.toggle('active', tab === 'all');
+  loadActivityLog();
+}
+
+function ehFormat(field, v) {
+  if (v === undefined || v === null || v === '') return '—';
+  if (field === 'name') return escapeHtml(String(v));
+  if (field === 'qty') return escapeHtml(String(Math.round(Number(v) * 1000) / 1000));
+  return escapeHtml(fmtMoney(Number(v))) + ' د.ل';
+}
+
+function loadEditHistory() {
+  const el = document.getElementById('activityLogBody');
+  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  Promise.all([
+    db.ref('data/editHistory').limitToLast(300).once('value'),
+    db.ref('data/editResults').once('value')
+  ]).then(res => {
+    if (activityLogTab !== 'edits') return;
+    const val = res[0].val() || {};
+    const latestResults = res[1].val() || {};
+    editHistoryCache = val;
+    const keys = Object.keys(val).sort((a, b) => new Date(val[b].at) - new Date(val[a].at));
+    if (!keys.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد تعديلات أصناف مسجلة بعد. أي تعديل من بطاقة الصنف سيظهر هنا.</div>'; return; }
+    el.innerHTML = keys.map(key => {
+      const e = val[key];
+      const d = new Date(e.at);
+      const dateStr = d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' });
+      const timeStr = d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
+      const ch = e.changes || {};
+      const order = ['name', 'price', 'wholesale', 'cost', 'qty'];
+      const rows = order.filter(k => ch[k]).map(k => `<div class="ehRow"><span class="lbl">${escapeHtml(editFieldLabel(k))}</span><span class="val"><span class="old">${ehFormat(k, ch[k].from)}</span><span style="color:var(--textMuted);">←</span><span>${ehFormat(k, ch[k].to)}</span></span></div>`).join('');
+
+      // حالة التنفيذ: من السجل نفسه، ولو لسه ما اتسجلتش نشوف آخر رد للكاشير على الصنف ده
+      let result = e.result || null;
+      const lr = latestResults[e.itemId];
+      if (!result && lr && String(lr.reqId) === String(e.reqId) && !lr.retrying) {
+        const failed = {};
+        Object.keys(lr.results || {}).forEach(k => { if (!lr.results[k].ok) failed[k] = String(lr.results[k].msg || ''); });
+        result = { ok: !Object.keys(failed).length, failed: failed };
+      }
+      let status;
+      if (!result) status = '<span class="ehStatus" style="color:#B45309;">⏳ في انتظار الكاشير</span>';
+      else if (result.ok) status = '<span class="ehStatus" style="color:#16A34A;">✓ نُفّذ على الكاشير</span>';
+      else status = '<span class="ehStatus" style="color:#DC2626;">✗ ' + Object.keys(result.failed || {}).map(k => escapeHtml(editFieldLabel(k)) + ': ' + escapeHtml(result.failed[k])).join(' • ') + '</span>';
+
+      const badge = e.source === 'undo'
+        ? '<span class="ehBadge" style="background:#EDE9FE;color:#6D28D9;">↩️ تراجع</span>'
+        : '<span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">من التطبيق</span>';
+      let action;
+      if (e.undoneAt) {
+        const ud = new Date(e.undoneAt);
+        action = `<span class="ehStatus" style="color:var(--textMuted);">أُلغي بالتراجع ${ud.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</span>`;
+      } else {
+        action = `<button type="button" class="ehUndo" onclick="undoEditHistory('${key}', this)">↩️ تراجع</button>`;
+      }
+      return `<div class="ehCard${e.undoneAt ? ' undone' : ''}">
+        <div class="ehTop"><div><div class="ehName">${escapeHtml(e.itemName || ('صنف ' + e.itemId))}</div>${badge}</div><div class="ehTime">${timeStr}<br>${dateStr}</div></div>
+        <div style="margin-top:6px;">${rows}</div>
+        <div class="ehFoot">${status}${action}</div>
+      </div>`;
+    }).join('');
+  }).catch(err => {
+    el.innerHTML = '<div class="emptyMsg">تعذّر تحميل السجل - تأكد من النت وحاول مرة أخرى</div>';
+    logClientError('تحميل سجل التعديلات', err && err.message ? err.message : String(err));
+  });
+}
+
+function undoEditHistory(key, btn) {
+  const e = editHistoryCache[key];
+  if (!e || e.undoneAt) return;
+  const itemId = e.itemId;
+  const it = latestItems['i' + itemId];
+  if (!it) { alert('هذا الصنف غير موجود في قائمة الأصناف الآن، فلا يمكن التراجع'); return; }
+  const ch = e.changes || {};
+  const payload = {};
+  const newChanges = {};
+  const lines = [];
+  const warnings = [];
+  const cur = { name: String(it.name || ''), qty: Number(it.stock || 0), cost: Number(it.cost || 0), wholesale: Number(it.wholesale || 0), price: Number(it.price || 0) };
+
+  Object.keys(ch).forEach(k => {
+    const from = ch[k].from, to = ch[k].to;
+    if (k === 'qty') {
+      const delta = Math.round((Number(from) - Number(to)) * 1000) / 1000;
+      if (!delta) return;
+      payload.qtyDelta = firebase.database.ServerValue.increment(delta);
+      newChanges.qty = { from: cur.qty, to: Math.round((cur.qty + delta) * 1000) / 1000 };
+      lines.push('الكمية: ' + (delta > 0 ? '+' : '') + delta + ' (الرصيد الحالي ' + cur.qty + ' ← ' + newChanges.qty.to + ')');
+      return;
+    }
+    if (k === 'wholesale' && !it.barcode) { warnings.push('سعر الجملة ما يرجعش: الصنف ما له باركود فعال'); return; }
+    const isName = k === 'name';
+    const same = isName ? String(cur[k]) === String(to) : Math.abs(Number(cur[k]) - Number(to)) < 0.0005;
+    if (!same) warnings.push(editFieldLabel(k) + ' تغيّر بعد هذا التعديل (الحالي ' + (isName ? cur[k] : fmtMoney(cur[k])) + ')');
+    payload[k] = isName ? String(from) : Number(from);
+    newChanges[k] = { from: cur[k], to: payload[k] };
+    lines.push(editFieldLabel(k) + ': ' + (isName ? cur[k] : fmtMoney(cur[k])) + ' ← ' + (isName ? from : fmtMoney(Number(from))));
+  });
+
+  if (!lines.length) { alert('لا يوجد شيء للتراجع عنه في هذا التعديل'); return; }
+  let msg = 'ترجع ' + (e.itemName || 'الصنف') + ' للقيم القديمة؟\n\n' + lines.join('\n');
+  if (warnings.length) msg += '\n\n⚠️ ' + warnings.join('\n⚠️ ');
+  if (!confirm(msg)) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  const reqId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  payload.reqId = reqId;
+  db.ref('commands/editItem/' + itemId).update(payload).then(() => {
+    // تحديث مؤقت على الشاشة لحد ما السكريبت يعيد المزامنة
+    Object.keys(newChanges).forEach(k => {
+      if (k === 'qty') it.stock = newChanges.qty.to;
+      else if (k === 'name') it.name = newChanges.name.to;
+      else it[k] = newChanges[k].to;
+    });
+    const newKey = recordEditHistory(itemId, it.name, newChanges, reqId, 'undo', key);
+    db.ref('data/editHistory/' + key).update({ undoneAt: new Date().toISOString(), undoneBy: newKey });
+    logActivity('تراجع عن تعديل صنف', (e.itemName || '') + ' ← ' + lines.join(' - '));
+    loadEditHistory();
+  }).catch(err => {
+    if (btn) { btn.disabled = false; btn.textContent = '↩️ تراجع'; }
+    const m = err && err.message ? err.message : String(err);
+    alert('فشل إرسال التراجع: ' + m);
+    logClientError('تراجع عن تعديل صنف', m);
+  });
+}
+
 function loadActivityLog() {
+  const info = document.getElementById('activityLogInfo');
+  if (activityLogTab === 'edits') {
+    info.innerHTML = 'كل تعديل على صنف من بطاقة الصنف: القيمة القديمة ← الجديدة. زر <b>تراجع</b> يُرجع القيمة القديمة على الكاشير. (تعديلات تليجرام ستظهر هنا بعد تحديث السكريبت القادم)';
+    loadEditHistory();
+    return;
+  }
+  info.textContent = 'كل عملية إضافة دين، سداد، ترجيع، أو تعديل في الزبائن — بالوقت والتاريخ (ما عدا الجرد).';
   const el = document.getElementById('activityLogBody');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   db.ref('data/activityLog').limitToLast(200).once('value').then(snap => {
     const val = snap.val();
     const entries = val ? Object.values(val) : [];
-    if (!entries.length) { el.innerHTML = '<div class="emptyMsg">مفيش حركات مسجلة لسه</div>'; return; }
+    if (!entries.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد حركات مسجلة بعد</div>'; return; }
     const sorted = entries.sort((a,b) => new Date(b.at) - new Date(a.at));
     const ICONS = {
       'إضافة دين': { bg:'#DBEAFE', svg:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6 15h4"/></svg>' },
@@ -4874,7 +5693,7 @@ function loadCustomers() {
     const custVal = custSnap.val();
     const customers = custVal ? Object.entries(custVal).map(([id, c]) => ({ id, ...c })) : [];
     if (!customers.length) {
-      el.innerHTML = '<div class="emptyMsg">مفيش زبائن مسجلين لسه</div>';
+      el.innerHTML = '<div class="emptyMsg">لا يوجد زبائن مسجلين بعد</div>';
       return;
     }
     const debtVal = debtSnap.val();
@@ -4912,7 +5731,7 @@ function loadCustomers() {
       } else if (c.net < 0) {
         statusHtml = `<div class="p" style="color:#DC2626;font-weight:800;">-${fmtMoney(Math.abs(c.net))} د.ل (مستحق له)</div>`;
       } else {
-        statusHtml = `<div class="p">مفيش دين</div>`;
+        statusHtml = `<div class="p">لا يوجد دين</div>`;
       }
       return `
       <div class="searchResultRow">
@@ -4964,7 +5783,7 @@ function saveCustomerEdit() {
   if (!editingCustomerId) return;
   const name = document.getElementById('editCustomerNameInput').value.trim();
   const phone = document.getElementById('editCustomerPhoneInput').value.trim();
-  if (!name) { alert('اسم الزبون مايقدرش يبقى فاضي'); return; }
+  if (!name) { alert('اسم الزبون لا يمكن أن يكون فارغًا'); return; }
   const updates = { name: name, phone: phone || null };
   db.ref('data/customers/' + editingCustomerId).update(updates).then(() => {
     // ملحوظة: تغيير الاسم هنا بيحدّث حساب الزبون نفسه بس - أي فواتير/ديون قديمة متسجل فيها
@@ -4972,11 +5791,11 @@ function saveCustomerEdit() {
     logActivity('تعديل بيانات زبون', name + (phone ? ' - 📞 ' + phone : ''));
     closeModal('editCustomerModal');
     loadCustomers();
-  }).catch(err => alert('حصلت مشكلة وقت الحفظ: ' + (err && err.message ? err.message : err)));
+  }).catch(err => alert('حدثت مشكلة وقت الحفظ: ' + (err && err.message ? err.message : err)));
 }
 
 function deleteCustomer(customerId, customerName) {
-  if (!confirm('تأكيد حذف الزبون "' + customerName + '"؟ (متاح بس لأن الحساب متزن حاليًا)')) return;
+  if (!confirm('تأكيد حذف الزبون "' + customerName + '"؟ (متاح فقط لأن الحساب متزن حاليًا)')) return;
   db.ref('data/customers/' + customerId).remove().then(() => {
     logActivity('حذف زبون', customerName);
     loadCustomers();
@@ -5067,13 +5886,13 @@ function submitDeposit() {
     if (kind !== 'purchase') {
       reconcileSalesAccount(customerId).then(info => {
         if (info.settledCount > 0) {
-          showQuickToast(`✅ اتسدد تلقائيًا ${info.settledCount} صنف من إجمالي الإيداعات`);
+          showQuickToast(`✅ سُدّد تلقائيًا ${info.settledCount} صنف من إجمالي الإيداعات`);
         }
         finishUp();
       }).catch(err => {
         // مهم نوضح للمستخدم إن التسوية التلقائية فشلت (مش نتجاهلها بصمت) - الإيداع نفسه اتسجل
         // صح، بس الأصناف المستحقة لسه "لم يسدد" ومحتاجة تسجيل سداد يدوي دلوقتي بدل التلقائي
-        alert('الإيداع اتسجل بنجاح، لكن حصلت مشكلة في التسوية التلقائية للأصناف المستحقة: ' + (err && err.message ? err.message : err) + '\n\nممكن تسجّلي السداد يدويًا لكل صنف من زرار "تسجيل السداد".');
+        alert('الإيداع سُجّل بنجاح، لكن حدثت مشكلة في التسوية التلقائية للأصناف المستحقة: ' + (err && err.message ? err.message : err) + '\n\nيمكنك تسجيل السداد يدويًا لكل صنف من زر "تسجيل السداد".');
         finishUp();
       });
     } else {
@@ -5119,7 +5938,7 @@ async function reconcileSalesAccount(customerId, debugMode) {
       stillFilling = false; // أول صنف مش كفاية له، نوقف نسدد أي حاجة بعده (حتى لو أرخص) - أقدم أولًا
     }
     if (debugMode) {
-      debugLines.push(`[${d.id.slice(-5)}] ${d.itemName||'?'} amount=${JSON.stringify(d.amount)}(${typeof d.amount}) paid=${JSON.stringify(d.paid)}(${typeof d.paid}) autoSettled=${JSON.stringify(d.autoSettled)} date=${d.date} → ${shouldBePaid ? 'هيتسدد' : 'مش هيتسدد'}`);
+      debugLines.push(`[${d.id.slice(-5)}] ${d.itemName||'?'} amount=${JSON.stringify(d.amount)}(${typeof d.amount}) paid=${JSON.stringify(d.paid)}(${typeof d.paid}) autoSettled=${JSON.stringify(d.autoSettled)} date=${d.date} → ${shouldBePaid ? 'سيُسدَّد' : 'لن يُسدَّد'}`);
     }
     if (shouldBePaid && !d.paid) {
       updates['data/debts/' + d.id + '/paid'] = true;
@@ -5166,7 +5985,7 @@ function loadPurchaseDebts() {
 function renderPurchaseDebtsSuppliers() {
   const el = document.getElementById('purchaseDebtsList');
   const totalEl = document.getElementById('purchaseDebtsTotal');
-  if (!latestPurchaseDebts.length) { el.innerHTML = '<div class="emptyMsg">مفيش ديون مشتريات مسجلة</div>'; totalEl.textContent = ''; return; }
+  if (!latestPurchaseDebts.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد ديون مشتريات مسجلة</div>'; totalEl.textContent = ''; return; }
   const grandTotal = latestPurchaseDebts.reduce((sum, it) => sum + Number(it.price || 0), 0);
   totalEl.textContent = 'إجمالي الديون: ' + fmtMoney(grandTotal) + ' د.ل (' + latestPurchaseDebts.length + ' صنف)';
 
@@ -5225,11 +6044,11 @@ function cancelDeposit(depositId, customerId, customerName, kind) {
         if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
         if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
       }).catch(err => {
-        alert('اتلغى الإيداع، لكن حصلت مشكلة وقت إعادة حساب الأصناف المستحقة تلقائيًا: ' + (err && err.message ? err.message : err) + '\n\nراجعي الأصناف يدويًا للتأكد.');
+        alert('أُلغي الإيداع، لكن حدثت مشكلة وقت إعادة حساب الأصناف المستحقة تلقائيًا: ' + (err && err.message ? err.message : err) + '\n\nراجع الأصناف يدويًا للتأكد.');
         if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
       });
     }).catch(err => {
-      alert('حصلت مشكلة وقت مسح الإيداع: ' + (err && err.message ? err.message : err));
+      alert('حدثت مشكلة وقت مسح الإيداع: ' + (err && err.message ? err.message : err));
     });
   });
 }
@@ -5261,7 +6080,7 @@ function renderDepositRow(p, customerId, customerName, kind) {
 // والتاريخ والوقت، وأي بيانات تانية اتقرت من الإيصال بالكاميرا (رمز التفويض، STAN، إلخ) لو متوفرة
 function showDepositReceiptDetail(depositId) {
   const dep = window.__depositsById && window.__depositsById[depositId];
-  if (!dep) { alert('مقدرناش نلاقي تفاصيل الإيداع ده - جرب تقفل الشاشة وتفتحها تاني'); return; }
+  if (!dep) { alert('تعذّر إيجاد تفاصيل هذا الإيداع - حاول إغلاق الشاشة وفتحها مرة أخرى'); return; }
   document.getElementById('itemDetailTitle').textContent = 'تفاصيل الواصل';
   const body = document.getElementById('itemDetailBody');
   const dt = new Date(dep.at);
@@ -5294,6 +6113,127 @@ function showDepositReceiptDetail(depositId) {
 
   body.innerHTML = html;
   openModal('itemDetailModal');
+}
+
+/* ================= تذكير الزبون بالدين على واتساب ================= */
+// تحويل رقم الهاتف لصيغة واتساب الدولية (ليبيا 218): 0912345678 → 218912345678
+function toWhatsAppNumber(phone) {
+  let d = String(phone || '')
+    .replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, c => String(c.charCodeAt(0) - 0x06F0))
+    .replace(/[^0-9+]/g, '');
+  if (d.startsWith('+')) d = d.slice(1);
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('0')) d = '218' + d.slice(1);
+  else if (d.length === 9 && d.startsWith('9')) d = '218' + d;
+  return d.length >= 11 ? d : '';
+}
+
+let debtReminder = null; // { text, num, customerName, file, pdf, preparing }
+
+function buildDebtReminderText(s) {
+  const unpaid = s.salesDebts || [];
+  let since = '';
+  if (unpaid.length) {
+    const oldest = unpaid.reduce((m, d) => (new Date(d.date) < new Date(m.date) ? d : m), unpaid[0]);
+    const od = new Date(oldest.date);
+    if (!isNaN(od)) since = od.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  const lines = [
+    'السلام عليكم ' + s.customerName + ' 🌷',
+    'نذكّركم بأن الرصيد المستحق عليكم لدينا هو: ' + fmtMoney(s.combinedNet) + ' د.ل'
+  ];
+  if (unpaid.length) lines.push('عدد الأصناف: ' + unpaid.length + (since ? ' — من تاريخ ' + since : ''));
+  lines.push('مرفق كشف الحساب بالتفاصيل.');
+  lines.push('نرجو التكرم بالسداد في أقرب وقت.');
+  lines.push('مع الشكر والتقدير 🙏');
+  return lines.join('\n');
+}
+
+function sendDebtReminderWhatsApp() {
+  const s = lastCustomerStatement;
+  if (!s || !(s.combinedNet > 0)) { alert('هذا الزبون غير مديون حاليًا'); return; }
+  debtReminder = { text: buildDebtReminderText(s), num: toWhatsAppNumber(s.customerPhone), customerName: s.customerName, phone: s.customerPhone || '', amount: s.combinedNet, file: null, pdf: null, preparing: false };
+  document.getElementById('drTo').textContent = 'إلى: ' + s.customerName + (debtReminder.num ? ' — 📞 ' + s.customerPhone : ' — ما له رقم محفوظ');
+  document.getElementById('drPreview').textContent = debtReminder.text;
+  renderDebtReminderPdfBtn();
+  openModal('debtReminderModal');
+}
+
+function renderDebtReminderPdfBtn() {
+  const btn = document.getElementById('drPdfBtn');
+  const hint = document.getElementById('drPdfHint');
+  const r = debtReminder || {};
+  btn.disabled = !!r.preparing;
+  btn.style.opacity = r.preparing ? '.7' : '1';
+  if (r.preparing) {
+    btn.textContent = '⏳ جاري تجهيز كشف الحساب PDF...';
+    hint.textContent = '';
+  } else if (r.file) {
+    btn.textContent = '📤 مشاركة الرسالة + كشف PDF';
+    hint.textContent = 'الكشف جاهز. اختر واتساب ثم الزبون. الرسالة ستُنسخ أيضًا — لو واتساب أرسل الملف بدون النص، الصقها في المحادثة.';
+  } else {
+    btn.textContent = '📄 رسالة + كشف حساب PDF';
+    hint.textContent = 'يتم تجهيز الكشف أولًا، ثم تضغط مشاركة وتختار واتساب والزبون.';
+  }
+}
+
+// خطوتين عن قصد: الآيفون بيرفض فتح قايمة المشاركة لو ما جاتش من ضغطة مباشرة،
+// وتجهيز الـ PDF بياخد ثواني - فبنجهزه الأول، وبعدين ضغطة "مشاركة" تفتح القايمة فورًا
+function debtReminderPdfAction() {
+  const r = debtReminder;
+  if (!r || r.preparing) return;
+  if (!r.file) {
+    const libErr = pdfLibsError();
+    if (libErr) { alert(libErr); return; }
+    const html = buildCustomerStatementHtml({ purchase: true, deposit: true, payment: true, purchaseAccount: true, fromDate: null, toDate: null });
+    if (!html) { alert('تعذّر تجهيز الكشف - افتح حساب الزبون مرة أخرى وحاول'); return; }
+    r.preparing = true;
+    renderDebtReminderPdfBtn();
+    buildPdfFileFromHtml(html, 'كشف حساب - ' + r.customerName).then(res => {
+      r.preparing = false;
+      r.file = res.file;
+      r.pdf = res.pdf;
+      renderDebtReminderPdfBtn();
+    }).catch(err => {
+      r.preparing = false;
+      renderDebtReminderPdfBtn();
+      const m = err && err.message ? err.message : String(err);
+      alert('تعذّر تجهيز الـ PDF: ' + m);
+      logClientError('تجهيز كشف PDF للتذكير', m);
+    });
+    return;
+  }
+  // نسخ الرسالة احتياطيًا (جوه نفس الضغطة)
+  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(r.text).catch(() => {}); } catch (e) {}
+  const data = { files: [r.file], text: r.text };
+  if (navigator.canShare && navigator.canShare({ files: [r.file] })) {
+    navigator.share(navigator.canShare(data) ? data : { files: [r.file] }).then(() => {
+      logActivity('تذكير بالدين', r.customerName + ' - ' + fmtMoney(r.amount) + ' د.ل - مع كشف PDF');
+      closeModal('debtReminderModal');
+    }).catch(err => {
+      if (err && err.name === 'AbortError') return; // المستخدم قفل قايمة المشاركة
+      alert('تعذّر فتح قائمة المشاركة: ' + (err && err.message ? err.message : err));
+    });
+  } else if (r.pdf && typeof r.pdf.save === 'function') {
+    r.pdf.save('كشف حساب - ' + r.customerName + '.pdf');
+    alert('هذا الجهاز لا يدعم مشاركة الملفات مباشرة، فالكشف حُفظ كملف. أرسله للزبون من واتساب، والرسالة نُسخت.');
+  } else {
+    alert('تعذّر مشاركة الملف على هذا الجهاز.');
+  }
+}
+
+function debtReminderTextOnly() {
+  const r = debtReminder;
+  if (!r) return;
+  // رسالة بس: من غير سطر "مرفق كشف الحساب"
+  const text = r.text.split('\n').filter(l => l.indexOf('مرفق كشف الحساب') === -1).join('\n');
+  if (!r.num && !confirm('هذا الزبون ما له رقم هاتف محفوظ (أو الرقم ناقص).\nتفتح واتساب وتختار الشخص بنفسك؟\n\nيمكنك إضافة رقمه من "تعديل بيانات الزبون".')) return;
+  const url = 'https://wa.me/' + (r.num || '') + '?text=' + encodeURIComponent(text);
+  logActivity('تذكير بالدين', r.customerName + ' - ' + fmtMoney(r.amount) + ' د.ل' + (r.num ? ' - 📞 ' + r.phone : ''));
+  closeModal('debtReminderModal');
+  const w = window.open(url, '_blank');
+  if (!w) window.location.href = url;
 }
 
 function openCustomerDebt(customerId, customerName) {
@@ -5356,19 +6296,26 @@ function openCustomerDebt(customerId, customerName) {
       netHtml = `<div class="p" style="font-weight:800;color:#16A34A;">0.00 د.ل (الحساب متزن)</div>`;
     }
     let html = `<div class="searchResultRow" id="debtTotalRow" style="background:var(--surface2);"><div class="n">الرصيد الإجمالي</div>${netHtml}</div>`;
+    if (combinedNet > 0.0005) {
+      // تذكير بالدين: بيظهر بس لما الزبون مديون لك
+      html += `<button type="button" onclick="sendDebtReminderWhatsApp()" style="width:100%;margin:10px 0 0;background:#25D366;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3a.5.5 0 0 0 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.7a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3Z"/></svg>
+        تذكير بالدين على واتساب
+      </button>`;
+    }
     html += `<div style="display:flex;gap:8px;margin:10px 0;">
       <button onclick="openModal('statementFilterModal')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg> معاينة</button>
       <button onclick="shareStatementView()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
-    html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;"><span class="ic ic-moneybag"></span> حساب المبيعات (اللي له عندك)</div>`;
+    html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;"><span class="ic ic-moneybag"></span> حساب المبيعات (ما له عندك)</div>`;
     html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','sales')" style="width:100%;margin:6px 0 10px;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
 
     if (mine.length) {
       html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف المستحقة</div>`;
       html += mine.map(d => renderDebtRow(d, customerId, customerName, false)).join('');
     } else {
-      html += `<div class="emptyMsg">مفيش أصناف مستحقة</div>`;
+      html += `<div class="emptyMsg">لا يوجد أصناف مستحقة</div>`;
     }
 
     if (myDeposits.length) {
@@ -5381,11 +6328,11 @@ function openCustomerDebt(customerId, customerName) {
 
     // ---- حساب المشتريات (بضاعة اشتريتها من نفس الشخص/المحل) ----
     if (myPurchases.length || myPurchaseDeposits.length) {
-      html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:22px 0 6px;border-top:1px solid var(--border);padding-top:16px;"><span class="ic ic-receipt"></span> حساب المشتريات (اللي عليك ليه)</div>`;
+      html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:22px 0 6px;border-top:1px solid var(--border);padding-top:16px;"><span class="ic ic-receipt"></span> حساب المشتريات (ما عليك له)</div>`;
       html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','purchase')" style="width:100%;margin:6px 0 10px;background:#FEF3C7;color:#B45309;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#B45309" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> تسديد مبلغ للمحل</button>`;
 
       if (myPurchases.length) {
-        html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف اللي اشتريتها</div>`;
+        html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف التي اشتريتها</div>`;
         html += myPurchases.map(it => renderPurchaseDebtRow(it, customerId, customerName)).join('');
       }
 
@@ -5487,16 +6434,16 @@ function confirmStatementFilterAndOpen() {
     fromDate: document.getElementById('stmtFilterFromDate').value || null,
     toDate: document.getElementById('stmtFilterToDate').value || null
   };
-  if (!filters.purchase && !filters.deposit && !filters.payment && !filters.purchaseAccount) { alert('اختار نوع حركة واحد على الأقل'); return; }
-  if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) { alert('تاريخ "من" لازم يكون قبل تاريخ "إلى"'); return; }
+  if (!filters.purchase && !filters.deposit && !filters.payment && !filters.purchaseAccount) { alert('اختر نوع حركة واحد على الأقل'); return; }
+  if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) { alert('تاريخ "من" يجب يكون قبل تاريخ "إلى"'); return; }
   closeModal('statementFilterModal');
   openCustomerStatementView(filters);
 }
 
-function openCustomerStatementView(filters) {
+// بيبني كشف حساب الزبون (HTML) من غير ما يفتح أي نافذة - بيستخدمه عرض الكشف وتذكير الواتساب (PDF)
+function buildCustomerStatementHtml(filters) {
   const s = lastCustomerStatement;
-  if (!s) return;
-  currentStatementViewType = 'customer';
+  if (!s) return '';
   const f = filters || {};
   // بنحسب كل الحركات والرصيد المتراكم على كامل تاريخ الحساب الأول (من غير أي فلترة تاريخ) -
   // عشان الرصيد يفضل دقيق ومربوط بكل حاجة قبل كده، حتى لو هنعرض بس جزء من الفترة
@@ -5527,7 +6474,7 @@ function openCustomerStatementView(filters) {
   const lastDateShown = f.toDate ? new Date(f.toDate) : now;
   const custNum = customerDisplayNumber(s.customerId);
 
-  document.getElementById('statementViewTitle').textContent = 'كشف حساب - ' + s.customerName;
+  
 
   const openingRowHtml = f.fromDate ? `<tr style="background:#F8FAFC;">
     <td colspan="7" style="text-align:left;font-weight:800;color:#475569;">الرصيد الافتتاحي (قبل ${f.fromDate})</td>
@@ -5550,7 +6497,7 @@ function openCustomerStatementView(filters) {
       <td style="color:#0D9488;font-weight:700;">${paymentCell}</td>
       <td style="color:#DC2626;font-weight:800;">${fmtMoney(r.balance)}</td>
     </tr>`;
-  }).join('') : `<tr><td colspan="9" style="padding:20px;color:#94A3B8;">مفيش حركات مسجلة في الفترة دي</td></tr>`;
+  }).join('') : `<tr><td colspan="9" style="padding:20px;color:#94A3B8;">لا يوجد حركات مسجلة في هذه الفترة</td></tr>`;
 
   const totalDebtBeforePayment = totalPurchases - totalDeposits;
 
@@ -5592,7 +6539,15 @@ function openCustomerStatementView(filters) {
     <div class="newStmtSignRow"><div class="newStmtSignLine">توقيع المسؤول</div></div>
     <div class="newStmtThanks" style="display:flex;align-items:center;justify-content:center;gap:5px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="#16A34A" stroke="#16A34A"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> شكرًا لتعاملكم معنا</div>
   </div>`;
-  document.getElementById('statementViewBody').innerHTML = html;
+  return html;
+}
+
+function openCustomerStatementView(filters) {
+  const s = lastCustomerStatement;
+  if (!s) return;
+  currentStatementViewType = 'customer';
+  document.getElementById('statementViewTitle').textContent = 'كشف حساب - ' + s.customerName;
+  document.getElementById('statementViewBody').innerHTML = buildCustomerStatementHtml(filters);
   openModal('statementViewModal');
 }
 
@@ -5614,7 +6569,7 @@ function shareStatementView() {
   if (navigator.share) {
     navigator.share({ title: 'كشف حساب - ' + s.customerName, text: text }).catch(() => {});
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => alert('اتنسخ الكشف - الصقه فين ما تحب'));
+    navigator.clipboard.writeText(text).then(() => alert('نُسخ الكشف - الصقه حيث تريد'));
   } else {
     alert(text);
   }
@@ -5628,7 +6583,7 @@ function shareShortagesView() {
   if (navigator.share) {
     navigator.share({ title: v.title, text: text }).catch(() => {});
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => alert('اتنسخت القائمة - الصقها فين ما تحب'));
+    navigator.clipboard.writeText(text).then(() => alert('نُسخت القائمة - الصقها حيث تريد'));
   } else {
     alert(text);
   }
@@ -5650,74 +6605,73 @@ function showQuickToast(msg, autoDismiss) {
   return el;
 }
 
-function downloadStatementViewPDF() {
-  // فحص إن المكتبات المطلوبة اتحمّلت فعلاً من الإنترنت قبل ما نبدأ - لو لأ، نقول ليه بالظبط
-  if (typeof html2canvas === 'undefined') {
-    alert('مقدرناش نجهز الـ PDF: مكتبة تجهيز الصورة (html2canvas) لسه ما اتحمّلتش من الإنترنت. تأكد من الاتصال بالإنترنت واقفل التطبيق وافتحه تاني.');
-    return;
-  }
-  if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-    alert('مقدرناش نجهز الـ PDF: مكتبة إنشاء ملف الـ PDF (jsPDF) لسه ما اتحمّلتش من الإنترنت. تأكد من الاتصال بالإنترنت واقفل التطبيق وافتحه تاني.');
-    return;
-  }
+// فحص إن مكتبات الـ PDF اتحمّلت من الإنترنت - بيرجع سبب المشكلة بالظبط لو فيه
+function pdfLibsError() {
+  if (typeof html2canvas === 'undefined') return 'تعذّر تجهيز الـ PDF: مكتبة تجهيز الصورة (html2canvas) لم تُحمَّل بعد من الإنترنت. تأكد من الاتصال بالإنترنت وأغلق التطبيق وافتحه مرة أخرى.';
+  if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') return 'تعذّر تجهيز الـ PDF: مكتبة إنشاء ملف الـ PDF (jsPDF) لم تُحمَّل بعد من الإنترنت. تأكد من الاتصال بالإنترنت وأغلق التطبيق وافتحه مرة أخرى.';
+  return '';
+}
 
+// بيحوّل أي HTML لملف PDF (بيرجع Promise بـ { file, pdf })
+// بناخد نسخة من المحتوى في عنصر منفصل تمامًا برا أي نافذة، بعرض ثابت كبير يكفي الجدول بكل أعمدته
+// من غير أي قص، ونصوّر النسخة دي بس - بعيدة عن أي قيد وراثي من نوافذ التطبيق
+function buildPdfFileFromHtml(html, filename) {
+  return new Promise((resolve, reject) => {
+    const clone = document.createElement('div');
+    clone.innerHTML = html;
+    clone.style.cssText = 'position:fixed; top:0; left:-99999px; width:900px; background:#fff; color:#1E293B; padding:16px; box-sizing:border-box; direction:rtl; font-family:inherit; z-index:-1;';
+    document.body.appendChild(clone);
+    const cleanup = () => { if (clone.parentNode) clone.parentNode.removeChild(clone); };
+    setTimeout(() => {
+      try {
+        html2canvas(clone, { scale: 2, backgroundColor: '#ffffff', width: 900, windowWidth: 900 }).then(canvas => {
+          cleanup();
+          try {
+            if (!canvas.width || !canvas.height) { reject(new Error('الصفحة ظهرت فارغة (مقاسها صفر) - حاول مرة أخرى')); return; }
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const { jsPDF } = window.jspdf;
+            const pageWidth = 842; // عرض A4 بالعرض (Landscape) بالنقاط - أنسب لجدول عريض
+            const imgHeight = canvas.height * (pageWidth / canvas.width);
+            // format مخصص من غير orientation - عشان المقاسات تمشي زي ما هي من غير تحويل غلط
+            const pdf = new jsPDF({ unit: 'pt', format: [pageWidth, imgHeight] });
+            pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeight);
+            const blob = pdf.output('blob');
+            resolve({ file: new File([blob], filename + '.pdf', { type: 'application/pdf' }), pdf: pdf });
+          } catch (innerErr) {
+            reject(new Error('مشكلة وقت بناء ملف الـ PDF نفسه: ' + (innerErr && innerErr.message ? innerErr.message : innerErr)));
+          }
+        }).catch(err => {
+          cleanup();
+          reject(new Error('مشكلة وقت تصوير الصفحة (html2canvas): ' + (err && err.message ? err.message : err)));
+        });
+      } catch (syncErr) {
+        cleanup();
+        reject(new Error('مشكلة قبل ما نبدأ التصوير: ' + (syncErr && syncErr.message ? syncErr.message : syncErr)));
+      }
+    }, 100);
+  });
+}
+
+function downloadStatementViewPDF() {
+  const libErr = pdfLibsError();
+  if (libErr) { alert(libErr); return; }
   const body = document.getElementById('statementViewBody');
   const filename = document.getElementById('statementViewTitle').textContent || 'كشف حساب';
-
-  // المحاولة القديمة (تشيل قيود الانزلاق من العنصر نفسه بس) ما كانتش كفاية - كان لسه فيه عنصر
-  // جد (أب) تاني بيحاصر العرض. الحل الأضمن: ناخد نسخة كاملة من المحتوى ونحطها في عنصر منفصل
-  // تمامًا، مربوط مباشرة في نهاية الصفحة (مش جوه أي نافذة/قيود)، بعرض ثابت كبير يكفي الجدول
-  // بكل أعمدته من غير أي قص، ونصوّر النسخة دي بس - بعيدة تمامًا عن أي قيد وراثي من نوافذ التطبيق
-  const clone = document.createElement('div');
-  clone.innerHTML = body.innerHTML;
-  clone.style.cssText = 'position:fixed; top:0; left:-99999px; width:900px; background:#fff; padding:16px; box-sizing:border-box; direction:rtl; font-family:inherit; z-index:-1;';
-  document.body.appendChild(clone);
-
   const toast = showQuickToast('جاري تجهيز الـ PDF...', false);
-  function cleanup() {
-    if (clone.parentNode) clone.parentNode.removeChild(clone);
-    if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
-  }
-
-  setTimeout(() => {
-    try {
-      html2canvas(clone, { scale: 2, backgroundColor: '#ffffff', width: 900, windowWidth: 900 }).then(canvas => {
-        cleanup();
-        try {
-          if (!canvas.width || !canvas.height) {
-            alert('مقدرناش نجهز الـ PDF: الصفحة طلعت فاضية (مقاسها صفر) - جرب تاني.');
-            return;
-          }
-          const imgData = canvas.toDataURL('image/jpeg', 0.95);
-          const { jsPDF } = window.jspdf;
-          const pageWidth = 842; // عرض A4 بالعرض (Landscape) بالنقاط - أنسب لجدول عريض من غير ما يتقص
-          const imgWidth = pageWidth;
-          const imgHeight = canvas.height * (imgWidth / canvas.width);
-          // لما بتدي format مخصص (مقاسات محددة بنفسك)، أي orientation زيادة بتتعارض معاه وتعمل
-          // تحويل غلط للمقاسات - من غير ما نحددها بيمشي بالمقاسات المكتوبة بالظبط من غير أي لخبطة
-          const pdf = new jsPDF({ unit: 'pt', format: [pageWidth, imgHeight] });
-          pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-          const pdfBlob = pdf.output('blob');
-          const pdfFile = new File([pdfBlob], filename + '.pdf', { type: 'application/pdf' });
-          if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-            navigator.share({ files: [pdfFile] }).catch(() => {});
-          } else if (typeof pdf.save === 'function') {
-            pdf.save(filename + '.pdf');
-          } else {
-            alert('مقدرناش نجهزلك الملف للحفظ أو المشاركة على الجهاز ده.');
-          }
-        } catch (innerErr) {
-          alert('حصلت مشكلة وقت بناء ملف الـ PDF نفسه: ' + (innerErr && innerErr.message ? innerErr.message : innerErr));
-        }
-      }).catch(err => {
-        cleanup();
-        alert('حصلت مشكلة وقت تصوير الصفحة (html2canvas): ' + (err && err.message ? err.message : err));
-      });
-    } catch (syncErr) {
-      cleanup();
-      alert('حصلت مشكلة فورية قبل حتى ما نبدأ التصوير: ' + (syncErr && syncErr.message ? syncErr.message : syncErr));
+  const removeToast = () => { if (toast && toast.parentNode) toast.parentNode.removeChild(toast); };
+  buildPdfFileFromHtml(body.innerHTML, filename).then(({ file, pdf }) => {
+    removeToast();
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(() => {});
+    } else if (typeof pdf.save === 'function') {
+      pdf.save(filename + '.pdf');
+    } else {
+      alert('تعذّر تجهيز الملف للحفظ أو المشاركة على هذا الجهاز.');
     }
-  }, 100);
+  }).catch(err => {
+    removeToast();
+    alert('تعذّر تجهيز الـ PDF: ' + (err && err.message ? err.message : err));
+  });
 }
 
 function renderPurchaseDebtRow(it, customerId, customerName) {
@@ -5852,7 +6806,7 @@ function loadLowStock() {
     const val = snap.val();
     const dismissed = getDismissedLowStock();
     const items = (val ? Object.values(val) : []).filter(it => !dismissed.includes(String(it.id)));
-    if (!items.length) { el.innerHTML = '<div class="emptyMsg">مفيش اصناف نفدت في آخر يومين</div>'; return; }
+    if (!items.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد اصناف نفدت في آخر يومين</div>'; return; }
     const sorted = items.sort((a,b) => new Date(b.time) - new Date(a.time));
     el.innerHTML = sorted.map(it => `<div class="searchResultRow" data-item-id="${it.id}">
       <div style="flex:1;min-width:0;"><div class="n">${escapeHtml(it.name)}</div><div class="p">${it.time || ''}</div></div>
@@ -5955,7 +6909,7 @@ function renderShortagesList() {
   items = currentShortageSourceFilter === 'unclassified'
     ? items.filter(it => !it.source)
     : items.filter(it => it.source === currentShortageSourceFilter);
-  if (!items.length) { el.innerHTML = '<div class="emptyMsg">القائمة فاضية</div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="emptyMsg">القائمة فارغة</div>'; return; }
   el.innerHTML = items.map(it => `<div class="searchResultRow">
       <div style="flex:1;min-width:0;cursor:pointer;" onclick="openAddShortageForm('${it.id}')">
         <div class="n">${escapeHtml(it.name)}${it.qty ? ' &middot; الكمية: ' + it.qty : ''}</div>
@@ -5975,13 +6929,13 @@ function shareShortagesList() {
     items = items.filter(it => it.source === currentShortageSourceFilter);
     title = 'قائمة النواقص - ' + currentShortageSourceFilter;
   }
-  if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
+  if (!items.length) { alert('هذه القائمة فارغة حاليًا'); return; }
   const lines = items.map((it, idx) => (idx + 1) + '. ' + it.name + (it.qty ? ' × ' + it.qty : '') + (it.source ? ' (' + it.source + ')' : ''));
   const text = title + '\n\n' + lines.join('\n');
   if (navigator.share) {
     navigator.share({ title: title, text: text }).catch(() => {});
   } else if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => alert('اتنسخت القائمة - الصقها في ملاحظاتك أو في محادثة المورد')).catch(() => alert(text));
+    navigator.clipboard.writeText(text).then(() => alert('نُسخت القائمة - الصقها في ملاحظاتك أو في محادثة المورد')).catch(() => alert(text));
   } else {
     alert(text);
   }
@@ -5999,7 +6953,7 @@ function openShortagesListView() {
     items = items.filter(it => it.source === currentShortageSourceFilter);
     title = 'قائمة النواقص - ' + currentShortageSourceFilter;
   }
-  if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
+  if (!items.length) { alert('هذه القائمة فارغة حاليًا'); return; }
   currentStatementViewType = 'shortages';
   lastShortagesView = { title, items };
 
@@ -6189,7 +7143,7 @@ function markShortageFulfilled(id) {
 function buyAllShortagesInCurrentFilter() {
   if (currentShortageSourceFilter === 'unclassified') return;
   const items = latestShortages.filter(it => it.source === currentShortageSourceFilter);
-  if (!items.length) { alert('القائمة دي فاضية حاليًا'); return; }
+  if (!items.length) { alert('هذه القائمة فارغة حاليًا'); return; }
   if (!confirm('تأكيد إنك اشتريت كل أصناف "' + currentShortageSourceFilter + '" (' + items.length + ' صنف)؟')) return;
   Promise.all(items.map(it => fulfillShortageItem(it))).then(() => {
     loadShortages();
@@ -6236,7 +7190,7 @@ function loadReturnsOffline(fromStr, toStr, el) {
     const returns = flat.filter(e => e && e.type === 'return');
     renderReturnsGroupedByDate(fromStr, toStr, returns, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة'));
   }).catch(() => {
-    el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+    el.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
 
@@ -6244,8 +7198,8 @@ function loadReturnsRange() {
   const fromStr = document.getElementById('returnsFrom').value;
   const toStr = document.getElementById('returnsTo').value;
   const el = document.getElementById('returnsList');
-  if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية</div>'; return; }
-  if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية لازم يكون قبل تاريخ النهاية</div>'; return; }
+  if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختر تاريخ البداية والنهاية</div>'; return; }
+  if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
 
   const pushRef = db.ref('commands/invoiceQuery').push();
@@ -6294,7 +7248,7 @@ function setReportPeriod(period) {
     if (fromEl.value && toEl.value) {
       loadCustomRangeReport();
     } else {
-      el.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية واضغط عرض</div>';
+      el.innerHTML = '<div class="emptyMsg">اختر تاريخ البداية والنهاية واضغط عرض</div>';
     }
     return;
   }
@@ -6305,8 +7259,8 @@ function loadCustomRangeReport() {
   const fromStr = document.getElementById('reportRangeFrom').value;
   const toStr = document.getElementById('reportRangeTo').value;
   const el = document.getElementById('reportsBody');
-  if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختار تاريخ البداية والنهاية</div>'; return; }
-  if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية لازم يكون قبل تاريخ النهاية</div>'; return; }
+  if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختر تاريخ البداية والنهاية</div>'; return; }
+  if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
   runReportQuery({ from: fromStr, to: toStr }, 'range', el, 'من ' + fromStr + ' إلى ' + toStr);
 }
 
@@ -6324,9 +7278,13 @@ function reportRangeForPeriod(period) {
   return { from: fmt(from), to: fmt(now) };
 }
 
+let lastReportRange = null;
+let lastPeriodReport = null; // { r, periodLabel, range, offline, file, pdf, preparing }
+
 function renderPeriodReport(r, period, el, notePrefix, rangeLabel) {
   const periodLabel = rangeLabel || { day:'اليوم', week:'آخر 7 أيام', month:'من أول الشهر', year:'من أول السنة' }[period];
   const net = (Number(r.totalSales)||0) - (Number(r.returnsTotal)||0);
+  lastPeriodReport = { r: r, periodLabel: periodLabel, range: lastReportRange, offline: !!notePrefix, file: null, pdf: null, preparing: false };
   el.innerHTML = (notePrefix || '') + `
     <div class="searchResultRow"><div class="n">الفترة</div><div class="p">${periodLabel}</div></div>
     <div class="searchResultRow"><div class="n">إجمالي المبيعات</div><div class="p">${fmtMoney(r.totalSales)} د.ل</div></div>
@@ -6334,7 +7292,88 @@ function renderPeriodReport(r, period, el, notePrefix, rangeLabel) {
     <div class="searchResultRow"><div class="n">عدد المرتجعات</div><div class="p">${r.returnsCount ?? 0}</div></div>
     <div class="searchResultRow"><div class="n">قيمة المرتجعات</div><div class="p">${fmtMoney(r.returnsTotal)} د.ل</div></div>
     <div class="searchResultRow"><div class="n">صافي المبيعات</div><div class="p">${fmtMoney(net)} د.ل</div></div>
+    <button type="button" id="reportPdfBtn" onclick="reportPdfAction()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">📄 تصدير التقرير PDF</button>
+    <div id="reportPdfHint" style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:6px;"></div>
   `;
+}
+
+function buildReportPdfHtml(rep) {
+  const r = rep.r || {};
+  const net = (Number(r.totalSales) || 0) - (Number(r.returnsTotal) || 0);
+  const now = new Date();
+  const store = (typeof labelSettings !== 'undefined' && labelSettings.storeName) ? String(labelSettings.storeName) : 'منظومة المبيعات';
+  let rangeStr = '';
+  if (rep.range && rep.range.from) {
+    const f = new Date(rep.range.from + 'T12:00:00'), t = new Date((rep.range.to || rep.range.from) + 'T12:00:00');
+    const o = { day: 'numeric', month: 'long', year: 'numeric' };
+    rangeStr = rep.range.from === rep.range.to ? f.toLocaleDateString('ar-EG-u-nu-latn', o) : 'من ' + f.toLocaleDateString('ar-EG-u-nu-latn', o) + ' إلى ' + t.toLocaleDateString('ar-EG-u-nu-latn', o);
+  }
+  const card = (label, val, color, bg) => `<div style="flex:1;background:${bg};border-radius:14px;padding:18px 16px;text-align:center;"><div style="font-size:15px;color:#475569;font-weight:700;">${label}</div><div style="font-size:26px;font-weight:900;color:${color};margin-top:8px;">${val}</div></div>`;
+  return `<div style="background:#fff;color:#1E293B;padding:10px 18px;font-size:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1E293B;padding-bottom:12px;">
+      <div><div style="font-size:26px;font-weight:900;">تقرير المبيعات</div><div style="font-size:15px;color:#475569;font-weight:700;margin-top:4px;">${escapeHtml(store)}</div></div>
+      <div style="text-align:left;"><div style="font-size:18px;font-weight:800;">${escapeHtml(rep.periodLabel || '')}</div><div style="font-size:14px;color:#475569;margin-top:4px;">${escapeHtml(rangeStr)}</div></div>
+    </div>
+    ${rep.offline ? '<div style="margin-top:12px;background:#FEF3C7;color:#92400E;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:700;">ملاحظة: جهاز الكاشير ما كانش متصل وقت التقرير، فالأرقام من آخر نسخة محفوظة.</div>' : ''}
+    <div style="display:flex;gap:12px;margin-top:18px;">
+      ${card('إجمالي المبيعات', fmtMoney(r.totalSales) + ' د.ل', '#1E293B', '#F1F5F9')}
+      ${card('المرتجعات', fmtMoney(r.returnsTotal) + ' د.ل', '#DC2626', '#FEF2F2')}
+      ${card('صافي المبيعات', fmtMoney(net) + ' د.ل', '#16A34A', '#F0FDF4')}
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-top:18px;font-size:16px;">
+      <tr style="background:#F8FAFC;"><th style="padding:10px;text-align:right;border-bottom:2px solid #E2E8F0;">البند</th><th style="padding:10px;text-align:left;border-bottom:2px solid #E2E8F0;">القيمة</th></tr>
+      <tr><td style="padding:10px;border-bottom:1px solid #F1F5F9;">الفترة</td><td style="padding:10px;text-align:left;border-bottom:1px solid #F1F5F9;font-weight:700;">${escapeHtml(rep.periodLabel || '')}</td></tr>
+      <tr><td style="padding:10px;border-bottom:1px solid #F1F5F9;">إجمالي المبيعات</td><td style="padding:10px;text-align:left;border-bottom:1px solid #F1F5F9;font-weight:700;">${fmtMoney(r.totalSales)} د.ل</td></tr>
+      <tr><td style="padding:10px;border-bottom:1px solid #F1F5F9;">عدد الفواتير</td><td style="padding:10px;text-align:left;border-bottom:1px solid #F1F5F9;font-weight:700;">${r.orderCount ?? 0}</td></tr>
+      <tr><td style="padding:10px;border-bottom:1px solid #F1F5F9;">عدد المرتجعات</td><td style="padding:10px;text-align:left;border-bottom:1px solid #F1F5F9;font-weight:700;">${r.returnsCount ?? 0}</td></tr>
+      <tr><td style="padding:10px;border-bottom:1px solid #F1F5F9;">قيمة المرتجعات</td><td style="padding:10px;text-align:left;border-bottom:1px solid #F1F5F9;font-weight:700;">${fmtMoney(r.returnsTotal)} د.ل</td></tr>
+      <tr style="background:#F0FDF4;"><td style="padding:12px 10px;font-weight:900;">صافي المبيعات</td><td style="padding:12px 10px;text-align:left;font-weight:900;color:#16A34A;">${fmtMoney(net)} د.ل</td></tr>
+    </table>
+    <div style="margin-top:16px;font-size:12px;color:#94A3B8;text-align:center;">تم الإنشاء: ${now.toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+  </div>`;
+}
+
+// خطوتين زي تذكير الديون: الآيفون بيرفض قايمة المشاركة لو ما جاتش من ضغطة مباشرة
+function reportPdfAction() {
+  const rep = lastPeriodReport;
+  const btn = document.getElementById('reportPdfBtn');
+  const hint = document.getElementById('reportPdfHint');
+  if (!rep || !btn || rep.preparing) return;
+  const title = 'تقرير المبيعات - ' + (rep.periodLabel || '');
+  if (!rep.file) {
+    const libErr = pdfLibsError();
+    if (libErr) { alert(libErr); return; }
+    rep.preparing = true;
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري تجهيز التقرير...';
+    buildPdfFileFromHtml(buildReportPdfHtml(rep), title.replace(/[\/:*?"<>|]/g, '-')).then(res => {
+      rep.preparing = false;
+      rep.file = res.file; rep.pdf = res.pdf;
+      if (lastPeriodReport !== rep) return;
+      btn.disabled = false;
+      btn.style.background = '#16A34A';
+      btn.textContent = '📤 مشاركة التقرير';
+      hint.textContent = 'التقرير جاهز - اختر واتساب أو احفظه في الملفات';
+    }).catch(err => {
+      rep.preparing = false;
+      btn.disabled = false;
+      btn.textContent = '📄 تصدير التقرير PDF';
+      const m = err && err.message ? err.message : String(err);
+      alert('تعذّر تجهيز الـ PDF: ' + m);
+      logClientError('تصدير تقرير PDF', m);
+    });
+    return;
+  }
+  if (navigator.canShare && navigator.canShare({ files: [rep.file] })) {
+    navigator.share({ files: [rep.file], title: title }).catch(err => {
+      if (err && err.name === 'AbortError') return;
+      alert('تعذّر فتح قائمة المشاركة: ' + (err && err.message ? err.message : err));
+    });
+  } else if (rep.pdf && typeof rep.pdf.save === 'function') {
+    rep.pdf.save(rep.file.name);
+  } else {
+    alert('تعذّر مشاركة الملف على هذا الجهاز.');
+  }
 }
 
 function loadReportForPeriodOffline(period, range, el, rangeLabel) {
@@ -6352,13 +7391,14 @@ function loadReportForPeriodOffline(period, range, el, rangeLabel) {
     });
     renderPeriodReport({ totalSales, returnsTotal, orderCount, returnsCount }, period, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - الأرقام من آخر نسخة محفوظة'), rangeLabel);
   }).catch(() => {
-    el.innerHTML = '<div class="emptyMsg">الجهاز مش متصل ومقدرش أجيب النسخة المحفوظة دلوقتي</div>';
+    el.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
 
 // نواة مشتركة لأي تقرير فترة - سواء تبويب جاهز (يومي/أسبوعي...) أو نطاق مخصص من تاريخ لتاريخ
 function runReportQuery(range, period, el, rangeLabel) {
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  lastReportRange = range;
 
   const pushRef = db.ref('commands/reportQuery').push();
   const pushId = pushRef.key;
@@ -6391,20 +7431,57 @@ function loadReports() {
   setReportPeriod(currentReportPeriod);
 }
 
+// كل المنتجات: بتتعرض على دفعات (60 صنف) وبتكمّل تلقائي وانت بتسكرول - أسرع بكتير من رسم 1500 صف مرة واحدة
+// والبحث بالاسم (بيتجاهل فروق أ/ا، ة/ه، ى/ي) أو بالباركود
+const PRODUCTS_PAGE = 60;
+let productsView = { list: [], shown: 0 };
+let productsFilterTimer = null;
+
+function renderProductsListDebounced() {
+  clearTimeout(productsFilterTimer);
+  productsFilterTimer = setTimeout(renderProductsList, 140);
+}
+
 function renderProductsList() {
   const el = document.getElementById('productsList');
-  const filterVal = (document.getElementById('productsFilterInput').value || '').trim().toLowerCase();
+  const raw = (document.getElementById('productsFilterInput').value || '').trim();
+  const q = normalizeArabicName(raw);
   const items = Object.values(latestItems || {});
-  if (!items.length) { el.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت (بتتحدث كل دقيقة)</div>'; return; }
-  const filtered = filterVal ? items.filter(it => (it.name||'').toLowerCase().includes(filterVal)) : items;
-  if (!filtered.length) { el.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
-  const sorted = filtered.sort((a,b) => (a.name||'').localeCompare(b.name||''));
-  el.innerHTML = sorted.slice(0,200).map(it => `
+  if (!items.length) { el.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد (تتحدث كل دقيقة)</div>'; return; }
+  const filtered = q ? items.filter(it => normalizeArabicName(it.name).includes(q) || (it.barcode && String(it.barcode).includes(raw))) : items.slice();
+  if (!filtered.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد نتائج</div>'; return; }
+  filtered.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+  productsView = { list: filtered, shown: 0 };
+  el.innerHTML = `<div class="plCount">${filtered.length} صنف</div><div id="productsRows"></div><div id="productsMore" class="emptyMsg" style="display:none;"></div>`;
+  el.scrollTop = 0;
+  appendProductsPage();
+}
+
+function appendProductsPage() {
+  const rowsEl = document.getElementById('productsRows');
+  if (!rowsEl) return;
+  const v = productsView;
+  const next = v.list.slice(v.shown, v.shown + PRODUCTS_PAGE);
+  if (!next.length) return;
+  rowsEl.insertAdjacentHTML('beforeend', next.map(it => `
     <div class="searchResultRow" style="cursor:pointer" onclick="showItemDetail(${it.id})">
       <div class="n">${escapeHtml(it.name)}</div>
       <div class="p">${fmtMoney(it.price)} د.ل &nbsp;|&nbsp; متبقي: ${it.stock}</div>
-    </div>`).join('') + (sorted.length > 200 ? '<div class="emptyMsg">اكتب اسم اصح لتضييق النتائج (اكتر من 200 صنف)</div>' : '');
-  el.scrollTop = 0;
+    </div>`).join(''));
+  v.shown += next.length;
+  const more = document.getElementById('productsMore');
+  if (more) {
+    more.style.display = v.shown < v.list.length ? 'block' : 'none';
+    more.textContent = 'عرض ' + v.shown + ' من ' + v.list.length + ' — كمّل سكرول لباقي الأصناف';
+  }
+  // لو الشاشة طويلة والدفعة الأولى ما ملتهاش، نكمّل على طول
+  const el = document.getElementById('productsList');
+  if (el && v.shown < v.list.length && el.scrollHeight <= el.clientHeight + 40) setTimeout(appendProductsPage, 0);
+}
+
+function onProductsListScroll() {
+  const el = document.getElementById('productsList');
+  if (el.scrollTop + el.clientHeight > el.scrollHeight - 400) appendProductsPage();
 }
 
 function showItemDetail(id) {
@@ -6426,9 +7503,9 @@ function doSearch() {
   const el = document.getElementById('searchResults');
   if (!q) { el.innerHTML = '<div class="emptyMsg">اكتب اسم صنف وابحث</div>'; return; }
   const items = Object.values(latestItems || {});
-  if (!items.length) { el.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت</div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد</div>'; return; }
   const results = items.filter(it => (it.name||'').toLowerCase().includes(q));
-  if (!results.length) { el.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>'; return; }
+  if (!results.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد نتائج</div>'; return; }
   el.innerHTML = results.slice(0,50).map(it => `
     <div class="searchResultRow" style="cursor:pointer" onclick="showItemDetail(${it.id})">
       <div class="n">${escapeHtml(it.name)}</div>
@@ -6443,13 +7520,13 @@ function onSearchInput() {
   const items = Object.values(latestItems || {});
   if (!items.length) {
     dd.style.display = 'block';
-    dd.innerHTML = '<div class="emptyMsg">لسه مفيش بيانات اصناف اتزامنت (بتتحدث كل دقيقة)</div>';
+    dd.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد (تتحدث كل دقيقة)</div>';
     return;
   }
   const results = items.filter(it => (it.name||'').toLowerCase().includes(q)).slice(0, 8);
   if (!results.length) {
     dd.style.display = 'block';
-    dd.innerHTML = '<div class="emptyMsg">مفيش نتائج</div>';
+    dd.innerHTML = '<div class="emptyMsg">لا يوجد نتائج</div>';
     return;
   }
   dd.style.display = 'block';
