@@ -313,6 +313,9 @@
   .lsCheck { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--text); padding:7px 0; cursor:pointer; }
   .lsCheck input { width:18px; height:18px; }
   .lpStep { width:46px; height:44px; border:none; border-radius:10px; background:var(--surface2); color:var(--text); font-size:22px; font-weight:800; cursor:pointer; flex-shrink:0; }
+  /* البضاعة التالفة */
+  .dmStat { flex:1; background:var(--surface2); border-radius:12px; padding:10px 6px; text-align:center; font-size:11.5px; color:var(--textMuted); font-weight:700; }
+  .dmStat b { display:block; font-size:16px; color:var(--text); margin-top:4px; font-weight:900; }
   /* حول التطبيق */
   .abHead { text-align:center; padding:6px 0 14px; border-bottom:1px solid var(--border); }
   .abHead img { height:46px; width:auto; display:block; margin:0 auto 8px; }
@@ -654,6 +657,7 @@
     <div class="quickItem" onclick="openModal('shortagesModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div><div class="ql">النواقص</div></div>
     <div class="quickItem" onclick="openInventoryCount()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div class="ql">الجرد</div></div>
     <div class="quickItem" onclick="openModal('missingItemsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div><div class="ql">المفقودات</div></div>
+    <div class="quickItem" onclick="openDamagedModal()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m9 10 6 6M15 10l-6 6"/></svg></div><div class="ql">التالف</div></div>
     <div class="quickItem" onclick="openModal('activityLogModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l2 3v15H6V6Z"/><path d="M9 11h6M9 15h6"/></svg></div><div class="ql">سجل الحركات</div></div>
     <div class="quickItem" onclick="openNotesModal()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#CA8A04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4Z"/><path d="M17 4v3h3"/><path d="M8 11h8M8 15h5"/></svg></div><div class="ql">الملاحظات</div></div>
     <div class="quickItem" onclick="openModal('errorsModal')" style="position:relative;"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg></div><div class="ql">الأخطاء</div><span class="badge" id="errorsBadge" style="display:none;top:6px;left:6px;">0</span></div>
@@ -905,6 +909,42 @@
     <button type="button" id="lpPrintBtn" onclick="submitLabelPrint()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;">🖨️ طباعة</button>
     <div id="lpStatus" style="text-align:center;font-size:12.5px;font-weight:700;margin-top:10px;line-height:1.7;"></div>
     <button type="button" onclick="closeModal('labelPrintModal');openLabelSettings();" style="width:100%;margin-top:8px;background:none;border:none;color:var(--textMuted);font-weight:700;font-size:12.5px;cursor:pointer;padding:8px;">⚙️ إعدادات الطباعة والمقاس</button>
+  </div>
+</div>
+
+<div class="modalBg" id="damagedFormModal" onclick="if(event.target===this)closeModal('damagedFormModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('damagedFormModal')">✕</button>
+    <h3>⚠️ تسجيل بضاعة تالفة</h3>
+    <div id="dmSearchWrap">
+      <input type="text" id="dmSearch" placeholder="ابحث بالاسم أو الباركود..." autocomplete="off" oninput="damagedSearch()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);">
+      <div id="dmResults" style="max-height:30vh;overflow:auto;margin-top:6px;"></div>
+    </div>
+    <div id="dmSelected"></div>
+    <div class="lsSec">الكمية التالفة</div>
+    <input type="number" id="dmQty" inputmode="decimal" min="0" step="any" lang="en" placeholder="0" oninput="updateDamagedSummary()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);text-align:center;font-weight:800;font-size:18px;">
+    <div class="lsSec">السبب</div>
+    <div id="dmReasons" class="lsChips"></div>
+    <div class="lsSec">ملاحظة (اختياري)</div>
+    <input type="text" id="dmNote" maxlength="200" placeholder="مثال: وقع من الرف" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);">
+    <div id="dmSummary" style="margin-top:12px;"></div>
+    <button type="button" id="dmSubmit" onclick="submitDamaged()" style="width:100%;margin-top:14px;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;">تسجيل وخصم من المخزون</button>
+    <div id="dmStatus" style="text-align:center;font-size:12.5px;font-weight:700;margin-top:10px;"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="damagedModal" onclick="if(event.target===this)closeModal('damagedModal')">
+  <div class="modalSheet" style="height:85vh;overflow-y:auto;">
+    <button class="closeM" onclick="closeModal('damagedModal')">✕</button>
+    <h3>البضاعة التالفة</h3>
+    <button type="button" onclick="openDamagedForm()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;margin-bottom:12px;">+ تسجيل تالف</button>
+    <div class="lsChips" style="margin-bottom:12px;">
+      <button type="button" class="lsChip dmTab" data-p="day" style="direction:rtl;" onclick="setDamagedPeriod('day')">اليوم</button>
+      <button type="button" class="lsChip dmTab" data-p="week" style="direction:rtl;" onclick="setDamagedPeriod('week')">آخر 7 أيام</button>
+      <button type="button" class="lsChip dmTab" data-p="month" style="direction:rtl;" onclick="setDamagedPeriod('month')">هذا الشهر</button>
+      <button type="button" class="lsChip dmTab" data-p="all" style="direction:rtl;" onclick="setDamagedPeriod('all')">الكل</button>
+    </div>
+    <div id="dmBody"></div>
   </div>
 </div>
 
@@ -2043,11 +2083,317 @@ function sendLabelPrintJob(jobs, st, statusEl, btn) {
 
 const itemCardOfferLabel = {};
 
+/* ================= البضاعة التالفة =================
+   التسجيل بيخصم الكمية من مخزون الكاشير بنفس طريق تعديل الكمية المجرّب (qtyDelta بالسالب -
+   السكريبت بيوزّعها على الدفعات من غير ما يسيب أي دفعة تحت الصفر، ولو الكاشير مقفول بيتنفذ أول ما يرجع).
+   سعر التكلفة بيتسجل وقت التسجيل ويفضل ثابت، فالخسارة القديمة ما بتتغيرش لو التكلفة اتغيرت بعدين.
+   لو المخزون خلص بسبب التالف (كان فيه، وبقى صفر) الصنف بيتضاف للنواقص تلقائي. */
+const DAMAGE_REASONS = ['كسر', 'انتهاء صلاحية', 'عيب مصنعي', 'ضياع أو سرقة', 'أخرى'];
+let damagedFormItemId = null;
+let damagedFormReason = 'كسر';
+let damagedPeriod = 'month';
+let damagedReport = null; // { rows, totals, label, file, pdf, preparing }
+
+function openDamagedForm(itemId) {
+  damagedFormItemId = itemId || null;
+  damagedFormReason = 'كسر';
+  document.getElementById('dmSearch').value = '';
+  document.getElementById('dmResults').innerHTML = '';
+  document.getElementById('dmQty').value = '';
+  document.getElementById('dmNote').value = '';
+  document.getElementById('dmStatus').innerHTML = '';
+  document.getElementById('dmSubmit').disabled = false;
+  renderDamagedReasons();
+  renderDamagedSelected();
+  openModal('damagedFormModal');
+}
+
+function renderDamagedReasons() {
+  document.getElementById('dmReasons').innerHTML = DAMAGE_REASONS.map(r =>
+    `<button type="button" class="lsChip${r === damagedFormReason ? ' on' : ''}" style="direction:rtl;" onclick="damagedFormReason='${r}';renderDamagedReasons();">${escapeHtml(r)}</button>`
+  ).join('');
+}
+
+function damagedSearch() {
+  const raw = (document.getElementById('dmSearch').value || '').trim();
+  const el = document.getElementById('dmResults');
+  if (!raw) { el.innerHTML = ''; return; }
+  const q = normalizeArabicName(raw);
+  const list = Object.values(latestItems || {}).filter(it => normalizeArabicName(it.name).includes(q) || (it.barcode && String(it.barcode) === raw))
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar')).slice(0, 30);
+  el.innerHTML = list.length ? list.map(it => Number(it.stock || 0) > 0
+      ? `<div class="searchResultRow" style="cursor:pointer" onclick="pickDamagedItem(${it.id})"><div class="n">${escapeHtml(it.name)}</div><div class="p">متبقي: ${it.stock}</div></div>`
+      : `<div class="searchResultRow" style="opacity:.45;"><div class="n">${escapeHtml(it.name)}</div><div class="p">لا يوجد مخزون</div></div>`).join('')
+    : '<div class="emptyMsg">لا يوجد صنف بهذا الاسم أو الباركود</div>';
+}
+
+function pickDamagedItem(id) {
+  damagedFormItemId = id;
+  document.getElementById('dmSearch').value = '';
+  document.getElementById('dmResults').innerHTML = '';
+  renderDamagedSelected();
+  setTimeout(() => { try { document.getElementById('dmQty').focus(); } catch (e) {} }, 50);
+}
+
+function renderDamagedSelected() {
+  const it = damagedFormItemId ? latestItems['i' + damagedFormItemId] : null;
+  document.getElementById('dmSearchWrap').style.display = it ? 'none' : '';
+  const box = document.getElementById('dmSelected');
+  if (!it) { box.innerHTML = ''; updateDamagedSummary(); return; }
+  box.innerHTML = `<div style="border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <div style="min-width:0;"><div style="font-weight:800;font-size:14.5px;color:var(--text);">${escapeHtml(it.name)}</div>
+      <div style="font-size:12px;color:var(--textMuted);margin-top:4px;">المخزون الحالي: <b>${it.stock}</b> · التكلفة: <b>${fmtMoney(it.cost)} د.ل</b></div>
+      ${Number(it.stock || 0) > 0 ? '' : '<div style="font-size:12px;color:#DC2626;font-weight:800;margin-top:4px;">لا يوجد مخزون لهذا الصنف - لا يمكن تسجيل تالف</div>'}</div>
+      <button type="button" onclick="damagedFormItemId=null;renderDamagedSelected();" style="border:none;background:var(--surface2);color:var(--text);border-radius:10px;padding:7px 10px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;">تغيير</button>
+    </div>`;
+  updateDamagedSummary();
+}
+
+function updateDamagedSummary() {
+  const el = document.getElementById('dmSummary');
+  const it = damagedFormItemId ? latestItems['i' + damagedFormItemId] : null;
+  const qty = Number(String(document.getElementById('dmQty').value).replace(',', '.'));
+  if (!it || !(qty > 0)) { el.innerHTML = ''; return; }
+  const stock = Number(it.stock || 0);
+  const cost = Number(it.cost || 0);
+  if (!(stock > 0)) { el.innerHTML = '<div style="color:#DC2626;font-weight:800;text-align:center;">لا يوجد مخزون لهذا الصنف - لا يمكن تسجيل تالف</div>'; return; }
+  if (qty > stock) { el.innerHTML = `<div style="color:#DC2626;font-weight:800;text-align:center;">الكمية أكبر من المخزون الموجود - أقصى كمية: ${stock}</div>`; return; }
+  const after = Math.max(0, Math.round((stock - qty) * 1000) / 1000);
+  let warn = '';
+  if (!(cost > 0)) warn += `<div style="color:#B45309;font-weight:700;margin-top:6px;">⚠️ تكلفة هذا الصنف صفر - الخسارة ستُسجل صفر. عدّل سعر الشراء من بطاقة الصنف إذا كان خاطئًا.</div>`;
+  if (stock > 0 && after <= 0) warn += `<div style="color:#2563EB;font-weight:700;margin-top:6px;">ℹ️ المخزون سينفد، فالصنف سيُضاف للنواقص تلقائيًا.</div>`;
+  el.innerHTML = `<div style="background:#FEF2F2;border-radius:12px;padding:12px 14px;font-size:13px;color:#7F1D1D;line-height:1.9;">
+      <div style="display:flex;justify-content:space-between;"><span>الكمية × التكلفة</span><b>${qty} × ${fmtMoney(cost)} د.ل</b></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;"><span>إجمالي الخسارة</span><b>${fmtMoney(qty * cost)} د.ل</b></div>
+      <div style="display:flex;justify-content:space-between;"><span>المخزون</span><b>${stock} ← ${after}</b></div>
+    </div>${warn}`;
+}
+
+function submitDamaged() {
+  const it = damagedFormItemId ? latestItems['i' + damagedFormItemId] : null;
+  if (!it) { alert('اختر الصنف الأول'); return; }
+  const qty = Number(String(document.getElementById('dmQty').value).replace(',', '.'));
+  if (!(qty > 0)) { alert('اكتب الكمية التالفة'); document.getElementById('dmQty').focus(); return; }
+  const note = document.getElementById('dmNote').value.trim().slice(0, 200);
+  const stock = Number(it.stock || 0);
+  const cost = Number(it.cost || 0);
+  // ممنوع نهائي: لا تالف لصنف مخزونه صفر، ولا كمية أكبر من الموجود (عشان ما نسجلش خسارة لقطع مش موجودة)
+  if (!(stock > 0)) { alert('لا يوجد مخزون لهذا الصنف - لا يمكن تسجيل تالف.'); return; }
+  if (qty > stock) { alert('الكمية التالفة أكبر من المخزون الموجود.\nأقصى كمية: ' + stock); document.getElementById('dmQty').focus(); return; }
+  const after = Math.max(0, Math.round((stock - qty) * 1000) / 1000);
+  const total = Math.round(qty * cost * 1000) / 1000;
+  if (!confirm('تسجيل تالف؟\n\n' + it.name + '\nالكمية: ' + qty + ' (' + damagedFormReason + ')\nالخسارة: ' + fmtMoney(total) + ' د.ل\nالمخزون: ' + stock + ' ← ' + after + '\n\nالكمية ستُخصم من مخزون الكاشير.')) return;
+
+  const btn = document.getElementById('dmSubmit');
+  btn.disabled = true;
+  const reqId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  const autoShortage = stock > 0 && after <= 0;
+  const rec = {
+    at: new Date().toISOString(), itemId: String(it.id), itemName: String(it.name), barcode: String(it.barcode || ''),
+    qty: qty, unitCost: cost, totalCost: total, reason: damagedFormReason, note: note,
+    stockBefore: stock, reqId: reqId, autoShortage: autoShortage
+  };
+  const recRef = db.ref('data/damaged').push();
+  recRef.set(rec).then(() => db.ref('commands/editItem/' + it.id).update({ qtyDelta: firebase.database.ServerValue.increment(-qty), reqId: reqId })).then(() => {
+    recordEditHistory(it.id, it.name, { qty: { from: stock, to: after } }, reqId, 'damaged', null);
+    watchDamagedResult(it.id, reqId, recRef.key);
+    if (autoShortage) {
+      db.ref('commands/addShortage/' + it.id).set(String(it.name));
+      db.ref('data/dismissedLowStock/' + it.id).set(true);
+    }
+    it.stock = after;
+    logActivity('تسجيل تالف', it.name + ' × ' + qty + ' (' + damagedFormReason + ') - خسارة ' + fmtMoney(total) + ' د.ل');
+    document.getElementById('dmStatus').innerHTML = '<span style="color:#16A34A;">✓ تم تسجيل التالف وإرسال الخصم للكاشير</span>';
+    setTimeout(() => { closeModal('damagedFormModal'); if (isModalOpen('damagedModal')) loadDamagedLog(); }, 900);
+  }).catch(err => {
+    btn.disabled = false;
+    const m = err && err.message ? err.message : String(err);
+    document.getElementById('dmStatus').innerHTML = '<span style="color:#DC2626;">✗ تعذّر التسجيل: ' + escapeHtml(m) + '</span>';
+    logClientError('تسجيل تالف', m);
+  });
+}
+
+// بنسجل رد الكاشير جوه سجل التالف نفسه (اتنفذ / فشل)
+function watchDamagedResult(itemId, reqId, key) {
+  const ref = db.ref('data/editResults/' + itemId);
+  const cb = snap => {
+    const r = snap.val();
+    if (!r || String(r.reqId) !== String(reqId) || r.retrying) return;
+    ref.off('value', cb);
+    const q = (r.results || {}).qty;
+    db.ref('data/damaged/' + key).update({ result: { ok: q ? !!q.ok : !!r.ok, msg: q && !q.ok ? String(q.msg || '') : '', at: new Date().toISOString() } }).catch(() => {});
+  };
+  ref.on('value', cb);
+}
+
+function openDamagedModal() {
+  openModal('damagedModal');
+  loadDamagedLog();
+}
+
+function setDamagedPeriod(p) {
+  damagedPeriod = p;
+  loadDamagedLog();
+}
+
+function damagedPeriodStart(p) {
+  const now = new Date();
+  if (p === 'day') return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (p === 'week') return new Date(now.getTime() - 6 * 86400000 - (now.getHours() * 3600000));
+  if (p === 'month') return new Date(now.getFullYear(), now.getMonth(), 1);
+  return null;
+}
+
+function loadDamagedLog() {
+  document.querySelectorAll('#damagedModal .dmTab').forEach(b => b.classList.toggle('on', b.dataset.p === damagedPeriod));
+  const el = document.getElementById('dmBody');
+  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  liveOnce('data/damaged').then(snap => {
+    const all = Object.entries(snap.val() || {}).map(([id, r]) => Object.assign({ id: id }, r));
+    const start = damagedPeriodStart(damagedPeriod);
+    const rows = all.filter(r => !start || new Date(r.at) >= start).sort((a, b) => new Date(b.at) - new Date(a.at));
+    const active = rows.filter(r => !r.cancelledAt);
+    const totals = { count: active.length, qty: active.reduce((s, r) => s + Number(r.qty || 0), 0), loss: active.reduce((s, r) => s + Number(r.totalCost || 0), 0) };
+    const byReason = {};
+    active.forEach(r => { const k = r.reason || 'أخرى'; byReason[k] = byReason[k] || { qty: 0, loss: 0 }; byReason[k].qty += Number(r.qty || 0); byReason[k].loss += Number(r.totalCost || 0); });
+    const byItem = {};
+    active.forEach(r => { const k = r.itemId; byItem[k] = byItem[k] || { name: r.itemName, qty: 0, loss: 0 }; byItem[k].qty += Number(r.qty || 0); byItem[k].loss += Number(r.totalCost || 0); });
+    const topItems = Object.values(byItem).sort((a, b) => b.loss - a.loss).slice(0, 5);
+    const label = { day: 'اليوم', week: 'آخر 7 أيام', month: 'هذا الشهر', all: 'كل الفترات' }[damagedPeriod];
+    damagedReport = { rows: active, totals: totals, byReason: byReason, topItems: topItems, label: label, file: null, pdf: null, preparing: false };
+
+    let html = `<div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div class="dmStat"><div>السجلات</div><b>${totals.count}</b></div>
+        <div class="dmStat"><div>القطع</div><b>${Math.round(totals.qty * 1000) / 1000}</b></div>
+        <div class="dmStat" style="background:#FEF2F2;"><div style="color:#7F1D1D;">الخسارة</div><b style="color:#DC2626;">${fmtMoney(totals.loss)} د.ل</b></div>
+      </div>`;
+    if (!rows.length) { el.innerHTML = html + '<div class="emptyMsg">لا يوجد تالف مسجل في هذه الفترة</div>'; return; }
+    const reasons = Object.entries(byReason).sort((a, b) => b[1].loss - a[1].loss);
+    if (reasons.length) html += `<div class="lsSec" style="margin-top:4px;">حسب السبب</div>` + reasons.map(([k, v]) => `<div class="searchResultRow"><div class="n">${escapeHtml(k)} <span style="color:var(--textMuted);font-weight:600;">(${Math.round(v.qty * 1000) / 1000} قطعة)</span></div><div class="p">${fmtMoney(v.loss)} د.ل</div></div>`).join('');
+    if (topItems.length) html += `<div class="lsSec">أكثر الأصناف تلفًا</div>` + topItems.map(v => `<div class="searchResultRow"><div class="n">${escapeHtml(v.name)} <span style="color:var(--textMuted);font-weight:600;">(${Math.round(v.qty * 1000) / 1000})</span></div><div class="p">${fmtMoney(v.loss)} د.ل</div></div>`).join('');
+    html += `<button type="button" id="dmPdfBtn" onclick="damagedPdfAction()" style="width:100%;margin-top:12px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;">📄 تصدير PDF</button>`;
+    html += `<div class="lsSec">السجل</div>` + rows.map(r => {
+      const d = new Date(r.at);
+      const when = d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
+      let status;
+      if (r.cancelledAt) status = '<span style="color:var(--textMuted);">أُلغي - الكمية رجعت للمخزون</span>';
+      else if (!r.result) status = '<span style="color:#B45309;">⏳ في انتظار الكاشير</span>';
+      else if (r.result.ok) status = '<span style="color:#16A34A;">✓ خُصم من الكاشير</span>';
+      else status = '<span style="color:#DC2626;">✗ ' + escapeHtml(r.result.msg || 'فشل الخصم') + '</span>';
+      return `<div class="ehCard${r.cancelledAt ? ' undone' : ''}">
+        <div class="ehTop"><div><div class="ehName">${escapeHtml(r.itemName)}</div><span class="ehBadge" style="background:#FEE2E2;color:#B91C1C;">${escapeHtml(r.reason || '')}</span>${r.autoShortage ? ' <span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">أُضيف للنواقص</span>' : ''}</div><div class="ehTime">${when}</div></div>
+        <div class="ehRow"><span class="lbl">الكمية × التكلفة</span><span class="val">${r.qty} × ${fmtMoney(r.unitCost)} د.ل</span></div>
+        <div class="ehRow"><span class="lbl">الخسارة</span><span class="val" style="color:#DC2626;">${fmtMoney(r.totalCost)} د.ل</span></div>
+        ${r.note ? `<div class="ehRow"><span class="lbl">ملاحظة</span><span class="val" style="font-weight:600;">${escapeHtml(r.note)}</span></div>` : ''}
+        <div class="ehFoot"><span class="ehStatus">${status}</span>${r.cancelledAt ? '' : `<button type="button" class="ehUndo" onclick="cancelDamaged('${r.id}', this)">↩️ إلغاء</button>`}</div>
+      </div>`;
+    }).join('');
+    el.innerHTML = html;
+  }).catch(err => {
+    el.innerHTML = '<div class="emptyMsg">تعذّر تحميل سجل التالف - تأكد من النت وحاول مرة أخرى</div>';
+    logClientError('تحميل سجل التالف', err && err.message ? err.message : String(err));
+  });
+}
+
+// إلغاء تسجيل تالف: الكمية بترجع للمخزون بنفس طريق التعديل (increment موجب)
+function cancelDamaged(id, btn) {
+  liveOnce('data/damaged').then(snap => {
+    const r = (snap.val() || {})[id];
+    if (!r || r.cancelledAt) return;
+    if (!confirm('إلغاء تسجيل التالف؟\n\n' + r.itemName + ' × ' + r.qty + '\nالكمية سترجع لمخزون الكاشير.')) return;
+    if (btn) btn.disabled = true;
+    const reqId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    const it = latestItems['i' + r.itemId];
+    const cur = it ? Number(it.stock || 0) : 0;
+    db.ref('commands/editItem/' + r.itemId).update({ qtyDelta: firebase.database.ServerValue.increment(Number(r.qty)), reqId: reqId }).then(() => {
+      if (it) it.stock = Math.round((cur + Number(r.qty)) * 1000) / 1000;
+      recordEditHistory(r.itemId, r.itemName, { qty: { from: cur, to: Math.round((cur + Number(r.qty)) * 1000) / 1000 } }, reqId, 'undo', null);
+      return db.ref('data/damaged/' + id).update({ cancelledAt: new Date().toISOString() });
+    }).then(() => {
+      logActivity('إلغاء تالف', r.itemName + ' × ' + r.qty);
+      loadDamagedLog();
+    }).catch(err => {
+      if (btn) btn.disabled = false;
+      alert('تعذّر الإلغاء: ' + (err && err.message ? err.message : err));
+    });
+  });
+}
+
+function buildDamagedPdfHtml(rep) {
+  const store = (typeof labelSettings !== 'undefined' && labelSettings.storeName) ? String(labelSettings.storeName) : 'منظومة المبيعات';
+  const rows = rep.rows.map(r => {
+    const d = new Date(r.at);
+    return `<tr><td style="padding:8px;border-bottom:1px solid #F1F5F9;">${d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric' })}</td><td style="padding:8px;border-bottom:1px solid #F1F5F9;font-weight:700;">${escapeHtml(r.itemName)}</td><td style="padding:8px;border-bottom:1px solid #F1F5F9;">${escapeHtml(r.reason || '')}</td><td style="padding:8px;border-bottom:1px solid #F1F5F9;text-align:center;">${r.qty}</td><td style="padding:8px;border-bottom:1px solid #F1F5F9;text-align:left;">${fmtMoney(r.unitCost)}</td><td style="padding:8px;border-bottom:1px solid #F1F5F9;text-align:left;font-weight:800;color:#DC2626;">${fmtMoney(r.totalCost)}</td></tr>`;
+  }).join('');
+  return `<div style="background:#fff;color:#1E293B;padding:10px 18px;font-size:15px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1E293B;padding-bottom:12px;">
+      <div><div style="font-size:26px;font-weight:900;">تقرير البضاعة التالفة</div><div style="font-size:15px;color:#475569;font-weight:700;margin-top:4px;">${escapeHtml(store)}</div></div>
+      <div style="font-size:18px;font-weight:800;">${escapeHtml(rep.label)}</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      <div style="flex:1;background:#F1F5F9;border-radius:14px;padding:16px;text-align:center;"><div style="color:#475569;font-weight:700;">السجلات</div><div style="font-size:24px;font-weight:900;margin-top:6px;">${rep.totals.count}</div></div>
+      <div style="flex:1;background:#F1F5F9;border-radius:14px;padding:16px;text-align:center;"><div style="color:#475569;font-weight:700;">القطع</div><div style="font-size:24px;font-weight:900;margin-top:6px;">${Math.round(rep.totals.qty * 1000) / 1000}</div></div>
+      <div style="flex:1;background:#FEF2F2;border-radius:14px;padding:16px;text-align:center;"><div style="color:#7F1D1D;font-weight:700;">إجمالي الخسارة</div><div style="font-size:24px;font-weight:900;margin-top:6px;color:#DC2626;">${fmtMoney(rep.totals.loss)} د.ل</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;">
+      <tr style="background:#F8FAFC;"><th style="padding:8px;text-align:right;">التاريخ</th><th style="padding:8px;text-align:right;">الصنف</th><th style="padding:8px;text-align:right;">السبب</th><th style="padding:8px;">الكمية</th><th style="padding:8px;text-align:left;">التكلفة</th><th style="padding:8px;text-align:left;">الخسارة</th></tr>
+      ${rows}
+    </table>
+    <div style="margin-top:14px;font-size:12px;color:#94A3B8;text-align:center;">تم الإنشاء: ${new Date().toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+  </div>`;
+}
+
+function damagedPdfAction() {
+  const rep = damagedReport;
+  const btn = document.getElementById('dmPdfBtn');
+  if (!rep || !btn || rep.preparing) return;
+  const title = 'تقرير التالف - ' + rep.label;
+  if (!rep.file) {
+    const libErr = pdfLibsError();
+    if (libErr) { alert(libErr); return; }
+    rep.preparing = true;
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري تجهيز التقرير...';
+    buildPdfFileFromHtml(buildDamagedPdfHtml(rep), title).then(res => {
+      rep.preparing = false; rep.file = res.file; rep.pdf = res.pdf;
+      if (damagedReport !== rep) return;
+      btn.disabled = false; btn.style.background = '#16A34A'; btn.textContent = '📤 مشاركة التقرير';
+    }).catch(err => {
+      rep.preparing = false; btn.disabled = false; btn.textContent = '📄 تصدير PDF';
+      alert('تعذّر تجهيز الـ PDF: ' + (err && err.message ? err.message : err));
+    });
+    return;
+  }
+  if (navigator.canShare && navigator.canShare({ files: [rep.file] })) {
+    navigator.share({ files: [rep.file], title: title }).catch(err => { if (!err || err.name !== 'AbortError') alert('تعذّر فتح قائمة المشاركة'); });
+  } else if (rep.pdf && typeof rep.pdf.save === 'function') {
+    rep.pdf.save(rep.file.name);
+  } else {
+    alert('تعذّر مشاركة الملف على هذا الجهاز.');
+  }
+}
+
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.7.1';
+const APP_VERSION = '2.9.1';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.9.1', date: '2026-09-29', items: [
+    'لا يمكن تسجيل تالف لصنف مخزونه صفر، ولا بكمية أكبر من المخزون الموجود',
+    'الجرد يرفض الأرقام السالبة',
+    'التراجع عن تعديل كمية لا يعرض رقمًا تحت الصفر، وينبّه إذا كانت الكمية ستصبح صفرًا'
+  ] },
+  { v: '2.9.0', date: '2026-09-29', items: [
+    'تسجيل البضاعة التالفة: الكمية تُخصم من مخزون الكاشير، مع السبب والتكلفة والتاريخ',
+    'سجل التالف: إجمالي الخسارة، التقسيم حسب السبب، أكثر الأصناف تلفًا، وتصدير PDF',
+    'إلغاء تسجيل التالف يرجّع الكمية للمخزون',
+    'لو نفد المخزون بسبب التالف، الصنف يُضاف للنواقص تلقائيًا'
+  ] },
+  { v: '2.8.0', date: '2026-09-29', items: [
+    'حساب الزبون وقائمة الزبائن وديون المشتريات تفتح فورًا: البيانات تُحمَّل مرة واحدة وتبقى متزامنة تلقائيًا',
+    'فحص مرتجعات ديون الزبون من النسخة المحفوظة فورًا، والكاشير يُسأل فقط عن الفواتير الجديدة جدًا وهو متصل',
+    'لا تتراكم طلبات على الكاشير وهو مغلق'
+  ] },
   { v: '2.7.1', date: '2026-09-29', items: [
     'لو الكاشير بطيء في الرد، التطبيق يظل ينتظر النتيجة الحية ويستبدل بها نتيجة النسخة المحفوظة تلقائيًا فور وصولها',
     'الفواتير الجديدة التي لم تصل للنسخة المحفوظة بعد لم تعد تظهر كـ "غير موجود" أثناء انتظار الكاشير'
@@ -2801,7 +3147,7 @@ function showInvoiceDetail(inv) {
 function loadInvoiceDebtOwner(invoiceNumber) {
   const box = document.getElementById('invoiceDebtOwnerBox');
   if (!box) return;
-  db.ref('data/debts').once('value').then(snap => {
+  liveOnce('data/debts').then(snap => {
     const val = snap.val();
     const all = val ? Object.values(val) : [];
     const matches = all.filter(d => String(d.invoiceNumber) === String(invoiceNumber));
@@ -3105,7 +3451,7 @@ function openCustomerPickerList() {
   const listEl = document.getElementById('customerPickerList');
   listEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   openModal('customerPickerModal');
-  db.ref('data/customers').once('value').then(snap => {
+  liveOnce('data/customers').then(snap => {
     const val = snap.val();
     customerPickerAll = val ? Object.entries(val).map(([id, c]) => ({ id, name: String((c && c.name) || ''), norm: normalizeArabicName(c && c.name) })) : [];
     customerPickerAll.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
@@ -4226,6 +4572,32 @@ function offlineNoteHtml(text) {
 }
 
 // أرشيف يوم واحد بس - مصفوفة فواتير/مرتجعات (أو فاضية لو مفيش)
+// ============ بيانات متزامنة في الذاكرة (الديون / الإيداعات / الزبائن / ديون المشتريات) ============
+// بدل ما نحمّل المجموعة كلها من جديد كل مرة تنفتح شاشة، بنحمّلها مرة واحدة وبتفضل متزامنة لوحدها
+// (أي تعديل من الجوال ده أو من جوال تاني بيوصل فورًا). liveOnce بترجع نفس شكل once('value')
+// (فيها .val()) عشان باقي الكود يفضل زي ما هو، وبترجع نسخة منفصلة عشان محدش يعدّل في الأصل بالغلط
+const liveCollections = {};
+function liveOnce(path) {
+  let e = liveCollections[path];
+  if (!e) {
+    e = { val: null, loaded: false };
+    e.ready = new Promise((resolve, reject) => {
+      db.ref(path).on('value', snap => {
+        e.val = snap.val();
+        if (!e.loaded) { e.loaded = true; resolve(); }
+      }, err => {
+        if (!e.loaded) { delete liveCollections[path]; reject(err); }
+      });
+    });
+    liveCollections[path] = e;
+  }
+  return e.ready.then(() => {
+    const v = e.val;
+    const copy = v == null ? v : (typeof structuredClone === 'function' ? structuredClone(v) : JSON.parse(JSON.stringify(v)));
+    return { val: () => copy };
+  });
+}
+
 // ============ الاستعلام من الكاشير + النسخة المحفوظة (أسرع نتيجة ممكنة) ============
 // - لو الكاشير مقفول (من النبضة): بندور في النسخة المحفوظة فورًا، ومن غير ما نبعت طلب للكاشير
 //   (عشان ما يتراكمش طلب ينفذه بكرة لما يفتح)
@@ -4970,6 +5342,7 @@ function showItemCardDetail(itemId) {
       <div id="itemCardEditStatus" data-item-id="${it.id}" style="text-align:center;font-size:12px;font-weight:700;margin-top:8px;line-height:1.7;"></div>
       ${itemCardOfferLabel[it.id] ? `<button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:#FEF3C7;color:#B45309;border:1.5px dashed #F59E0B;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;">🏷️ اطبع ملصق بالسعر الجديد</button>` : ''}
       <button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#2563EB;border:1.5px solid #BFDBFE;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;">🏷️ طباعة باركود</button>
+      <button onclick="openDamagedForm(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#DC2626;border:1.5px solid #FCA5A5;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;">⚠️ تسجيل تالف</button>
     </div>
   `;
   renderItemCardEditStatus(it.id);
@@ -5333,7 +5706,9 @@ function confirmScanAndNext() {
   if (!currentScannedItem) return;
   const val = document.getElementById('scanQtyInput').value;
   if (val !== '') {
-    draftSetCount(currentScannedItem.id, Number(val));
+    const n = Number(val);
+    if (isNaN(n) || n < 0) { alert('العدد لا يمكن أن يكون سالبًا'); document.getElementById('scanQtyInput').value = ''; return; }
+    draftSetCount(currentScannedItem.id, n);
   }
   updateCountProgress();
   updateScanSessionCount();
@@ -5434,7 +5809,18 @@ document.addEventListener('input', function(e) {
 });
 
 function setCountValue(itemId, val) {
-  if (val === '') { draftRemoveCount(itemId); } else { draftSetCount(itemId, Number(val)); }
+  if (val === '') { draftRemoveCount(itemId); updateCountProgress(); return; }
+  const n = Number(val);
+  if (isNaN(n) || n < 0) {
+    // ممنوع رقم سالب في الجرد - بنمسح الخانة بدل ما نحفظ رقم غلط
+    const inp = document.activeElement;
+    if (inp && inp.tagName === 'INPUT') inp.value = '';
+    draftRemoveCount(itemId);
+    showQuickToast('العدد لا يمكن أن يكون سالبًا', true);
+    updateCountProgress();
+    return;
+  }
+  draftSetCount(itemId, n);
   updateCountProgress();
 }
 
@@ -5684,13 +6070,17 @@ function loadEditHistory() {
 
       const badge = e.source === 'undo'
         ? '<span class="ehBadge" style="background:#EDE9FE;color:#6D28D9;">↩️ تراجع</span>'
-        : '<span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">من التطبيق</span>';
+        : e.source === 'damaged'
+          ? '<span class="ehBadge" style="background:#FEE2E2;color:#B91C1C;">⚠️ تالف</span>'
+          : '<span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">من التطبيق</span>';
       let action;
       if (e.undoneAt) {
         const ud = new Date(e.undoneAt);
         action = `<span class="ehStatus" style="color:var(--textMuted);">أُلغي بالتراجع ${ud.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</span>`;
       } else {
-        action = `<button type="button" class="ehUndo" onclick="undoEditHistory('${key}', this)">↩️ تراجع</button>`;
+        action = e.source === 'damaged'
+          ? '<span class="ehStatus" style="color:var(--textMuted);">الإلغاء من سجل التالف</span>'
+          : `<button type="button" class="ehUndo" onclick="undoEditHistory('${key}', this)">↩️ تراجع</button>`;
       }
       return `<div class="ehCard${e.undoneAt ? ' undone' : ''}">
         <div class="ehTop"><div><div class="ehName">${escapeHtml(e.itemName || ('صنف ' + e.itemId))}</div>${badge}</div><div class="ehTime">${timeStr}<br>${dateStr}</div></div>
@@ -5723,8 +6113,11 @@ function undoEditHistory(key, btn) {
       const delta = Math.round((Number(from) - Number(to)) * 1000) / 1000;
       if (!delta) return;
       payload.qtyDelta = firebase.database.ServerValue.increment(delta);
-      newChanges.qty = { from: cur.qty, to: Math.round((cur.qty + delta) * 1000) / 1000 };
+      const rawTo = Math.round((cur.qty + delta) * 1000) / 1000;
+      // الكاشير عمره ما بينزل تحت الصفر، فبنعرض نفس اللي هيحصل فعلًا
+      newChanges.qty = { from: cur.qty, to: Math.max(0, rawTo) };
       lines.push('الكمية: ' + (delta > 0 ? '+' : '') + delta + ' (الرصيد الحالي ' + cur.qty + ' ← ' + newChanges.qty.to + ')');
+      if (rawTo < 0) warnings.push('المخزون الحالي (' + cur.qty + ') أقل من الكمية المطلوب خصمها - الكمية ستصبح 0 ولن تنزل تحت الصفر');
       return;
     }
     if (k === 'wholesale' && !it.barcode) { warnings.push('سعر الجملة ما يرجعش: الصنف ما له باركود فعال'); return; }
@@ -5820,11 +6213,11 @@ function loadCustomers() {
   const el = document.getElementById('customersList');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   Promise.all([
-    db.ref('data/customers').once('value'),
-    db.ref('data/debts').once('value'),
-    db.ref('data/deposits').once('value'),
-    db.ref('data/purchaseDebts').once('value'),
-    db.ref('data/purchaseDeposits').once('value')
+    liveOnce('data/customers'),
+    liveOnce('data/debts'),
+    liveOnce('data/deposits'),
+    liveOnce('data/purchaseDebts'),
+    liveOnce('data/purchaseDeposits')
   ]).then(([custSnap, debtSnap, depSnap, pdSnap, ppSnap]) => {
     const custVal = custSnap.val();
     const customers = custVal ? Object.entries(custVal).map(([id, c]) => ({ id, ...c })) : [];
@@ -6045,8 +6438,8 @@ function submitDeposit() {
 // بزرار "تسجيل السداد" - دي منضربهاش خالص، مهما كان الرصيد المتاح)
 async function reconcileSalesAccount(customerId, debugMode) {
   const [debtSnap, depSnap] = await Promise.all([
-    db.ref('data/debts').once('value'),
-    db.ref('data/deposits').once('value')
+    liveOnce('data/debts'),
+    liveOnce('data/deposits')
   ]);
   const allDebts = Object.entries(debtSnap.val() || {}).map(([id, d]) => ({ id, ...d })).filter(d => d.customerId === customerId);
   const allDeposits = Object.entries(depSnap.val() || {}).map(([id, p]) => ({ id, ...p })).filter(p => p.customerId === customerId);
@@ -6110,7 +6503,7 @@ function loadPurchaseDebts() {
   const totalEl = document.getElementById('purchaseDebtsTotal');
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   totalEl.textContent = '';
-  db.ref('data/purchaseDebts').once('value').then(snap => {
+  liveOnce('data/purchaseDebts').then(snap => {
     const val = snap.val();
     const all = val ? Object.entries(val).map(([id, d]) => ({ id, ...d })) : [];
     latestPurchaseDebts = all.filter(it => !it.paid);
@@ -6382,10 +6775,10 @@ function openCustomerDebt(customerId, customerName) {
   // تعملي أي حاجة زيادة
   reconcileSalesAccount(customerId).catch(() => {}).then(() => {
   Promise.all([
-    db.ref('data/debts').once('value'),
-    db.ref('data/deposits').once('value'),
-    db.ref('data/purchaseDebts').once('value'),
-    db.ref('data/purchaseDeposits').once('value'),
+    liveOnce('data/debts'),
+    liveOnce('data/deposits'),
+    liveOnce('data/purchaseDebts'),
+    liveOnce('data/purchaseDeposits'),
     db.ref('data/customers/' + customerId).once('value')
   ]).then(([debtSnap, depSnap, pdSnap, ppSnap, custSnap]) => {
     const debtVal = debtSnap.val();
@@ -6867,41 +7260,44 @@ function renderDebtRow(d, customerId, customerName, isReturned) {
 // بيفحص كل دين على حسب رقم الإيصال بتاعه - نفس آلية البحث في المرتجعات (commands/invoiceQuery)
 // من غير اي تعديل على السكربت. لو الفاتورة فيها ارجاع، الصف يتلون احمر وزر السداد يتحول لزر ارجاع.
 function checkDebtReturns(debts, customerId, customerName) {
+  // 1) النسخة المحفوظة الأول (فورًا، وفيها علامة المرتجع) - 2) الكاشير بس للفواتير اللي مش في النسخة المحفوظة
+  //    (الجديدة جدًا) ولو الكاشير متصل. قبل كده كان بيبعت طلب للكاشير لكل فاتورة ويستنى 15 ثانية،
+  //    والطلبات كانت بتتراكم وقت ما الكاشير مقفول
   const invoiceNumbers = [...new Set(debts.map(d => d.invoiceNumber).filter(Boolean))];
-  invoiceNumbers.forEach(invNum => {
-    const digits = String(invNum).replace(/[^0-9]/g, '');
-    if (!digits) return;
-
-    const pushRef = db.ref('commands/invoiceQuery').push();
-    const pushId = pushRef.key;
-    pushRef.set({ type: 'search', query: digits });
-
-    const applyIfReturned = (saleEntry) => {
-      if (!saleEntry || !saleEntry.hasReturn) return;
-      debts.filter(d => d.invoiceNumber === invNum).forEach(d => {
-        const rowEl = document.getElementById('debtRow_' + d.id);
-        if (rowEl) rowEl.outerHTML = renderDebtRow(d, customerId, customerName, true);
-      });
-    };
-
-    const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
-    const timeout = setTimeout(() => {
-      resultRef.off('value');
-      // الجهاز مش رادّ - ندوّر في الأرشيف المحفوظ بدل ما نسيب الفاتورة من غير فحص
-      fetchFullArchiveFlat().then(flat => {
-        applyIfReturned(flat.find(r => r && r.type === 'sale' && r.number === invNum));
-      }).catch(() => {});
-    }, 15000);
-
-    resultRef.on('value', snap => {
-      if (snap.val() === null) return;
-      clearTimeout(timeout);
-      resultRef.off('value');
-      const val = snap.val();
-      const results = val ? Object.values(val) : [];
-      resultRef.remove();
-      applyIfReturned(results.find(r => r.type === 'sale' && r.number === invNum));
+  if (!invoiceNumbers.length) return;
+  const applyIfReturned = (invNum, saleEntry) => {
+    if (!saleEntry || !saleEntry.hasReturn) return;
+    debts.filter(d => d.invoiceNumber === invNum).forEach(d => {
+      const rowEl = document.getElementById('debtRow_' + d.id);
+      if (rowEl) rowEl.outerHTML = renderDebtRow(d, customerId, customerName, true);
     });
+  };
+  const askCashier = invNum => {
+    const digits = String(invNum).replace(/[^0-9]/g, '');
+    if (!digits || !cashierLooksOnline()) return;
+    const pushRef = db.ref('commands/invoiceQuery').push();
+    pushRef.set({ type: 'search', query: digits });
+    const resultRef = db.ref('data/invoiceQueryResults/' + pushRef.key);
+    let stop = null;
+    const cb = snap => {
+      if (snap.val() === null) return;
+      clearTimeout(stop);
+      resultRef.off('value', cb);
+      const results = Object.values(snap.val() || {});
+      resultRef.remove();
+      applyIfReturned(invNum, results.find(r => r && r.type === 'sale' && r.number === invNum));
+    };
+    stop = setTimeout(() => resultRef.off('value', cb), 60000);
+    resultRef.on('value', cb);
+  };
+  fetchFullArchiveFlat().then(flat => {
+    invoiceNumbers.forEach(invNum => {
+      const entry = flat.find(r => r && r.type === 'sale' && r.number === invNum);
+      if (entry) applyIfReturned(invNum, entry);
+      else askCashier(invNum);
+    });
+  }).catch(() => {
+    invoiceNumbers.forEach(askCashier);
   });
 }
 
