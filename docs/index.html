@@ -512,7 +512,7 @@
         <button class="faceIdBtn" id="faceIdBtn" onclick="loginWithFaceId()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H5a1 1 0 0 0-1 1v2M17 4h2a1 1 0 0 1 1 1v2M7 20H5a1 1 0 0 1-1-1v-2M17 20h2a1 1 0 0 0 1-1v-2M8 10v2a4 4 0 0 0 4 4M9 8.5c.7-.9 1.8-1.4 3-1.4a3.5 3.5 0 0 1 3.5 3.5V13"/></svg><span>تسجيل الدخول ببصمة الوجه</span><span>‹</span></button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.7;">آخر تحديث: 26 سبتمبر 2:05 ص · 8e19a4</div>
+    <div id="loginVersionTag" style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;opacity:.75;direction:rtl;"></div>
   </div>
 </div>
 
@@ -2044,18 +2044,41 @@ function sendLabelPrintJob(jobs, st, statusEl, btn) {
 const itemCardOfferLabel = {};
 
 /* ================= حول التطبيق ================= */
-const APP_VERSION = '2.6.0';
-const APP_BUILD_DATE = '2026-09-28';
-const APP_CHANGELOG = [
-  'تذكير الزبائن بالديون على واتساب مع كشف حساب PDF',
-  'سجل تعديلات الأصناف (القديم ← الجديد) مع زر تراجع',
-  'الجرد يُحفظ أول بأول، ويمكن أن يتم من أكثر من جوال معًا',
-  'زر رجوع لنتائج البحث في بطاقة الصنف وفحص السعر',
-  'كل النوافذ مضبوطة مع الكيبورد وشريط الساعة (بدون تشوه)',
-  'بحث ذكي وحماية من التكرار في اختيار الزبون',
-  'تعديل الأسعار يصل لشاشة البيع في الكاشير مباشرة',
-  'شاشة الأخطاء وحالة الكاشير مع السبب والحل'
+// ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
+const APP_VERSION = '2.7.0';
+const APP_BUILD_DATE = '2026-09-29';
+const APP_RELEASES = [
+  { v: '2.7.0', date: '2026-09-29', items: [
+    'البحث في الفواتير أصبح فوريًا: إذا كان الكاشير مغلقًا يبحث في النسخة المحفوظة مباشرة، وإذا كان يعمل يعرض نتيجة سريعة ثم يحدّثها من الكاشير',
+    'الأرشيف يُحمَّل مرة واحدة ثم يصبح كل بحث فوريًا، مع عرض الوقت الذي استغرقه البحث',
+    'طباعة الباركود: إعدادات كاملة، 5 قوالب، مقاسات جاهزة ويدوية، ومعاينة قبل الطباعة',
+    'تصدير التقارير PDF ومشاركتها',
+    'قائمة كل المنتجات أسرع وتُحمَّل على دفعات، والبحث بالاسم أو الباركود',
+    'توحيد نصوص التطبيق بعربي بسيط وواضح',
+    'رقم الإصدار ظاهر في شاشة الدخول'
+  ] },
+  { v: '2.6.0', date: '2026-09-28', items: [
+    'تذكير الزبائن بالديون على واتساب مع كشف حساب PDF',
+    'سجل تعديلات الأصناف (القديم ← الجديد) مع زر تراجع',
+    'الجرد يُحفظ أولًا بأول، ويمكن إجراؤه من أكثر من جوال معًا',
+    'زر رجوع لنتائج البحث في بطاقة الصنف وفحص السعر',
+    'كل النوافذ مضبوطة مع الكيبورد وشريط الساعة (بدون تشوه)',
+    'بحث ذكي وحماية من التكرار في اختيار الزبون',
+    'تعديل الأسعار يصل لشاشة البيع في الكاشير مباشرة',
+    'شاشة الأخطاء وحالة الكاشير مع السبب والحل'
+  ] }
 ];
+
+function appBuildDateLabel(dateStr, withYear) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('ar-EG-u-nu-latn', withYear ? { day: 'numeric', month: 'long', year: 'numeric' } : { day: 'numeric', month: 'long' });
+}
+
+// رقم الإصدار في شاشة الدخول
+(function () {
+  const el = document.getElementById('loginVersionTag');
+  if (el) el.textContent = 'الإصدار ' + APP_VERSION + ' · ' + appBuildDateLabel(APP_BUILD_DATE, true);
+})();
 
 function appRunModeLabel() {
   if (isNativeApp()) return 'تطبيق الآيفون (App Store)';
@@ -2098,7 +2121,8 @@ function openAboutApp() {
     <div class="abRow"><span class="k">الحالة</span><span class="v" style="direction:rtl;color:${st.color};white-space:normal;">${escapeHtml(st.title)}</span></div>
     <div class="abRow"><span class="k">آخر اتصال</span><span class="v" style="direction:rtl;">${lastSeen}</span></div>
     <div class="abSec">الجديد في الإصدار ${APP_VERSION}</div>
-    <div class="abLog"><ul style="margin:0;padding:0;">${APP_CHANGELOG.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}</ul></div>
+    <div class="abLog"><ul style="margin:0;padding:0;">${APP_RELEASES[0].items.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}</ul></div>
+    ${APP_RELEASES.slice(1).map(r => `<details style="margin-top:10px;"><summary style="font-size:12px;color:var(--textMuted);font-weight:800;cursor:pointer;">الإصدار ${r.v} — ${appBuildDateLabel(r.date, true)}</summary><div class="abLog" style="margin-top:6px;"><ul style="margin:0;padding:0;">${r.items.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}</ul></div></details>`).join('')}
   `;
   openModal('aboutModal');
 }
@@ -3283,38 +3307,41 @@ function runInvoiceQuery(type, query, title, filterFn, summaryFn) {
   body.innerHTML = '<div class="emptyMsg">جاري البحث...</div>';
   openModal('invoiceResultsModal');
 
-  const pushRef = db.ref('commands/invoiceQuery').push();
-  const pushId = pushRef.key;
-  pushRef.set({ type: type, query: query || '' });
-
-  const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
-  const timeout = setTimeout(() => {
-    resultRef.off('value');
+  const ctx = newQueryCtx();
+  const offline = () => {
+    if (ctx.live) return;
     if (type === 'all') {
       fetchFullArchiveFlat().then(flat => {
+        if (ctx.live) return;
         let results = flat.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 200);
         if (filterFn) results = results.filter(filterFn);
         const summaryHtml = summaryFn ? summaryFn(results) : '';
-        body.innerHTML = offlineNoteHtml('جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة') + summaryHtml + renderInvoiceResultsList(results);
+        body.innerHTML = archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة') + summaryHtml + renderInvoiceResultsList(results) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
       }).catch(() => {
+        if (ctx.live || ctx.prelim) return;
         body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
       });
-    } else {
-      body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل او لا يوجد رد - حاول مرة أخرى</div>';
+    } else if (!ctx.prelim) {
+      body.innerHTML = '<div class="emptyMsg">الكاشير غير متصل - هذه القائمة تحتاج الكاشير. حاول مرة أخرى لما يرجع.</div>';
     }
-  }, 15000);
-
-  resultRef.on('value', snap => {
-    if (snap.val() === null) return;
-    clearTimeout(timeout);
-    resultRef.off('value');
-    const val = snap.val();
-    let results = val ? Object.values(val) : [];
-    if (filterFn) results = results.filter(filterFn);
-    const summaryHtml = summaryFn ? summaryFn(results) : '';
-    body.innerHTML = summaryHtml + renderInvoiceResultsList(results);
-    resultRef.remove();
-  });
+  };
+  runWithCashier(ctx, () => {
+    const pushRef = db.ref('commands/invoiceQuery').push();
+    pushRef.set({ type: type, query: query || '' });
+    const resultRef = db.ref('data/invoiceQueryResults/' + pushRef.key);
+    const cb = snap => {
+      if (snap.val() === null) return;
+      markQueryLive(ctx);
+      resultRef.off('value', cb);
+      let results = Object.values(snap.val() || {});
+      if (filterFn) results = results.filter(filterFn);
+      const summaryHtml = summaryFn ? summaryFn(results) : '';
+      body.innerHTML = summaryHtml + renderInvoiceResultsList(results) + queryTimeHtml(ctx, 'من الكاشير مباشرة');
+      resultRef.remove();
+    };
+    resultRef.on('value', cb);
+    return () => resultRef.off('value', cb);
+  }, offline);
 }
 
 function processReceiptOcrBlob(blob) {
@@ -4163,26 +4190,22 @@ function searchInvoiceByNumber() {
   body.innerHTML = '<div class="emptyMsg">جاري البحث...</div>';
   openModal('invoiceResultsModal');
 
-  const pushRef = db.ref('commands/invoiceQuery').push();
-  const pushId = pushRef.key;
-  pushRef.set({ type: 'search', query: q });
-
-  const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
-  const timeout = setTimeout(() => {
-    resultRef.off('value');
-    // الجهاز مش متصل - ندور في النسخة المحفوظة من الأرشيف بدل ما نوقف
-    searchInvoiceOffline(q, body);
-  }, 15000);
-
-  resultRef.on('value', snap => {
-    if (snap.val() === null) return;
-    clearTimeout(timeout);
-    resultRef.off('value');
-    const val = snap.val();
-    const results = val ? Object.values(val) : [];
-    body.innerHTML = renderInvoiceResultsList(results);
-    resultRef.remove();
-  });
+  const ctx = newQueryCtx();
+  runWithCashier(ctx, () => {
+    const pushRef = db.ref('commands/invoiceQuery').push();
+    pushRef.set({ type: 'search', query: q });
+    const resultRef = db.ref('data/invoiceQueryResults/' + pushRef.key);
+    const cb = snap => {
+      if (snap.val() === null) return;
+      markQueryLive(ctx);
+      resultRef.off('value', cb);
+      const results = Object.values(snap.val() || {});
+      body.innerHTML = renderInvoiceResultsList(results) + queryTimeHtml(ctx, 'من الكاشير مباشرة');
+      resultRef.remove();
+    };
+    resultRef.on('value', cb);
+    return () => resultRef.off('value', cb);
+  }, () => searchInvoiceOffline(q, body, ctx));
 }
 
 // ============ أدوات مشتركة لقراءة الأرشيف المحفوظ وقت ما جهاز المحل يكون مش رادّ ============
@@ -4197,17 +4220,101 @@ function offlineNoteHtml(text) {
 }
 
 // أرشيف يوم واحد بس - مصفوفة فواتير/مرتجعات (أو فاضية لو مفيش)
+// ============ الاستعلام من الكاشير + النسخة المحفوظة (أسرع نتيجة ممكنة) ============
+// - لو الكاشير مقفول (من النبضة): بندور في النسخة المحفوظة فورًا، ومن غير ما نبعت طلب للكاشير
+//   (عشان ما يتراكمش طلب ينفذه بكرة لما يفتح)
+// - لو الكاشير شغال: بنعرض نتيجة النسخة المحفوظة فورًا مع "جاري التحديث"، وبنستبدلها بالنتيجة الحية أول ما توصل
+// - الأرشيف بيتحمّل مرة واحدة في الذاكرة، وبعدها بنحدّث الأيام الجديدة بس
+function cashierLooksOnline() {
+  if (!navigator.onLine) return false;
+  if (!scriptStatus || !scriptStatus.lastSeen) return true; // لسه ما عرفناش حالته - نجرب
+  const sec = (Date.now() + (typeof serverTimeOffset === 'number' ? serverTimeOffset : 0) - scriptStatus.lastSeen) / 1000;
+  return sec <= 60;
+}
+
+function newQueryCtx() {
+  return { t0: (window.performance && performance.now) ? performance.now() : Date.now(), live: false, prelim: false, timer: null };
+}
+
+function queryElapsedSec(ctx) {
+  const now = (window.performance && performance.now) ? performance.now() : Date.now();
+  return Math.max(0.01, (now - ctx.t0) / 1000);
+}
+
+function queryTimeHtml(ctx, source) {
+  const t = queryElapsedSec(ctx);
+  return `<div style="text-align:center;font-size:11px;color:var(--textMuted);font-weight:700;margin:10px 0 2px;">⏱ ${t < 10 ? t.toFixed(2) : t.toFixed(1)} ثانية — ${source}</div>`;
+}
+
+function archiveNote(ctx, offlineText) {
+  if (ctx && ctx.prelim) return offlineNoteHtml('نتيجة سريعة من النسخة المحفوظة — جاري التحديث من الكاشير...');
+  return offlineNoteHtml(offlineText);
+}
+
+// بيثبّت إن النتيجة الحية وصلت (عشان النسخة المحفوظة ما تكتبش فوقها)
+function markQueryLive(ctx) {
+  ctx.live = true;
+  if (ctx.timer) { clearTimeout(ctx.timer); ctx.timer = null; }
+}
+
+// sendFn: بتبعت الطلب للكاشير وبترجع دالة لإلغاء الاستماع
+// offlineFn: بترسم من النسخة المحفوظة (وبتحترم ctx.live و ctx.prelim)
+function runWithCashier(ctx, sendFn, offlineFn, timeoutMs) {
+  if (!cashierLooksOnline()) {
+    ctx.prelim = false;
+    offlineFn();
+    return;
+  }
+  ctx.prelim = true;
+  offlineFn();
+  const cancel = sendFn();
+  ctx.timer = setTimeout(() => {
+    if (ctx.live) return;
+    try { cancel(); } catch (e) {}
+    ctx.prelim = false;
+    offlineFn();
+  }, timeoutMs || 8000);
+}
+
+let archiveCache = null;
+let archiveCacheAt = 0;
+let archiveCachePromise = null;
+
+function loadArchiveCache() {
+  if (archiveCachePromise) return archiveCachePromise;
+  if (archiveCache && Date.now() - archiveCacheAt < 60000) return Promise.resolve(archiveCache);
+  let q;
+  if (!archiveCache) {
+    q = db.ref('data/dailyArchive').once('value').then(snap => { archiveCache = snap.val() || {}; });
+  } else {
+    // تحديث من آخر يوم موجود عندنا (شامله، عشان فواتير النهارده بتزيد)
+    const days = Object.keys(archiveCache).sort();
+    const last = days.length ? days[days.length - 1] : '';
+    q = db.ref('data/dailyArchive').orderByKey().startAt(last).once('value').then(snap => { Object.assign(archiveCache, snap.val() || {}); });
+  }
+  archiveCachePromise = q.then(() => {
+    archiveCacheAt = Date.now();
+    archiveCachePromise = null;
+    return archiveCache;
+  }).catch(err => {
+    archiveCachePromise = null;
+    throw err;
+  });
+  return archiveCachePromise;
+}
+
+// أرشيف يوم واحد بس - مصفوفة فواتير/مرتجعات (أو فاضية لو مفيش)
 function fetchArchiveDay(dateStr) {
+  if (archiveCache) return loadArchiveCache().then(c => Object.values(c[dateStr] || {}).filter(Boolean));
   return db.ref('data/dailyArchive/' + dateStr).once('value').then(snap => {
     const val = snap.val();
-    return val ? Object.values(val) : [];
+    return val ? Object.values(val).filter(Boolean) : [];
   });
 }
 
 // كل الأرشيف (كل الأيام) مفلطح في مصفوفة واحدة - يستخدم وقت البحث برقم من غير معرفة التاريخ
 function fetchFullArchiveFlat() {
-  return db.ref('data/dailyArchive').once('value').then(snap => {
-    const allDays = snap.val() || {};
+  return loadArchiveCache().then(allDays => {
     const flat = [];
     Object.values(allDays).forEach(dayObj => {
       Object.values(dayObj || {}).forEach(entry => { if (entry) flat.push(entry); });
@@ -4217,33 +4324,39 @@ function fetchFullArchiveFlat() {
 }
 
 // أرشيف كل الأيام الواقعة بين تاريخين (شاملين الطرفين) - يستخدم في تقارير الفترة
+// أرشيف كل الأيام الواقعة بين تاريخين (شاملين الطرفين)
+// لو الأرشيف في الذاكرة بنفلتر منه، غير كده بنطلب الأيام دي بس من السيرفر (مش الأرشيف كله)
 function fetchArchiveRange(fromStr, toStr) {
-  return db.ref('data/dailyArchive').once('value').then(snap => {
-    const allDays = snap.val() || {};
+  const flatten = days => {
     const flat = [];
-    Object.keys(allDays).forEach(d => {
-      if (d >= fromStr && d <= toStr) {
-        Object.values(allDays[d] || {}).forEach(entry => { if (entry) flat.push(entry); });
-      }
+    Object.keys(days || {}).forEach(d => {
+      if (d >= fromStr && d <= toStr) Object.values(days[d] || {}).forEach(entry => { if (entry) flat.push(entry); });
     });
     return flat;
-  });
+  };
+  if (archiveCache) return loadArchiveCache().then(flatten);
+  return db.ref('data/dailyArchive').orderByKey().startAt(fromStr).endAt(toStr).once('value').then(snap => flatten(snap.val()));
 }
 
-function searchInvoiceOffline(q, body) {
+function searchInvoiceOffline(q, body, ctx) {
+  ctx = ctx || newQueryCtx();
   const numMatch = q.replace(/[^0-9]/g, '');
   fetchFullArchiveFlat().then(flat => {
+    if (ctx.live) return;
     const matches = flat.filter(entry => {
       const numberDigits = String(entry.number || '').replace(/[^0-9]/g, '');
       const orderDigits = String(entry.orderNo || '').replace(/[^0-9]/g, '');
       return numMatch !== '' && (numberDigits === numMatch || orderDigits === numMatch);
     });
     if (matches.length) {
-      body.innerHTML = offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وقد تكون قديمة') + renderInvoiceResultsList(matches);
+      body.innerHTML = archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة وقد تكون قديمة') + renderInvoiceResultsList(matches) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
+    } else if (ctx.prelim) {
+      body.innerHTML = '<div class="emptyMsg">غير موجود في النسخة المحفوظة — جاري البحث في الكاشير...</div>';
     } else {
-      body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نتيجة مطابقة في النسخة المحفوظة</div>';
+      body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نتيجة مطابقة في النسخة المحفوظة</div>' + queryTimeHtml(ctx, 'من النسخة المحفوظة');
     }
   }).catch(() => {
+    if (ctx.live || ctx.prelim) return;
     body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
@@ -4268,10 +4381,13 @@ function renderInvoicesGroupedByDate(results, notePrefix) {
   return html;
 }
 
-function loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl) {
+function loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl, ctx) {
+  ctx = ctx || newQueryCtx();
   fetchArchiveRange(fromStr, toStr).then(flat => {
-    resultsEl.innerHTML = renderInvoicesGroupedByDate(flat, offlineNoteHtml('جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة'));
+    if (ctx.live) return;
+    resultsEl.innerHTML = renderInvoicesGroupedByDate(flat, archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - القائمة من آخر نسخة محفوظة')) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
   }).catch(() => {
+    if (ctx.live || ctx.prelim) return;
     resultsEl.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
@@ -4284,25 +4400,22 @@ function loadAllInvoicesRange() {
   if (fromStr > toStr) { resultsEl.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
   resultsEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
 
-  const pushRef = db.ref('commands/invoiceQuery').push();
-  const pushId = pushRef.key;
-  pushRef.set({ type: 'byRange', from: fromStr, to: toStr, query: '' });
-
-  const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
-  const timeout = setTimeout(() => {
-    resultRef.off('value');
-    loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl);
-  }, 15000);
-
-  resultRef.on('value', snap => {
-    if (snap.val() === null) return;
-    clearTimeout(timeout);
-    resultRef.off('value');
-    const val = snap.val();
-    const results = val ? Object.values(val) : [];
-    resultRef.remove();
-    resultsEl.innerHTML = renderInvoicesGroupedByDate(results, '');
-  });
+  const ctx = newQueryCtx();
+  runWithCashier(ctx, () => {
+    const pushRef = db.ref('commands/invoiceQuery').push();
+    pushRef.set({ type: 'byRange', from: fromStr, to: toStr, query: '' });
+    const resultRef = db.ref('data/invoiceQueryResults/' + pushRef.key);
+    const cb = snap => {
+      if (snap.val() === null) return;
+      markQueryLive(ctx);
+      resultRef.off('value', cb);
+      const results = Object.values(snap.val() || {});
+      resultRef.remove();
+      resultsEl.innerHTML = renderInvoicesGroupedByDate(results, '') + queryTimeHtml(ctx, 'من الكاشير مباشرة');
+    };
+    resultRef.on('value', cb);
+    return () => resultRef.off('value', cb);
+  }, () => loadAllInvoicesRangeOffline(fromStr, toStr, resultsEl, ctx));
 }
 
 function openAllInvoices() {
@@ -4362,34 +4475,35 @@ function browseInvoicesByDate() {
   body.innerHTML = '<div class="emptyMsg">جاري البحث...</div>';
   openModal('invoiceResultsModal');
 
-  const pushRef = db.ref('commands/invoiceQuery').push();
-  const pushId = pushRef.key;
-  pushRef.set({ type: 'byDate', query: dateVal });
-
-  const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
-  const timeout = setTimeout(() => {
-    resultRef.off('value');
-    // الجهاز مش متصل - نرجع لآخر نسخة محفوظة في الأرشيف (ممكن تكون ناقصة)
-    db.ref('data/dailyArchive/' + dateVal).once('value').then(snap => {
-      const val = snap.val();
-      const archived = val ? Object.values(val) : [];
+  const ctx = newQueryCtx();
+  const offline = () => {
+    fetchArchiveDay(dateVal).then(archived => {
+      if (ctx.live) return;
       if (archived.length) {
-        body.innerHTML = '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> جهاز المحل غير متصل حاليًا - هذه آخر نسخة محفوظة وقد تكون ناقصة</div>' + computeDaySummaryHtml(archived) + renderInvoiceResultsList(archived);
-      } else {
-        body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نسخة محفوظة لهذا اليوم</div>';
+        body.innerHTML = archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - هذه آخر نسخة محفوظة وقد تكون ناقصة') + computeDaySummaryHtml(archived) + renderInvoiceResultsList(archived) + queryTimeHtml(ctx, 'من النسخة المحفوظة');
+      } else if (!ctx.prelim) {
+        body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يوجد نسخة محفوظة لهذا اليوم</div>' + queryTimeHtml(ctx, 'من النسخة المحفوظة');
       }
+    }).catch(() => {
+      if (ctx.live || ctx.prelim) return;
+      body.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
     });
-  }, 15000);
-
-  resultRef.on('value', snap => {
-    if (snap.val() === null) return;
-    clearTimeout(timeout);
-    resultRef.off('value');
-    const val = snap.val();
-    const results = val ? Object.values(val) : [];
-    body.innerHTML = computeDaySummaryHtml(results) + renderInvoiceResultsList(results);
-    resultRef.remove();
-  });
+  };
+  runWithCashier(ctx, () => {
+    const pushRef = db.ref('commands/invoiceQuery').push();
+    pushRef.set({ type: 'byDate', query: dateVal });
+    const resultRef = db.ref('data/invoiceQueryResults/' + pushRef.key);
+    const cb = snap => {
+      if (snap.val() === null) return;
+      markQueryLive(ctx);
+      resultRef.off('value', cb);
+      const results = Object.values(snap.val() || {});
+      body.innerHTML = computeDaySummaryHtml(results) + renderInvoiceResultsList(results) + queryTimeHtml(ctx, 'من الكاشير مباشرة');
+      resultRef.remove();
+    };
+    resultRef.on('value', cb);
+    return () => resultRef.off('value', cb);
+  }, offline);
 }
 
 /* ================= الجرد اليومي ================= */
@@ -7185,11 +7299,15 @@ function renderReturnsGroupedByDate(fromStr, toStr, allReturns, el, notePrefix) 
   el.innerHTML = html;
 }
 
-function loadReturnsOffline(fromStr, toStr, el) {
+function loadReturnsOffline(fromStr, toStr, el, ctx) {
+  ctx = ctx || newQueryCtx();
   fetchArchiveRange(fromStr, toStr).then(flat => {
+    if (ctx.live) return;
     const returns = flat.filter(e => e && e.type === 'return');
-    renderReturnsGroupedByDate(fromStr, toStr, returns, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة'));
+    renderReturnsGroupedByDate(fromStr, toStr, returns, el, archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - النتيجة من آخر نسخة محفوظة'));
+    el.insertAdjacentHTML('beforeend', queryTimeHtml(ctx, 'من النسخة المحفوظة'));
   }).catch(() => {
+    if (ctx.live || ctx.prelim) return;
     el.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
@@ -7202,26 +7320,24 @@ function loadReturnsRange() {
   if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
 
-  const pushRef = db.ref('commands/invoiceQuery').push();
-  const pushId = pushRef.key;
-  pushRef.set({ type: 'byRange', from: fromStr, to: toStr, query: '' });
-
-  const resultRef = db.ref('data/invoiceQueryResults/' + pushId);
-  const timeout = setTimeout(() => {
-    resultRef.off('value');
-    loadReturnsOffline(fromStr, toStr, el);
-  }, 15000);
-
-  resultRef.on('value', snap => {
-    if (snap.val() === null) return;
-    clearTimeout(timeout);
-    resultRef.off('value');
-    const val = snap.val();
-    const results = val ? Object.values(val) : [];
-    resultRef.remove();
-    const returns = results.filter(e => e && e.type === 'return');
-    renderReturnsGroupedByDate(fromStr, toStr, returns, el, '');
-  });
+  const ctx = newQueryCtx();
+  runWithCashier(ctx, () => {
+    const pushRef = db.ref('commands/invoiceQuery').push();
+    pushRef.set({ type: 'byRange', from: fromStr, to: toStr, query: '' });
+    const resultRef = db.ref('data/invoiceQueryResults/' + pushRef.key);
+    const cb = snap => {
+      if (snap.val() === null) return;
+      markQueryLive(ctx);
+      resultRef.off('value', cb);
+      const results = Object.values(snap.val() || {});
+      resultRef.remove();
+      const returns = results.filter(e => e && e.type === 'return');
+      renderReturnsGroupedByDate(fromStr, toStr, returns, el, '');
+      el.insertAdjacentHTML('beforeend', queryTimeHtml(ctx, 'من الكاشير مباشرة'));
+    };
+    resultRef.on('value', cb);
+    return () => resultRef.off('value', cb);
+  }, () => loadReturnsOffline(fromStr, toStr, el, ctx));
 }
 
 function loadReturns() {
@@ -7376,8 +7492,10 @@ function reportPdfAction() {
   }
 }
 
-function loadReportForPeriodOffline(period, range, el, rangeLabel) {
+function loadReportForPeriodOffline(period, range, el, rangeLabel, ctx) {
+  ctx = ctx || newQueryCtx();
   fetchArchiveRange(range.from, range.to).then(flat => {
+    if (ctx.live) return;
     let totalSales = 0, returnsTotal = 0, orderCount = 0, returnsCount = 0;
     flat.forEach(entry => {
       if (!entry) return;
@@ -7389,8 +7507,10 @@ function loadReportForPeriodOffline(period, range, el, rangeLabel) {
         orderCount++;
       }
     });
-    renderPeriodReport({ totalSales, returnsTotal, orderCount, returnsCount }, period, el, offlineNoteHtml('جهاز المحل غير متصل حاليًا - الأرقام من آخر نسخة محفوظة'), rangeLabel);
+    renderPeriodReport({ totalSales, returnsTotal, orderCount, returnsCount }, period, el, archiveNote(ctx, 'جهاز المحل غير متصل حاليًا - الأرقام من آخر نسخة محفوظة'), rangeLabel);
+    el.insertAdjacentHTML('beforeend', queryTimeHtml(ctx, 'من النسخة المحفوظة'));
   }).catch(() => {
+    if (ctx.live || ctx.prelim) return;
     el.innerHTML = '<div class="emptyMsg">الجهاز غير متصل ولا يمكن جلب النسخة المحفوظة الآن</div>';
   });
 }
@@ -7400,25 +7520,24 @@ function runReportQuery(range, period, el, rangeLabel) {
   el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
   lastReportRange = range;
 
-  const pushRef = db.ref('commands/reportQuery').push();
-  const pushId = pushRef.key;
-  pushRef.set({ from: range.from, to: range.to });
-
-  const resultRef = db.ref('data/reportQueryResults/' + pushId);
-  const timeout = setTimeout(() => {
-    resultRef.off('value');
-    loadReportForPeriodOffline(period, range, el, rangeLabel);
-  }, 15000);
-
-  resultRef.on('value', snap => {
-    if (snap.val() === null) return;
-    clearTimeout(timeout);
-    resultRef.off('value');
-    const r = snap.val() || {};
-    resultRef.remove();
-    if (r.error) { el.innerHTML = '<div class="emptyMsg">⚠️ ' + escapeHtml(r.error) + '</div>'; return; }
-    renderPeriodReport(r, period, el, '', rangeLabel);
-  });
+  const ctx = newQueryCtx();
+  runWithCashier(ctx, () => {
+    const pushRef = db.ref('commands/reportQuery').push();
+    pushRef.set({ from: range.from, to: range.to });
+    const resultRef = db.ref('data/reportQueryResults/' + pushRef.key);
+    const cb = snap => {
+      if (snap.val() === null) return;
+      markQueryLive(ctx);
+      resultRef.off('value', cb);
+      const r = snap.val() || {};
+      resultRef.remove();
+      if (r.error) { el.innerHTML = '<div class="emptyMsg">⚠️ ' + escapeHtml(r.error) + '</div>'; return; }
+      renderPeriodReport(r, period, el, '', rangeLabel);
+      el.insertAdjacentHTML('beforeend', queryTimeHtml(ctx, 'من الكاشير مباشرة'));
+    };
+    resultRef.on('value', cb);
+    return () => resultRef.off('value', cb);
+  }, () => loadReportForPeriodOffline(period, range, el, rangeLabel, ctx));
 }
 
 function loadReportForPeriod(period) {
