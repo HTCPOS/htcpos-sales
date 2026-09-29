@@ -242,14 +242,15 @@
   #shortageFormModal .modalSheet { width:calc(100% - 64px); max-width:380px; border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); animation:depositDropIn .32s cubic-bezier(.22,.9,.32,1.2); }
   /* النافذتين دول في نص الشاشة (مش نافذة سفلية) - تغيير المساحة تحتهم كان بيخلي الحركة تبان
      قافزة فجأة. تحريك النافذة نفسها لفوق شوية بـ transform بدل كده بيدي حركة أنعم بكتير */
+  /* رفع النافذة فوق الكيبورد بخاصية translate المستقلة (مش transform): كده ما بتتخانقش مع حركة
+     فتح النافذة (اللي شغالة على transform)، فالنافذة ما بتهزش لما الكيبورد يفتح وهي لسه بتظهر */
   body.keyboard-open #depositModal .modalSheet,
   body.keyboard-open #shortageFormModal .modalSheet,
   body.keyboard-open #editCustomerModal .modalSheet {
-    transform: translateY(calc(var(--kb-h) * -0.32));
-    transition: transform .28s cubic-bezier(.25,.8,.25,1);
+    translate: 0 calc(var(--kb-h) * -0.32);
   }
   #depositModal .modalSheet, #shortageFormModal .modalSheet, #editCustomerModal .modalSheet {
-    transition: transform .28s cubic-bezier(.25,.8,.25,1);
+    transition: translate .3s cubic-bezier(.32,.72,0,1);
   }
   /* نافذة اختيار الزبون: الجزء الفوقاني (العنوان والملاحظة وخانة البحث) ثابت ودايمًا ظاهر،
      والقائمة بس هي اللي بتسكرول. لما الكيبورد يفتح النافذة بتصغر على المساحة اللي فوقه بالظبط
@@ -484,6 +485,49 @@
   .rvImageWrap img { display:block; width:100%; height:auto; }
   .rvHighlightBox { position:absolute; border:3px solid #2563EB; border-radius:4px; box-shadow:0 0 0 999px rgba(0,0,0,.35); pointer-events:none; transition:all .15s ease; display:none; }
   .rvSummaryBar { display:flex; flex-direction:column; gap:2px; background:var(--surface2); border-radius:12px; padding:10px 14px; margin-bottom:10px; font-size:12.5px; font-weight:700; }
+
+  /* ================= نظام الحركة ================= */
+  /* النوافذ السفلية: بتنزلق من أسفل الشاشة وبتنزل لتحت وهي بتتقفل (منحنى زي الآيفون من غير ارتداد) */
+  @keyframes sheetUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  @keyframes sheetDown { from { transform:translateY(0); } to { transform:translateY(105%); } }
+  @keyframes bgIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes bgOut { from { opacity:1; } to { opacity:0; } }
+  @keyframes dialogIn { from { transform:scale(.94); opacity:0; } to { transform:scale(1); opacity:1; } }
+  @keyframes dialogOut { from { transform:scale(1); opacity:1; } to { transform:scale(.96); opacity:0; } }
+  .modalBg { animation:bgIn .26s ease both; transition:background-color .3s ease; }
+  .modalBg .modalSheet { animation:sheetUp .36s cubic-bezier(.32,.72,0,1) both; transition:scale .34s cubic-bezier(.32,.72,0,1), filter .34s ease; }
+  .modalBg.closing { animation:bgOut .24s ease forwards; pointer-events:none; }
+  .modalBg.closing .modalSheet { animation:sheetDown .24s cubic-bezier(.4,0,1,1) forwards; }
+  /* النوافذ اللي في نص الشاشة (الإيداع / النواقص / تعديل الزبون): تكبير خفيف مع ظهور */
+  #depositModal .modalSheet, #shortageFormModal .modalSheet, #editCustomerModal .modalSheet { animation:dialogIn .26s cubic-bezier(.2,.8,.2,1) both; }
+  #depositModal.closing .modalSheet, #shortageFormModal.closing .modalSheet, #editCustomerModal.closing .modalSheet { animation:dialogOut .18s ease forwards; }
+  /* عمق النوافذ: اللي تحت بتصغر وتبعد شوية بدل طبقة سودا تانية، والنافذة اللي فوق خلفيتها أخف */
+  .modalBg.behind .modalSheet { scale:.94; filter:brightness(.92); }
+  .modalBg.stacked { background:rgba(15,23,42,.16); }
+  /* استجابة الضغط */
+  .searchResultRow[onclick] { -webkit-tap-highlight-color:transparent; transition:background-color .15s ease, transform .15s ease; border-radius:10px; }
+  .searchResultRow[onclick]:active { background:var(--surface2); transform:scale(.985); }
+  .quickItem, .statCard { -webkit-tap-highlight-color:transparent; transition:transform .15s ease; }
+  .quickItem:active, .statCard:active { transform:scale(.96); }
+  .modalSheet button:not(:disabled):active { filter:brightness(.93); }
+  /* دخول القوائم: أول الصفوف بتظهر بتتابع خفيف - بس أول ما النافذة تتفتح (مش مع كل تحديث) */
+  @keyframes rowIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .modalBg.justOpened .searchResultRow { animation:rowIn .28s ease both; }
+  .modalBg.justOpened .searchResultRow:nth-child(2) { animation-delay:.025s; }
+  .modalBg.justOpened .searchResultRow:nth-child(3) { animation-delay:.05s; }
+  .modalBg.justOpened .searchResultRow:nth-child(4) { animation-delay:.075s; }
+  .modalBg.justOpened .searchResultRow:nth-child(5) { animation-delay:.1s; }
+  .modalBg.justOpened .searchResultRow:nth-child(6) { animation-delay:.125s; }
+  .modalBg.justOpened .searchResultRow:nth-child(7) { animation-delay:.15s; }
+  .modalBg.justOpened .searchResultRow:nth-child(n+8) { animation-delay:.17s; }
+  /* تحميل أنيق: صفوف رمادية بتلمع بدل "جاري التحميل..." */
+  .skRow { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:15px 8px; border-bottom:1px solid var(--border2); }
+  .skBar { height:12px; border-radius:6px; background:linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%); background-size:300% 100%; animation:skShimmer 1.3s ease-in-out infinite; }
+  @keyframes skShimmer { from { background-position:100% 0; } to { background-position:-100% 0; } }
+  /* احترام "تقليل الحركة" في إعدادات الآيفون */
+  @media (prefers-reduced-motion: reduce) {
+    .modalBg, .modalBg .modalSheet, .modalBg.closing, .modalBg.closing .modalSheet, .searchResultRow, .skBar { animation-duration:.01s !important; animation-delay:0s !important; transition-duration:.01s !important; }
+  }
 </style>
 </head>
 <body>
@@ -2260,7 +2304,7 @@ function damagedPeriodStart(p) {
 function loadDamagedLog() {
   document.querySelectorAll('#damagedModal .dmTab').forEach(b => b.classList.toggle('on', b.dataset.p === damagedPeriod));
   const el = document.getElementById('dmBody');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   liveOnce('data/damaged').then(snap => {
     const all = Object.entries(snap.val() || {}).map(([id, r]) => Object.assign({ id: id }, r));
     const start = damagedPeriodStart(damagedPeriod);
@@ -2388,9 +2432,17 @@ function damagedPdfAction() {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.9.2';
+const APP_VERSION = '2.10.0';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.10.0', date: '2026-09-29', items: [
+    'حركة احترافية للنوافذ: تنزلق من أسفل الشاشة عند الفتح وتنزل بنعومة عند الإغلاق',
+    'عمق النوافذ: النافذة التي تحت تصغر قليلًا بدل تراكم طبقات داكنة',
+    'استجابة بصرية عند الضغط على الصفوف والأزرار',
+    'تحميل أنيق بصفوف لامعة بدل كلمة "جاري التحميل"',
+    'إصلاح اهتزاز نافذة الإيداع عند فتح الكيبورد',
+    'احترام إعداد "تقليل الحركة" في الآيفون'
+  ] },
   { v: '2.9.2', date: '2026-09-29', items: [
     'رأس كل نافذة ثابت في الأعلى: الزر والعنوان يبقيان ظاهرين مهما نزلت في القائمة',
     'زر رجوع باسم النافذة السابقة عند فتح نافذة من داخل نافذة أخرى، وزر ✕ للنوافذ المفتوحة من الرئيسية',
@@ -2582,7 +2634,7 @@ function openUserAccountInfo() {
 
 function openAttendanceLog() {
   const body = document.getElementById('attendanceLogBody');
-  body.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  body.innerHTML = skeletonHtml();
   openModal('attendanceLogModal');
   db.ref('data/attendanceLog').limitToLast(200).once('value').then(snap => {
     const val = snap.val();
@@ -2638,6 +2690,7 @@ if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.is
     document.documentElement.style.setProperty('--kb-h', kh + 'px');
     document.body.classList.add('keyboard-open');
     const active = document.activeElement;
+    if (inCenteredDialog(active)) return; // النافذة بتترفع لوحدها بحركة ناعمة
     if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
       setTimeout(() => scrollIntoViewIfCovered(active, kh), 50);
     }
@@ -2657,8 +2710,12 @@ function scrollIntoViewIfCovered(el, keyboardHeight) {
     el.scrollIntoView({ block: 'center' });
   }
 }
+function inCenteredDialog(el) {
+  return !!(el && el.closest && el.closest('#depositModal, #shortageFormModal, #editCustomerModal'));
+}
 document.addEventListener('focusin', (e) => {
   const t = e.target;
+  if (inCenteredDialog(t)) return;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
     setTimeout(() => scrollIntoViewIfCovered(t), 250);
     // لو الكيبورد مفتوح أصلًا والمستخدم نقل لخانة تانية جوه نافذة
@@ -3243,13 +3300,37 @@ function unlockBodyScroll() {
 function anyModalOpen() {
   return Array.from(document.querySelectorAll('.modalBg')).some(m => m.style.display === 'flex');
 }
+
+function prefersReducedMotion() {
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+// عمق النوافذ: كل نافذة مفتوحة تحت نافذة تانية بتصغر شوية، واللي فوق خلفيتها أخف (بدل طبقات سودا فوق بعض)
+function refreshModalDepth() {
+  const open = Array.from(document.querySelectorAll('.modalBg')).filter(m => m.style.display === 'flex' && !m.classList.contains('closing'));
+  open.forEach((m, i) => {
+    m.classList.toggle('behind', i < open.length - 1);
+    m.classList.toggle('stacked', i > 0);
+  });
+}
+
+// شكل تحميل أنيق (صفوف بتلمع) بدل كلمة "جاري التحميل..."
+function skeletonHtml(rows) {
+  const n = rows || 6;
+  let h = '';
+  for (let i = 0; i < n; i++) {
+    const w1 = 38 + ((i * 37) % 40), w2 = 16 + ((i * 23) % 14);
+    h += `<div class="skRow"><div class="skBar" style="width:${w1}%;"></div><div class="skBar" style="width:${w2}%;"></div></div>`;
+  }
+  return h;
+}
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
 
 function topOpenModalId(exceptEl) {
   let top = null;
-  document.querySelectorAll('.modalBg').forEach(m => { if (m !== exceptEl && m.style.display === 'flex') top = m.id; });
+  document.querySelectorAll('.modalBg').forEach(m => { if (m !== exceptEl && m.style.display === 'flex' && !m.classList.contains('closing')) top = m.id; });
   return top;
 }
 
@@ -3332,7 +3413,7 @@ function attachSheetSwipe(modal, sheet, head) {
     sheet.style.transition = 'transform .22s ease';
     if (dy > 110) {
       sheet.style.transform = 'translateY(110%)';
-      setTimeout(() => { sheet.style.transition = ''; sheet.style.transform = ''; closeModal(modal.id); }, 200);
+      setTimeout(() => { closeModal(modal.id, { instant: true }); sheet.style.transition = ''; sheet.style.transform = ''; }, 200);
     } else {
       sheet.style.transform = '';
       setTimeout(() => { sheet.style.transition = ''; }, 230);
@@ -3349,8 +3430,15 @@ function openModal(id) {
   // أي نافذة بتتفتح بننقلها لآخر الصفحة أول ما تتفتح - كده هي دايمًا اللي فوق مهما كانت
   // النافذة التانية المفتوحة أصلاً هي إيه، من غير ما نحتاج نحدد أولوية ثابتة لنافذة بعينها
   // (كانت المشكلة إن نافذة واحدة بس اتخليت "فوق دايمًا" فكسرت العكس لما نافذة تانية تحتاجه)
+  // لو كانت بتتقفل ورجعنا فتحناها بسرعة: نلغي الإغلاق
+  if (el._closeTimer) { clearTimeout(el._closeTimer); el._closeTimer = null; }
+  el.classList.remove('closing');
   document.body.appendChild(el);
   el.style.display = 'flex';
+  el.classList.add('justOpened');
+  clearTimeout(el._justOpenedTimer);
+  el._justOpenedTimer = setTimeout(() => el.classList.remove('justOpened'), 700);
+  refreshModalDepth();
   try { updateSheetHeaderMode(el, parentId); } catch (e) {}
   if (!wasAnyOpen) lockBodyScroll();
   if (id === 'lowStockModal') loadLowStock();
@@ -3367,10 +3455,27 @@ function openModal(id) {
   if (id === 'purchaseDebtsModal') loadPurchaseDebts();
   if (id === 'zeroPriceModal') loadZeroPriceModal();
 }
-function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
-  if (!anyModalOpen()) { unlockBodyScroll(); setActiveNavItem(null); }
-  onModalClosed(id);
+// الإغلاق بحركة (النافذة بتنزل والخلفية بتفتح) - opts.instant للإغلاق الفوري (زي بعد السحب لتحت)
+function closeModal(id, opts) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const finish = () => {
+    el._closeTimer = null;
+    el.classList.remove('closing', 'behind', 'stacked', 'justOpened');
+    el.style.display = 'none';
+    if (!anyModalOpen()) { unlockBodyScroll(); setActiveNavItem(null); }
+    refreshModalDepth();
+    onModalClosed(id);
+  };
+  if (el.style.display !== 'flex') { finish(); return; }
+  if (el._closeTimer) return; // بتتقفل فعلًا
+  if ((opts && opts.instant) || prefersReducedMotion()) { finish(); return; }
+  el.classList.add('closing');
+  el.classList.remove('behind');
+  // النافذة اللي تحتها ترجع لحجمها في نفس اللحظة اللي دي بتنزل فيها
+  const rest = Array.from(document.querySelectorAll('.modalBg')).filter(m => m !== el && m.style.display === 'flex' && !m.classList.contains('closing'));
+  rest.forEach((m, i) => { m.classList.toggle('behind', i < rest.length - 1); });
+  el._closeTimer = setTimeout(finish, 230);
 }
 function isModalOpen(id) {
   const el = document.getElementById(id);
@@ -3429,7 +3534,7 @@ function editFieldLabel(field) {
 
 function loadAlerts() {
   const el = document.getElementById('alertsBody');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
 
   Promise.all([
     db.ref('data/lowStockItems').once('value'),
@@ -3568,7 +3673,7 @@ function openCustomerPickerList() {
   customerPickerAll = [];
   customerPickerBusy = false;
   const listEl = document.getElementById('customerPickerList');
-  listEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  listEl.innerHTML = skeletonHtml();
   openModal('customerPickerModal');
   liveOnce('data/customers').then(snap => {
     const val = snap.val();
@@ -3773,7 +3878,7 @@ function renderInvoiceResultsList(results) {
 function runInvoiceQuery(type, query, title, filterFn, summaryFn) {
   document.getElementById('invoiceResultsTitle').textContent = title;
   const body = document.getElementById('invoiceResultsBody');
-  body.innerHTML = '<div class="emptyMsg">جاري البحث...</div>';
+  body.innerHTML = skeletonHtml();
   openModal('invoiceResultsModal');
 
   const ctx = newQueryCtx();
@@ -4658,7 +4763,7 @@ function searchInvoiceByNumber() {
 
   document.getElementById('invoiceResultsTitle').textContent = title;
   const body = document.getElementById('invoiceResultsBody');
-  body.innerHTML = '<div class="emptyMsg">جاري البحث...</div>';
+  body.innerHTML = skeletonHtml();
   openModal('invoiceResultsModal');
 
   const ctx = newQueryCtx();
@@ -4909,7 +5014,7 @@ function loadAllInvoicesRange() {
   const resultsEl = document.getElementById('allInvoicesResults');
   if (!fromStr || !toStr) { resultsEl.innerHTML = '<div class="emptyMsg">اختر تاريخ البداية والنهاية</div>'; return; }
   if (fromStr > toStr) { resultsEl.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
-  resultsEl.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  resultsEl.innerHTML = skeletonHtml();
 
   const ctx = newQueryCtx();
   runWithCashier(ctx, () => {
@@ -4983,7 +5088,7 @@ function browseInvoicesByDate() {
 
   document.getElementById('invoiceResultsTitle').textContent = title;
   const body = document.getElementById('invoiceResultsBody');
-  body.innerHTML = '<div class="emptyMsg">جاري البحث...</div>';
+  body.innerHTML = skeletonHtml();
   openModal('invoiceResultsModal');
 
   const ctx = newQueryCtx();
@@ -6001,7 +6106,7 @@ function finishInventoryCount() {
 
 function loadMissingItems() {
   const el = document.getElementById('missingItemsBody');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   db.ref('data/missingItems').once('value').then(snap => {
     const val = snap.val();
     const items = val ? Object.entries(val).map(([id, m]) => ({ id, ...m })) : [];
@@ -6033,7 +6138,7 @@ function openNotesModal() {
 
 function loadNotesList() {
   const el = document.getElementById('notesList');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   db.ref('data/notes').once('value').then(snap => {
     const val = snap.val();
     const notes = val ? Object.entries(val).map(([id, n]) => ({ id, ...n })) : [];
@@ -6154,7 +6259,7 @@ function ehFormat(field, v) {
 
 function loadEditHistory() {
   const el = document.getElementById('activityLogBody');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   Promise.all([
     db.ref('data/editHistory').limitToLast(300).once('value'),
     db.ref('data/editResults').once('value')
@@ -6284,7 +6389,7 @@ function loadActivityLog() {
   }
   info.textContent = 'كل عملية إضافة دين، سداد، ترجيع، أو تعديل في الزبائن — بالوقت والتاريخ (ما عدا الجرد).';
   const el = document.getElementById('activityLogBody');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   db.ref('data/activityLog').limitToLast(200).once('value').then(snap => {
     const val = snap.val();
     const entries = val ? Object.values(val) : [];
@@ -6330,7 +6435,7 @@ function addStandaloneCustomer() {
 
 function loadCustomers() {
   const el = document.getElementById('customersList');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   Promise.all([
     liveOnce('data/customers'),
     liveOnce('data/debts'),
@@ -6463,7 +6568,8 @@ function openDepositForm(customerId, customerName, kind) {
   pendingReceiptOcrJson = null; // إيداع جديد - أي بيانات إيصال قديمة متحفوظة من مرة سابقة تتلغى
   setDepositMethod('نقدي');
   openModal('depositModal');
-  setTimeout(() => { document.getElementById('depositAmountInput').focus(); }, 150);
+  // الكيبورد يفتح بعد ما النافذة تكمّل ظهورها (.26 ثانية) عشان الحركتين ما يتداخلوش
+  setTimeout(() => { document.getElementById('depositAmountInput').focus(); }, 280);
 }
 
 function setDepositMethod(method) {
@@ -6477,16 +6583,7 @@ function setDepositMethod(method) {
 }
 
 function closeDepositModalAnimated() {
-  const sheet = document.querySelector('#depositModal .modalSheet');
-  if (sheet) {
-    sheet.classList.add('dropOut');
-    setTimeout(() => {
-      closeModal('depositModal');
-      sheet.classList.remove('dropOut');
-    }, 320);
-  } else {
-    closeModal('depositModal');
-  }
+  closeModal('depositModal');
 }
 
 function submitDeposit() {
@@ -6620,7 +6717,7 @@ let latestPurchaseDebts = [];
 function loadPurchaseDebts() {
   const el = document.getElementById('purchaseDebtsList');
   const totalEl = document.getElementById('purchaseDebtsTotal');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   totalEl.textContent = '';
   liveOnce('data/purchaseDebts').then(snap => {
     const val = snap.val();
@@ -6887,7 +6984,7 @@ function debtReminderTextOnly() {
 function openCustomerDebt(customerId, customerName) {
   document.getElementById('customerDebtTitle').textContent = 'حساب ' + customerName;
   const el = document.getElementById('customerDebtBody');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   openModal('customerDebtModal');
   // بنعيد التسوية الشاملة أول ما نفتح الحساب (مش بس وقت الإيداع نفسه) - شبكة أمان: لو لأي سبب
   // حدث إيداع أو دين فات عليه التسوية التلقائية، فتح الحساب نفسه بيصححه فورًا من غير ما تحتاجي
@@ -7452,7 +7549,7 @@ function dismissLowStockItem(itemId, btnEl) {
 }
 function loadLowStock() {
   const el = document.getElementById('lowStockList');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   db.ref('data/lowStockItems').once('value').then(snap => {
     const val = snap.val();
     const dismissed = getDismissedLowStock();
@@ -7483,7 +7580,7 @@ let shortagesLoadToken = 0; // شبكة أمان ضد تحميلين متزاح�
 function loadShortages() {
   const myToken = ++shortagesLoadToken;
   const el = document.getElementById('shortagesList');
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   document.getElementById('shortagesFulfilledSection').innerHTML = '';
   Promise.all([
     db.ref('data/shortages').once('value'),
@@ -7855,7 +7952,7 @@ function loadReturnsRange() {
   const el = document.getElementById('returnsList');
   if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختر تاريخ البداية والنهاية</div>'; return; }
   if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
 
   const ctx = newQueryCtx();
   runWithCashier(ctx, () => {
@@ -8054,7 +8151,7 @@ function loadReportForPeriodOffline(period, range, el, rangeLabel, ctx) {
 
 // نواة مشتركة لأي تقرير فترة - سواء تبويب جاهز (يومي/أسبوعي...) أو نطاق مخصص من تاريخ لتاريخ
 function runReportQuery(range, period, el, rangeLabel) {
-  el.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  el.innerHTML = skeletonHtml();
   lastReportRange = range;
 
   const ctx = newQueryCtx();
