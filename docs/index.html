@@ -430,6 +430,19 @@
      والزيادة بتسكرول جوه النافذة. قواعد الكيبورد أدق من دي فبتكسبها وقت ما الكيبورد مفتوح */
   .modalSheet { max-height:calc(100vh - var(--navbar-h, 76px) - env(safe-area-inset-top) - 30px) !important; }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
+  /* رأس النافذة الثابت: شريط سحب + (رجوع أو ✕) + العنوان - بيفضل ظاهر فوق مهما سكرولت،
+     وبيتبني تلقائي لأي نافذة فيها ✕ وعنوان مباشرة جوه الـ sheet */
+  .modalSheet.hasHead { padding-top:0; }
+  .sheetHead { position:sticky; top:0; z-index:20; margin:0 -20px 10px; padding:7px 20px 10px; background:var(--surface); border-bottom:1px solid transparent; transition:border-color .2s ease, box-shadow .2s ease; touch-action:none; }
+  .sheetHead.scrolled { border-bottom-color:var(--border); box-shadow:0 8px 14px -12px rgba(0,0,0,.35); }
+  .sheetGrab { width:38px; height:5px; border-radius:3px; background:var(--border); margin:0 auto 9px; }
+  .sheetHeadRow { display:flex; align-items:center; gap:10px; min-height:34px; }
+  .sheetHeadRow h3 { flex:1; margin:0 !important; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sheetHead.nested .sheetHeadRow h3 { text-align:center; }
+  .sheetHead .closeM { float:none !important; flex-shrink:0; }
+  .sheetBack { display:flex; align-items:center; gap:3px; border:none; background:none; color:#2563EB; font-weight:800; font-size:14px; padding:6px 0; cursor:pointer; flex-shrink:0; max-width:42%; -webkit-tap-highlight-color:transparent; }
+  .sheetBack:active { opacity:.55; }
+  .sheetBack .sbLabel { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .searchResultRow { padding:12px 8px; border-bottom:1px solid var(--border2); display:flex; justify-content:space-between; align-items:center; }
   .searchResultRow .n { font-weight:700; font-size:14px; color:var(--text); }
   .searchResultRow .p { font-size:12px; color:var(--textMuted); }
@@ -2375,9 +2388,14 @@ function damagedPdfAction() {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.9.1';
+const APP_VERSION = '2.9.2';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.9.2', date: '2026-09-29', items: [
+    'رأس كل نافذة ثابت في الأعلى: الزر والعنوان يبقيان ظاهرين مهما نزلت في القائمة',
+    'زر رجوع باسم النافذة السابقة عند فتح نافذة من داخل نافذة أخرى، وزر ✕ للنوافذ المفتوحة من الرئيسية',
+    'سحب النافذة للأسفل من أعلاها لإغلاقها، مثل تطبيقات الآيفون'
+  ] },
   { v: '2.9.1', date: '2026-09-29', items: [
     'لا يمكن تسجيل تالف لصنف مخزونه صفر، ولا بكمية أكبر من المخزون الموجود',
     'الجرد يرفض الأرقام السالبة',
@@ -3225,14 +3243,115 @@ function unlockBodyScroll() {
 function anyModalOpen() {
   return Array.from(document.querySelectorAll('.modalBg')).some(m => m.style.display === 'flex');
 }
+/* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
+const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
+const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
+
+function topOpenModalId(exceptEl) {
+  let top = null;
+  document.querySelectorAll('.modalBg').forEach(m => { if (m !== exceptEl && m.style.display === 'flex') top = m.id; });
+  return top;
+}
+
+function enhanceSheetHeader(modal) {
+  if (!modal) return null;
+  if (modal.dataset.headDone) return modal._sheetHead || null;
+  modal.dataset.headDone = '1';
+  if (SHEET_HEAD_SKIP.includes(modal.id)) return null;
+  const sheet = Array.from(modal.children).find(c => c.classList && c.classList.contains('modalSheet'));
+  if (!sheet) return null;
+  const kids = Array.from(sheet.children);
+  const close = kids.find(c => c.classList.contains('closeM'));
+  const h3 = kids.find(c => c.tagName === 'H3');
+  if (!close || !h3) return null; // نافذة ليها رأس خاص بيها - ما نلمسهاش
+  const head = document.createElement('div');
+  head.className = 'sheetHead';
+  head.innerHTML = '<div class="sheetGrab"></div><div class="sheetHeadRow"></div>';
+  const row = head.lastChild;
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'sheetBack';
+  back.style.display = 'none';
+  back.innerHTML = SHEET_BACK_ICON + '<span class="sbLabel"></span>';
+  back.addEventListener('click', () => closeModal(modal.id));
+  row.appendChild(back);
+  row.appendChild(h3);
+  row.appendChild(close);
+  sheet.insertBefore(head, sheet.firstChild);
+  sheet.classList.add('hasHead');
+  sheet.addEventListener('scroll', () => head.classList.toggle('scrolled', sheet.scrollTop > 4), { passive: true });
+  attachSheetSwipe(modal, sheet, head);
+  modal._sheetHead = head;
+  return head;
+}
+
+// نافذة مفتوحة من جوه نافذة تانية = زر "رجوع" باسم النافذة اللي تحتها، غير كده = ✕
+function updateSheetHeaderMode(modal, parentId) {
+  const head = enhanceSheetHeader(modal);
+  if (!head) return;
+  const back = head.querySelector('.sheetBack');
+  const close = head.querySelector('.closeM');
+  head.classList.remove('scrolled');
+  if (parentId) {
+    const ph = document.querySelector('#' + parentId + ' .modalSheet h3');
+    let label = ph ? ph.textContent.trim() : '';
+    if (!label) label = 'رجوع';
+    if (label.length > 18) label = label.slice(0, 17) + '…';
+    back.querySelector('.sbLabel').textContent = label;
+    back.style.display = 'flex';
+    if (close) close.style.display = 'none';
+    head.classList.add('nested');
+  } else {
+    back.style.display = 'none';
+    if (close) close.style.display = '';
+    head.classList.remove('nested');
+  }
+}
+
+// سحب الرأس لتحت يقفل النافذة (زي تطبيقات الآيفون)
+function attachSheetSwipe(modal, sheet, head) {
+  let y0 = null, dy = 0, dragging = false;
+  head.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    y0 = e.touches[0].clientY; dy = 0; dragging = false;
+  }, { passive: true });
+  head.addEventListener('touchmove', e => {
+    if (y0 === null) return;
+    dy = e.touches[0].clientY - y0;
+    if (!dragging && dy > 8) { dragging = true; sheet.style.transition = 'none'; }
+    if (dragging) {
+      e.preventDefault();
+      sheet.style.transform = 'translateY(' + Math.max(0, dy) + 'px)';
+    }
+  }, { passive: false });
+  const end = () => {
+    if (y0 === null) return;
+    y0 = null;
+    if (!dragging) return;
+    dragging = false;
+    sheet.style.transition = 'transform .22s ease';
+    if (dy > 110) {
+      sheet.style.transform = 'translateY(110%)';
+      setTimeout(() => { sheet.style.transition = ''; sheet.style.transform = ''; closeModal(modal.id); }, 200);
+    } else {
+      sheet.style.transform = '';
+      setTimeout(() => { sheet.style.transition = ''; }, 230);
+    }
+  };
+  head.addEventListener('touchend', end);
+  head.addEventListener('touchcancel', end);
+}
+
 function openModal(id) {
   const wasAnyOpen = anyModalOpen();
   const el = document.getElementById(id);
+  const parentId = topOpenModalId(el);
   // أي نافذة بتتفتح بننقلها لآخر الصفحة أول ما تتفتح - كده هي دايمًا اللي فوق مهما كانت
   // النافذة التانية المفتوحة أصلاً هي إيه، من غير ما نحتاج نحدد أولوية ثابتة لنافذة بعينها
   // (كانت المشكلة إن نافذة واحدة بس اتخليت "فوق دايمًا" فكسرت العكس لما نافذة تانية تحتاجه)
   document.body.appendChild(el);
   el.style.display = 'flex';
+  try { updateSheetHeaderMode(el, parentId); } catch (e) {}
   if (!wasAnyOpen) lockBodyScroll();
   if (id === 'lowStockModal') loadLowStock();
   if (id === 'shortagesModal') loadShortages();
