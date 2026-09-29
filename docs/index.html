@@ -314,6 +314,12 @@
   .lsCheck { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--text); padding:7px 0; cursor:pointer; }
   .lsCheck input { width:18px; height:18px; }
   .lpStep { width:46px; height:44px; border:none; border-radius:10px; background:var(--surface2); color:var(--text); font-size:22px; font-weight:800; cursor:pointer; flex-shrink:0; }
+  /* الأيقونات الموحدة (بدل الإيموجي) - بتاخد لون وحجم النص اللي جنبها، فبتمشي مع الوضع الليلي */
+  .ico { width:1.15em; height:1.15em; display:inline-block; vertical-align:-0.2em; flex-shrink:0; }
+  .closeM .ico { width:15px; height:15px; vertical-align:middle; }
+  .gsClear .ico, .cpClear .ico { width:12px; height:12px; vertical-align:middle; }
+  .phIc .ico { width:21px; height:21px; }
+  .gsSec .ico { width:15px; height:15px; margin-left:4px; }
   /* مركز الأصناف */
   .phCam { flex-shrink:0; width:48px; border:none; border-radius:14px; background:var(--surface2); color:#2563EB; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .phShorts { display:flex; gap:6px; margin-top:10px; flex-shrink:0; }
@@ -450,7 +456,7 @@
   .modalSheet { max-height:calc(100vh - var(--navbar-h, 76px) - env(safe-area-inset-top) - 30px) !important; }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
   /* رأس النافذة الثابت: شريط سحب + (رجوع أو ✕) + العنوان - بيفضل ظاهر فوق مهما سكرولت،
-     وبيتبني تلقائي لأي نافذة فيها ✕ وعنوان مباشرة جوه الـ sheet */
+     وبيتبني تلقائي لأي نافذة فيها <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> وعنوان مباشرة جوه الـ sheet */
   .modalSheet.hasHead { padding-top:0; }
   .sheetHead { position:sticky; top:0; z-index:20; margin:0 -20px 10px; padding:7px 20px 10px; background:var(--surface); border-bottom:1px solid transparent; transition:border-color .2s ease, box-shadow .2s ease; touch-action:none; }
   .sheetHead.scrolled { border-bottom-color:var(--border); box-shadow:0 8px 14px -12px rgba(0,0,0,.35); }
@@ -750,7 +756,7 @@
 <!-- ================= MODALS ================= -->
 <div class="modalBg" id="lowStockModal" onclick="if(event.target===this)closeModal('lowStockModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('lowStockModal')">✕</button>
+    <button class="closeM" onclick="closeModal('lowStockModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>أصناف نفدت الكمية</h3>
     <div id="lowStockList"><div class="emptyMsg">لا يوجد بيانات</div></div>
   </div>
@@ -758,7 +764,7 @@
 
 <div class="modalBg" id="zeroPriceModal" onclick="if(event.target===this)closeModal('zeroPriceModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('zeroPriceModal')">✕</button>
+    <button class="closeM" onclick="closeModal('zeroPriceModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>أصناف بيعت بسعر 0</h3>
     <div style="background:#FEF2F2;color:#B91C1C;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
       هذه فواتير تحتاج مراجعة وتصحيح من برنامج الكاشير نفسه - هنا للتنبيه فقط.
@@ -769,7 +775,7 @@
 
 <div class="modalBg" id="shortagesModal" onclick="if(event.target===this)closeModal('shortagesModal')">
   <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
-    <button class="closeM" onclick="closeModal('shortagesModal')">✕</button>
+    <button class="closeM" onclick="closeModal('shortagesModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>قائمة النواقص</h3>
     <button onclick="openAddShortageForm()" style="width:100%;margin:10px 0;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> إضافة صنف جديد للنواقص</button>
     <div id="shortagesSourceTabs" style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;"></div>
@@ -780,7 +786,7 @@
 
 <div class="modalBg" id="shortageFormModal" onclick="if(event.target===this)closeModal('shortageFormModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('shortageFormModal')">✕</button>
+    <button class="closeM" onclick="closeModal('shortageFormModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="shortageFormTitle">إضافة صنف جديد للنواقص</h3>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
       <div style="position:relative;">
@@ -793,14 +799,14 @@
         <button type="button" id="shortageSourceLocalBtn" onclick="setShortageFormSource('محلي')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">محلي</button>
         <button type="button" id="shortageSourceChinaBtn" onclick="setShortageFormSource('الصين')" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">الصين</button>
       </div>
-      <button onclick="saveShortageForm()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;margin-top:6px;">✓ حفظ</button>
+      <button onclick="saveShortageForm()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;margin-top:6px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> حفظ</button>
     </div>
   </div>
 </div>
 
 <div class="modalBg" id="returnsModal" onclick="if(event.target===this)closeModal('returnsModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('returnsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('returnsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>المرتجعات</h3>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <input type="date" id="returnsFrom" style="flex:1;">
@@ -813,7 +819,7 @@
 
 <div class="modalBg" id="reportsModal" onclick="if(event.target===this)closeModal('reportsModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('reportsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('reportsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>التقارير</h3>
     <div style="display:flex;gap:6px;margin:12px 0;overflow-x:auto;">
       <button class="alertTab reportTab" data-period="day" onclick="setReportPeriod('day')">يومي</button>
@@ -833,7 +839,7 @@
 
 <div class="modalBg" id="alertsModal" onclick="if(event.target===this)closeModal('alertsModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('alertsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('alertsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>التنبيهات</h3>
     <div id="alertsFilterTabs" style="display:flex;gap:6px;margin:12px 0 14px;overflow-x:auto;">
       <button class="alertTab active" data-filter="all" onclick="setAlertFilter('all')">الكل</button>
@@ -852,7 +858,7 @@
 
 <div class="modalBg" id="searchModal" onclick="if(event.target===this)closeModal('searchModal')">
   <div class="modalSheet" style="height:80vh;">
-    <button class="closeM" onclick="closeModal('searchModal')">✕</button>
+    <button class="closeM" onclick="closeModal('searchModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>نتائج البحث</h3>
     <div id="searchResults"><div class="emptyMsg">اكتب اسم صنف وابحث</div></div>
   </div>
@@ -860,7 +866,7 @@
 
 <div class="modalBg" id="productsModal" onclick="if(event.target===this)closeModal('productsModal')">
   <div class="modalSheet" style="height:80vh;">
-    <button class="closeM" onclick="closeModal('productsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('productsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>كل المنتجات</h3>
     <div class="searchBox" style="margin:0 0 12px;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
@@ -872,7 +878,7 @@
 
 <div class="modalBg" id="itemDetailModal" onclick="if(event.target===this)closeModal('itemDetailModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('itemDetailModal')">✕</button>
+    <button class="closeM" onclick="closeModal('itemDetailModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="itemDetailTitle">تفاصيل الفاتورة</h3>
     <div id="itemDetailBody"></div>
   </div>
@@ -880,7 +886,7 @@
 
 <div class="modalBg" id="customersModal" onclick="if(event.target===this)closeModal('customersModal')">
   <div class="modalSheet" style="height:85vh;">
-    <button class="closeM" onclick="closeModal('customersModal')">✕</button>
+    <button class="closeM" onclick="closeModal('customersModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>الزبائن</h3>
     <div style="display:flex;gap:8px;margin:14px 0;">
       <input type="text" id="standaloneCustomerNameInput" placeholder="اسم زبون جديد..." style="flex:1;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;">
@@ -892,7 +898,7 @@
 
 <div class="modalBg" id="customerDebtModal" onclick="if(event.target===this)closeModal('customerDebtModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('customerDebtModal')">✕</button>
+    <button class="closeM" onclick="closeModal('customerDebtModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="customerDebtTitle">حساب الزبون</h3>
     <div id="customerDebtBody"></div>
   </div>
@@ -900,19 +906,19 @@
 
 <div class="modalBg" id="debtReminderModal" onclick="if(event.target===this)closeModal('debtReminderModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('debtReminderModal')">✕</button>
+    <button class="closeM" onclick="closeModal('debtReminderModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>تذكير بالدين على واتساب</h3>
     <div id="drTo" style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin:-4px 0 10px;"></div>
     <div id="drPreview" style="white-space:pre-wrap;background:#DCF8C6;color:#111B21;border-radius:14px 14px 4px 14px;padding:12px 14px;font-size:13.5px;line-height:1.75;box-shadow:0 1px 2px rgba(0,0,0,.12);"></div>
     <button type="button" id="drPdfBtn" onclick="debtReminderPdfAction()" style="width:100%;margin-top:14px;background:#25D366;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;"></button>
     <div id="drPdfHint" style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:6px;line-height:1.6;"></div>
-    <button type="button" onclick="debtReminderTextOnly()" style="width:100%;margin-top:10px;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13.5px;cursor:pointer;">💬 رسالة فقط (يفتح محادثة الزبون مباشرة)</button>
+    <button type="button" onclick="debtReminderTextOnly()" style="width:100%;margin-top:10px;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-1L3 20l1.3-4.2A8.4 8.4 0 1 1 21 11.5z"/></svg> رسالة فقط (يفتح محادثة الزبون مباشرة)</button>
   </div>
 </div>
 
 <div class="modalBg" id="labelSettingsModal" onclick="if(event.target===this)closeModal('labelSettingsModal')">
   <div class="modalSheet" style="height:88vh;overflow-y:auto;">
-    <button class="closeM" onclick="closeModal('labelSettingsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('labelSettingsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>إعدادات طباعة الباركود</h3>
     <div class="lsPreviewBox"><div id="lsPreview"></div></div>
     <div id="lsPreviewInfo" style="text-align:center;font-size:11.5px;color:var(--textMuted);font-weight:700;margin-top:6px;"></div>
@@ -951,8 +957,8 @@
     </div>
 
     <div style="display:flex;gap:8px;margin-top:16px;">
-      <button type="button" onclick="saveLabelSettings()" style="flex:1;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">✓ حفظ الإعدادات</button>
-      <button type="button" id="lsTestBtn" onclick="labelTestPrint()" style="flex:1;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">🖨️ طباعة تجريبية</button>
+      <button type="button" onclick="saveLabelSettings()" style="flex:1;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> حفظ الإعدادات</button>
+      <button type="button" id="lsTestBtn" onclick="labelTestPrint()" style="flex:1;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg> طباعة تجريبية</button>
     </div>
     <div id="lsStatus" style="text-align:center;font-size:12.5px;font-weight:700;margin-top:10px;line-height:1.7;"></div>
   </div>
@@ -960,8 +966,8 @@
 
 <div class="modalBg" id="labelPrintModal" onclick="if(event.target===this)closeModal('labelPrintModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('labelPrintModal')">✕</button>
-    <h3>🏷️ طباعة باركود</h3>
+    <button class="closeM" onclick="closeModal('labelPrintModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg> طباعة باركود</h3>
     <div id="lpName" style="font-weight:800;font-size:14.5px;color:var(--text);margin:-6px 0 10px;"></div>
     <div class="lsPreviewBox"><div id="lpPreview"></div></div>
     <div id="lpInfo" style="text-align:center;font-size:11.5px;color:var(--textMuted);font-weight:700;margin-top:6px;"></div>
@@ -981,16 +987,16 @@
       <button type="button" class="lsChip" onclick="document.getElementById('lpCopies').value=20">20</button>
       <button type="button" class="lsChip" onclick="document.getElementById('lpCopies').value=50">50</button>
     </div>
-    <button type="button" id="lpPrintBtn" onclick="submitLabelPrint()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;">🖨️ طباعة</button>
+    <button type="button" id="lpPrintBtn" onclick="submitLabelPrint()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg> طباعة</button>
     <div id="lpStatus" style="text-align:center;font-size:12.5px;font-weight:700;margin-top:10px;line-height:1.7;"></div>
-    <button type="button" onclick="closeModal('labelPrintModal');openLabelSettings();" style="width:100%;margin-top:8px;background:none;border:none;color:var(--textMuted);font-weight:700;font-size:12.5px;cursor:pointer;padding:8px;">⚙️ إعدادات الطباعة والمقاس</button>
+    <button type="button" onclick="closeModal('labelPrintModal');openLabelSettings();" style="width:100%;margin-top:8px;background:none;border:none;color:var(--textMuted);font-weight:700;font-size:12.5px;cursor:pointer;padding:8px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg> إعدادات الطباعة والمقاس</button>
   </div>
 </div>
 
 <div class="modalBg" id="damagedFormModal" onclick="if(event.target===this)closeModal('damagedFormModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('damagedFormModal')">✕</button>
-    <h3>⚠️ تسجيل بضاعة تالفة</h3>
+    <button class="closeM" onclick="closeModal('damagedFormModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> تسجيل بضاعة تالفة</h3>
     <div id="dmSearchWrap">
       <input type="text" id="dmSearch" placeholder="ابحث بالاسم أو الباركود..." autocomplete="off" oninput="damagedSearch()" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:16px;background:var(--surface);color:var(--text);">
       <div id="dmResults" style="max-height:30vh;overflow:auto;margin-top:6px;"></div>
@@ -1010,7 +1016,7 @@
 
 <div class="modalBg" id="damagedModal" onclick="if(event.target===this)closeModal('damagedModal')">
   <div class="modalSheet" style="height:85vh;overflow-y:auto;">
-    <button class="closeM" onclick="closeModal('damagedModal')">✕</button>
+    <button class="closeM" onclick="closeModal('damagedModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>البضاعة التالفة</h3>
     <button type="button" onclick="openDamagedForm()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;margin-bottom:12px;">+ تسجيل تالف</button>
     <div class="lsChips" style="margin-bottom:12px;">
@@ -1025,7 +1031,7 @@
 
 <div class="modalBg" id="productsHubModal" onclick="if(event.target===this)closeModal('productsHubModal')">
   <div class="modalSheet" style="height:88vh;display:flex;flex-direction:column;overflow:hidden;">
-    <button class="closeM" onclick="closeModal('productsHubModal')">✕</button>
+    <button class="closeM" onclick="closeModal('productsHubModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>مركز الأصناف</h3>
     <div style="display:flex;gap:8px;flex-shrink:0;">
       <div class="gsBox" style="flex:1;">
@@ -1035,11 +1041,11 @@
       <button type="button" class="phCam" onclick="productsHubCamera()" aria-label="مسح بالكاميرا"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></button>
     </div>
     <div class="phShorts">
-      <button type="button" class="phShort" onclick="openInventoryCount()"><span class="phIc">📋</span><span>جرد</span></button>
-      <button type="button" class="phShort" onclick="openLabelSettings()"><span class="phIc">🏷️</span><span>باركود</span></button>
-      <button type="button" class="phShort" onclick="openDamagedModal()"><span class="phIc">⚠️</span><span>تالف</span></button>
-      <button type="button" class="phShort" onclick="openModal('shortagesModal')"><span class="phIc">🛒</span><span>النواقص</span></button>
-      <button type="button" class="phShort" onclick="productsHubRfid()" style="opacity:.5;"><span class="phIc">📡</span><span>RFID</span></button>
+      <button type="button" class="phShort" onclick="openInventoryCount()"><span class="phIc" style="color:#2563EB;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span><span>جرد</span></button>
+      <button type="button" class="phShort" onclick="openLabelSettings()"><span class="phIc" style="color:#7C3AED;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span><span>باركود</span></button>
+      <button type="button" class="phShort" onclick="openDamagedModal()"><span class="phIc" style="color:#DC2626;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span><span>تالف</span></button>
+      <button type="button" class="phShort" onclick="openModal('shortagesModal')"><span class="phIc" style="color:#EA580C;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.6L22 7H6"/></svg></span><span>النواقص</span></button>
+      <button type="button" class="phShort" onclick="productsHubRfid()" style="opacity:.5;"><span class="phIc" style="color:#64748B;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="2"/></svg></span><span>RFID</span></button>
     </div>
     <div id="phChips" class="lsChips" style="flex-shrink:0;margin-top:10px;"></div>
     <div id="phList" onscroll="onProductsHubScroll()" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-top:10px;"></div>
@@ -1048,12 +1054,12 @@
 
 <div class="modalBg" id="globalSearchModal" onclick="if(event.target===this)closeModal('globalSearchModal')">
   <div class="modalSheet" style="height:88vh;display:flex;flex-direction:column;overflow:hidden;">
-    <button class="closeM" onclick="closeModal('globalSearchModal')">✕</button>
+    <button class="closeM" onclick="closeModal('globalSearchModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>البحث</h3>
     <div id="gsBox" class="gsBox">
       <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="text" id="gsInput" placeholder="صنف، زبون، رقم فاتورة، ملاحظة، شاشة..." autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" oninput="onGlobalSearchInput()">
-      <button type="button" class="gsClear" onclick="gsClear()" aria-label="مسح">✕</button>
+      <button type="button" class="gsClear" onclick="gsClear()" aria-label="مسح"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div id="gsBody" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-top:6px;"></div>
   </div>
@@ -1061,7 +1067,7 @@
 
 <div class="modalBg" id="aboutModal" onclick="if(event.target===this)closeModal('aboutModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('aboutModal')">✕</button>
+    <button class="closeM" onclick="closeModal('aboutModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>حول التطبيق</h3>
     <div id="aboutBody"></div>
   </div>
@@ -1069,7 +1075,7 @@
 
 <div class="modalBg" id="generalSettingsModal" onclick="if(event.target===this)closeModal('generalSettingsModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('generalSettingsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('generalSettingsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>الإعدادات</h3>
     <div style="margin-top:14px;">
       <button onclick="closeModal('generalSettingsModal');openSoundSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
@@ -1095,7 +1101,7 @@
 
 <div class="modalBg" id="soundSettingsModal" onclick="if(event.target===this)closeModal('soundSettingsModal')">
   <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
-    <button class="closeM" onclick="closeModal('soundSettingsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('soundSettingsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>إعدادات الصوت والاهتزاز</h3>
     <div id="soundSettingsBody" style="flex:1;overflow-y:auto;margin-top:10px;"></div>
   </div>
@@ -1103,7 +1109,7 @@
 
 <div class="modalBg" id="mainMenuModal" onclick="if(event.target===this)closeModal('mainMenuModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('mainMenuModal')">✕</button>
+    <button class="closeM" onclick="closeModal('mainMenuModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>القائمة</h3>
     <div style="margin-top:14px;">
       <button onclick="closeModal('mainMenuModal');openUserAccountInfo();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
@@ -1128,7 +1134,7 @@
 
 <div class="modalBg" id="userAccountModal" onclick="if(event.target===this)closeModal('userAccountModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('userAccountModal')">✕</button>
+    <button class="closeM" onclick="closeModal('userAccountModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>حساب المستخدم</h3>
     <div id="userAccountBody" style="margin-top:14px;"></div>
   </div>
@@ -1136,7 +1142,7 @@
 
 <div class="modalBg" id="attendanceLogModal" onclick="if(event.target===this)closeModal('attendanceLogModal')">
   <div class="modalSheet" style="height:80vh; display:flex; flex-direction:column;">
-    <button class="closeM" onclick="closeModal('attendanceLogModal')">✕</button>
+    <button class="closeM" onclick="closeModal('attendanceLogModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>متابعة فتح وإغلاق المنظومة</h3>
     <div style="font-size:11.5px;color:var(--textMuted);margin-top:6px;">يتابع وقت اتصال المنظومة الرئيسية بالنت (من نشاط آخر مزامنة لها) - يعمل فقط أثناء فتح التطبيق، وليس مراقبة لحظية دائمة</div>
     <div id="attendanceLogBody" style="flex:1;overflow-y:auto;margin-top:12px;"></div>
@@ -1145,7 +1151,7 @@
 
 <div class="modalBg" id="statementFilterModal" onclick="if(event.target===this)closeModal('statementFilterModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('statementFilterModal')">✕</button>
+    <button class="closeM" onclick="closeModal('statementFilterModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>اختر فترة وحركات الكشف</h3>
     <div style="margin:14px 0 4px;">
       <label style="font-size:12px;color:var(--textMuted);font-weight:700;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> الفترة الزمنية (اختياري - اتركها فارغة لعرض كل الفترة)</label>
@@ -1171,7 +1177,7 @@
       </label>
       <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
         <input type="checkbox" id="stmtFilterPayment" checked style="width:18px;height:18px;">
-        <span style="font-size:13.5px;font-weight:700;">✅ المسدد (السداد الجزئي)</span>
+        <span style="font-size:13.5px;font-weight:700;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> المسدد (السداد الجزئي)</span>
       </label>
       <label style="display:flex;align-items:center;gap:10px;padding:12px 4px;cursor:pointer;">
         <input type="checkbox" id="stmtFilterPurchaseAccount" checked style="width:18px;height:18px;">
@@ -1184,7 +1190,7 @@
 
 <div class="modalBg" id="statementViewModal" onclick="if(event.target===this)closeModal('statementViewModal')">
   <div class="modalSheet" style="height:85vh; display:flex; flex-direction:column;">
-    <button class="closeM" onclick="closeModal('statementViewModal')">✕</button>
+    <button class="closeM" onclick="closeModal('statementViewModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="statementViewTitle">كشف حساب</h3>
     <div id="statementViewBody" style="flex:1;overflow-y:auto;overflow-x:hidden;margin-top:10px;background:#fff;color:#1E293B;border-radius:12px;padding:14px;box-sizing:border-box;width:100%;"></div>
     <div style="display:flex;gap:8px;margin-top:12px;">
@@ -1197,7 +1203,7 @@
 <div class="modalBg" id="customerPickerModal" onclick="if(event.target===this)closeModal('customerPickerModal')">
   <div class="modalSheet cpSheet">
     <div class="cpHead">
-      <button class="closeM" onclick="closeModal('customerPickerModal')">✕</button>
+      <button class="closeM" onclick="closeModal('customerPickerModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <h3 id="customerPickerTitle">ادراج في حساب زبون</h3>
       <div id="debtNoteWrap" class="cpField">
         <label for="debtItemNoteInput">ملاحظة على الصنف (اختياري)</label>
@@ -1206,7 +1212,7 @@
       <div class="cpSearch">
         <svg class="cpSearchIc" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input type="text" id="newCustomerNameInput" placeholder="ابحث عن زبون أو اكتب اسم جديد..." enterkeyhint="done" autocomplete="off" autocorrect="off" spellcheck="false" oninput="filterCustomerPicker()" onkeydown="if(event.key==='Enter'){event.preventDefault();customerPickerEnter();}">
-        <button type="button" id="cpClearBtn" class="cpClear" onclick="clearCustomerPickerSearch()" aria-label="مسح">✕</button>
+        <button type="button" id="cpClearBtn" class="cpClear" onclick="clearCustomerPickerSearch()" aria-label="مسح"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
     </div>
     <div id="customerPickerList" class="cpList"></div>
@@ -1215,7 +1221,7 @@
 
 <div class="modalBg" id="editCustomerModal" onclick="if(event.target===this)closeModal('editCustomerModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('editCustomerModal')">✕</button>
+    <button class="closeM" onclick="closeModal('editCustomerModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>تعديل بيانات الزبون</h3>
     <div style="margin:14px 0;">
       <label style="font-size:12px;color:var(--textMuted);font-weight:700;">اسم الزبون</label>
@@ -1225,13 +1231,13 @@
       <label style="font-size:12px;color:var(--textMuted);font-weight:700;">رقم الهاتف (اختياري)</label>
       <input type="tel" inputmode="tel" id="editCustomerPhoneInput" lang="en" placeholder="مثال: 0912345678" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;margin-top:6px;box-sizing:border-box;direction:ltr;text-align:right;">
     </div>
-    <button onclick="saveCustomerEdit()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;">✓ حفظ التعديلات</button>
+    <button onclick="saveCustomerEdit()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> حفظ التعديلات</button>
   </div>
 </div>
 
 <div class="modalBg" id="depositModal" onclick="if(event.target===this)closeDepositModalAnimated()">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeDepositModalAnimated()">✕</button>
+    <button class="closeM" onclick="closeDepositModalAnimated()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="depositModalTitle">إيداع مبلغ</h3>
     <div style="margin:14px 0;">
       <label style="font-size:12px;color:var(--textMuted);font-weight:700;">المبلغ (د.ل)</label>
@@ -1253,13 +1259,13 @@
       <label style="font-size:12px;color:var(--textMuted);font-weight:700;display:block;margin-top:12px;">تاريخ ووقت الإيصال</label>
       <input type="text" inputmode="text" id="depositDateInput" lang="en" placeholder="مثال: 22/09/26 14:30:00 - اختياري" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:14px;margin-top:6px;box-sizing:border-box;direction:ltr;text-align:center;">
     </div>
-    <button onclick="submitDeposit()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;">✓ تأكيد الإيداع</button>
+    <button onclick="submitDeposit()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> تأكيد الإيداع</button>
   </div>
 </div>
 
 <div class="modalBg" id="cardReceiptOcrCameraModal" onclick="if(event.target===this)closeCardReceiptOcrCamera()">
   <div class="modalSheet" style="height:auto;">
-    <button class="closeM" onclick="closeCardReceiptOcrCamera()">✕</button>
+    <button class="closeM" onclick="closeCardReceiptOcrCamera()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>قراءة إيصال البطاقة</h3>
     <div style="position:relative;background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
       <video id="cardReceiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
@@ -1274,7 +1280,7 @@
      قبل ما أي قيمة تتحفظ. كل حقل يجب يتراجع/يتأكد يدويًا لو غير verified. -->
 <div class="modalBg" id="receiptReviewModal" onclick="if(event.target===this)return;">
   <div class="modalSheet" style="display:flex; flex-direction:column;">
-    <button class="closeM" onclick="cancelReceiptReview()">✕</button>
+    <button class="closeM" onclick="cancelReceiptReview()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>مراجعة بيانات الإيصال</h3>
     <div class="rvSummaryBar" id="rvSummaryBar"></div>
     <button class="rvImageToggleBtn" onclick="toggleReceiptImage()" id="rvImageToggleBtn" style="display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg> عرض صورة الإيصال</button>
@@ -1286,8 +1292,8 @@
     <div id="rvDebugPanel" style="display:none; background:var(--surface2); border-radius:12px; padding:12px; margin-top:10px; font-size:11px; max-height:220px; overflow:auto;"></div>
     <button onclick="toggleReceiptDebugPanel()" style="background:none;border:none;color:var(--textMuted);font-size:11px;font-weight:700;padding:8px 0;cursor:pointer;text-align:center;display:inline-flex;align-items:center;gap:5px;justify-content:center;width:100%;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg> عرض تفاصيل القراءة التقنية (للتشخيص لو حقل غلط)</button>
     <div style="display:flex; gap:10px; padding-top:12px; border-top:1px solid var(--border2); flex-shrink:0;">
-      <button onclick="retakeReceiptPhoto()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:14.5px;cursor:pointer;">↻ إعادة التصوير</button>
-      <button onclick="confirmReceiptReview()" style="flex:2;background:#16A34A;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15.5px;cursor:pointer;">✓ تأكيد واستخدام البيانات</button>
+      <button onclick="retakeReceiptPhoto()" style="flex:1;background:#F1F5F9;color:#334155;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:14.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg> إعادة التصوير</button>
+      <button onclick="confirmReceiptReview()" style="flex:2;background:#16A34A;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> تأكيد واستخدام البيانات</button>
     </div>
   </div>
 </div>
@@ -1295,7 +1301,7 @@
 
 <div class="modalBg" id="purchaseDebtsModal" onclick="if(event.target===this)closeModal('purchaseDebtsModal')">
   <div class="modalSheet" style="height:85vh;">
-    <button class="closeM" onclick="closeModal('purchaseDebtsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('purchaseDebtsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>ديون مشتريات</h3>
     <div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
       بضاعة اشتريتها من الخارج ولم تسددها بعد ولم تدخلها في المنظومة - اكتب اسم الصنف والسعر، ثم اختر المحل من قائمة الزبائن.
@@ -1312,7 +1318,7 @@
 
 <div class="modalBg" id="priceCheckModal" onclick="if(event.target===this)closeModal('priceCheckModal')">
   <div class="modalSheet" style="height:85vh;">
-    <button class="closeM" onclick="closeModal('priceCheckModal')">✕</button>
+    <button class="closeM" onclick="closeModal('priceCheckModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>فحص سعر سريع</h3>
     <div class="searchBox" style="margin:12px 0;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
@@ -1327,7 +1333,7 @@
 
 <div class="modalBg" id="itemCardModal" onclick="if(event.target===this)closeItemCardModal()">
   <div class="modalSheet" style="height:88vh;">
-    <button class="closeM" onclick="closeItemCardModal()">✕</button>
+    <button class="closeM" onclick="closeItemCardModal()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>بطاقة صنف</h3>
     <div class="searchBox" style="margin:12px 0;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
@@ -1344,7 +1350,7 @@
 
 <div class="modalBg" id="invoiceResultsModal" onclick="if(event.target===this)closeModal('invoiceResultsModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('invoiceResultsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('invoiceResultsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="invoiceResultsTitle">نتائج البحث</h3>
     <div id="invoiceResultsBody"></div>
   </div>
@@ -1352,7 +1358,7 @@
 
 <div class="modalBg" id="inventoryCountModal" onclick="if(event.target===this)closeModal('inventoryCountModal')">
   <div class="modalSheet" style="height:88vh;">
-    <button class="closeM" onclick="closeModal('inventoryCountModal')">✕</button>
+    <button class="closeM" onclick="closeModal('inventoryCountModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>الجرد اليومي</h3>
     <div style="background:#EFF6FF;color:#1D4ED8;font-size:12px;border-radius:10px;padding:10px 12px;margin:10px 0;">
       اكتب العدد الفعلي الذي عددته لكل صنف، أو استخدم الكاميرا لمسح الباركود. الأصناف التي فيها فرق ستُعدَّل تلقائيًا وتُسجَّل في المفقودات.
@@ -1372,7 +1378,7 @@
 
 <div class="modalBg" id="receiptOcrCameraModal" onclick="if(event.target===this)closeReceiptOcrCamera()">
   <div class="modalSheet" style="height:auto;">
-    <button class="closeM" onclick="closeReceiptOcrCamera()">✕</button>
+    <button class="closeM" onclick="closeReceiptOcrCamera()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>قراءة رقم الإيصال</h3>
     <div style="position:relative;background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
       <video id="receiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
@@ -1387,7 +1393,7 @@
 
 <div class="modalBg" id="barcodeScannerModal" onclick="if(event.target===this)closeBarcodeScanner()">
   <div class="modalSheet" style="max-height:88vh;">
-    <button class="closeM" onclick="closeBarcodeScanner()">✕</button>
+    <button class="closeM" onclick="closeBarcodeScanner()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>مسح الباركود</h3>
     <div style="display:flex; gap:8px; margin:10px 0;">
       <button id="modeIncrementBtn" onclick="setScanMode('increment')" style="flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg> مسح = +1 (أسرع)</button>
@@ -1406,9 +1412,9 @@
       <div id="scanItemSystemQty" style="font-size:12px; color:#475569; margin-bottom:10px;"></div>
       <div style="display:flex; gap:8px; align-items:center;">
         <input type="number" inputmode="numeric" id="scanQtyInput" lang="en" placeholder="العدد الفعلي" onkeydown="if(event.key==='Enter')confirmScanAndNext()" style="flex:1; padding:12px; border:1.5px solid #E2E8F0; border-radius:12px; font-size:18px; text-align:center;">
-        <button onclick="confirmScanAndNext()" style="background:#16A34A; color:#fff; border:none; border-radius:12px; padding:12px 18px; font-weight:800; font-size:14px; cursor:pointer; white-space:nowrap;">✓ التالي</button>
+        <button onclick="confirmScanAndNext()" style="background:#16A34A; color:#fff; border:none; border-radius:12px; padding:12px 18px; font-weight:800; font-size:14px; cursor:pointer; white-space:nowrap;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> التالي</button>
       </div>
-      <button onclick="closeBarcodeScanner()" style="width:100%; margin-top:8px; background:#FEE2E2; color:#DC2626; border:none; border-radius:12px; padding:10px; font-weight:700; font-size:12px; cursor:pointer;">✕ إلغاء ورجوع</button>
+      <button onclick="closeBarcodeScanner()" style="width:100%; margin-top:8px; background:#FEE2E2; color:#DC2626; border:none; border-radius:12px; padding:10px; font-weight:700; font-size:12px; cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> إلغاء ورجوع</button>
     </div>
     <div id="incrementFeedback" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:16px; margin-top:12px; text-align:center;">
       <div id="incItemName" style="font-weight:800; font-size:15px; margin-bottom:4px; color:#14532D;"></div>
@@ -1422,7 +1428,7 @@
 
 <div class="modalBg" id="missingItemsModal" onclick="if(event.target===this)closeModal('missingItemsModal')">
   <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('missingItemsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('missingItemsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>المفقودات</h3>
     <div id="missingItemsBody"></div>
   </div>
@@ -1430,7 +1436,7 @@
 
 <div class="modalBg" id="errorsModal" onclick="if(event.target===this)closeModal('errorsModal')">
   <div class="modalSheet" style="max-height:85vh;">
-    <button class="closeM" onclick="closeModal('errorsModal')">✕</button>
+    <button class="closeM" onclick="closeModal('errorsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>الأخطاء وحالة الكاشير</h3>
     <div id="errorsStatusCard" style="border-radius:12px;padding:12px;margin:10px 0;font-size:13px;font-weight:700;line-height:1.7;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
@@ -1443,7 +1449,7 @@
 
 <div class="modalBg" id="activityLogModal" onclick="if(event.target===this)closeModal('activityLogModal')">
   <div class="modalSheet" style="max-height:85vh;">
-    <button class="closeM" onclick="closeModal('activityLogModal')">✕</button>
+    <button class="closeM" onclick="closeModal('activityLogModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>سجل حركات التطبيق</h3>
     <div class="logTabs">
       <button type="button" id="logTabEdits" class="logTab active" onclick="switchActivityLogTab('edits')">تعديلات الأصناف</button>
@@ -1456,7 +1462,7 @@
 
 <div class="modalBg" id="notesModal" onclick="if(event.target===this)closeModal('notesModal')">
   <div class="modalSheet" style="height:75vh; display:flex; flex-direction:column;">
-    <button class="closeM" onclick="closeModal('notesModal')">✕</button>
+    <button class="closeM" onclick="closeModal('notesModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
 
     <div id="notesListView">
       <h3>الملاحظات</h3>
@@ -1641,9 +1647,9 @@ async function registerFaceId(email, password) {
       localStorage.setItem('faceIdPass', b64encode(password));
       localStorage.setItem('faceIdVerified', '1');
       checkFaceIdAvailable();
-      alert('✅ تفعّلت بصمة الوجه بنجاح');
+      alert('تفعّلت بصمة الوجه بنجاح');
     } catch (e) {
-      alert('❌ فشل تفعيل بصمة الوجه: ' + (e && e.message ? e.message : JSON.stringify(e)));
+      alert('فشل تفعيل بصمة الوجه: ' + (e && e.message ? e.message : JSON.stringify(e)));
     }
     return;
   }
@@ -2089,7 +2095,7 @@ function saveLabelSettings() {
   try { localStorage.setItem('labelSettings', JSON.stringify(st)); } catch (e) {}
   db.ref('data/labelSettings').set(st).then(() => {
     labelSettingsLoaded = true;
-    showQuickToast('تم حفظ إعدادات الطباعة ✓', true);
+    showQuickToast('تم حفظ إعدادات الطباعة', true);
   }).catch(err => {
     alert('حُفظت على هذا الجوال فقط - تعذّر رفعها: ' + (err && err.message ? err.message : err));
   });
@@ -2151,7 +2157,7 @@ function submitLabelPrint() {
 // ---- إرسال للكاشير ----
 function sendLabelPrintJob(jobs, st, statusEl, btn) {
   if (!scriptSupports('printLabels')) {
-    statusEl.innerHTML = '<span style="color:#B45309;">⚠️ السكريبت على الكاشير لم يُحدَّث بعد لدعم الطباعة. المعاينة والإعدادات تعمل من الآن، والطباعة ستعمل بعد تحديث السكريبت.</span>';
+    statusEl.innerHTML = '<span style="color:#B45309;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> السكريبت على الكاشير لم يُحدَّث بعد لدعم الطباعة. المعاينة والإعدادات تعمل من الآن، والطباعة ستعمل بعد تحديث السكريبت.</span>';
     return;
   }
   const total = jobs.reduce((a, j) => a + j.copies, 0);
@@ -2166,7 +2172,7 @@ function sendLabelPrintJob(jobs, st, statusEl, btn) {
   ref.set(payload).then(() => {
     const resRef = db.ref('data/printResults/' + ref.key);
     const timer = setTimeout(() => {
-      statusEl.innerHTML = '<span style="color:#B45309;">⏳ الكاشير لم يرد بعد. غالبًا الكمبيوتر مقطوع عن النت أو السكريبت متوقف - الطلب يُلغى تلقائيًا لو لم يُطبع خلال 10 دقائق حتى لا يطبع فجأة لاحقًا.</span>';
+      statusEl.innerHTML = '<span style="color:#B45309;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> الكاشير لم يرد بعد. غالبًا الكمبيوتر مقطوع عن النت أو السكريبت متوقف - الطلب يُلغى تلقائيًا لو لم يُطبع خلال 10 دقائق حتى لا يطبع فجأة لاحقًا.</span>';
       if (btn) btn.disabled = false;
     }, 30000);
     const cb = snap => {
@@ -2177,17 +2183,17 @@ function sendLabelPrintJob(jobs, st, statusEl, btn) {
       resRef.remove().catch(() => {});
       if (btn) btn.disabled = false;
       if (r.ok) {
-        statusEl.innerHTML = '<span style="color:#16A34A;">✓ طُبع ' + (r.printed || total) + ' ملصق</span>';
+        statusEl.innerHTML = '<span style="color:#16A34A;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> طُبع ' + (r.printed || total) + ' ملصق</span>';
         logActivity('طباعة باركود', jobs.map(j => j.name + ' × ' + j.copies).join(' - '));
       } else {
-        statusEl.innerHTML = '<span style="color:#DC2626;">✗ لم يُطبع: ' + escapeHtml(r.msg || 'سبب غير معروف') + '</span>';
+        statusEl.innerHTML = '<span style="color:#DC2626;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg> لم يُطبع: ' + escapeHtml(r.msg || 'سبب غير معروف') + '</span>';
       }
     };
     resRef.on('value', cb);
   }).catch(err => {
     if (btn) btn.disabled = false;
     const m = err && err.message ? err.message : String(err);
-    statusEl.innerHTML = '<span style="color:#DC2626;">✗ تعذّر إرسال الطلب: ' + escapeHtml(m) + '</span>';
+    statusEl.innerHTML = '<span style="color:#DC2626;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg> تعذّر إرسال الطلب: ' + escapeHtml(m) + '</span>';
     logClientError('إرسال طلب طباعة باركود', m);
   });
 }
@@ -2271,7 +2277,7 @@ function updateDamagedSummary() {
   if (qty > stock) { el.innerHTML = `<div style="color:#DC2626;font-weight:800;text-align:center;">الكمية أكبر من المخزون الموجود - أقصى كمية: ${stock}</div>`; return; }
   const after = Math.max(0, Math.round((stock - qty) * 1000) / 1000);
   let warn = '';
-  if (!(cost > 0)) warn += `<div style="color:#B45309;font-weight:700;margin-top:6px;">⚠️ تكلفة هذا الصنف صفر - الخسارة ستُسجل صفر. عدّل سعر الشراء من بطاقة الصنف إذا كان خاطئًا.</div>`;
+  if (!(cost > 0)) warn += `<div style="color:#B45309;font-weight:700;margin-top:6px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> تكلفة هذا الصنف صفر - الخسارة ستُسجل صفر. عدّل سعر الشراء من بطاقة الصنف إذا كان خاطئًا.</div>`;
   if (stock > 0 && after <= 0) warn += `<div style="color:#2563EB;font-weight:700;margin-top:6px;">ℹ️ المخزون سينفد، فالصنف سيُضاف للنواقص تلقائيًا.</div>`;
   el.innerHTML = `<div style="background:#FEF2F2;border-radius:12px;padding:12px 14px;font-size:13px;color:#7F1D1D;line-height:1.9;">
       <div style="display:flex;justify-content:space-between;"><span>الكمية × التكلفة</span><b>${qty} × ${fmtMoney(cost)} د.ل</b></div>
@@ -2314,12 +2320,12 @@ function submitDamaged() {
     }
     it.stock = after;
     logActivity('تسجيل تالف', it.name + ' × ' + qty + ' (' + damagedFormReason + ') - خسارة ' + fmtMoney(total) + ' د.ل');
-    document.getElementById('dmStatus').innerHTML = '<span style="color:#16A34A;">✓ تم تسجيل التالف وإرسال الخصم للكاشير</span>';
+    document.getElementById('dmStatus').innerHTML = '<span style="color:#16A34A;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> تم تسجيل التالف وإرسال الخصم للكاشير</span>';
     setTimeout(() => { closeModal('damagedFormModal'); if (isModalOpen('damagedModal')) loadDamagedLog(); }, 900);
   }).catch(err => {
     btn.disabled = false;
     const m = err && err.message ? err.message : String(err);
-    document.getElementById('dmStatus').innerHTML = '<span style="color:#DC2626;">✗ تعذّر التسجيل: ' + escapeHtml(m) + '</span>';
+    document.getElementById('dmStatus').innerHTML = '<span style="color:#DC2626;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg> تعذّر التسجيل: ' + escapeHtml(m) + '</span>';
     logClientError('تسجيل تالف', m);
   });
 }
@@ -2382,21 +2388,21 @@ function loadDamagedLog() {
     const reasons = Object.entries(byReason).sort((a, b) => b[1].loss - a[1].loss);
     if (reasons.length) html += `<div class="lsSec" style="margin-top:4px;">حسب السبب</div>` + reasons.map(([k, v]) => `<div class="searchResultRow"><div class="n">${escapeHtml(k)} <span style="color:var(--textMuted);font-weight:600;">(${Math.round(v.qty * 1000) / 1000} قطعة)</span></div><div class="p">${fmtMoney(v.loss)} د.ل</div></div>`).join('');
     if (topItems.length) html += `<div class="lsSec">أكثر الأصناف تلفًا</div>` + topItems.map(v => `<div class="searchResultRow"><div class="n">${escapeHtml(v.name)} <span style="color:var(--textMuted);font-weight:600;">(${Math.round(v.qty * 1000) / 1000})</span></div><div class="p">${fmtMoney(v.loss)} د.ل</div></div>`).join('');
-    html += `<button type="button" id="dmPdfBtn" onclick="damagedPdfAction()" style="width:100%;margin-top:12px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;">📄 تصدير PDF</button>`;
+    html += `<button type="button" id="dmPdfBtn" onclick="damagedPdfAction()" style="width:100%;margin-top:12px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg> تصدير PDF</button>`;
     html += `<div class="lsSec">السجل</div>` + rows.map(r => {
       const d = new Date(r.at);
       const when = d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
       let status;
       if (r.cancelledAt) status = '<span style="color:var(--textMuted);">أُلغي - الكمية رجعت للمخزون</span>';
-      else if (!r.result) status = '<span style="color:#B45309;">⏳ في انتظار الكاشير</span>';
-      else if (r.result.ok) status = '<span style="color:#16A34A;">✓ خُصم من الكاشير</span>';
-      else status = '<span style="color:#DC2626;">✗ ' + escapeHtml(r.result.msg || 'فشل الخصم') + '</span>';
+      else if (!r.result) status = '<span style="color:#B45309;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> في انتظار الكاشير</span>';
+      else if (r.result.ok) status = '<span style="color:#16A34A;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> خُصم من الكاشير</span>';
+      else status = '<span style="color:#DC2626;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg> ' + escapeHtml(r.result.msg || 'فشل الخصم') + '</span>';
       return `<div class="ehCard${r.cancelledAt ? ' undone' : ''}">
         <div class="ehTop"><div><div class="ehName">${escapeHtml(r.itemName)}</div><span class="ehBadge" style="background:#FEE2E2;color:#B91C1C;">${escapeHtml(r.reason || '')}</span>${r.autoShortage ? ' <span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">أُضيف للنواقص</span>' : ''}</div><div class="ehTime">${when}</div></div>
         <div class="ehRow"><span class="lbl">الكمية × التكلفة</span><span class="val">${r.qty} × ${fmtMoney(r.unitCost)} د.ل</span></div>
         <div class="ehRow"><span class="lbl">الخسارة</span><span class="val" style="color:#DC2626;">${fmtMoney(r.totalCost)} د.ل</span></div>
         ${r.note ? `<div class="ehRow"><span class="lbl">ملاحظة</span><span class="val" style="font-weight:600;">${escapeHtml(r.note)}</span></div>` : ''}
-        <div class="ehFoot"><span class="ehStatus">${status}</span>${r.cancelledAt ? '' : `<button type="button" class="ehUndo" onclick="cancelDamaged('${r.id}', this)">↩️ إلغاء</button>`}</div>
+        <div class="ehFoot"><span class="ehStatus">${status}</span>${r.cancelledAt ? '' : `<button type="button" class="ehUndo" onclick="cancelDamaged('${r.id}', this)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg> إلغاء</button>`}</div>
       </div>`;
     }).join('');
     el.innerHTML = html;
@@ -2464,13 +2470,13 @@ function damagedPdfAction() {
     if (libErr) { alert(libErr); return; }
     rep.preparing = true;
     btn.disabled = true;
-    btn.textContent = '⏳ جاري تجهيز التقرير...';
+    btn.textContent = 'جاري تجهيز التقرير...';
     buildPdfFileFromHtml(buildDamagedPdfHtml(rep), title).then(res => {
       rep.preparing = false; rep.file = res.file; rep.pdf = res.pdf;
       if (damagedReport !== rep) return;
-      btn.disabled = false; btn.style.background = '#16A34A'; btn.textContent = '📤 مشاركة التقرير';
+      btn.disabled = false; btn.style.background = '#16A34A'; btn.textContent = 'مشاركة التقرير';
     }).catch(err => {
-      rep.preparing = false; btn.disabled = false; btn.textContent = '📄 تصدير PDF';
+      rep.preparing = false; btn.disabled = false; btn.textContent = 'تصدير PDF';
       alert('تعذّر تجهيز الـ PDF: ' + (err && err.message ? err.message : err));
     });
     return;
@@ -2554,7 +2560,7 @@ function renderProductsHub() {
   ];
   document.getElementById('phChips').innerHTML = chips.map(([f, label]) =>
     `<button type="button" class="lsChip${phFilter === f ? ' on' : ''}" style="direction:rtl;" onclick="setProductsHubFilter('${f}')">${label} <b style="opacity:.75;">${counts[f]}</b></button>`
-  ).join('') + `<button type="button" class="lsChip" style="direction:rtl;" onclick="phSetLowThreshold()" title="تغيير حد القليل">⚙️</button>`;
+  ).join('') + `<button type="button" class="lsChip" style="direction:rtl;" onclick="phSetLowThreshold()" title="تغيير حد القليل"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>`;
 
   if (!items.length) { listEl.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد (تتحدث كل دقيقة)</div>'; return; }
   const raw = (document.getElementById('phSearch').value || '').trim();
@@ -2610,7 +2616,7 @@ function productsHubCamera() {
 }
 
 function productsHubRfid() {
-  alert('جرد RFID قريبًا 📡\n\nلما تختار جهاز الـ RFID، أرسل اسم الموديل قبل الشراء عشان نتأكد إنه يدعم وضع "لوحة مفاتيح بلوتوث" (HID) ويشتغل مع التطبيق مباشرة.');
+  alert('جرد RFID قريبًا\n\nلما تختار جهاز الـ RFID، أرسل اسم الموديل قبل الشراء عشان نتأكد إنه يدعم وضع "لوحة مفاتيح بلوتوث" (HID) ويشتغل مع التطبيق مباشرة.');
 }
 
 /* ================= البحث العام ================= */
@@ -2641,12 +2647,12 @@ const GS_SCREENS = [
   { name: 'حول التطبيق', kw: 'حول اصدار نسخة تحديث', run: "openAboutApp()" }
 ];
 const GS_SECTIONS = {
-  screens: { title: 'الشاشات', icon: '⚡' },
-  items: { title: 'الأصناف', icon: '📦' },
-  customers: { title: 'الزبائن والمحلات', icon: '👤' },
-  invoices: { title: 'الفواتير', icon: '🧾' },
-  notes: { title: 'الملاحظات', icon: '📝' },
-  damaged: { title: 'التالف', icon: '⚠️' }
+  screens: { title: 'الشاشات', icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>' },
+  items: { title: 'الأصناف', icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>' },
+  customers: { title: 'الزبائن والمحلات', icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>' },
+  invoices: { title: 'الفواتير', icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>' },
+  notes: { title: 'الملاحظات', icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>' },
+  damaged: { title: 'التالف', icon: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>' }
 };
 let gsTimer = null;
 let gsData = { customers: null, notes: null, damaged: null, archive: null };
@@ -2713,8 +2719,8 @@ function renderGlobalSearch() {
   if (!raw) {
     const rec = gsRecent();
     el.innerHTML = rec.length
-      ? `<div class="gsSec"><span>🕘 عمليات بحث سابقة</span><button type="button" class="gsLink" onclick="gsClearRecent()">مسح</button></div>` +
-        rec.map((r, i) => `<div class="searchResultRow gsRow" onclick="gsUseRecent(${i})"><div class="n">${escapeHtml(r)}</div><div class="p">↖</div></div>`).join('')
+      ? `<div class="gsSec"><span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg> عمليات بحث سابقة</span><button type="button" class="gsLink" onclick="gsClearRecent()">مسح</button></div>` +
+        rec.map((r, i) => `<div class="searchResultRow gsRow" onclick="gsUseRecent(${i})"><div class="n">${escapeHtml(r)}</div><div class="p"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 17 7 7M7 15V7h8"/></svg></div></div>`).join('')
       : '<div class="emptyMsg" style="line-height:1.9;">ابحث عن صنف، زبون، رقم فاتورة، ملاحظة، أو اسم شاشة<br><span style="font-size:12px;">مثال: A12 · محمد · 1097 · جرد</span></div>';
     return;
   }
@@ -2773,7 +2779,7 @@ function renderGlobalSearch() {
     const lim = gsExpanded[sec] ? 60 : (sec === 'screens' ? 3 : 4);
     html += `<div class="gsSec"><span>${GS_SECTIONS[sec].icon} ${GS_SECTIONS[sec].title}</span><span class="gsCnt">${list.length}</span></div>`;
     html += list.slice(0, lim).map((r, i) => gsRowHtml(sec, r, i, raw)).join('');
-    if (showSearchCashier) html += `<div class="searchResultRow gsRow" onclick="gsSearchCashierInvoice('${digits}')"><div class="n" style="color:#2563EB;">🔎 بحث في الكاشير عن الفاتورة رقم ${digits}</div><div class="p">›</div></div>`;
+    if (showSearchCashier) html += `<div class="searchResultRow gsRow" onclick="gsSearchCashierInvoice('${digits}')"><div class="n" style="color:#2563EB;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> بحث في الكاشير عن الفاتورة رقم ${digits}</div><div class="p">›</div></div>`;
     if (list.length > lim) html += `<button type="button" class="gsMore" onclick="gsExpanded['${sec}']=true;renderGlobalSearch();">عرض الكل (${list.length})</button>`;
   });
   if (!total && !numeric) html = '<div class="emptyMsg">لا يوجد نتائج لـ «' + escapeHtml(raw) + '»</div>';
@@ -2824,9 +2830,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.12.1';
+const APP_VERSION = '2.13.0';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.13.0', date: '2026-09-29', items: [
+    'استبدال الإيموجي القديم بأيقونات خطية موحدة في كل التطبيق',
+    'الأيقونات تتلون تلقائيًا مع الوضع الليلي وتبدو بنفس الشكل على كل الأجهزة'
+  ] },
   { v: '2.12.1', date: '2026-09-29', items: [
     'إصلاح قفزة النوافذ لأعلى عند فتح الكيبورد (مثل نافذة البحث): النافذة تصغر بنفس سرعة ظهور الكيبورد',
     'لمسة على الخلفية والكيبورد مفتوح تغلق الكيبورد فقط، ولا تغلق النافذة بالغلط'
@@ -2915,7 +2925,7 @@ function appRunModeLabel() {
 }
 
 function copyTextToClipboard(text, okMsg) {
-  const done = () => { try { showQuickToast(okMsg || 'نُسخ ✓', true); } catch (e) {} };
+  const done = () => { try { showQuickToast(okMsg || 'نُسخ', true); } catch (e) {} };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(done).catch(() => prompt('انسخ من هنا:', text));
   } else {
@@ -2942,7 +2952,7 @@ function openAboutApp() {
     </div>
     <div class="abSec">الحساب والتشغيل</div>
     <div class="abRow"><span class="k">الحساب</span><span class="v">${escapeHtml(u && u.email ? u.email : '—')}</span></div>
-    <div class="abRow"><span class="k">رقم الحساب (UID)</span><span class="v" style="font-size:11.5px;">${escapeHtml(u ? u.uid : '—')}</span>${u ? `<button type="button" class="abCopy" onclick="copyTextToClipboard('${u.uid}','رقم الحساب نُسخ ✓')">نسخ</button>` : ''}</div>
+    <div class="abRow"><span class="k">رقم الحساب (UID)</span><span class="v" style="font-size:11.5px;">${escapeHtml(u ? u.uid : '—')}</span>${u ? `<button type="button" class="abCopy" onclick="copyTextToClipboard('${u.uid}','رقم الحساب نُسخ')">نسخ</button>` : ''}</div>
     <div class="abRow"><span class="k">طريقة التشغيل</span><span class="v" style="direction:rtl;">${appRunModeLabel()}</span></div>
     <div class="abRow"><span class="k">المظهر</span><span class="v" style="direction:rtl;">${isDark ? 'ليلي' : 'نهاري'}</span></div>
     <div class="abSec">الكاشير</div>
@@ -2977,7 +2987,7 @@ function openSoundSettings() {
           <label style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
             <input type="radio" name="sound_${context}" value="${key}" ${current === key ? 'checked' : ''} onchange="pendingSoundSettings['${context}Sound']='${key}';" style="width:17px;height:17px;">
             <span style="font-size:13px;flex:1;">${preset.label}</span>
-            ${preset.type ? `<button onclick="event.preventDefault();event.stopPropagation();playTonePreset('${key}', document.getElementById('vol_${context}_label') ? parseInt(document.getElementById('vol_${context}_label').textContent) : 100)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">🔊 اختبار</button>` : ''}
+            ${preset.type ? `<button onclick="event.preventDefault();event.stopPropagation();playTonePreset('${key}', document.getElementById('vol_${context}_label') ? parseInt(document.getElementById('vol_${context}_label').textContent) : 100)" style="background:#EFF6FF;color:#2563EB;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg> اختبار</button>` : ''}
           </label>
         `).join('')}
       </div>`;
@@ -2991,7 +3001,7 @@ function openSoundSettings() {
         <label style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border2);cursor:pointer;">
           <input type="radio" name="vib_tap" value="${key}" ${vibCurrent === key ? 'checked' : ''} onchange="pendingSoundSettings.tapVibration='${key}';" style="width:17px;height:17px;">
           <span style="font-size:13px;flex:1;">${preset.label}</span>
-          ${preset.style ? `<button onclick="event.preventDefault();event.stopPropagation();playVibrationPreset('${key}')" style="background:#F0FDF4;color:#16A34A;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">📳 اختبار</button>` : ''}
+          ${preset.style ? `<button onclick="event.preventDefault();event.stopPropagation();playVibrationPreset('${key}')" style="background:#F0FDF4;color:#16A34A;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3 8v8M21 8v8"/></svg> اختبار</button>` : ''}
         </label>
       `).join('')}
     </div>`;
@@ -3009,7 +3019,7 @@ function openSoundSettings() {
     </div>`;
 
   const saveBtn = `
-    <button onclick="commitSoundSettings()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;margin-top:6px;">💾 حفظ الإعدادات</button>`;
+    <button onclick="commitSoundSettings()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;margin-top:6px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> حفظ الإعدادات</button>`;
 
   body.innerHTML = toggleSection
     + soundSection('tap', SOUND_CONTEXTS.tap)
@@ -3027,7 +3037,7 @@ function openSoundSettings() {
 function commitSoundSettings() {
   saveSoundSettings(pendingSoundSettings);
   closeModal('soundSettingsModal');
-  showQuickToast('✅ تم حفظ إعدادات الصوت والاهتزاز');
+  showQuickToast('تم حفظ إعدادات الصوت والاهتزاز');
 }
 
 function openUserAccountInfo() {
@@ -3035,7 +3045,7 @@ function openUserAccountInfo() {
   const body = document.getElementById('userAccountBody');
   body.innerHTML = `
     <div class="searchResultRow"><div class="n">البريد الإلكتروني</div><div class="p" style="direction:ltr;">${escapeHtml(email)}</div></div>
-    <div class="searchResultRow"><div class="n">حالة الجلسة</div><div class="p" style="color:#16A34A;font-weight:800;">✓ متصل</div></div>
+    <div class="searchResultRow"><div class="n">حالة الجلسة</div><div class="p" style="color:#16A34A;font-weight:800;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> متصل</div></div>
   `;
   openModal('userAccountModal');
 }
@@ -3410,7 +3420,7 @@ function renderErrorsStatusCard() {
 function renderErrorsModal() {
   renderErrorsStatusCard();
   const el = document.getElementById('errorsBody');
-  if (!errorLogEntries.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد أخطاء ✓</div>'; return; }
+  if (!errorLogEntries.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد أخطاء <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>'; return; }
   el.innerHTML = errorLogEntries.map(e => `
     <div style="border:1px solid var(--border);border-right:4px solid #DC2626;border-radius:12px;padding:11px 12px;margin-bottom:9px;">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
@@ -3430,7 +3440,7 @@ function copyErrorText(key) {
   const e = errorLogEntries.find(x => x.key === key);
   if (!e) return;
   const txt = (e.time || '') + ' | ' + (e.where || '') + '\n' + (e.msg || '');
-  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('نُسخ ✓')).catch(() => prompt('انسخ النص:', txt));
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('نُسخ')).catch(() => prompt('انسخ النص:', txt));
   else prompt('انسخ النص:', txt);
 }
 
@@ -3638,7 +3648,7 @@ function loadInvoiceDebtOwner(invoiceNumber) {
     box.innerHTML = matches.map(d => `
       <div class="searchResultRow" style="background:${d.paid ? '#F0FDF4' : '#FFF7ED'};border-radius:10px;margin-bottom:6px;">
         <div>
-          <div class="n" style="color:${d.paid ? '#16A34A' : '#EA580C'};">${d.paid ? '✓ دين مسدد' : '<span class="ic ic-warning"></span> عليه دين'} - ${escapeHtml(d.customerName || 'بدون اسم')}</div>
+          <div class="n" style="color:${d.paid ? '#16A34A' : '#EA580C'};">${d.paid ? '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> دين مسدد' : '<span class="ic ic-warning"></span> عليه دين'} - ${escapeHtml(d.customerName || 'بدون اسم')}</div>
           <div class="p" style="margin-top:2px;">${escapeHtml(d.itemName || '')} &middot; ${fmtMoney(d.amount)} د.ل</div>
         </div>
       </div>`).join('');
@@ -4242,7 +4252,7 @@ function assignDebtToCustomer(customerId, customerName) {
     // ده يتسدد منه فورًا تلقائيًا - مش لازم يستنى إيداع جديد
     reconcileSalesAccount(customerId).then(info => {
       if (info.settledCount > 0) {
-        alert('تم تسجيل الدين على حساب ' + customerName + '\n\n✅ سُدّد تلقائيًا من رصيد فائض عنده أصلاً');
+        alert('تم تسجيل الدين على حساب ' + customerName + '\n\nسُدّد تلقائيًا من رصيد فائض عنده أصلاً');
       } else {
         alert('تم تسجيل الدين على حساب ' + customerName);
       }
@@ -4605,7 +4615,7 @@ async function attemptCardReceiptOcrScan() {
     const statusEl = document.getElementById('cardReceiptOcrStatus');
     if (foundCount >= 2) {
       playFeedback('deposit'); // لقينا الإيصال - قراءة ناجحة
-      if (statusEl) statusEl.textContent = '✅ لقيت الإيصال - جاري التحليل الدقيق...';
+      if (statusEl) statusEl.textContent = 'لقيت الإيصال - جاري التحليل الدقيق...';
       await finalizeCardReceiptCapture(video, guide);
     } else {
       if (statusEl) statusEl.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6"/></svg> وجّه الكاميرا على الإيصال كامل داخل الإطار';
@@ -4713,7 +4723,7 @@ async function finalizeCardReceiptCapture(video, guide) {
     document.getElementById('depositDateInput').value = merged.datetime.value;
     pendingReceiptOcrJson = buildReceiptOcrJson(merged);
     receiptCaptureState = null;
-    showQuickReceiptToast('✅ تعبّأ المبلغ والرقم المرجعي والتاريخ تلقائيًا');
+    showQuickReceiptToast('تعبّأ المبلغ والرقم المرجعي والتاريخ تلقائيًا');
     return;
   }
 
@@ -5003,7 +5013,7 @@ function buildReceiptSummaryHtml(fields) {
   const criticalMissing = getReceiptCriticalFields().filter(k => !(fields[k] && fields[k].value));
   return criticalMissing.length
     ? `<span style="color:#DC2626;"><span class="ic ic-warning"></span> اكتب يدويًا: ${criticalMissing.map(k => RECEIPT_FIELD_DEFS[k].label).join('، ')}</span><span style="color:var(--textMuted); font-weight:600;">باقي الحقول اختيارية</span>`
-    : `<span style="color:#16A34A;">✅ المبلغ والرقم المرجعي والتاريخ جاهزين</span><span style="color:var(--textMuted); font-weight:600;">باقي الحقول اختيارية</span>`;
+    : `<span style="color:#16A34A;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> المبلغ والرقم المرجعي والتاريخ جاهزين</span><span style="color:var(--textMuted); font-weight:600;">باقي الحقول اختيارية</span>`;
 }
 
 function populateReceiptDebugPanel() {
@@ -5267,7 +5277,7 @@ function queryElapsedSec(ctx) {
 
 function queryTimeHtml(ctx, source) {
   const t = queryElapsedSec(ctx);
-  return `<div style="text-align:center;font-size:11px;color:var(--textMuted);font-weight:700;margin:10px 0 2px;">⏱ ${t < 10 ? t.toFixed(2) : t.toFixed(1)} ثانية — ${source}</div>`;
+  return `<div style="text-align:center;font-size:11px;color:var(--textMuted);font-weight:700;margin:10px 0 2px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg> ${t < 10 ? t.toFixed(2) : t.toFixed(1)} ثانية — ${source}</div>`;
 }
 
 function archiveNote(ctx, offlineText) {
@@ -5681,7 +5691,7 @@ function renderCountDraftBanner() {
     since = ' من ' + dt.toLocaleDateString('ar-EG-u-nu-latn') + ' الساعة ' + dt.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
   }
   el.innerHTML = `<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:10px 12px;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-    <span>📝 جرد مفتوح${since} — ${n} صنف. العد محفوظ، كمّل من مكان ما وقفت.</span>
+    <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> جرد مفتوح${since} — ${n} صنف. العد محفوظ، كمّل من مكان ما وقفت.</span>
     <button onclick="cancelInventoryCount()" style="background:#fff;color:#DC2626;border:1px solid #FCA5A5;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">إلغاء الجرد</button>
   </div>`;
 }
@@ -5986,9 +5996,9 @@ function showItemCardDetail(itemId) {
       </div>
       <button onclick="openItemCardEdit(${it.id})" style="width:100%;margin-top:14px;background:#7C3AED;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> تعديل الصنف</button>
       <div id="itemCardEditStatus" data-item-id="${it.id}" style="text-align:center;font-size:12px;font-weight:700;margin-top:8px;line-height:1.7;"></div>
-      ${itemCardOfferLabel[it.id] ? `<button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:#FEF3C7;color:#B45309;border:1.5px dashed #F59E0B;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;">🏷️ اطبع ملصق بالسعر الجديد</button>` : ''}
-      <button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#2563EB;border:1.5px solid #BFDBFE;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;">🏷️ طباعة باركود</button>
-      <button onclick="openDamagedForm(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#DC2626;border:1.5px solid #FCA5A5;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;">⚠️ تسجيل تالف</button>
+      ${itemCardOfferLabel[it.id] ? `<button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:#FEF3C7;color:#B45309;border:1.5px dashed #F59E0B;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg> اطبع ملصق بالسعر الجديد</button>` : ''}
+      <button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#2563EB;border:1.5px solid #BFDBFE;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg> طباعة باركود</button>
+      <button onclick="openDamagedForm(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#DC2626;border:1.5px solid #FCA5A5;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> تسجيل تالف</button>
     </div>
   `;
   renderItemCardEditStatus(it.id);
@@ -6029,7 +6039,7 @@ function watchItemCardEditResult(itemId, reqId) {
   if (itemCardEditListeners[itemId]) { itemCardEditListeners[itemId].ref.off('value', itemCardEditListeners[itemId].cb); clearTimeout(itemCardEditListeners[itemId].timer); }
   const ref = db.ref('data/editResults/' + itemId);
   const timer = setTimeout(() => {
-    setItemCardEditStatus(itemId, '⏳ التعديل محفوظ لكن الكاشير لم يرد بعد.<br><span style="font-weight:600;">السبب غالبًا: جهاز الكاشير مقطوع عن النت أو السكريبت مغلق. سيُنفَّذ تلقائيًا فور تشغيله.</span>', '#B45309');
+    setItemCardEditStatus(itemId, '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> التعديل محفوظ لكن الكاشير لم يرد بعد.<br><span style="font-weight:600;">السبب غالبًا: جهاز الكاشير مقطوع عن النت أو السكريبت مغلق. سيُنفَّذ تلقائيًا فور تشغيله.</span>', '#B45309');
   }, 20000);
   const cb = snap => {
     const r = snap.val();
@@ -6038,11 +6048,11 @@ function watchItemCardEditResult(itemId, reqId) {
     const res = r.results || {};
     const failed = Object.keys(res).filter(k => !res[k].ok);
     if (!failed.length) {
-      setItemCardEditStatus(itemId, '✓ نُفّذ على الكاشير', '#16A34A');
+      setItemCardEditStatus(itemId, '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> نُفّذ على الكاشير', '#16A34A');
     } else {
-      const lines = failed.map(k => '✗ ' + escapeHtml(editFieldLabel(k)) + ': ' + escapeHtml(res[k].msg || 'سبب غير معروف')).join('<br>');
+      const lines = failed.map(k => '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg> ' + escapeHtml(editFieldLabel(k)) + ': ' + escapeHtml(res[k].msg || 'سبب غير معروف')).join('<br>');
       const okCount = Object.keys(res).length - failed.length;
-      setItemCardEditStatus(itemId, (okCount ? '✓ باقي التعديلات نُفّذت<br>' : '') + lines, r.retrying ? '#B45309' : '#DC2626');
+      setItemCardEditStatus(itemId, (okCount ? '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> باقي التعديلات نُفّذت<br>' : '') + lines, r.retrying ? '#B45309' : '#DC2626');
     }
     if (!r.retrying) { ref.off('value', cb); delete itemCardEditListeners[itemId]; }
   };
@@ -6710,14 +6720,14 @@ function loadEditHistory() {
         result = { ok: !Object.keys(failed).length, failed: failed };
       }
       let status;
-      if (!result) status = '<span class="ehStatus" style="color:#B45309;">⏳ في انتظار الكاشير</span>';
-      else if (result.ok) status = '<span class="ehStatus" style="color:#16A34A;">✓ نُفّذ على الكاشير</span>';
-      else status = '<span class="ehStatus" style="color:#DC2626;">✗ ' + Object.keys(result.failed || {}).map(k => escapeHtml(editFieldLabel(k)) + ': ' + escapeHtml(result.failed[k])).join(' • ') + '</span>';
+      if (!result) status = '<span class="ehStatus" style="color:#B45309;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> في انتظار الكاشير</span>';
+      else if (result.ok) status = '<span class="ehStatus" style="color:#16A34A;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> نُفّذ على الكاشير</span>';
+      else status = '<span class="ehStatus" style="color:#DC2626;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg> ' + Object.keys(result.failed || {}).map(k => escapeHtml(editFieldLabel(k)) + ': ' + escapeHtml(result.failed[k])).join(' • ') + '</span>';
 
       const badge = e.source === 'undo'
-        ? '<span class="ehBadge" style="background:#EDE9FE;color:#6D28D9;">↩️ تراجع</span>'
+        ? '<span class="ehBadge" style="background:#EDE9FE;color:#6D28D9;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg> تراجع</span>'
         : e.source === 'damaged'
-          ? '<span class="ehBadge" style="background:#FEE2E2;color:#B91C1C;">⚠️ تالف</span>'
+          ? '<span class="ehBadge" style="background:#FEE2E2;color:#B91C1C;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> تالف</span>'
           : '<span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">من التطبيق</span>';
       let action;
       if (e.undoneAt) {
@@ -6726,7 +6736,7 @@ function loadEditHistory() {
       } else {
         action = e.source === 'damaged'
           ? '<span class="ehStatus" style="color:var(--textMuted);">الإلغاء من سجل التالف</span>'
-          : `<button type="button" class="ehUndo" onclick="undoEditHistory('${key}', this)">↩️ تراجع</button>`;
+          : `<button type="button" class="ehUndo" onclick="undoEditHistory('${key}', this)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg> تراجع</button>`;
       }
       return `<div class="ehCard${e.undoneAt ? ' undone' : ''}">
         <div class="ehTop"><div><div class="ehName">${escapeHtml(e.itemName || ('صنف ' + e.itemId))}</div>${badge}</div><div class="ehTime">${timeStr}<br>${dateStr}</div></div>
@@ -6777,7 +6787,7 @@ function undoEditHistory(key, btn) {
 
   if (!lines.length) { alert('لا يوجد شيء للتراجع عنه في هذا التعديل'); return; }
   let msg = 'ترجع ' + (e.itemName || 'الصنف') + ' للقيم القديمة؟\n\n' + lines.join('\n');
-  if (warnings.length) msg += '\n\n⚠️ ' + warnings.join('\n⚠️ ');
+  if (warnings.length) msg += '\n\n' + warnings.join('\n');
   if (!confirm(msg)) return;
 
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
@@ -6795,7 +6805,7 @@ function undoEditHistory(key, btn) {
     logActivity('تراجع عن تعديل صنف', (e.itemName || '') + ' ← ' + lines.join(' - '));
     loadEditHistory();
   }).catch(err => {
-    if (btn) { btn.disabled = false; btn.textContent = '↩️ تراجع'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'تراجع'; }
     const m = err && err.message ? err.message : String(err);
     alert('فشل إرسال التراجع: ' + m);
     logClientError('تراجع عن تعديل صنف', m);
@@ -6963,7 +6973,7 @@ function saveCustomerEdit() {
   db.ref('data/customers/' + editingCustomerId).update(updates).then(() => {
     // ملحوظة: تغيير الاسم هنا بيحدّث حساب الزبون نفسه بس - أي فواتير/ديون قديمة متسجل فيها
     // اسمه القديم كنص جاهز مش هتتغيّر تلقائيًا (عشان محفوظة كأرشيف تاريخي وقت العملية)
-    logActivity('تعديل بيانات زبون', name + (phone ? ' - 📞 ' + phone : ''));
+    logActivity('تعديل بيانات زبون', name + (phone ? ' - ' + phone : ''));
     closeModal('editCustomerModal');
     loadCustomers();
   }).catch(err => alert('حدثت مشكلة وقت الحفظ: ' + (err && err.message ? err.message : err)));
@@ -7053,7 +7063,7 @@ function submitDeposit() {
     if (kind !== 'purchase') {
       reconcileSalesAccount(customerId).then(info => {
         if (info.settledCount > 0) {
-          showQuickToast(`✅ سُدّد تلقائيًا ${info.settledCount} صنف من إجمالي الإيداعات`);
+          showQuickToast(`سُدّد تلقائيًا ${info.settledCount} صنف من إجمالي الإيداعات`);
         }
         finishUp();
       }).catch(err => {
@@ -7207,7 +7217,7 @@ function cancelDeposit(depositId, customerId, customerName, kind) {
     db.ref(path + depositId).remove().then(() => {
       logActivity('إلغاء إيداع', amountLabel + ' - ' + customerName);
       reconcileSalesAccount(customerId).then(info => {
-        if (info.revertedCount > 0) showQuickToast(`↩️ رجّعنا ${info.revertedCount} صنف لحالة "لم يسدد" بعد إلغاء الإيداع`);
+        if (info.revertedCount > 0) showQuickToast(`رجّعنا ${info.revertedCount} صنف لحالة "لم يسدد" بعد إلغاء الإيداع`);
         if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
         if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
       }).catch(err => {
@@ -7238,7 +7248,7 @@ function renderDepositRow(p, customerId, customerName, kind) {
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
       <div class="p" style="font-weight:800;color:${color};">${fmtMoney(p.amount)} د.ل</div>
-      <button onclick="event.stopPropagation();cancelDeposit('${p.id}','${customerId}','${customerName.replace(/'/g,"")}','${kind}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✕ إلغاء</button>
+      <button onclick="event.stopPropagation();cancelDeposit('${p.id}','${customerId}','${customerName.replace(/'/g,"")}','${kind}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> إلغاء</button>
     </div>
   </div>`;
 }
@@ -7321,7 +7331,7 @@ function sendDebtReminderWhatsApp() {
   const s = lastCustomerStatement;
   if (!s || !(s.combinedNet > 0)) { alert('هذا الزبون غير مديون حاليًا'); return; }
   debtReminder = { text: buildDebtReminderText(s), num: toWhatsAppNumber(s.customerPhone), customerName: s.customerName, phone: s.customerPhone || '', amount: s.combinedNet, file: null, pdf: null, preparing: false };
-  document.getElementById('drTo').textContent = 'إلى: ' + s.customerName + (debtReminder.num ? ' — 📞 ' + s.customerPhone : ' — ما له رقم محفوظ');
+  document.getElementById('drTo').textContent = 'إلى: ' + s.customerName + (debtReminder.num ? ' — ' + s.customerPhone : ' — ما له رقم محفوظ');
   document.getElementById('drPreview').textContent = debtReminder.text;
   renderDebtReminderPdfBtn();
   openModal('debtReminderModal');
@@ -7334,13 +7344,13 @@ function renderDebtReminderPdfBtn() {
   btn.disabled = !!r.preparing;
   btn.style.opacity = r.preparing ? '.7' : '1';
   if (r.preparing) {
-    btn.textContent = '⏳ جاري تجهيز كشف الحساب PDF...';
+    btn.textContent = 'جاري تجهيز كشف الحساب PDF...';
     hint.textContent = '';
   } else if (r.file) {
-    btn.textContent = '📤 مشاركة الرسالة + كشف PDF';
+    btn.textContent = 'مشاركة الرسالة + كشف PDF';
     hint.textContent = 'الكشف جاهز. اختر واتساب ثم الزبون. الرسالة ستُنسخ أيضًا — لو واتساب أرسل الملف بدون النص، الصقها في المحادثة.';
   } else {
-    btn.textContent = '📄 رسالة + كشف حساب PDF';
+    btn.textContent = 'رسالة + كشف حساب PDF';
     hint.textContent = 'يتم تجهيز الكشف أولًا، ثم تضغط مشاركة وتختار واتساب والزبون.';
   }
 }
@@ -7397,7 +7407,7 @@ function debtReminderTextOnly() {
   const text = r.text.split('\n').filter(l => l.indexOf('مرفق كشف الحساب') === -1).join('\n');
   if (!r.num && !confirm('هذا الزبون ما له رقم هاتف محفوظ (أو الرقم ناقص).\nتفتح واتساب وتختار الشخص بنفسك؟\n\nيمكنك إضافة رقمه من "تعديل بيانات الزبون".')) return;
   const url = 'https://wa.me/' + (r.num || '') + '?text=' + encodeURIComponent(text);
-  logActivity('تذكير بالدين', r.customerName + ' - ' + fmtMoney(r.amount) + ' د.ل' + (r.num ? ' - 📞 ' + r.phone : ''));
+  logActivity('تذكير بالدين', r.customerName + ' - ' + fmtMoney(r.amount) + ' د.ل' + (r.num ? ' - ' + r.phone : ''));
   closeModal('debtReminderModal');
   const w = window.open(url, '_blank');
   if (!w) window.location.href = url;
@@ -7850,7 +7860,7 @@ function renderPurchaseDebtRow(it, customerId, customerName) {
         <div class="n">${escapeHtml(it.itemName)}</div>
         <div class="p">${fmtMoney(it.price)} د.ل &middot; ${new Date(it.at).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${paidDateStr ? ' &middot; سُدد ' + paidDateStr : ''}</div>
       </div>
-      <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ سددت</div>
+      <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> سددت</div>
     </div>`;
   }
   return `<div class="searchResultRow">
@@ -7874,14 +7884,14 @@ function renderDebtRow(d, customerId, customerName, isReturned) {
           <div style="font-size:11px;color:#94A3B8;">${d.qty} × ${fmtMoney(d.price)} د.ل &middot; فاتورة ${d.invoiceNumber}${paidDateStr ? ' &middot; سُدد ' + paidDateStr : ''}</div>
           ${noteHtml}
         </div>
-        <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">✓ سددت</div>
+        <div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> سددت</div>
       </div>`;
   }
   const rowStyle = isReturned ? 'background:#FEF2F2;' : '';
   const nameStyle = isReturned ? 'color:#DC2626;' : '';
   const itemLabelEsc = (d.itemName || '').replace(/'/g,"");
   const actionBtn = isReturned
-    ? `<button onclick="markDebtReturned('${d.id}','${customerId}','${customerName.replace(/'/g,"")}','${itemLabelEsc}',${Number(d.amount)||0})" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">↩️ إرجاع</button>`
+    ? `<button onclick="markDebtReturned('${d.id}','${customerId}','${customerName.replace(/'/g,"")}','${itemLabelEsc}',${Number(d.amount)||0})" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg> إرجاع</button>`
     : `<button onclick="markDebtPaid('${d.id}','${customerId}','${customerName.replace(/'/g,"")}','${itemLabelEsc}',${Number(d.amount)||0})" style="background:#DCFCE7;color:#16A34A;border:none;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تسجيل السداد</button>`;
   return `
       <div class="searchResultRow" id="debtRow_${d.id}" style="${rowStyle}">
@@ -8464,7 +8474,7 @@ function renderPeriodReport(r, period, el, notePrefix, rangeLabel) {
     <div class="searchResultRow"><div class="n">عدد المرتجعات</div><div class="p">${r.returnsCount ?? 0}</div></div>
     <div class="searchResultRow"><div class="n">قيمة المرتجعات</div><div class="p">${fmtMoney(r.returnsTotal)} د.ل</div></div>
     <div class="searchResultRow"><div class="n">صافي المبيعات</div><div class="p">${fmtMoney(net)} د.ل</div></div>
-    <button type="button" id="reportPdfBtn" onclick="reportPdfAction()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">📄 تصدير التقرير PDF</button>
+    <button type="button" id="reportPdfBtn" onclick="reportPdfAction()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg> تصدير التقرير PDF</button>
     <div id="reportPdfHint" style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:6px;"></div>
   `;
 }
@@ -8517,19 +8527,19 @@ function reportPdfAction() {
     if (libErr) { alert(libErr); return; }
     rep.preparing = true;
     btn.disabled = true;
-    btn.textContent = '⏳ جاري تجهيز التقرير...';
+    btn.textContent = 'جاري تجهيز التقرير...';
     buildPdfFileFromHtml(buildReportPdfHtml(rep), title.replace(/[\/:*?"<>|]/g, '-')).then(res => {
       rep.preparing = false;
       rep.file = res.file; rep.pdf = res.pdf;
       if (lastPeriodReport !== rep) return;
       btn.disabled = false;
       btn.style.background = '#16A34A';
-      btn.textContent = '📤 مشاركة التقرير';
+      btn.textContent = 'مشاركة التقرير';
       hint.textContent = 'التقرير جاهز - اختر واتساب أو احفظه في الملفات';
     }).catch(err => {
       rep.preparing = false;
       btn.disabled = false;
-      btn.textContent = '📄 تصدير التقرير PDF';
+      btn.textContent = 'تصدير التقرير PDF';
       const m = err && err.message ? err.message : String(err);
       alert('تعذّر تجهيز الـ PDF: ' + m);
       logClientError('تصدير تقرير PDF', m);
@@ -8587,7 +8597,7 @@ function runReportQuery(range, period, el, rangeLabel) {
       resultRef.off('value', cb);
       const r = snap.val() || {};
       resultRef.remove();
-      if (r.error) { el.innerHTML = '<div class="emptyMsg">⚠️ ' + escapeHtml(r.error) + '</div>'; return; }
+      if (r.error) { el.innerHTML = '<div class="emptyMsg"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> ' + escapeHtml(r.error) + '</div>'; return; }
       renderPeriodReport(r, period, el, '', rangeLabel);
       el.insertAdjacentHTML('beforeend', queryTimeHtml(ctx, 'من الكاشير مباشرة'));
     };
@@ -8721,6 +8731,6 @@ document.addEventListener('click', function(e) {
   }
 });
 </script>
-<button id="emergencyCloseScanner" onclick="forceCloseScanner()" style="display:none; position:fixed; top:calc(env(safe-area-inset-top) + 14px); left:14px; z-index:2147483647; background:#DC2626; color:#fff; border:3px solid #fff; border-radius:50%; width:52px; height:52px; font-size:22px; font-weight:900; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.4);">✕</button>
+<button id="emergencyCloseScanner" onclick="forceCloseScanner()" style="display:none; position:fixed; top:calc(env(safe-area-inset-top) + 14px); left:14px; z-index:2147483647; background:#DC2626; color:#fff; border:3px solid #fff; border-radius:50%; width:52px; height:52px; font-size:22px; font-weight:900; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.4);"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
 </body>
 </html>
