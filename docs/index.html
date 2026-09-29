@@ -1814,16 +1814,95 @@ function code128Modules(text) {
   return w.split('').map(Number);
 }
 
+const EAN_L = ['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
+const EAN_G = ['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];
+const EAN_R = ['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
+const EAN_PAR = ['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
+function ean13Valid(code) {
+  const t = String(code || '');
+  if (!/^\d{13}$/.test(t)) return false;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) sum += Number(t[i]) * (i % 2 ? 3 : 1);
+  return (10 - (sum % 10)) % 10 === Number(t[12]);
+}
+// 95 بت (1 = خط) + مواضع الخطوط الطويلة (الحراسة)
+function ean13Bits(code) {
+  const t = String(code), par = EAN_PAR[Number(t[0])];
+  let bits = '101';
+  for (let i = 1; i <= 6; i++) bits += (par[i - 1] === 'L' ? EAN_L : EAN_G)[Number(t[i])];
+  bits += '01010';
+  for (let i = 7; i <= 12; i++) bits += EAN_R[Number(t[i])];
+  bits += '101';
+  return bits;
+}
+
+// EAN-13 بنفس شكل ملصقات برنامج الكاشير: خطوط الحراسة أطول، والرقم الأول برا يسار، والباقي مجموعتين تحت
+function labelDrawEan13(ctx, code, box) {
+  const bits = ean13Bits(code);
+  const qL = 9, qR = 5;
+  let mw = Math.floor(box.w / (95 + qL + qR));
+  let warn = '';
+  if (mw < 1) { mw = 1; warn = 'الملصق ضيق على الباركود - جرّب مقاس أعرض.'; }
+  const x0 = Math.round(box.x + (box.w - (95 + qL + qR) * mw) / 2) + qL * mw;
+  const digitsH = Math.max(10, Math.round(box.h * 0.2));
+  const barH = box.h - digitsH;
+  const guardH = barH + Math.round(digitsH * 0.5);
+  const isGuard = i => i <= 2 || (i >= 45 && i <= 49) || i >= 92;
+  for (let i = 0; i < 95; i++) {
+    if (bits[i] === '1') ctx.fillRect(x0 + i * mw, Math.round(box.y), mw, isGuard(i) ? guardH : barH);
+  }
+  const t = String(code);
+  const fs = Math.max(8, Math.min(digitsH * 1.05, (42 * mw) / 6 / 0.62));
+  ctx.font = '500 ' + Math.floor(fs) + 'px Arial, Helvetica, sans-serif';
+  try { ctx.direction = 'ltr'; } catch (e) {}
+  const ty = box.y + barH + digitsH / 2 + 1;
+  ctx.fillText(t[0], x0 - 5 * mw, ty);
+  for (let k = 0; k < 6; k++) ctx.fillText(t[1 + k], x0 + (3 + 7 * k + 3.5) * mw, ty);
+  for (let k = 0; k < 6; k++) ctx.fillText(t[7 + k], x0 + (50 + 7 * k + 3.5) * mw, ty);
+  try { ctx.direction = 'inherit'; } catch (e) {}
+  return warn;
+}
+
+// قالب "نظام الكاشير": اسم الصنف فوق، باركود EAN-13 كبير، واسم المحل رأسي على الجنب (زي ملصقات البرنامج بالظبط)
+function labelDrawSystem(ctx, item, s, inner, pxmm, code, validCode) {
+  let box = { x: inner.x, y: inner.y, w: inner.w, h: inner.h };
+  const store = String(s.storeName || '').trim();
+  if (store) {
+    const stripW = Math.round(4.2 * pxmm);
+    ctx.save();
+    ctx.translate(box.x + box.w - stripW / 2, box.y + box.h / 2);
+    ctx.rotate(Math.PI / 2);
+    labelDrawText(ctx, store, { x: -box.h / 2, y: -stripW / 2, w: box.h, h: stripW }, '800', 1);
+    ctx.restore();
+    box.w -= stripW + Math.round(pxmm * 0.8);
+  }
+  const nameH = Math.round(box.h * 0.22);
+  if (s.showName !== false && item.name) labelDrawText(ctx, String(item.name), { x: box.x, y: box.y, w: box.w, h: nameH }, '600', 1);
+  const gap = Math.round(pxmm * 0.8);
+  const bBox = { x: box.x, y: box.y + nameH + gap, w: box.w, h: box.h - nameH - gap };
+  if (!code) return '';
+  if (/^\d{13}$/.test(code) && ean13Valid(code)) return labelDrawEan13(ctx, code, bBox);
+  if (!validCode) return '';
+  // باركود مش EAN-13: Code128 + الرقم تحته
+  const dH = Math.round(bBox.h * 0.2);
+  const w = labelDrawBarcode(ctx, code, { x: bBox.x, y: bBox.y, w: bBox.w, h: bBox.h - dH });
+  try { ctx.direction = 'ltr'; } catch (e) {}
+  labelDrawText(ctx, code, { x: bBox.x, y: bBox.y + bBox.h - dH, w: bBox.w, h: dH }, '600', 1);
+  try { ctx.direction = 'inherit'; } catch (e) {}
+  return w;
+}
+
 const LABEL_TEMPLATES = [
+  { id: 'system',      name: 'نظام الكاشير', desc: 'نفس تصميم ملصقات برنامج الكاشير' },
   { id: 'standard',    name: 'قياسي',       desc: 'الاسم، الباركود، والسعر' },
   { id: 'priceBig',    name: 'السعر بارز',  desc: 'سعر كبير فوق والباركود تحت' },
   { id: 'barcodeOnly', name: 'باركود كبير', desc: 'باركود واضح ورقمه' },
   { id: 'compact',     name: 'بدون سعر',    desc: 'الاسم والباركود فقط' },
   { id: 'shelf',       name: 'ملصق رف',     desc: 'سعر كبير جدًا وباركود صغير' }
 ];
-const LABEL_PRESETS = [[40, 30], [50, 25], [50, 30], [38, 25], [60, 40], [30, 20], [58, 40], [70, 50]];
-const LABEL_DEFAULTS = { widthMm: 40, heightMm: 30, gapMm: 2, dpi: 203, template: 'standard', showName: true, showPrice: true, showStoreName: false, storeName: '', currency: 'د.ل', rotate: 0, offsetXmm: 0, offsetYmm: 0, printer: '' };
-const LABEL_SAMPLE = { name: 'صنف تجريبي Sample', price: 12.5, barcode: '1234567890128' };
+const LABEL_PRESETS = [[39, 25], [40, 30], [50, 25], [50, 30], [38, 25], [60, 40], [30, 20], [58, 40], [70, 50]];
+const LABEL_DEFAULTS = { widthMm: 39, heightMm: 25, gapMm: 2, dpi: 203, template: 'system', showName: true, showPrice: true, showStoreName: false, storeName: '', currency: 'د.ل', rotate: 0, offsetXmm: 0, offsetYmm: 0, printer: '' };
+const LABEL_SAMPLE = { name: 'SMART 8 LCD CH', price: 120, barcode: '2137703921771' };
 const LABEL_FONT = '"Segoe UI", Tahoma, -apple-system, "Geeza Pro", Arial, sans-serif';
 
 let labelSettings = Object.assign({}, LABEL_DEFAULTS);
@@ -1943,6 +2022,8 @@ function renderLabelCanvas(item, st, templateOverride) {
     compact:     [['store', .11], ['name', .3], ['barcode', .45], ['digits', .14]],
     shelf:       [['store', .11], ['name', .28], ['price', .44], ['barcode', .16], ['digits', .1]]
   }[tpl] || [];
+  let warning = '';
+  if (tpl === 'system') warning = labelDrawSystem(ctx, item, s, inner, pxmm, code, validCode) || '';
   const rows = R.filter(([t]) => {
     if (t === 'store') return s.showStoreName && String(s.storeName || '').trim();
     if (t === 'name') return s.showName && item.name;
@@ -1954,7 +2035,6 @@ function renderLabelCanvas(item, st, templateOverride) {
   const gap = Math.round(pxmm * 0.6);
   const usableH = inner.h - gap * Math.max(0, rows.length - 1);
   let y = inner.y;
-  let warning = '';
   rows.forEach(([t, wgt]) => {
     const h = usableH * wgt / totalW;
     const box = { x: inner.x, y: y, w: inner.w, h: h };
@@ -2830,9 +2910,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.13.0';
+const APP_VERSION = '2.14.0';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.14.0', date: '2026-09-29', items: [
+    'قالب ملصق "نظام الكاشير" بنفس تصميم ملصقات البرنامج (باركود EAN-13 واسم المحل رأسيًا)، وهو الافتراضي',
+    'مقاس 39×25 مم مضاف للمقاسات الجاهزة وهو الافتراضي'
+  ] },
   { v: '2.13.0', date: '2026-09-29', items: [
     'استبدال الإيموجي القديم بأيقونات خطية موحدة في كل التطبيق',
     'الأيقونات تتلون تلقائيًا مع الوضع الليلي وتبدو بنفس الشكل على كل الأجهزة'
