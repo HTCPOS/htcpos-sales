@@ -1836,60 +1836,99 @@ function ean13Bits(code) {
   return bits;
 }
 
-// EAN-13 بنفس شكل ملصقات برنامج الكاشير: خطوط الحراسة أطول، والرقم الأول برا يسار، والباقي مجموعتين تحت
-function labelDrawEan13(ctx, code, box) {
-  const bits = ean13Bits(code);
-  const qL = 9, qR = 5;
-  let mw = Math.floor(box.w / (95 + qL + qR));
-  let warn = '';
-  if (mw < 1) { mw = 1; warn = 'الملصق ضيق على الباركود - جرّب مقاس أعرض.'; }
-  const x0 = Math.round(box.x + (box.w - (95 + qL + qR) * mw) / 2) + qL * mw;
-  const digitsH = Math.max(10, Math.round(box.h * 0.2));
-  const barH = box.h - digitsH;
-  const guardH = barH + Math.round(digitsH * 0.5);
-  const isGuard = i => i <= 2 || (i >= 45 && i <= 49) || i >= 92;
-  for (let i = 0; i < 95; i++) {
-    if (bits[i] === '1') ctx.fillRect(x0 + i * mw, Math.round(box.y), mw, isGuard(i) ? guardH : barH);
-  }
-  const t = String(code);
-  const fs = Math.max(8, Math.min(digitsH * 1.05, (42 * mw) / 6 / 0.62));
-  ctx.font = '500 ' + Math.floor(fs) + 'px Arial, Helvetica, sans-serif';
-  try { ctx.direction = 'ltr'; } catch (e) {}
-  const ty = box.y + barH + digitsH / 2 + 1;
-  ctx.fillText(t[0], x0 - 5 * mw, ty);
-  for (let k = 0; k < 6; k++) ctx.fillText(t[1 + k], x0 + (3 + 7 * k + 3.5) * mw, ty);
-  for (let k = 0; k < 6; k++) ctx.fillText(t[7 + k], x0 + (50 + 7 * k + 3.5) * mw, ty);
-  try { ctx.direction = 'inherit'; } catch (e) {}
-  return warn;
+// ===== قالب "نظام الكاشير": مقاس بالمليمتر من ملصق البرنامج الأصلي (39×25) =====
+// كل الأماكن والمقاسات متاخدة من ملصق برنامج الكاشير نفسه، وبتتناسب لو المقاس اتغير
+const SYS_REF = { w: 39, h: 25 };
+const SYS_LAYOUT = {
+  nameY: 3.7, nameSize: 3.05,            // اسم الصنف: منتصفه على 3.7 ملم من فوق، خط عادي
+  barTop: 6.6, barH: 10.0, guardExt: 2.3, // الباركود: يبدأ 6.6 ملم، الخطوط 10 ملم، وخطوط الحراسة أطول 2.3
+  module: 0.276,                          // عرض أرفع خط (نفس ملصق البرنامج تقريبًا)
+  barsCenterX: 19.4,                      // منتصف الباركود أفقيًا
+  digitsBase: 19.5, digitsSize: 3.2,      // الأرقام: خط عادي، وسطرها على 19.5 ملم
+  firstDigitGap: 6,                       // الرقم الأول برا الباركود يسار (بالموديول)
+  storeX: 37.2, storeY: 15.9, storeSize: 2.2, storeLen: 17 // اسم المحل الرأسي على اليمين
+};
+
+// بيرسم خطوط الباركود بحواف مقرّبة لأقرب نقطة طابعة (زي ما الطابعة نفسها بتعمل مع العرض الكسري)
+function sysFillBar(ctx, x1, x2, y, h) {
+  const a = Math.round(x1), b = Math.round(x2);
+  if (b > a) ctx.fillRect(a, Math.round(y), b - a, Math.round(h));
 }
 
-// قالب "نظام الكاشير": اسم الصنف فوق، باركود EAN-13 كبير، واسم المحل رأسي على الجنب (زي ملصقات البرنامج بالظبط)
 function labelDrawSystem(ctx, item, s, inner, pxmm, code, validCode) {
-  let box = { x: inner.x, y: inner.y, w: inner.w, h: inner.h };
+  const W = inner.w + inner.x * 2, H = inner.h + inner.y * 2;
+  const sx = (W / pxmm) / SYS_REF.w, sy = (H / pxmm) / SYS_REF.h;
+  const sf = Math.min(sx, sy);
+  const X = mm => mm * sx * pxmm, Y = mm => mm * sy * pxmm, F = mm => Math.max(8, mm * sf * pxmm);
+  const L = SYS_LAYOUT;
+  let warn = '';
+
+  // اسم المحل رأسي (عريض) على اليمين
   const store = String(s.storeName || '').trim();
   if (store) {
-    const stripW = Math.round(4.2 * pxmm);
     ctx.save();
-    ctx.translate(box.x + box.w - stripW / 2, box.y + box.h / 2);
+    ctx.translate(X(L.storeX), Y(L.storeY));
     ctx.rotate(Math.PI / 2);
-    labelDrawText(ctx, store, { x: -box.h / 2, y: -stripW / 2, w: box.h, h: stripW }, '800', 1);
+    let fs = F(L.storeSize);
+    ctx.font = '700 ' + fs + 'px Arial, Helvetica, sans-serif';
+    const maxLen = Y(L.storeLen);
+    while (fs > 7 && ctx.measureText(store).width > maxLen) { fs -= 0.5; ctx.font = '700 ' + fs + 'px Arial, Helvetica, sans-serif'; }
+    ctx.fillText(store, 0, 0);
     ctx.restore();
-    box.w -= stripW + Math.round(pxmm * 0.8);
   }
-  const nameH = Math.round(box.h * 0.22);
-  if (s.showName !== false && item.name) labelDrawText(ctx, String(item.name), { x: box.x, y: box.y, w: box.w, h: nameH }, '600', 1);
-  const gap = Math.round(pxmm * 0.8);
-  const bBox = { x: box.x, y: box.y + nameH + gap, w: box.w, h: box.h - nameH - gap };
+
+  // اسم الصنف (خط عادي) - بيصغر لوحده لو طويل
+  if (s.showName !== false && item.name) {
+    let fs = F(L.nameSize);
+    const maxW = X(34);
+    ctx.font = '400 ' + fs + 'px Arial, Helvetica, sans-serif';
+    while (fs > 8 && ctx.measureText(String(item.name)).width > maxW) { fs -= 0.5; ctx.font = '400 ' + fs + 'px Arial, Helvetica, sans-serif'; }
+    ctx.fillText(labelEllipsis(ctx, String(item.name), maxW), X(L.barsCenterX), Y(L.nameY));
+  }
   if (!code) return '';
-  if (/^\d{13}$/.test(code) && ean13Valid(code)) return labelDrawEan13(ctx, code, bBox);
+
+  const mw = L.module * sx * pxmm; // عرض الموديول بالنقط (ممكن يكون كسري زي البرنامج)
+  if (/^\d{13}$/.test(code) && ean13Valid(code)) {
+    const bits = ean13Bits(code);
+    const x0 = X(L.barsCenterX) - (95 * mw) / 2;
+    const top = Y(L.barTop), bh = Y(L.barH), gh = Y(L.barH + L.guardExt);
+    const isGuard = i => i <= 2 || (i >= 45 && i <= 49) || i >= 92;
+    let i = 0;
+    while (i < 95) {
+      if (bits[i] !== '1') { i++; continue; }
+      let j = i;
+      while (j < 95 && bits[j] === '1' && isGuard(j) === isGuard(i)) j++;
+      sysFillBar(ctx, x0 + i * mw, x0 + j * mw, top, isGuard(i) ? gh : bh);
+      i = j;
+    }
+    if (mw < 1.6) warn = 'الملصق صغير على الباركود - ممكن القارئ ما يقراهوش. جرّب مقاس أكبر.';
+    // الأرقام (خط عادي): الأول برا يسار، والباقي مجموعتين في نص كل 7 موديول
+    ctx.font = '400 ' + F(L.digitsSize) + 'px Arial, Helvetica, sans-serif';
+    try { ctx.direction = 'ltr'; } catch (e) {}
+    ctx.textBaseline = 'alphabetic';
+    const by = Y(L.digitsBase);
+    ctx.fillText(code[0], x0 - L.firstDigitGap * mw, by);
+    for (let k = 0; k < 6; k++) ctx.fillText(code[1 + k], x0 + (3 + 7 * k + 3.5) * mw, by);
+    for (let k = 0; k < 6; k++) ctx.fillText(code[7 + k], x0 + (50 + 7 * k + 3.5) * mw, by);
+    ctx.textBaseline = 'middle';
+    try { ctx.direction = 'inherit'; } catch (e) {}
+    return warn;
+  }
   if (!validCode) return '';
-  // باركود مش EAN-13: Code128 + الرقم تحته
-  const dH = Math.round(bBox.h * 0.2);
-  const w = labelDrawBarcode(ctx, code, { x: bBox.x, y: bBox.y, w: bBox.w, h: bBox.h - dH });
+  // باركود مش EAN-13: Code128 في نفس المكان + الرقم تحته بنفس الخط
+  const mods = code128Modules(code);
+  const sum = mods.reduce((a, b) => a + b, 0);
+  const cw = Math.min(mw, X(33) / sum);
+  let x = X(L.barsCenterX) - (sum * cw) / 2;
+  mods.forEach((m, k) => { if (k % 2 === 0) sysFillBar(ctx, x, x + m * cw, Y(L.barTop), Y(L.barH)); x += m * cw; });
+  if (cw < 1.6) warn = 'الباركود رفيع على المقاس ده - جرّبه بالقارئ.';
+  ctx.font = '400 ' + F(L.digitsSize) + 'px Arial, Helvetica, sans-serif';
   try { ctx.direction = 'ltr'; } catch (e) {}
-  labelDrawText(ctx, code, { x: bBox.x, y: bBox.y + bBox.h - dH, w: bBox.w, h: dH }, '600', 1);
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(code, X(L.barsCenterX), Y(L.digitsBase));
+  ctx.textBaseline = 'middle';
   try { ctx.direction = 'inherit'; } catch (e) {}
-  return w;
+  return warn;
 }
 
 const LABEL_TEMPLATES = [
@@ -2054,10 +2093,11 @@ function renderLabelCanvas(item, st, templateOverride) {
   if (!code && ['barcodeOnly', 'compact'].includes(tpl)) warning = 'هذا الصنف ما له باركود مسجل في الكاشير - اختر قالب "ملصق رف" أو "السعر بارز".';
 
   // أبيض وأسود صافي - الطابعة الحرارية ما بتطبعش رمادي، فبنحسم كل نقطة من هنا عشان النتيجة تبقى حادة
+  const thr = tpl === 'system' ? 185 : 160; // الخط العادي الرفيع محتاج حد أعلى عشان الحروف تفضل ممتلية
   const img = ctx.getImageData(0, 0, W, H);
   const d = img.data;
   for (let i = 0; i < d.length; i += 4) {
-    const v = (d[i] + d[i + 1] + d[i + 2]) / 3 < 160 ? 0 : 255;
+    const v = (d[i] + d[i + 1] + d[i + 2]) / 3 < thr ? 0 : 255;
     d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
   }
   ctx.putImageData(img, 0, 0);
@@ -2910,9 +2950,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.14.0';
+const APP_VERSION = '2.14.1';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.14.1', date: '2026-09-29', items: [
+    'قالب "نظام الكاشير" مطابق لملصق البرنامج بالمليمتر: خط عادي للاسم والأرقام، نفس عرض وارتفاع الباركود، ونفس مكان اسم المحل الرأسي',
+    'حواف الخط أنظف وأكثر امتلاءً في الطباعة الحرارية'
+  ] },
   { v: '2.14.0', date: '2026-09-29', items: [
     'قالب ملصق "نظام الكاشير" بنفس تصميم ملصقات البرنامج (باركود EAN-13 واسم المحل رأسيًا)، وهو الافتراضي',
     'مقاس 39×25 مم مضاف للمقاسات الجاهزة وهو الافتراضي'
