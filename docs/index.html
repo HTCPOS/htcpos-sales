@@ -314,6 +314,18 @@
   .lsCheck { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--text); padding:7px 0; cursor:pointer; }
   .lsCheck input { width:18px; height:18px; }
   .lpStep { width:46px; height:44px; border:none; border-radius:10px; background:var(--surface2); color:var(--text); font-size:22px; font-weight:800; cursor:pointer; flex-shrink:0; }
+  /* البحث العام */
+  .gsBox { position:relative; display:flex; align-items:center; gap:8px; background:var(--surface2); border-radius:14px; padding:0 12px; color:var(--textMuted); flex-shrink:0; }
+  .gsBox input { flex:1; min-width:0; border:none; background:transparent; color:var(--text); font-size:16px; padding:13px 0; outline:none; }
+  .gsClear { display:none; border:none; background:var(--border); color:var(--textMuted); width:24px; height:24px; border-radius:50%; font-size:11px; cursor:pointer; flex-shrink:0; }
+  .gsBox.hasText .gsClear { display:block; }
+  .gsSec { display:flex; justify-content:space-between; align-items:center; font-size:12.5px; font-weight:800; color:var(--textMuted); margin:16px 4px 4px; }
+  .gsCnt { background:var(--surface2); border-radius:10px; padding:2px 9px; font-size:11px; }
+  .gsLink { border:none; background:none; color:#2563EB; font-weight:800; font-size:12px; cursor:pointer; }
+  .gsRow { cursor:pointer; }
+  .gsRow mark { background:rgba(250,204,21,.35); color:inherit; border-radius:3px; padding:0 1px; }
+  .gsSub { font-size:11.5px; color:var(--textMuted); font-weight:600; margin-top:3px; }
+  .gsMore { width:100%; border:none; background:none; color:#2563EB; font-weight:800; font-size:12.5px; padding:10px; cursor:pointer; }
   /* البضاعة التالفة */
   .dmStat { flex:1; background:var(--surface2); border-radius:12px; padding:10px 6px; text-align:center; font-size:11.5px; color:var(--textMuted); font-weight:700; }
   .dmStat b { display:block; font-size:16px; color:var(--text); margin-top:4px; font-weight:900; }
@@ -617,9 +629,9 @@
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
   </div>
   <div style="position:relative; margin:14px 16px;">
-    <div class="searchBox" style="margin:0;">
+    <div class="searchBox" style="margin:0;cursor:pointer;" onclick="openGlobalSearch()">
       <span><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-      <input type="text" id="searchInput" placeholder="بحث عن صنف..." oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="ابحث في كل التطبيق..." readonly tabindex="-1" style="pointer-events:none;" autocomplete="off">
     </div>
     <div id="searchDropdown" class="dropPopover" style="display:none; position:absolute; top:52px; left:0; right:0; background:var(--surface); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:40; max-height:320px; overflow:auto;"></div>
   </div>
@@ -1002,6 +1014,19 @@
       <button type="button" class="lsChip dmTab" data-p="all" style="direction:rtl;" onclick="setDamagedPeriod('all')">الكل</button>
     </div>
     <div id="dmBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="globalSearchModal" onclick="if(event.target===this)closeModal('globalSearchModal')">
+  <div class="modalSheet" style="height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+    <button class="closeM" onclick="closeModal('globalSearchModal')">✕</button>
+    <h3>البحث</h3>
+    <div id="gsBox" class="gsBox">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="text" id="gsInput" placeholder="صنف، زبون، رقم فاتورة، ملاحظة، شاشة..." autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" oninput="onGlobalSearchInput()">
+      <button type="button" class="gsClear" onclick="gsClear()" aria-label="مسح">✕</button>
+    </div>
+    <div id="gsBody" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-top:6px;"></div>
   </div>
 </div>
 
@@ -2430,11 +2455,225 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= البحث العام ================= */
+// بيدور في كل التطبيق مرة واحدة: الأصناف، الزبائن والمحلات، الفواتير، الملاحظات، التالف، والشاشات.
+// كل البحث من بيانات موجودة في الذاكرة أصلًا (فوري)، والفواتير من النسخة المحفوظة + زر للبحث في الكاشير
+const GS_RECENT_KEY = 'gsRecent';
+const GS_SCREENS = [
+  { name: 'التقارير', kw: 'تقرير تقارير مبيعات ارباح صافي', run: "openModal('reportsModal')" },
+  { name: 'إدارة المخزون', kw: 'مخزون كميات نفد نفاد', run: "openModal('lowStockModal')" },
+  { name: 'المرتجعات', kw: 'مرتجع مرتجعات ارجاع', run: "openModal('returnsModal')" },
+  { name: 'النواقص', kw: 'نواقص طلبيات مورد', run: "openModal('shortagesModal')" },
+  { name: 'الجرد', kw: 'جرد عد مخزون', run: "openInventoryCount()" },
+  { name: 'المفقودات', kw: 'مفقودات مفقود', run: "openModal('missingItemsModal')" },
+  { name: 'البضاعة التالفة', kw: 'تالف تلف كسر خسارة', run: "openDamagedModal()" },
+  { name: 'تسجيل تالف جديد', kw: 'تالف تسجيل جديد كسر', run: "openDamagedForm()" },
+  { name: 'سجل الحركات', kw: 'سجل حركات تعديلات تراجع', run: "openModal('activityLogModal')" },
+  { name: 'الملاحظات', kw: 'ملاحظات ملاحظة', run: "openNotesModal()" },
+  { name: 'الزبائن', kw: 'زبائن زبون ديون دين حساب ايداع سداد', run: "openModal('customersModal')" },
+  { name: 'ديون المشتريات', kw: 'مشتريات محل محلات مورد موردين ديون', run: "openModal('purchaseDebtsModal')" },
+  { name: 'كل المنتجات', kw: 'منتجات اصناف صنف', run: "openModal('productsModal')" },
+  { name: 'بطاقة صنف', kw: 'بطاقة صنف تعديل سعر كمية', run: "openItemCardModal()" },
+  { name: 'فحص سعر سريع', kw: 'فحص سعر', run: "openPriceCheckModal()" },
+  { name: 'كل الفواتير', kw: 'فواتير فاتورة ايصال ايصالات', run: "openAllInvoices()" },
+  { name: 'الأخطاء وحالة الكاشير', kw: 'اخطاء خطا كاشير حالة اتصال', run: "openModal('errorsModal')" },
+  { name: 'إعدادات طباعة الباركود', kw: 'باركود طباعة ملصق ملصقات', run: "openLabelSettings()" },
+  { name: 'الإعدادات', kw: 'اعدادات ضبط', run: "openGeneralSettings()" },
+  { name: 'حول التطبيق', kw: 'حول اصدار نسخة تحديث', run: "openAboutApp()" }
+];
+const GS_SECTIONS = {
+  screens: { title: 'الشاشات', icon: '⚡' },
+  items: { title: 'الأصناف', icon: '📦' },
+  customers: { title: 'الزبائن والمحلات', icon: '👤' },
+  invoices: { title: 'الفواتير', icon: '🧾' },
+  notes: { title: 'الملاحظات', icon: '📝' },
+  damaged: { title: 'التالف', icon: '⚠️' }
+};
+let gsTimer = null;
+let gsData = { customers: null, notes: null, damaged: null, archive: null };
+let gsRes = {};
+let gsExpanded = {};
+
+function gsRecent() {
+  try { return JSON.parse(localStorage.getItem(GS_RECENT_KEY) || '[]'); } catch (e) { return []; }
+}
+function gsSaveRecent(q) {
+  q = String(q || '').trim();
+  if (q.length < 2) return;
+  const list = [q].concat(gsRecent().filter(x => x !== q)).slice(0, 8);
+  try { localStorage.setItem(GS_RECENT_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function openGlobalSearch() {
+  openModal('globalSearchModal');
+  const inp = document.getElementById('gsInput');
+  inp.value = '';
+  gsExpanded = {};
+  renderGlobalSearch();
+  try { inp.focus(); } catch (e) {} // جوه نفس الضغطة عشان الكيبورد يفتح على الآيفون
+  liveOnce('data/customers').then(s => { gsData.customers = s.val() || {}; renderGlobalSearch(); }).catch(() => {});
+  liveOnce('data/notes').then(s => { gsData.notes = s.val() || {}; renderGlobalSearch(); }).catch(() => {});
+  liveOnce('data/damaged').then(s => { gsData.damaged = s.val() || {}; renderGlobalSearch(); }).catch(() => {});
+}
+
+function onGlobalSearchInput() {
+  const raw = document.getElementById('gsInput').value;
+  document.getElementById('gsBox').classList.toggle('hasText', raw.length > 0);
+  gsExpanded = {};
+  clearTimeout(gsTimer);
+  gsTimer = setTimeout(renderGlobalSearch, 110);
+}
+
+function gsClear() {
+  const inp = document.getElementById('gsInput');
+  inp.value = '';
+  onGlobalSearchInput();
+  inp.focus();
+}
+
+function gsUseRecent(i) {
+  const q = gsRecent()[i];
+  if (!q) return;
+  document.getElementById('gsInput').value = q;
+  onGlobalSearchInput();
+}
+
+function gsClearRecent() {
+  try { localStorage.removeItem(GS_RECENT_KEY); } catch (e) {}
+  renderGlobalSearch();
+}
+
+function renderGlobalSearch() {
+  const el = document.getElementById('gsBody');
+  if (!el) return;
+  const raw = (document.getElementById('gsInput').value || '').trim();
+  const q = normalizeArabicName(raw);
+  const digits = raw.replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 0x0660)).replace(/[^0-9]/g, '');
+  const numeric = digits.length >= 3 && digits.length === raw.replace(/\s/g, '').length;
+
+  if (!raw) {
+    const rec = gsRecent();
+    el.innerHTML = rec.length
+      ? `<div class="gsSec"><span>🕘 عمليات بحث سابقة</span><button type="button" class="gsLink" onclick="gsClearRecent()">مسح</button></div>` +
+        rec.map((r, i) => `<div class="searchResultRow gsRow" onclick="gsUseRecent(${i})"><div class="n">${escapeHtml(r)}</div><div class="p">↖</div></div>`).join('')
+      : '<div class="emptyMsg" style="line-height:1.9;">ابحث عن صنف، زبون، رقم فاتورة، ملاحظة، أو اسم شاشة<br><span style="font-size:12px;">مثال: A12 · محمد · 1097 · جرد</span></div>';
+    return;
+  }
+
+  const res = { screens: [], items: [], customers: [], invoices: [], notes: [], damaged: [] };
+  // الشاشات
+  GS_SCREENS.forEach(sc => { if (normalizeArabicName(sc.name + ' ' + sc.kw).includes(q)) res.screens.push(sc); });
+  // الأصناف: بالاسم أو الباركود
+  Object.values(latestItems || {}).forEach(it => {
+    const n = normalizeArabicName(it.name);
+    const bc = String(it.barcode || '');
+    if (n.includes(q) || (digits.length >= 3 && bc.includes(digits))) res.items.push({ it: it, starts: n.startsWith(q) || bc === digits });
+  });
+  res.items.sort((a, b) => (b.starts - a.starts) || String(a.it.name).localeCompare(String(b.it.name), 'ar'));
+  // الزبائن: بالاسم أو رقم الهاتف
+  Object.entries(gsData.customers || {}).forEach(([id, c]) => {
+    if (!c) return;
+    const n = normalizeArabicName(c.name);
+    const ph = String(c.phone || '').replace(/[^0-9]/g, '');
+    if (n.includes(q) || (digits.length >= 3 && ph.includes(digits))) res.customers.push({ id: id, name: String(c.name || ''), phone: String(c.phone || ''), starts: n.startsWith(q) });
+  });
+  res.customers.sort((a, b) => (b.starts - a.starts) || a.name.localeCompare(b.name, 'ar'));
+  // الملاحظات
+  Object.entries(gsData.notes || {}).forEach(([id, nt]) => {
+    if (nt && normalizeArabicName(nt.text).includes(q)) res.notes.push({ id: id, text: String(nt.text || ''), at: nt.updatedAt || nt.createdAt });
+  });
+  // التالف
+  Object.values(gsData.damaged || {}).forEach(d => {
+    if (d && !d.cancelledAt && normalizeArabicName((d.itemName || '') + ' ' + (d.reason || '') + ' ' + (d.note || '')).includes(q)) res.damaged.push(d);
+  });
+  res.damaged.sort((a, b) => new Date(b.at) - new Date(a.at));
+  // الفواتير: بالأرقام بس، من النسخة المحفوظة
+  if (numeric) {
+    if (gsData.archive) {
+      gsData.archive.forEach(e => {
+        const nd = String(e.number || '').replace(/[^0-9]/g, '');
+        const od = String(e.orderNo || '').replace(/[^0-9]/g, '');
+        if (nd === digits || od === digits) res.invoices.push({ e: e, exact: true });
+        else if (digits.length >= 4 && (nd.includes(digits) || od.includes(digits))) res.invoices.push({ e: e, exact: false });
+      });
+      res.invoices.sort((a, b) => (b.exact - a.exact) || (new Date(b.e.date) - new Date(a.e.date)));
+    } else {
+      fetchFullArchiveFlat().then(flat => { gsData.archive = flat; renderGlobalSearch(); }).catch(() => {});
+    }
+  }
+  gsRes = res;
+
+  const order = numeric ? ['invoices', 'items', 'customers', 'screens', 'notes', 'damaged'] : ['screens', 'items', 'customers', 'notes', 'damaged', 'invoices'];
+  let html = '';
+  let total = 0;
+  order.forEach(sec => {
+    const list = res[sec];
+    const showSearchCashier = sec === 'invoices' && numeric;
+    if (!list.length && !showSearchCashier) return;
+    total += list.length;
+    const lim = gsExpanded[sec] ? 60 : (sec === 'screens' ? 3 : 4);
+    html += `<div class="gsSec"><span>${GS_SECTIONS[sec].icon} ${GS_SECTIONS[sec].title}</span><span class="gsCnt">${list.length}</span></div>`;
+    html += list.slice(0, lim).map((r, i) => gsRowHtml(sec, r, i, raw)).join('');
+    if (showSearchCashier) html += `<div class="searchResultRow gsRow" onclick="gsSearchCashierInvoice('${digits}')"><div class="n" style="color:#2563EB;">🔎 بحث في الكاشير عن الفاتورة رقم ${digits}</div><div class="p">›</div></div>`;
+    if (list.length > lim) html += `<button type="button" class="gsMore" onclick="gsExpanded['${sec}']=true;renderGlobalSearch();">عرض الكل (${list.length})</button>`;
+  });
+  if (!total && !numeric) html = '<div class="emptyMsg">لا يوجد نتائج لـ «' + escapeHtml(raw) + '»</div>';
+  el.innerHTML = html;
+}
+
+function gsRowHtml(sec, r, i, raw) {
+  const on = `onclick="gsGo('${sec}',${i})"`;
+  if (sec === 'screens') return `<div class="searchResultRow gsRow" ${on}><div class="n">${highlightCustomerMatch(r.name, raw)}</div><div class="p">›</div></div>`;
+  if (sec === 'items') return `<div class="searchResultRow gsRow" ${on}><div class="n">${highlightCustomerMatch(String(r.it.name || ''), raw)}${r.it.barcode ? `<div class="gsSub">${highlightCustomerMatch(String(r.it.barcode), raw)}</div>` : ''}</div><div class="p">${fmtMoney(r.it.price)} د.ل · ${r.it.stock}</div></div>`;
+  if (sec === 'customers') return `<div class="searchResultRow gsRow" ${on}><div class="n">${highlightCustomerMatch(r.name, raw)}${r.phone ? `<div class="gsSub" style="direction:ltr;text-align:right;">${highlightCustomerMatch(r.phone, raw)}</div>` : ''}</div><div class="p">›</div></div>`;
+  if (sec === 'invoices') {
+    const e = r.e; const d = new Date(e.date);
+    const label = (e.type === 'return' ? 'مرتجع #' : 'فاتورة #') + (e.number || e.orderNo || '');
+    return `<div class="searchResultRow gsRow" ${on}><div class="n">${escapeHtml(label)}<div class="gsSub">${isNaN(d) ? '' : d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric' })}</div></div><div class="p">${fmtMoney(e.amount)} د.ل</div></div>`;
+  }
+  if (sec === 'notes') {
+    const t = r.text.replace(/\s+/g, ' ');
+    return `<div class="searchResultRow gsRow" ${on}><div class="n" style="font-weight:600;">${highlightCustomerMatch(t.length > 70 ? t.slice(0, 70) + '…' : t, raw)}</div><div class="p">›</div></div>`;
+  }
+  if (sec === 'damaged') {
+    const d = new Date(r.at);
+    return `<div class="searchResultRow gsRow" ${on}><div class="n">${highlightCustomerMatch(String(r.itemName || ''), raw)} × ${r.qty}<div class="gsSub">${escapeHtml(r.reason || '')} · ${isNaN(d) ? '' : d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' })}</div></div><div class="p" style="color:#DC2626;">${fmtMoney(r.totalCost)} د.ل</div></div>`;
+  }
+  return '';
+}
+
+// النتيجة بتفتح فوق البحث، فزر الرجوع بيرجّعك للبحث بنفس الكلمة
+function gsGo(sec, i) {
+  const r = (gsRes[sec] || [])[i];
+  if (!r) return;
+  gsSaveRecent(document.getElementById('gsInput').value);
+  try { document.activeElement && document.activeElement.blur(); } catch (e) {}
+  if (sec === 'screens') { try { (new Function(r.run))(); } catch (e) {} return; }
+  if (sec === 'items') { showItemDetail(r.it.id); return; }
+  if (sec === 'customers') { openCustomerDebt(r.id, r.name); return; }
+  if (sec === 'invoices') { window.__invoicesById = window.__invoicesById || {}; if (r.e.id) window.__invoicesById[r.e.id] = r.e; showInvoiceDetail(r.e); return; }
+  if (sec === 'notes') { openNotesModal(); openNoteEditor(r.id); return; }
+  if (sec === 'damaged') { openDamagedModal(); return; }
+}
+
+function gsSearchCashierInvoice(digits) {
+  gsSaveRecent(digits);
+  try { document.activeElement && document.activeElement.blur(); } catch (e) {}
+  document.getElementById('invoiceSearchInput').value = digits;
+  searchInvoiceByNumber();
+}
+
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.10.0';
+const APP_VERSION = '2.11.0';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.11.0', date: '2026-09-29', items: [
+    'بحث عام من أعلى الشاشة الرئيسية: الأصناف، الزبائن والمحلات، الفواتير، الملاحظات، التالف، والشاشات',
+    'النتائج فورية ومقسمة حسب النوع مع تلوين الجزء المطابق',
+    'الأرقام ذكية: تُبحث كباركود وكرقم فاتورة وكرقم هاتف معًا',
+    'آخر عمليات البحث محفوظة للرجوع لها بضغطة'
+  ] },
   { v: '2.10.0', date: '2026-09-29', items: [
     'حركة احترافية للنوافذ: تنزلق من أسفل الشاشة عند الفتح وتنزل بنعومة عند الإغلاق',
     'عمق النوافذ: النافذة التي تحت تصغر قليلًا بدل تراكم طبقات داكنة',
