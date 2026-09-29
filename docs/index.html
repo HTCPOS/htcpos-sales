@@ -255,7 +255,7 @@
   /* نافذة اختيار الزبون: الجزء الفوقاني (العنوان والملاحظة وخانة البحث) ثابت ودايمًا ظاهر،
      والقائمة بس هي اللي بتسكرول. لما الكيبورد يفتح النافذة بتصغر على المساحة اللي فوقه بالظبط
      بدل ما تندفع لفوق وتطلع برا الشاشة */
-  #customerPickerModal .cpSheet { display:flex; flex-direction:column; height:75vh; max-height:75vh; overflow:hidden; padding-bottom:calc(10px + env(safe-area-inset-bottom)); transition:height .24s cubic-bezier(.25,.8,.25,1), max-height .24s cubic-bezier(.25,.8,.25,1); }
+  #customerPickerModal .cpSheet { display:flex; flex-direction:column; height:75vh; max-height:75vh; overflow:hidden; padding-bottom:calc(10px + env(safe-area-inset-bottom)); transition:height .26s cubic-bezier(.25,.8,.25,1), max-height .26s cubic-bezier(.25,.8,.25,1); }
   #customerPickerModal .cpHead { flex-shrink:0; }
   #customerPickerModal .cpHead h3 { margin-bottom:12px; }
   #customerPickerModal .cpField { margin:4px 0 10px; }
@@ -282,7 +282,7 @@
      النوافذ اللي طولها ثابت بتاخد المساحة المتاحة كلها (وقوايمها بتسكرول جواها)،
      والنوافذ المرنة بتفضل بحجمها لو صغيرة ومش بتكبر من غير داعي.
      النوافذ الوسطية (الإيداع / النواقص / تعديل الزبون) ونافذة ادراج الزبون ليها معالجة خاصة بيها */
-  .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet { transition:height .24s cubic-bezier(.25,.8,.25,1), max-height .24s cubic-bezier(.25,.8,.25,1); }
+  .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet { transition:height .26s cubic-bezier(.25,.8,.25,1), max-height .26s cubic-bezier(.25,.8,.25,1), scale .34s cubic-bezier(.32,.72,0,1), filter .34s ease; }
   body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) { bottom:0; padding-bottom:var(--kb-h); }
   body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet {
     max-height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px) !important;
@@ -314,6 +314,12 @@
   .lsCheck { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--text); padding:7px 0; cursor:pointer; }
   .lsCheck input { width:18px; height:18px; }
   .lpStep { width:46px; height:44px; border:none; border-radius:10px; background:var(--surface2); color:var(--text); font-size:22px; font-weight:800; cursor:pointer; flex-shrink:0; }
+  /* مركز الأصناف */
+  .phCam { flex-shrink:0; width:48px; border:none; border-radius:14px; background:var(--surface2); color:#2563EB; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .phShorts { display:flex; gap:6px; margin-top:10px; flex-shrink:0; }
+  .phShort { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; border:none; background:var(--surface2); color:var(--text); border-radius:12px; padding:8px 2px; font-size:11px; font-weight:800; cursor:pointer; min-width:0; }
+  .phIc { font-size:17px; line-height:1; }
+  .phBadge { flex-shrink:0; min-width:34px; text-align:center; border-radius:10px; padding:4px 8px; font-size:12px; font-weight:900; }
   /* البحث العام */
   .gsBox { position:relative; display:flex; align-items:center; gap:8px; background:var(--surface2); border-radius:14px; padding:0 12px; color:var(--textMuted); flex-shrink:0; }
   .gsBox input { flex:1; min-width:0; border:none; background:transparent; color:var(--text); font-size:16px; padding:13px 0; outline:none; }
@@ -506,7 +512,7 @@
   @keyframes bgOut { from { opacity:1; } to { opacity:0; } }
   @keyframes dialogIn { from { transform:scale(.94); opacity:0; } to { transform:scale(1); opacity:1; } }
   @keyframes dialogOut { from { transform:scale(1); opacity:1; } to { transform:scale(.96); opacity:0; } }
-  .modalBg { animation:bgIn .26s ease both; transition:background-color .3s ease; }
+  .modalBg { animation:bgIn .26s ease both; transition:background-color .3s ease, padding-bottom .26s cubic-bezier(.25,.8,.25,1), bottom .26s cubic-bezier(.25,.8,.25,1); }
   .modalBg .modalSheet { animation:sheetUp .36s cubic-bezier(.32,.72,0,1) both; transition:scale .34s cubic-bezier(.32,.72,0,1), filter .34s ease; }
   .modalBg.closing { animation:bgOut .24s ease forwards; pointer-events:none; }
   .modalBg.closing .modalSheet { animation:sheetDown .24s cubic-bezier(.4,0,1,1) forwards; }
@@ -721,7 +727,7 @@
   <div class="sectionHead"><h3>إجراءات سريعة</h3></div>
   <div class="quickGrid" style="grid-template-columns:repeat(3,1fr);">
     <div class="quickItem" onclick="openModal('reportsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><div class="ql">التقارير</div></div>
-    <div class="quickItem" onclick="openModal('lowStockModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5M12 12v5M9.5 14.5h5"/></svg></div><div class="ql">إدارة المخزون</div></div>
+    <div class="quickItem" onclick="openProductsHub('out')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5M12 12v5M9.5 14.5h5"/></svg></div><div class="ql">إدارة المخزون</div></div>
     <div class="quickItem" onclick="openModal('returnsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5h-3"/></svg></div><div class="ql">المرتجعات</div></div>
     <div class="quickItem" onclick="openModal('shortagesModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div><div class="ql">النواقص</div></div>
     <div class="quickItem" onclick="openInventoryCount()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div class="ql">الجرد</div></div>
@@ -735,7 +741,7 @@
 
   <nav class="bottomNav">
     <div class="navItem active" data-nav="home" onclick="switchNav('home')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7 9 7"/><path d="M5 10v10h14V10"/></svg></div>الرئيسية</div>
-    <div class="navItem" data-nav="lowStockModal" onclick="switchNav('lowStockModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 12 3l9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>المنتجات</div>
+    <div class="navItem" data-nav="productsHubModal" onclick="switchNav('productsHubModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 12 3l9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>المنتجات</div>
     <div class="navItem" data-nav="customersModal" onclick="switchNav('customersModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M15.5 6a3 3 0 0 1 0 6"/><path d="M17 14.2a5.8 5.8 0 0 1 4.5 5.8"/></svg></div>الزبائن</div>
     <div class="navItem" data-nav="reportsModal" onclick="switchNav('reportsModal')"><div class="ni"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>التقارير</div>
   </nav>
@@ -1014,6 +1020,29 @@
       <button type="button" class="lsChip dmTab" data-p="all" style="direction:rtl;" onclick="setDamagedPeriod('all')">الكل</button>
     </div>
     <div id="dmBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="productsHubModal" onclick="if(event.target===this)closeModal('productsHubModal')">
+  <div class="modalSheet" style="height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+    <button class="closeM" onclick="closeModal('productsHubModal')">✕</button>
+    <h3>مركز الأصناف</h3>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <div class="gsBox" style="flex:1;">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="text" id="phSearch" placeholder="بحث بالاسم أو الباركود..." autocomplete="off" autocorrect="off" spellcheck="false" oninput="onProductsHubSearch()">
+      </div>
+      <button type="button" class="phCam" onclick="productsHubCamera()" aria-label="مسح بالكاميرا"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></button>
+    </div>
+    <div class="phShorts">
+      <button type="button" class="phShort" onclick="openInventoryCount()"><span class="phIc">📋</span><span>جرد</span></button>
+      <button type="button" class="phShort" onclick="openLabelSettings()"><span class="phIc">🏷️</span><span>باركود</span></button>
+      <button type="button" class="phShort" onclick="openDamagedModal()"><span class="phIc">⚠️</span><span>تالف</span></button>
+      <button type="button" class="phShort" onclick="openModal('shortagesModal')"><span class="phIc">🛒</span><span>النواقص</span></button>
+      <button type="button" class="phShort" onclick="productsHubRfid()" style="opacity:.5;"><span class="phIc">📡</span><span>RFID</span></button>
+    </div>
+    <div id="phChips" class="lsChips" style="flex-shrink:0;margin-top:10px;"></div>
+    <div id="phList" onscroll="onProductsHubScroll()" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-top:10px;"></div>
   </div>
 </div>
 
@@ -2455,13 +2484,142 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= مركز الأصناف ================= */
+// شاشة واحدة لكل ما يخص البضاعة: بحث + كاميرا + اختصارات + فلاتر بأعدادها + قائمة سريعة.
+// الضغط على أي صنف يفتح بطاقة الصنف (التفاصيل والتعديل والباركود والتالف).
+// فيها مكان جاهز لجرد RFID لما يوصل الجهاز.
+const PH_PAGE = 60;
+let phFilter = 'all';
+let phView = { list: [], shown: 0 };
+let phTimer = null;
+
+function phLowThreshold() {
+  const n = Number(localStorage.getItem('lowThreshold'));
+  return isFinite(n) && n > 0 ? n : 3;
+}
+
+function phSetLowThreshold() {
+  const cur = phLowThreshold();
+  const v = prompt('الصنف يُعتبر "قرب يخلص" لما كميته تكون أقل من أو تساوي:', String(cur));
+  if (v === null) return;
+  const n = Number(String(v).replace(',', '.'));
+  if (!(n > 0) || n > 1000) { alert('اكتب رقم أكبر من صفر'); return; }
+  try { localStorage.setItem('lowThreshold', String(n)); } catch (e) {}
+  renderProductsHub();
+}
+
+function phMatchFilter(it, f, low) {
+  const stock = Number(it.stock || 0), price = Number(it.price || 0), cost = Number(it.cost || 0);
+  if (f === 'out') return stock <= 0;
+  if (f === 'low') return stock > 0 && stock <= low;
+  if (f === 'zeroPrice') return price <= 0;
+  if (f === 'pricing') return cost <= 0 || (price > 0 && price < cost);
+  return true;
+}
+
+function openProductsHub(filter) {
+  phFilter = filter || 'all';
+  document.getElementById('phSearch').value = '';
+  openModal('productsHubModal');
+}
+
+function setProductsHubFilter(f) {
+  phFilter = f;
+  renderProductsHub();
+}
+
+function onProductsHubSearch() {
+  clearTimeout(phTimer);
+  phTimer = setTimeout(renderProductsHub, 120);
+}
+
+function phStockBadge(stock, low) {
+  const s = Number(stock || 0);
+  if (s <= 0) return `<span class="phBadge" style="background:#FEE2E2;color:#B91C1C;">نفد</span>`;
+  if (s <= low) return `<span class="phBadge" style="background:#FEF3C7;color:#B45309;">${s}</span>`;
+  return `<span class="phBadge" style="background:#DCFCE7;color:#15803D;">${s}</span>`;
+}
+
+function renderProductsHub() {
+  const listEl = document.getElementById('phList');
+  if (!listEl) return;
+  const items = Object.values(latestItems || {});
+  const low = phLowThreshold();
+  const counts = { all: items.length, out: 0, low: 0, zeroPrice: 0, pricing: 0 };
+  items.forEach(it => {
+    ['out', 'low', 'zeroPrice', 'pricing'].forEach(f => { if (phMatchFilter(it, f, low)) counts[f]++; });
+  });
+  const chips = [
+    ['all', 'الكل'], ['out', 'نفدت'], ['low', 'قربت تخلص (≤' + low + ')'], ['zeroPrice', 'سعر البيع صفر'], ['pricing', 'مشاكل التسعير']
+  ];
+  document.getElementById('phChips').innerHTML = chips.map(([f, label]) =>
+    `<button type="button" class="lsChip${phFilter === f ? ' on' : ''}" style="direction:rtl;" onclick="setProductsHubFilter('${f}')">${label} <b style="opacity:.75;">${counts[f]}</b></button>`
+  ).join('') + `<button type="button" class="lsChip" style="direction:rtl;" onclick="phSetLowThreshold()" title="تغيير حد القليل">⚙️</button>`;
+
+  if (!items.length) { listEl.innerHTML = '<div class="emptyMsg">لم تتزامن بيانات الأصناف بعد (تتحدث كل دقيقة)</div>'; return; }
+  const raw = (document.getElementById('phSearch').value || '').trim();
+  const q = normalizeArabicName(raw);
+  let list = items.filter(it => phMatchFilter(it, phFilter, low));
+  if (q) list = list.filter(it => normalizeArabicName(it.name).includes(q) || (it.barcode && String(it.barcode).includes(raw)));
+  list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+  phView = { list: list, shown: 0, raw: raw, low: low };
+  if (!list.length) { listEl.innerHTML = '<div class="emptyMsg">لا يوجد أصناف مطابقة</div>'; return; }
+  const note = phFilter === 'pricing' ? '<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:9px 12px;margin:0 0 8px;font-weight:700;">أصناف تكلفتها صفر أو سعر بيعها أقل من تكلفتها - غالبًا خطأ إدخال يؤثر على حساب الأرباح.</div>' : '';
+  listEl.innerHTML = note + `<div class="plCount">${list.length} صنف</div><div id="phRows"></div><div id="phMore" class="emptyMsg" style="display:none;"></div>`;
+  listEl.scrollTop = 0;
+  appendProductsHubPage();
+}
+
+function appendProductsHubPage() {
+  const rowsEl = document.getElementById('phRows');
+  if (!rowsEl) return;
+  const v = phView;
+  const next = v.list.slice(v.shown, v.shown + PH_PAGE);
+  if (!next.length) return;
+  rowsEl.insertAdjacentHTML('beforeend', next.map(it => {
+    const warnCost = Number(it.cost || 0) <= 0 ? ' · <span style="color:#B45309;">التكلفة صفر</span>' : (Number(it.price || 0) > 0 && Number(it.price) < Number(it.cost) ? ' · <span style="color:#DC2626;">أقل من التكلفة</span>' : '');
+    return `<div class="searchResultRow gsRow" onclick="openItemFromHub(${it.id})">
+      <div class="n">${highlightCustomerMatch(String(it.name || ''), v.raw)}<div class="gsSub">${fmtMoney(it.price)} د.ل${it.barcode ? ' · ' + escapeHtml(String(it.barcode)) : ''}${warnCost}</div></div>
+      ${phStockBadge(it.stock, v.low)}
+    </div>`;
+  }).join(''));
+  v.shown += next.length;
+  const more = document.getElementById('phMore');
+  if (more) {
+    more.style.display = v.shown < v.list.length ? 'block' : 'none';
+    more.textContent = 'عرض ' + v.shown + ' من ' + v.list.length + ' — كمّل سكرول لباقي الأصناف';
+  }
+  const el = document.getElementById('phList');
+  if (el && v.shown < v.list.length && el.scrollHeight <= el.clientHeight + 40) setTimeout(appendProductsHubPage, 0);
+}
+
+function onProductsHubScroll() {
+  const el = document.getElementById('phList');
+  if (el.scrollTop + el.clientHeight > el.scrollHeight - 400) appendProductsHubPage();
+}
+
+function openItemFromHub(id) {
+  try { document.activeElement && document.activeElement.blur(); } catch (e) {}
+  openItemCardModal();
+  showItemCardDetail(id);
+}
+
+function productsHubCamera() {
+  openItemCardModal();
+  startItemCardCameraScan();
+}
+
+function productsHubRfid() {
+  alert('جرد RFID قريبًا 📡\n\nلما تختار جهاز الـ RFID، أرسل اسم الموديل قبل الشراء عشان نتأكد إنه يدعم وضع "لوحة مفاتيح بلوتوث" (HID) ويشتغل مع التطبيق مباشرة.');
+}
+
 /* ================= البحث العام ================= */
 // بيدور في كل التطبيق مرة واحدة: الأصناف، الزبائن والمحلات، الفواتير، الملاحظات، التالف، والشاشات.
 // كل البحث من بيانات موجودة في الذاكرة أصلًا (فوري)، والفواتير من النسخة المحفوظة + زر للبحث في الكاشير
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات ارباح صافي', run: "openModal('reportsModal')" },
-  { name: 'إدارة المخزون', kw: 'مخزون كميات نفد نفاد', run: "openModal('lowStockModal')" },
+  { name: 'الأصناف التي نفدت', kw: 'مخزون كميات نفد نفاد ادارة', run: "openProductsHub('out')" },
   { name: 'المرتجعات', kw: 'مرتجع مرتجعات ارجاع', run: "openModal('returnsModal')" },
   { name: 'النواقص', kw: 'نواقص طلبيات مورد', run: "openModal('shortagesModal')" },
   { name: 'الجرد', kw: 'جرد عد مخزون', run: "openInventoryCount()" },
@@ -2472,6 +2630,7 @@ const GS_SCREENS = [
   { name: 'الملاحظات', kw: 'ملاحظات ملاحظة', run: "openNotesModal()" },
   { name: 'الزبائن', kw: 'زبائن زبون ديون دين حساب ايداع سداد', run: "openModal('customersModal')" },
   { name: 'ديون المشتريات', kw: 'مشتريات محل محلات مورد موردين ديون', run: "openModal('purchaseDebtsModal')" },
+  { name: 'مركز الأصناف', kw: 'منتجات اصناف صنف مخزون نفد قليل تسعير rfid', run: "openProductsHub()" },
   { name: 'كل المنتجات', kw: 'منتجات اصناف صنف', run: "openModal('productsModal')" },
   { name: 'بطاقة صنف', kw: 'بطاقة صنف تعديل سعر كمية', run: "openItemCardModal()" },
   { name: 'فحص سعر سريع', kw: 'فحص سعر', run: "openPriceCheckModal()" },
@@ -2665,9 +2824,19 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.11.0';
+const APP_VERSION = '2.12.1';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.12.1', date: '2026-09-29', items: [
+    'إصلاح قفزة النوافذ لأعلى عند فتح الكيبورد (مثل نافذة البحث): النافذة تصغر بنفس سرعة ظهور الكيبورد',
+    'لمسة على الخلفية والكيبورد مفتوح تغلق الكيبورد فقط، ولا تغلق النافذة بالغلط'
+  ] },
+  { v: '2.12.0', date: '2026-09-29', items: [
+    'زر "المنتجات" في الشريط السفلي أصبح "مركز الأصناف": بحث وكاميرا واختصارات وفلاتر في شاشة واحدة',
+    'فلاتر بأعدادها: نفدت، قربت تخلص (الحد قابل للتغيير)، سعر البيع صفر، ومشاكل التسعير',
+    'الضغط على أي صنف يفتح بطاقة الصنف مباشرة',
+    'مكان جاهز لجرد RFID مستقبلًا'
+  ] },
   { v: '2.11.0', date: '2026-09-29', items: [
     'بحث عام من أعلى الشاشة الرئيسية: الأصناف، الزبائن والمحلات، الفواتير، الملاحظات، التالف، والشاشات',
     'النتائج فورية ومقسمة حسب النوع مع تلوين الجزء المطابق',
@@ -3540,6 +3709,18 @@ function anyModalOpen() {
   return Array.from(document.querySelectorAll('.modalBg')).some(m => m.style.display === 'flex');
 }
 
+// لمسة على الخلفية الغامقة وقت ما الكيبورد مفتوح = قصده يقفل الكيبورد مش النافذة.
+// بنوقفها قبل ما توصل لأي نافذة (مرحلة الالتقاط) - كده بتنطبق على كل النوافذ مهما كانت طريقة إغلاقها
+// (الكاميرا، بطاقة الصنف، الإيداع...) من غير ما يتنفذ نص الإغلاق وتفضل النافذة مفتوحة
+document.addEventListener('click', function (e) {
+  const t = e.target;
+  if (t && t.classList && t.classList.contains('modalBg') && document.body.classList.contains('keyboard-open')) {
+    e.stopPropagation();
+    e.preventDefault();
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (err) {}
+  }
+}, true);
+
 function prefersReducedMotion() {
   return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
@@ -3685,6 +3866,7 @@ function openModal(id) {
   if (id === 'returnsModal') loadReturns();
   if (id === 'reportsModal') loadReports();
   if (id === 'productsModal') renderProductsList();
+  if (id === 'productsHubModal') renderProductsHub();
   if (id === 'alertsModal') loadAlerts();
   if (id === 'customersModal') loadCustomers();
   if (id === 'missingItemsModal') loadMissingItems();
@@ -3737,6 +3919,7 @@ function switchNav(id) {
   document.querySelectorAll('.modalBg').forEach(m => { if (m.style.display === 'flex') m.style.display = 'none'; });
   setActiveNavItem(id);
   if (id === 'home') { unlockBodyScroll(); return; }
+  if (id === 'productsHubModal') { phFilter = 'all'; document.getElementById('phSearch').value = ''; }
   openModal(id);
 }
 
