@@ -3431,9 +3431,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.17.0';
+const APP_VERSION = '2.18.0';
 const APP_BUILD_DATE = '2026-09-30';
 const APP_RELEASES = [
+  { v: '2.18.0', date: '2026-09-30', items: [
+    'تعديلات بوت تليجرام (السعر والتكلفة والجملة والكمية) صارت تظهر في سجل التعديلات بشارة "من تليجرام"، من كم إلى كم',
+    'التراجع يشتغل على تعديلات تليجرام بنفس الطريقة',
+    'فلاتر في سجل التعديلات: الكل / من التطبيق / من تليجرام / تراجع، بأعدادها'
+  ] },
   { v: '2.17.0', date: '2026-09-30', items: [
     'تحديث السكريبت على كمبيوتر الكاشير من الجوال: من الإعدادات، اختر الملف والباقي تلقائي',
     'سجل مباشر للتحديث زي شاشة الكمبيوتر: النجاح بالأخضر والأخطاء بالأحمر، مع زر نسخ السجل',
@@ -7295,6 +7300,8 @@ function logActivity(action, detail) {
    - الكمية: بترجع بالفرق العكسي (increment) عشان المبيعات اللي حصلت بعد التعديل ما تضيعش */
 let activityLogTab = 'edits';
 let editHistoryCache = {};
+let ehFilter = 'all';
+function ehGroup(e) { return e.source === 'telegram' ? 'telegram' : e.source === 'undo' ? 'undo' : 'app'; }
 
 function recordEditHistory(itemId, itemName, changes, reqId, source, undoOf) {
   const ref = db.ref('data/editHistory').push();
@@ -7345,9 +7352,14 @@ function loadEditHistory() {
     const val = res[0].val() || {};
     const latestResults = res[1].val() || {};
     editHistoryCache = val;
-    const keys = Object.keys(val).sort((a, b) => new Date(val[b].at) - new Date(val[a].at));
-    if (!keys.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد تعديلات أصناف مسجلة بعد. أي تعديل من بطاقة الصنف سيظهر هنا.</div>'; return; }
-    el.innerHTML = keys.map(key => {
+    const allKeys = Object.keys(val).sort((a, b) => new Date(val[b].at) - new Date(val[a].at));
+    if (!allKeys.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد تعديلات أصناف مسجلة بعد. أي تعديل من بطاقة الصنف أو من تليجرام سيظهر هنا.</div>'; return; }
+    const cnt = { all: allKeys.length, app: 0, telegram: 0, undo: 0 };
+    allKeys.forEach(k => { cnt[ehGroup(val[k])]++; });
+    if (ehFilter !== 'all' && !cnt[ehFilter]) ehFilter = 'all';
+    const keys = ehFilter === 'all' ? allKeys : allKeys.filter(k => ehGroup(val[k]) === ehFilter);
+    const chip = (k, label) => cnt[k] || k === 'all' ? `<button type="button" class="lsChip${ehFilter === k ? ' on' : ''}" onclick="ehFilter='${k}';loadEditHistory();">${label} <b style="opacity:.75;">${cnt[k]}</b></button>` : '';
+    el.innerHTML = `<div class="lsChips" style="margin:0 0 10px;">${chip('all', 'الكل')}${chip('app', 'من التطبيق')}${chip('telegram', 'من تليجرام')}${chip('undo', 'تراجع')}</div>` + keys.map(key => {
       const e = val[key];
       const d = new Date(e.at);
       const dateStr = d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' });
@@ -7373,7 +7385,9 @@ function loadEditHistory() {
         ? '<span class="ehBadge" style="background:#EDE9FE;color:#6D28D9;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg> تراجع</span>'
         : e.source === 'damaged'
           ? '<span class="ehBadge" style="background:#FEE2E2;color:#B91C1C;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> تالف</span>'
-          : '<span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">من التطبيق</span>';
+          : e.source === 'telegram'
+            ? '<span class="ehBadge" style="background:#E0F2FE;color:#0369A1;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 4.5 2.8 11.7c-.8.3-.8 1.4 0 1.7l4.6 1.6 1.8 5.6c.2.7 1.1.9 1.6.3l2.6-2.8 4.8 3.5c.6.4 1.4.1 1.6-.6l3-15.2c.2-.9-.6-1.6-1.3-1.3z"/><path d="m7.4 15 11-8.3"/></svg> من تليجرام</span>'
+            : '<span class="ehBadge" style="background:#DBEAFE;color:#1D4ED8;">من التطبيق</span>';
       let action;
       if (e.undoneAt) {
         const ud = new Date(e.undoneAt);
