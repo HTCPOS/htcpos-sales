@@ -1081,6 +1081,16 @@
   </div>
 </div>
 
+<div class="modalBg" id="scriptUpdateModal" onclick="if(event.target===this)closeModal('scriptUpdateModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('scriptUpdateModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>تحديث السكريبت</h3>
+    <div style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin-top:6px;line-height:1.7;">ركّب نسخة جديدة من السكريبت على كمبيوتر الكاشير من جوالك</div>
+    <div id="scriptUpdateBody" style="margin-top:10px;"></div>
+  </div>
+</div>
+<style>@keyframes suSpin { to { transform: rotate(360deg); } }</style>
+
 <div class="modalBg" id="generalSettingsModal" onclick="if(event.target===this)closeModal('generalSettingsModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('generalSettingsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1094,6 +1104,11 @@
       <button onclick="closeModal('generalSettingsModal');openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">إعدادات طباعة الباركود</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <button onclick="closeModal('generalSettingsModal');openScriptUpdate();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:22px;height:22px;color:#2563EB;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/><path d="M12 8v5l3 2"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">تحديث السكريبت على الكاشير</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       <button onclick="closeModal('generalSettingsModal');openAboutApp();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
@@ -2618,6 +2633,206 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= تحديث السكريبت عن بعد ================= */
+// ترفع ملف StoreSalesAlert.ps1 من الجوال -> commands/scriptUpdate -> السكريبت يفحصه ويركّبه ويعيد تشغيل نفسه.
+// الحالة ترجع في data/scriptUpdateStatus: checking | installing | done | rejected | rolledback
+let scriptUpdateStatus = null;
+let scriptUpdFile = null; // { name, content, sha256, version, size }
+let scriptUpdPendingId = null;
+let scriptUpdTimer = null;
+
+function scriptVersionCompare(a, b) {
+  const pa = String(a || '0').split('.').map(Number), pb = String(b || '0').split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x !== y) return x > y ? 1 : -1;
+  }
+  return 0;
+}
+
+function runningScriptVersion() {
+  return scriptStatus && scriptStatus.scriptVersion ? String(scriptStatus.scriptVersion) : '';
+}
+
+function openScriptUpdate() {
+  scriptUpdFile = null;
+  renderScriptUpdate();
+  openModal('scriptUpdateModal');
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function scriptUpdPickFile(input) {
+  const f = input.files && input.files[0];
+  input.value = '';
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    const content = String(r.result || '');
+    let err = '';
+    let version = '';
+    if (!content.startsWith('# StoreSalesAlert - ASCII launcher')) err = 'هذا مو ملف السكريبت المجهّز (StoreSalesAlert.ps1)';
+    else if (/[^\x00-\x7F]/.test(content)) err = 'الملف فيه حروف غير إنجليزية - استخدم الملف كما وصلك بدون تعديل';
+    else if (content.indexOf('update_pending') < 0) err = 'هذي نسخة قديمة من السكريبت ما تدعم التحديث عن بعد';
+    else {
+      try {
+        const m = content.match(/\$__b64 = @'\r?\n([\s\S]*?)\r?\n'@/);
+        const bin = atob(m[1].replace(/\s/g, ''));
+        const code = new TextDecoder('utf-8').decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+        const vm = code.match(/\$ScriptVersion\s*=\s*"([^"]+)"/);
+        if (!vm) err = 'النسخة ما فيها رقم إصدار';
+        else if (code.indexOf('function Process-ScriptUpdate') < 0) err = 'النسخة ما تدعم التحديث عن بعد';
+        else version = vm[1];
+      } catch (e) { err = 'الملف تالف أو ناقص'; }
+    }
+    if (err) { scriptUpdFile = { error: err, name: f.name }; renderScriptUpdate(); return; }
+    scriptUpdFile = { name: f.name, content, version, size: content.length, sha256: await sha256Hex(content) };
+    renderScriptUpdate();
+  };
+  r.onerror = () => { scriptUpdFile = { error: 'تعذّر قراءة الملف', name: f.name }; renderScriptUpdate(); };
+  r.readAsText(f);
+}
+
+async function scriptUpdSend() {
+  const f = scriptUpdFile;
+  if (!f || f.error || scriptUpdPendingId) return;
+  const btn = document.getElementById('suSendBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'جاري رفع الملف...'; }
+  const id = db.ref('commands').push().key;
+  try {
+    await db.ref('commands/scriptUpdate').set({ id, content: f.content, sha256: f.sha256, name: f.name, version: f.version, at: firebase.database.ServerValue.TIMESTAMP });
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'تحديث الآن'; }
+    alert('تعذّر رفع الملف: ' + (e && e.message ? e.message : e));
+    return;
+  }
+  scriptUpdPendingId = id;
+  scriptUpdFile = Object.assign({}, f, { sentAt: Date.now() });
+  clearTimeout(scriptUpdTimer);
+  scriptUpdTimer = setTimeout(() => renderScriptUpdate(), 60000);
+  renderScriptUpdate();
+}
+
+async function scriptUpdCancel() {
+  if (!scriptUpdPendingId) return;
+  try { await db.ref('commands/scriptUpdate').remove(); } catch (e) {}
+  scriptUpdPendingId = null;
+  scriptUpdFile = null;
+  renderScriptUpdate();
+}
+
+function onScriptUpdateStatus(v) {
+  scriptUpdateStatus = v;
+  if (v && scriptUpdPendingId && v.id === scriptUpdPendingId && ['done', 'rejected', 'rolledback'].includes(v.state)) {
+    scriptUpdPendingId = null;
+    scriptUpdFile = null;
+    clearTimeout(scriptUpdTimer);
+    if (v.state === 'done') showQuickToast('تم تحديث السكريبت إلى ' + v.version, true);
+  }
+  try { if (isModalOpen('scriptUpdateModal')) renderScriptUpdate(); } catch (e) {}
+}
+
+function scriptUpdStepsHtml(state, f) {
+  const order = ['sent', 'checking', 'installing', 'done'];
+  const labels = { sent: 'رفع الملف', checking: 'الكاشير يفحص الملف', installing: 'التركيب وإعادة التشغيل', done: 'تم التحديث' };
+  const idx = order.indexOf(state);
+  return order.map((k, i) => {
+    const doneStep = i <= idx;
+    const active = i === idx + 1;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 2px;">
+      <span style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;${doneStep ? 'background:#16A34A;color:#fff;' : active ? 'border:2.5px solid #2563EB;border-top-color:transparent;animation:suSpin .9s linear infinite;' : 'background:var(--surface2);color:var(--textMuted);'}">${doneStep ? '✓' : active ? '' : i + 1}</span>
+      <span style="font-size:13.5px;font-weight:${active || doneStep ? 800 : 700};color:${doneStep ? 'var(--text)' : active ? '#2563EB' : 'var(--textMuted)'};">${labels[k]}</span></div>`;
+  }).join('');
+}
+
+// السجل المباشر (زي شاشة الكمبيوتر): أخضر = نجاح، أحمر = خطأ، برتقالي = تحذير
+function scriptUpdLogText(log) {
+  return (log || []).map(x => x.t + '  ' + (x.l === 'err' ? '✗ ' : x.l === 'ok' ? '✓ ' : x.l === 'warn' ? '! ' : '') + x.m).join('\n');
+}
+
+function scriptUpdLogHtml(log, live) {
+  const arr = Array.isArray(log) ? log : (log ? Object.values(log) : []);
+  if (!arr.length) return '';
+  const col = { ok: '#4ADE80', err: '#F87171', warn: '#FB923C', info: '#CBD5E1' };
+  const mark = { ok: '✓', err: '✗', warn: '!', info: '›' };
+  window.__suLastLog = arr;
+  return `<div style="margin-top:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:0 2px 6px;">
+      <span style="font-size:12.5px;font-weight:900;color:var(--textMuted);">السجل${live ? ' <span style="color:#2563EB;">● مباشر</span>' : ''}</span>
+      <button type="button" onclick="copyTextToClipboard(scriptUpdLogText(window.__suLastLog), 'تم نسخ السجل')" style="border:none;background:var(--surface2);color:var(--text);border-radius:8px;padding:5px 10px;font-size:11.5px;font-weight:800;cursor:pointer;">نسخ السجل</button>
+    </div>
+    <div id="suLogBox" style="background:#0F172A;border-radius:12px;padding:10px 12px;max-height:260px;overflow-y:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.75;direction:rtl;text-align:right;">
+      ${arr.map(x => `<div style="color:${col[x.l] || col.info};${x.l === 'err' ? 'font-weight:800;' : ''}"><span style="color:#64748B;direction:ltr;unicode-bidi:isolate;">${escapeHtml(String(x.t || ''))}</span> ${mark[x.l] || '›'} ${escapeHtml(String(x.m || ''))}</div>`).join('')}
+    </div></div>`;
+}
+
+function scriptUpdScrollLog() {
+  const b = document.getElementById('suLogBox');
+  if (b) b.scrollTop = b.scrollHeight;
+}
+
+function renderScriptUpdate() {
+  const el = document.getElementById('scriptUpdateBody');
+  if (!el) return;
+  const run = runningScriptVersion();
+  const st = getCashierState();
+  const supported = scriptSupports('scriptUpdate');
+  let h = `<div class="abRow"><span class="k">إصدار السكريبت الحالي</span><span class="v" style="font-weight:900;">${run ? escapeHtml(run) : '<span style="color:var(--textMuted);font-weight:700;">قديم</span>'}</span></div>
+    <div class="abRow"><span class="k">الكاشير</span><span class="v" style="direction:rtl;color:${st.color};white-space:normal;">${escapeHtml(st.title)}</span></div>`;
+  if (!supported) {
+    h += `<div style="margin-top:14px;background:#FEF3C7;color:#92400E;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;line-height:1.8;">التحديث عن بعد يحتاج تركيب أول مرة من عند الكاشير: انسخ StoreSalesAlert.ps1 وشغّل أمر run.txt. بعدها كل التحديثات تكون من هنا.</div>`;
+    el.innerHTML = h;
+    return;
+  }
+  const f = scriptUpdFile;
+  const us = scriptUpdateStatus;
+  if (scriptUpdPendingId) {
+    const mine = us && us.id === scriptUpdPendingId ? us.state : 'sent';
+    h += `<div style="margin-top:14px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:8px 12px;">
+      <div style="font-size:13px;font-weight:900;margin:4px 2px 4px;">التحديث إلى ${escapeHtml(f && f.version ? f.version : '')}</div>${scriptUpdStepsHtml(mine, f)}</div>`;
+    if (us && us.id === scriptUpdPendingId) h += scriptUpdLogHtml(us.log, true);
+    if (mine === 'sent' && f && f.sentAt && Date.now() - f.sentAt > 55000) {
+      h += `<div style="margin-top:10px;font-size:12.5px;color:#B45309;font-weight:700;line-height:1.8;">الكاشير ما استلم الطلب بعد. الطلب محفوظ وراح يتنفذ أول ما يتصل الكاشير.</div>`;
+    }
+    if (mine === 'sent') h += `<button type="button" onclick="scriptUpdCancel()" style="width:100%;margin-top:12px;border:1px solid var(--border);background:none;color:var(--text);border-radius:12px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;">إلغاء التحديث</button>`;
+    h += `<div style="margin-top:10px;font-size:11.5px;color:var(--textMuted);line-height:1.8;">لو النسخة الجديدة ما اشتغلت، الكاشير يرجّع النسخة السابقة تلقائيًا خلال دقائق.</div>`;
+    el.innerHTML = h;
+    scriptUpdScrollLog();
+    return;
+  }
+  // اختيار الملف
+  h += `<label style="display:block;margin-top:16px;border:2px dashed var(--border);border-radius:14px;padding:18px;text-align:center;cursor:pointer;">
+      <input type="file" style="display:none;" onchange="scriptUpdPickFile(this)">
+      <div style="font-size:14px;font-weight:800;color:#2563EB;">اختر ملف StoreSalesAlert.ps1</div>
+      <div style="font-size:12px;color:var(--textMuted);margin-top:4px;">من الملفات على جوالك</div></label>`;
+  if (f && f.error) {
+    h += `<div style="margin-top:12px;background:#FEE2E2;color:#991B1B;border-radius:12px;padding:11px 13px;font-size:13px;font-weight:700;line-height:1.7;">${escapeHtml(f.error)}</div>`;
+  } else if (f) {
+    const cmp = run ? scriptVersionCompare(f.version, run) : 1;
+    h += `<div style="margin-top:12px;background:var(--surface2);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;line-height:1.9;">
+        <div>الملف: <b>${escapeHtml(f.name)}</b> (${Math.round(f.size / 1024)} KB)</div>
+        <div>الإصدار: <b>${escapeHtml(run || 'قديم')}</b> ← <b style="color:#16A34A;">${escapeHtml(f.version)}</b></div></div>`;
+    if (cmp <= 0) h += `<div style="margin-top:8px;font-size:12.5px;color:#B45309;font-weight:800;">${cmp === 0 ? 'هذي نفس النسخة الشغالة حاليًا' : 'هذي نسخة أقدم من الشغالة حاليًا'}</div>`;
+    h += `<button id="suSendBtn" type="button" onclick="scriptUpdSend()" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;background:#2563EB;">${cmp <= 0 ? 'تركيبها على أي حال' : 'تحديث الآن'}</button>`;
+  }
+  // آخر نتيجة
+  if (us && us.state && us.at) {
+    const map = { done: ['تم التحديث بنجاح', '#16A34A'], rejected: ['رُفض التحديث', '#DC2626'], rolledback: ['فشل ورجعت النسخة السابقة', '#B45309'], checking: ['قيد الفحص', '#2563EB'], installing: ['قيد التركيب', '#2563EB'] };
+    const m = map[us.state] || [us.state, 'var(--text)'];
+    const d = new Date(us.at);
+    h += `<div class="abSec" style="margin-top:18px;">آخر تحديث</div>
+      <div class="abRow"><span class="k">النتيجة</span><span class="v" style="direction:rtl;color:${m[1]};font-weight:900;">${m[0]}${us.version ? ' · ' + escapeHtml(us.version) : ''}</span></div>
+      <div class="abRow"><span class="k">الوقت</span><span class="v" style="direction:rtl;">${d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' })} ${d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</span></div>
+      ${us.msg ? `<div style="font-size:12.5px;color:${us.state === 'rejected' ? '#DC2626' : 'var(--textMuted)'};font-weight:800;margin:6px 4px;line-height:1.7;">${escapeHtml(us.msg)}</div>` : ''}
+      ${scriptUpdLogHtml(us.log, us.state === 'checking' || us.state === 'installing')}`;
+  }
+  el.innerHTML = h;
+  scriptUpdScrollLog();
+}
+
 /* ================= تقرير الأرباح ================= */
 // السكريبت بيحسب من قاعدة بيانات الكاشير مباشرة (التكلفة محفوظة وقت البيع في كل سطر فاتورة = دقة 100%)،
 // والتطبيق بيضيف خسائر التالف من Firebase عشان يطلع صافي الربح الحقيقي.
@@ -3009,6 +3224,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'تحديث السكريبت', kw: 'تحديث سكريبت سكربت الكاشير تركيب نسخة', run: "openScriptUpdate()" },
   { name: 'تقرير الأرباح', kw: 'ارباح ربح صافي هامش راكد راكدة قيمة المخزون', run: "openModal('reportsModal');setReportView('profit')" },
   { name: 'الأصناف التي نفدت', kw: 'مخزون كميات نفد نفاد ادارة', run: "openProductsHub('out')" },
   { name: 'المرتجعات', kw: 'مرتجع مرتجعات ارجاع', run: "openModal('returnsModal')" },
@@ -3215,9 +3431,16 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.16.0';
-const APP_BUILD_DATE = '2026-09-29';
+const APP_VERSION = '2.17.0';
+const APP_BUILD_DATE = '2026-09-30';
 const APP_RELEASES = [
+  { v: '2.17.0', date: '2026-09-30', items: [
+    'تحديث السكريبت على كمبيوتر الكاشير من الجوال: من الإعدادات، اختر الملف والباقي تلقائي',
+    'سجل مباشر للتحديث زي شاشة الكمبيوتر: النجاح بالأخضر والأخطاء بالأحمر، مع زر نسخ السجل',
+    'الكاشير يفحص الملف (البصمة وصياغة الكود ورقم الإصدار) قبل التركيب، ويحتفظ بنسخة من السابق',
+    'رجوع تلقائي للنسخة السابقة لو الجديدة ما اشتغلت، مع تنبيه على تليجرام',
+    'عرض إصدار السكريبت الشغال في حول التطبيق'
+  ] },
   { v: '2.16.0', date: '2026-09-30', items: [
     'تبويب الأرباح في التقارير: صافي الربح بعد الخصومات والمرتجعات وخسائر التالف، بدقة 100% من تكلفة وقت البيع',
     'الأصناف الأكثر ربحًا والأكثر مبيعًا والتي بيعت بخسارة',
@@ -3360,6 +3583,7 @@ function openAboutApp() {
     <div class="abRow"><span class="k">المظهر</span><span class="v" style="direction:rtl;">${isDark ? 'ليلي' : 'نهاري'}</span></div>
     <div class="abSec">الكاشير</div>
     <div class="abRow"><span class="k">الحالة</span><span class="v" style="direction:rtl;color:${st.color};white-space:normal;">${escapeHtml(st.title)}</span></div>
+    <div class="abRow"><span class="k">إصدار السكريبت</span><span class="v">${escapeHtml(runningScriptVersion() || 'قديم')}</span></div>
     <div class="abRow"><span class="k">آخر اتصال</span><span class="v" style="direction:rtl;">${lastSeen}</span></div>
     <div class="abRow"><span class="k">آخر نسخة احتياطية</span><span class="v" style="direction:rtl;${backupStatus && backupStatus.ok === false ? 'color:#DC2626;' : ''}">${backupStatus && backupStatus.at ? escapeHtml(String(backupStatus.at).slice(0, 16)) + (backupStatus.ok === false ? ' (فشلت)' : '') : '—'}</span></div>
     <div class="abSec">الجديد في الإصدار ${APP_VERSION}</div>
@@ -3771,6 +3995,7 @@ let errorLogEntries = [];
 function startErrorMonitoring() {
   db.ref('.info/serverTimeOffset').on('value', snap => { serverTimeOffset = snap.val() || 0; });
   db.ref('data/scriptStatus').on('value', snap => { scriptStatus = snap.val(); renderCashierStatus(); });
+  db.ref('data/scriptUpdateStatus').on('value', snap => onScriptUpdateStatus(snap.val()));
   db.ref('data/backupStatus').on('value', snap => { backupStatus = snap.val(); try { if (isModalOpen('errorsModal')) renderErrorsStatusCard(); } catch (e) {} });
   db.ref('data/errorLog').limitToLast(100).on('value', snap => {
     const val = snap.val() || {};
