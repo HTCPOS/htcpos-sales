@@ -2956,7 +2956,19 @@ function renderRescuePanel() {
     ${rescuePendingId ? '<div style="font-size:12px;color:#2563EB;font-weight:800;margin-top:8px;text-align:center;">تم إرسال الأمر... الحارس ينفذه خلال ثواني</div>' : ''}`;
   if (rescueResult && rescueResult.log) {
     const d = rescueResult.at ? new Date(rescueResult.at) : null;
-    h += `<div style="font-size:11.5px;color:var(--textMuted);font-weight:700;margin-top:10px;">آخر أمر${d ? ' · ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }) : ''}</div>${scriptUpdLogHtml(rescueResult.log, false)}`;
+    // السطر الأخير: التطبيق نفسه بيتأكد إن نبضة السكريبت وصلت بعد الأمر
+    const log = (Array.isArray(rescueResult.log) ? rescueResult.log : Object.values(rescueResult.log)).slice();
+    const at = Number(rescueResult.at || 0);
+    const needsBeat = rescueResult.ok && ['restart', 'start', 'rollback'].includes(rescueResult.action);
+    let live = false;
+    if (needsBeat && at) {
+      const seen = scriptStatus && scriptStatus.lastSeen ? Number(scriptStatus.lastSeen) : 0;
+      const tt = x => new Date(x).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      if (seen > at + 3000) log.push({ t: tt(seen), m: 'وصلت نبضة السكريبت - رجع يشتغل بنجاح' + (scriptStatus.scriptVersion ? ' (الإصدار ' + scriptStatus.scriptVersion + ')' : ''), l: 'ok' });
+      else if (Date.now() + (typeof serverTimeOffset === 'number' ? serverTimeOffset : 0) - at > 120000) log.push({ t: tt(Date.now()), m: 'ما وصلت نبضة من السكريبت خلال دقيقتين - جرّب مرة ثانية أو استرجع النسخة السابقة', l: 'err' });
+      else live = true;
+    }
+    h += `<div style="font-size:11.5px;color:var(--textMuted);font-weight:700;margin-top:10px;">آخر أمر${d ? ' · ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }) : ''}</div>${scriptUpdLogHtml(log, live)}`;
   }
   h += '</div>';
   el.innerHTML = h;
@@ -3903,9 +3915,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.24.0';
+const APP_VERSION = '2.24.1';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.24.1', date: '2026-10-01', items: [
+    'سجل التحكم عن بعد يكمل نفسه: بعد إعادة التشغيل يظهر سطر أخضر لما توصل نبضة السكريبت (أو أحمر لو ما وصلت خلال دقيقتين)'
+  ] },
   { v: '2.24.0', date: '2026-10-01', items: [
     'التحكم عن بعد: حارس مستقل على الكاشير متصل دائمًا، حتى لو السكريبت وقف',
     'أزرار "إعادة تشغيل السكريبت" و"استرجاع النسخة السابقة" في الأخطاء وحالة الكاشير، مع سجل التنفيذ',
@@ -4512,7 +4527,7 @@ let errorLogEntries = [];
 
 function startErrorMonitoring() {
   db.ref('.info/serverTimeOffset').on('value', snap => { serverTimeOffset = snap.val() || 0; });
-  db.ref('data/scriptStatus').on('value', snap => { scriptStatus = snap.val(); renderCashierStatus(); });
+  db.ref('data/scriptStatus').on('value', snap => { scriptStatus = snap.val(); renderCashierStatus(); try { if (isModalOpen('errorsModal')) renderRescuePanel(); } catch (e) {} });
   db.ref('data/scriptUpdateStatus').on('value', snap => onScriptUpdateStatus(snap.val()));
   db.ref('data/cleanupStatus').on('value', snap => { cleanupStatus = snap.val(); });
   db.ref('data/firebaseUsage').on('value', snap => onFirebaseUsage(snap.val()));
