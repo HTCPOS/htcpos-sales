@@ -1503,6 +1503,7 @@
     <button class="closeM" onclick="closeModal('errorsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>الأخطاء وحالة الكاشير</h3>
     <div id="errorsStatusCard" style="border-radius:12px;padding:12px;margin:10px 0;font-size:13px;font-weight:700;line-height:1.7;"></div>
+    <div id="rescuePanel"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
       <span style="font-size:12px;color:var(--textMuted);font-weight:700;">آخر الأخطاء (الأحدث فوق)</span>
       <button onclick="clearErrorLog()" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;">مسح الكل</button>
@@ -2897,6 +2898,70 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= التحكم عن بعد (الحارس المتصل) =================
+   guardian.ps1 برنامج صغير مستقل على الكاشير، متصل بـ Firebase لحاله (نبضة كل 20 ثانية في data/guardianStatus).
+   حتى لو السكريبت الأساسي وقف، الحارس يستقبل أوامرك من commands/rescue: restart / start / rollback،
+   ويرد بالنتيجة وسجلها في data/rescueResult. */
+let guardianStatus = null;
+let rescueResult = null;
+let rescuePendingId = null;
+
+function guardianOnline() {
+  if (!guardianStatus || !guardianStatus.lastSeen) return false;
+  return (Date.now() + (typeof serverTimeOffset === 'number' ? serverTimeOffset : 0) - Number(guardianStatus.lastSeen)) / 1000 < 75;
+}
+
+function onGuardianData() {
+  try { renderCashierStatus(); } catch (e) {}
+  try { if (isModalOpen('errorsModal')) renderRescuePanel(); } catch (e) {}
+}
+
+function sendRescue(action) {
+  if (!guardianOnline()) { alert('الحارس غير متصل الآن، فالأمر ما يوصل للكاشير'); return; }
+  const labels = { restart: 'إعادة تشغيل السكريبت', start: 'تشغيل السكريبت', rollback: 'استرجاع النسخة السابقة من السكريبت' };
+  let msg = labels[action] + '؟';
+  if (action === 'rollback') msg += '\n\nيرجع السكريبت للنسخة اللي كانت قبل آخر تحديث.';
+  if (!confirm(msg)) return;
+  const id = db.ref('commands').push().key;
+  rescuePendingId = id;
+  db.ref('commands/rescue').set({ id: id, action: action, at: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+    renderRescuePanel();
+    setTimeout(() => { if (rescuePendingId === id) { rescuePendingId = null; renderRescuePanel(); } }, 45000);
+  }).catch(err => { rescuePendingId = null; alert('تعذّر إرسال الأمر: ' + (err && err.message ? err.message : err)); });
+}
+
+function renderRescuePanel() {
+  const el = document.getElementById('rescuePanel');
+  if (!el) return;
+  const g = guardianStatus;
+  if (!g) {
+    el.innerHTML = `<div style="background:var(--surface2);border-radius:12px;padding:11px 13px;margin:10px 0;font-size:12.5px;font-weight:700;color:var(--textMuted);line-height:1.8;">الحارس المتصل غير مركّب بعد على الكاشير - بعد تركيبه تقدر تعيد تشغيل السكريبت من هنا حتى لو وقف.</div>`;
+    return;
+  }
+  const on = guardianOnline();
+  const sec = g.lastSeen ? Math.max(0, (Date.now() + (typeof serverTimeOffset === 'number' ? serverTimeOffset : 0) - Number(g.lastSeen)) / 1000) : 0;
+  const mainTxt = !g.mainRunning ? '<span style="color:#DC2626;">متوقف</span>'
+    : (Number(g.aliveAgeMin) > 3 ? '<span style="color:#D97706;">شغال لكن ما يستجيب (' + escapeHtml(String(g.aliveAgeMin)) + ' دقيقة)</span>'
+    : '<span style="color:#16A34A;">شغال</span>' + (Number(g.mainCount) > 1 ? ' <span style="color:#D97706;">(' + g.mainCount + ' نسخ)</span>' : ''));
+  const btn = (action, label, color, bg) => `<button type="button" onclick="sendRescue('${action}')" ${rescuePendingId || !on ? 'disabled' : ''} style="flex:1;min-width:0;border:none;border-radius:11px;padding:11px 6px;font-size:13px;font-weight:800;cursor:pointer;color:${color};background:${bg};opacity:${rescuePendingId || !on ? '.5' : '1'};">${label}</button>`;
+  let h = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:12px 13px;margin:10px 0;">
+    <div style="font-size:13.5px;font-weight:900;margin-bottom:6px;">التحكم عن بعد</div>
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;padding:4px 0;"><span style="color:var(--textMuted);">الحارس</span><span style="color:${on ? '#16A34A' : '#DC2626'};">${on ? '● متصل' : '● غير متصل — آخر نبضة ' + ageText(sec)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;padding:4px 0;"><span style="color:var(--textMuted);">السكريبت على الكاشير</span><span>${mainTxt}</span></div>
+    ${Number(g.autoRestarts) ? `<div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;padding:4px 0;"><span style="color:var(--textMuted);">إعادة تشغيل تلقائي</span><span>${g.autoRestarts} مرة</span></div>` : ''}
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      ${g.mainRunning ? btn('restart', 'إعادة تشغيل السكريبت', '#fff', '#2563EB') : btn('start', 'تشغيل السكريبت', '#fff', '#16A34A')}
+      ${g.prevAvailable ? btn('rollback', 'استرجاع النسخة السابقة', '#B45309', '#FEF3C7') : ''}
+    </div>
+    ${rescuePendingId ? '<div style="font-size:12px;color:#2563EB;font-weight:800;margin-top:8px;text-align:center;">تم إرسال الأمر... الحارس ينفذه خلال ثواني</div>' : ''}`;
+  if (rescueResult && rescueResult.log) {
+    const d = rescueResult.at ? new Date(rescueResult.at) : null;
+    h += `<div style="font-size:11.5px;color:var(--textMuted);font-weight:700;margin-top:10px;">آخر أمر${d ? ' · ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }) : ''}</div>${scriptUpdLogHtml(rescueResult.log, false)}`;
+  }
+  h += '</div>';
+  el.innerHTML = h;
+}
+
 /* ================= استهلاك Firebase ================= */
 // السكريبت بيقرأ الأرقام الرسمية من Google Cloud Monitoring كل ساعة ويحطها في data/firebaseUsage
 let firebaseUsage = null;
@@ -3838,9 +3903,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.23.0';
-const APP_BUILD_DATE = '2026-09-30';
+const APP_VERSION = '2.24.0';
+const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.24.0', date: '2026-10-01', items: [
+    'التحكم عن بعد: حارس مستقل على الكاشير متصل دائمًا، حتى لو السكريبت وقف',
+    'أزرار "إعادة تشغيل السكريبت" و"استرجاع النسخة السابقة" في الأخطاء وحالة الكاشير، مع سجل التنفيذ',
+    'شريط الكاشير يفرّق بين: الكمبيوتر مقطوع، والسكريبت متوقف والحارس متصل'
+  ] },
   { v: '2.23.0', date: '2026-09-30', items: [
     'زر "طباعة" في الإجراءات السريعة ← طباعة باركود لمجموعة أصناف: ابحث، اختر الكمية، إدراج، وكرر، ثم طباعة الكل مرة وحدة',
     'القائمة محفوظة لو قفلت التطبيق، وتقدر تعدل الكميات أو تحذف قبل الطباعة',
@@ -4446,6 +4516,8 @@ function startErrorMonitoring() {
   db.ref('data/scriptUpdateStatus').on('value', snap => onScriptUpdateStatus(snap.val()));
   db.ref('data/cleanupStatus').on('value', snap => { cleanupStatus = snap.val(); });
   db.ref('data/firebaseUsage').on('value', snap => onFirebaseUsage(snap.val()));
+  db.ref('data/guardianStatus').on('value', snap => { guardianStatus = snap.val(); onGuardianData(); });
+  db.ref('data/rescueResult').on('value', snap => { const v = snap.val(); if (v && rescuePendingId && v.id === rescuePendingId) rescuePendingId = null; rescueResult = v; onGuardianData(); });
   db.ref('data/backupStatus').on('value', snap => { backupStatus = snap.val(); try { if (isModalOpen('errorsModal')) renderErrorsStatusCard(); } catch (e) {} });
   db.ref('data/errorLog').limitToLast(100).on('value', snap => {
     const val = snap.val() || {};
@@ -4470,6 +4542,7 @@ function getCashierState() {
   if (!navigator.onLine) return { color:'#DC2626', bg:'#FEF2F2', title:'الجوال مقطوع عن النت', reason:'التطبيق غير قادر على الوصول للبيانات.', fix:'شغّل الواي فاي أو بيانات الجوال.' };
   if (!scriptStatus || !scriptStatus.lastSeen) return { color:'#64748B', bg:'#F1F5F9', title:'لم تصل أي نبضة بعد من الكاشير', reason:'السكريبت الجديد لم يعمل بعد على الكمبيوتر.', fix:'شغّل ملف StoreSalesAlert.ps1 الجديد على جهاز الكاشير.' };
   const sec = Math.max(0, (Date.now() + serverTimeOffset - scriptStatus.lastSeen) / 1000);
+  if (sec > 60 && typeof guardianOnline === 'function' && guardianOnline()) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت متوقف — الحارس متصل (اضغط للتحكم)', reason:'الكمبيوتر شغال ومتصل، لكن السكريبت الأساسي ما يرد. الحارس يعيد تشغيله تلقائيًا خلال دقايق.', fix:'تقدر تضغط "إعادة تشغيل السكريبت" تحت الحين بدل ما تنتظر.' };
   if (sec > 60) return { color:'#DC2626', bg:'#FEF2F2', title:'الكاشير غير متصل — آخر اتصال ' + ageText(sec), reason:'جهاز الكاشير مقطوع عن النت، أو الكمبيوتر مطفأ، أو نافذة السكريبت أُغلقت.', fix:'تأكد أن الكمبيوتر يعمل ومتصل بالنت. السكريبت يعمل مخفيًا تلقائيًا مع الكمبيوتر - إن لم يعمل، أعد تشغيل الكمبيوتر أو شغّل أمر run.txt. التعديلات محفوظة وبتتنفذ فور عودته.' };
   if (scriptStatus.dbOk === false) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت يعمل لكن قاعدة البيانات لا تستجيب', reason:scriptStatus.dbError || 'سبب غير معروف', fix:scriptStatus.dbFix || 'افتح برنامج الكاشير وتأكد أنه يعمل.' };
   return { color:'#16A34A', bg:'#F0FDF4', title:'الكاشير متصل وكل شيء يعمل', reason:'', fix:'' };
@@ -4510,6 +4583,7 @@ function renderErrorsStatusCard() {
     (st.reason ? '<div style="color:#1E293B;font-weight:600;margin-top:4px;"><b>السبب:</b> ' + escapeHtml(st.reason) + '</div>' : '') +
     (st.fix ? '<div style="color:#1E293B;font-weight:600;"><b>الحل:</b> ' + escapeHtml(st.fix) + '</div>' : '') +
     backupStatusHtml();
+  try { renderRescuePanel(); } catch (e) {}
 }
 
 function renderErrorsModal() {
