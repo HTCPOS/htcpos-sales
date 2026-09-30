@@ -1081,6 +1081,15 @@
   </div>
 </div>
 
+<div class="modalBg" id="usageModal" onclick="if(event.target===this)closeModal('usageModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('usageModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>استهلاك Firebase</h3>
+    <div style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin-top:6px;">الخطة المجانية: 1 GB مساحة و10 GB تحميل في الشهر</div>
+    <div id="usageBody"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="scriptUpdateModal" onclick="if(event.target===this)closeModal('scriptUpdateModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('scriptUpdateModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1104,6 +1113,12 @@
       <button onclick="closeModal('generalSettingsModal');openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">إعدادات طباعة الباركود</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <button onclick="closeModal('generalSettingsModal');openUsage();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:22px;height:22px;color:#F59E0B;"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">استهلاك Firebase</span>
+        <span id="usageSettingsTag" style="font-size:12px;font-weight:800;"></span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       <button onclick="closeModal('generalSettingsModal');openScriptUpdate();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
@@ -2633,6 +2648,106 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= استهلاك Firebase ================= */
+// السكريبت بيقرأ الأرقام الرسمية من Google Cloud Monitoring كل ساعة ويحطها في data/firebaseUsage
+let firebaseUsage = null;
+
+function fmtBytes(b) {
+  b = Number(b || 0);
+  if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
+  if (b >= 1048576) return (b / 1048576).toFixed(b >= 104857600 ? 0 : 1) + ' MB';
+  if (b >= 1024) return Math.round(b / 1024) + ' KB';
+  return Math.round(b) + ' B';
+}
+
+function usageLevelInfo(level) {
+  return level === 'danger' ? { t: 'خطر', c: '#DC2626', bg: '#FEE2E2' }
+    : level === 'warn' ? { t: 'انتبه', c: '#B45309', bg: '#FEF3C7' }
+    : { t: 'آمن', c: '#16A34A', bg: '#DCFCE7' };
+}
+
+function onFirebaseUsage(v) {
+  firebaseUsage = v;
+  const tag = document.getElementById('usageSettingsTag');
+  if (tag) {
+    if (v && v.ok) { const li = usageLevelInfo(v.level); tag.textContent = li.t; tag.style.color = li.c; }
+    else if (v && v.ok === false) { tag.textContent = 'خطأ'; tag.style.color = '#DC2626'; }
+    else tag.textContent = '';
+  }
+  try { if (isModalOpen('usageModal')) renderUsage(); } catch (e) {}
+}
+
+function openUsage() {
+  renderUsage();
+  openModal('usageModal');
+}
+
+function usageBar(label, used, limit, pct) {
+  const p = Math.min(100, Math.max(0, Number(pct || 0)));
+  const col = p >= 80 ? '#DC2626' : p >= 50 ? '#F59E0B' : '#16A34A';
+  return `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:13px 14px;margin-top:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <span style="font-size:13.5px;font-weight:800;">${label}</span>
+      <span style="font-size:13px;font-weight:900;color:${col};direction:ltr;">${p.toFixed(p < 1 ? 2 : 1)}%</span>
+    </div>
+    <div style="height:10px;background:var(--surface2);border-radius:6px;margin:9px 0 7px;overflow:hidden;"><div style="height:100%;width:${Math.max(p, 0.8)}%;background:${col};border-radius:6px;"></div></div>
+    <div style="font-size:12px;color:var(--textMuted);font-weight:700;direction:ltr;text-align:right;">${fmtBytes(used)} / ${fmtBytes(limit)}</div>
+  </div>`;
+}
+
+function usageChartSvg(days) {
+  const arr = Array.isArray(days) ? days : Object.values(days || {});
+  if (!arr.length) return '';
+  const max = Math.max(1, ...arr.map(x => Number(x.b || 0)));
+  const W = 330, H = 130, n = arr.length, gap = 2, bw = (W - gap * (n - 1)) / n;
+  let bars = '';
+  arr.forEach((x, i) => {
+    const h = Math.max(1.5, (Number(x.b || 0) / max) * (H - 18));
+    const isToday = i === n - 1;
+    bars += `<rect x="${(W - (i + 1) * bw - i * gap).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" fill="${isToday ? '#93C5FD' : '#3B82F6'}"><title>${x.d}: ${fmtBytes(x.b)}</title></rect>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" aria-hidden="true">
+    <text x="${W}" y="10" font-size="10" fill="currentColor" opacity=".55" text-anchor="end">${fmtBytes(max)}</text>
+    <line x1="0" y1="${H - 0.5}" x2="${W}" y2="${H - 0.5}" stroke="currentColor" opacity=".15"/>${bars}</svg>
+    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--textMuted);font-weight:700;margin-top:4px;"><span>قبل 30 يوم</span><span>اليوم</span></div>`;
+}
+
+function renderUsage() {
+  const el = document.getElementById('usageBody');
+  if (!el) return;
+  const u = firebaseUsage;
+  if (!scriptSupports('firebaseUsage')) {
+    el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">هذه الميزة تحتاج تحديث السكريبت على الكاشير<br><span style="font-size:12px;">الإعدادات ← تحديث السكريبت على الكاشير</span></div>';
+    return;
+  }
+  if (!u) { el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">أول قراءة تصل خلال دقائق من تشغيل السكريبت، وبعدها كل ساعة</div>'; return; }
+  const when = u.at ? new Date(u.at) : null;
+  const whenStr = when ? when.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }) + ' ' + when.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }) : '—';
+  if (!u.ok) {
+    el.innerHTML = `<div style="margin-top:12px;background:#FEE2E2;color:#991B1B;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:800;line-height:1.8;">${escapeHtml(u.msg || 'تعذّر قراءة الاستهلاك')}</div>
+      ${u.detail ? `<div style="font-size:11px;color:var(--textMuted);margin:8px 4px;direction:ltr;text-align:left;word-break:break-word;">${escapeHtml(String(u.detail).slice(0, 300))}</div>` : ''}
+      <div style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:10px;">آخر محاولة ${whenStr} · تُعاد كل ساعة</div>`;
+    return;
+  }
+  const li = usageLevelInfo(u.level);
+  const days = Array.isArray(u.days) ? u.days : Object.values(u.days || {});
+  const today = days.length ? days[days.length - 1] : null;
+  let h = `<div style="display:flex;align-items:center;gap:10px;margin-top:12px;background:${li.bg};color:${li.c};border-radius:12px;padding:11px 14px;font-size:14px;font-weight:900;">
+      <span style="width:10px;height:10px;border-radius:50%;background:${li.c};"></span>الحالة: ${li.t}${u.disabled ? ' - التحميل موقوف من Firebase!' : ''}</div>`;
+  h += usageBar('التحميل هذا الشهر' + (u.monthEstimated ? ' (تقديري)' : ''), u.monthBytes, u.monthLimit, u.monthPct);
+  h += usageBar('المساحة المستخدمة', u.storageBytes, u.storageLimit, u.storagePct);
+  h += `<div style="display:flex;gap:8px;margin-top:10px;">
+      <div style="flex:1;background:var(--surface2);border-radius:12px;padding:10px;text-align:center;"><div style="font-size:11px;color:var(--textMuted);font-weight:800;">اليوم حتى الآن</div><div style="font-size:15px;font-weight:900;margin-top:3px;direction:ltr;">${fmtBytes(today ? today.b : 0)}</div></div>
+      <div style="flex:1;background:var(--surface2);border-radius:12px;padding:10px;text-align:center;"><div style="font-size:11px;color:var(--textMuted);font-weight:800;">متوسط اليوم (آخر 7)</div><div style="font-size:15px;font-weight:900;margin-top:3px;direction:ltr;">${fmtBytes(u.avgDayBytes)}</div></div>
+    </div>`;
+  h += `<div class="gsSec" style="margin-top:18px;"><span>التحميل اليومي - آخر 30 يوم</span></div>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:12px;margin-top:6px;color:var(--text);">${usageChartSvg(days)}</div>`;
+  h += `<div style="font-size:11.5px;color:var(--textMuted);font-weight:700;margin:14px 4px 0;line-height:1.9;">
+      تنبيه على تليجرام عند 50% و80% و95% من الحد الشهري، أو لو يوم استهلك أكثر من 3 أضعاف المعتاد.<br>
+      الأرقام رسمية من Google · آخر قراءة ${whenStr} · تتحدث كل ساعة</div>`;
+  el.innerHTML = h;
+}
+
 /* ================= تحديث السكريبت عن بعد ================= */
 // ترفع ملف StoreSalesAlert.ps1 من الجوال -> commands/scriptUpdate -> السكريبت يفحصه ويركّبه ويعيد تشغيل نفسه.
 // الحالة ترجع في data/scriptUpdateStatus: checking | installing | done | rejected | rolledback
@@ -3225,6 +3340,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'استهلاك Firebase', kw: 'استهلاك فايربيس فاير بيس حصة مساحة تحميل سيرفر', run: "openUsage()" },
   { name: 'تحديث السكريبت', kw: 'تحديث سكريبت سكربت الكاشير تركيب نسخة', run: "openScriptUpdate()" },
   { name: 'تقرير الأرباح', kw: 'ارباح ربح صافي هامش راكد راكدة قيمة المخزون', run: "openModal('reportsModal');setReportView('profit')" },
   { name: 'الأصناف التي نفدت', kw: 'مخزون كميات نفد نفاد ادارة', run: "openProductsHub('out')" },
@@ -3432,9 +3548,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.19.0';
+const APP_VERSION = '2.20.0';
 const APP_BUILD_DATE = '2026-09-30';
 const APP_RELEASES = [
+  { v: '2.20.0', date: '2026-09-30', items: [
+    'خانة "استهلاك Firebase" في الإعدادات: التحميل هذا الشهر والمساحة بأرقام Google الرسمية، مع رسم آخر 30 يوم',
+    'الحالة آمن / انتبه / خطر، وتنبيه تليجرام عند 50% و80% و95% أو يوم استهلاك غير طبيعي'
+  ] },
   { v: '2.19.0', date: '2026-09-30', items: [
     'حماية حصة السيرفر: الكاشير يرفع البيانات لما تتغير بس، والأصناف المتغيرة بس بدل القائمة كاملة',
     'الأرشيف يتحمّل آخر 3 شهور، والفترات الأقدم تنطلب وقت الحاجة',
@@ -4012,6 +4132,7 @@ function startErrorMonitoring() {
   db.ref('data/scriptStatus').on('value', snap => { scriptStatus = snap.val(); renderCashierStatus(); });
   db.ref('data/scriptUpdateStatus').on('value', snap => onScriptUpdateStatus(snap.val()));
   db.ref('data/cleanupStatus').on('value', snap => { cleanupStatus = snap.val(); });
+  db.ref('data/firebaseUsage').on('value', snap => onFirebaseUsage(snap.val()));
   db.ref('data/backupStatus').on('value', snap => { backupStatus = snap.val(); try { if (isModalOpen('errorsModal')) renderErrorsStatusCard(); } catch (e) {} });
   db.ref('data/errorLog').limitToLast(100).on('value', snap => {
     const val = snap.val() || {};
