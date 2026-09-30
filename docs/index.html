@@ -706,16 +706,13 @@
   <div style="margin:0 16px 10px;">
     <div class="searchBox" style="margin:0;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-      <input type="text" id="invoiceSearchInput" placeholder="بحث برقم الإيصال او الطلب..." onkeydown="if(event.key==='Enter')searchInvoiceByNumber()">
+      <input type="text" id="invoiceSearchInput" placeholder="رقم الإيصال أو الطلب..." onkeydown="if(event.key==='Enter')searchInvoiceByNumber()" style="min-width:0;">
       <button onclick="openReceiptOcrCamera()" style="background:none;border:none;padding:0 4px;cursor:pointer;display:flex;align-items:center;" title="قراءة رقم الإيصال بالكاميرا"><span class="ic ic-qr" style="width:22px;height:22px;"></span></button>
+      <label title="تصفح فواتير يوم معيّن" style="position:relative;display:flex;align-items:center;padding:0 4px;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
+        <input type="date" id="invoiceDateInput" lang="en" onchange="if(this.value){browseInvoicesByDate();const el=this;setTimeout(()=>{el.value='';},800);}" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;">
+      </label>
       <button onclick="searchInvoiceByNumber()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">بحث</button>
-    </div>
-  </div>
-  <div style="margin:0 16px 10px;">
-    <div class="searchBox" style="margin:0;">
-      <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
-      <input type="date" id="invoiceDateInput" lang="en" style="flex:1;border:none;outline:none;font-size:14px;background:transparent;">
-      <button onclick="browseInvoicesByDate()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">تصفح هذا اليوم</button>
     </div>
   </div>
   <div class="invoiceList" id="invoiceList">
@@ -724,6 +721,7 @@
 
   <div class="sectionHead"><h3>إجراءات سريعة</h3></div>
   <div class="quickGrid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="quickItem" onclick="openPrintHub()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg></div><div class="ql">طباعة</div></div>
     <div class="quickItem" onclick="openPriceCheckModal()"><div class="qi"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="ql">فحص سعر</div></div>
     <div class="quickItem" onclick="openInventoryCount()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div class="ql">الجرد</div></div>
     <div class="quickItem" onclick="openDamagedModal()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m9 10 6 6M15 10l-6 6"/></svg></div><div class="ql">التالف</div></div>
@@ -1062,6 +1060,44 @@
     <button class="closeM" onclick="closeModal('aboutModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>حول التطبيق</h3>
     <div id="aboutBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="printHubModal" onclick="if(event.target===this)closeModal('printHubModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('printHubModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>طباعة</h3>
+    <div style="margin-top:14px;">
+      <button onclick="openBatchLabels()" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5v14M6 5v14M10 5v14M13 5v14M17 5v14M21 5v14"/></svg>
+        <span style="flex:1;"><span style="display:block;font-size:14.5px;font-weight:800;color:var(--text);">طباعة باركود</span><span style="display:block;font-size:12px;color:var(--textMuted);font-weight:700;margin-top:2px;">مجموعة أصناف بكمياتها في طلب واحد</span></span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <button onclick="closeModal('printHubModal');openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span style="flex:1;font-size:14.5px;font-weight:700;color:var(--text);">إعدادات الملصق والطابعة</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modalBg" id="batchLabelModal" onclick="if(event.target===this)closeModal('batchLabelModal')">
+  <div class="modalSheet" style="display:flex;flex-direction:column;max-height:92vh;">
+    <button class="closeM" onclick="closeModal('batchLabelModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>طباعة باركود</h3>
+    <div style="flex:1;overflow-y:auto;min-height:0;">
+      <div class="searchBox" style="margin:14px 0 0;">
+        <input type="text" id="lqSearch" placeholder="اكتب اسم الصنف أو الباركود..." oninput="lqSearchInput()" autocomplete="off" style="min-width:0;">
+      </div>
+      <div id="lqResults" style="margin-top:4px;"></div>
+      <div id="lqPick"></div>
+      <div id="lqList"></div>
+    </div>
+    <div style="padding-top:10px;border-top:1px solid var(--border2);margin-top:8px;">
+      <div id="lqStatus" style="font-size:12.5px;font-weight:700;text-align:center;min-height:0;margin-bottom:6px;"></div>
+      <button id="lqPrintBtn" type="button" onclick="lqPrint()" style="width:100%;border:none;border-radius:13px;padding:14px;font-size:15.5px;font-weight:900;cursor:pointer;color:#fff;background:#2563EB;">طباعة</button>
+    </div>
   </div>
 </div>
 
@@ -2373,6 +2409,202 @@ function sendLabelPrintJob(jobs, st, statusEl, btn) {
   });
 }
 
+/* ================= طباعة باركود لمجموعة أصناف (قائمة واحدة - طلب واحد) =================
+   زر "طباعة" ← "طباعة باركود" ← ابحث عن الصنف ← اختر الكمية ← "إدراج" ← يرجع للبحث.
+   القائمة محفوظة في data/labelQueue (ترجع لها لو قفلت التطبيق)، و"طباعة" ترسل كل الأصناف
+   للكاشير في طلب واحد (السكريبت يدعم أكثر من صنف في الطلب من زمان). */
+let labelQueue = {};        // { i123: { id, qty } }
+let lqPicked = null;        // الصنف المختار حاليًا قبل الإدراج
+let lqLoaded = false;
+
+function openPrintHub() { openModal('printHubModal'); }
+
+function openBatchLabels() {
+  closeModal('printHubModal');
+  lqPicked = null;
+  document.getElementById('lqSearch').value = '';
+  document.getElementById('lqResults').innerHTML = '';
+  document.getElementById('lqPick').innerHTML = '';
+  document.getElementById('lqStatus').innerHTML = '';
+  openModal('batchLabelModal');
+  renderLabelQueue();
+  ensureLabelSettingsLoaded().catch(() => {});
+  if (!lqLoaded) {
+    db.ref('data/labelQueue').once('value').then(snap => {
+      lqLoaded = true;
+      const v = snap.val() || {};
+      Object.keys(v).forEach(k => { if (v[k] && v[k].id && !labelQueue[k]) labelQueue[k] = { id: Number(v[k].id), qty: Math.max(1, Number(v[k].qty) || 1) }; });
+      renderLabelQueue();
+    }).catch(() => { lqLoaded = true; });
+  }
+  setTimeout(() => { try { document.getElementById('lqSearch').focus(); } catch (e) {} }, 350);
+}
+
+function saveLabelQueue() {
+  const out = {};
+  Object.keys(labelQueue).forEach(k => { out[k] = { id: labelQueue[k].id, qty: labelQueue[k].qty }; });
+  db.ref('data/labelQueue').set(Object.keys(out).length ? out : null).catch(() => {});
+}
+
+function lqSearchInput() {
+  const q = normalizeArabicName(document.getElementById('lqSearch').value.trim());
+  const el = document.getElementById('lqResults');
+  lqPicked = null;
+  document.getElementById('lqPick').innerHTML = '';
+  if (!q) { el.innerHTML = ''; return; }
+  const all = Object.values(latestItems || {});
+  const res = [];
+  for (const it of all) {
+    if (!it) continue;
+    const bc = String(it.barcode || '');
+    if (normalizeArabicName(it.name).includes(q) || (bc && bc.includes(q))) { res.push(it); if (res.length >= 30) break; }
+  }
+  el.innerHTML = res.length ? res.map(it => `<div class="searchResultRow gsRow" onclick="lqPick(${Number(it.id)})">
+      <div class="n">${escapeHtml(String(it.name || ''))}<div class="gsSub">${fmtMoney(it.price)} د.ل · المخزون ${Number(it.stock || 0)}${it.barcode ? '' : ' · <span style="color:#DC2626;">بدون باركود</span>'}</div></div>
+      ${labelQueue['i' + it.id] ? `<div class="p" style="color:#16A34A;font-size:12px;font-weight:800;">في القائمة × ${labelQueue['i' + it.id].qty}</div>` : ''}
+    </div>`).join('') : '<div class="emptyMsg">لا توجد نتائج</div>';
+}
+
+function lqPick(id) {
+  const it = latestItems['i' + id];
+  if (!it) return;
+  lqPicked = id;
+  document.getElementById('lqResults').innerHTML = '';
+  const inQ = labelQueue['i' + id];
+  const noBc = !it.barcode;
+  document.getElementById('lqPick').innerHTML = `
+    <div style="background:var(--surface);border:1.5px solid #2563EB;border-radius:14px;padding:14px;margin-top:10px;">
+      <div style="font-size:15px;font-weight:900;">${escapeHtml(String(it.name || ''))}</div>
+      <div style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin-top:3px;">${fmtMoney(it.price)} د.ل · المخزون ${Number(it.stock || 0)}${inQ ? ' · في القائمة × ' + inQ.qty : ''}</div>
+      ${noBc ? '<div style="margin-top:10px;background:#FEE2E2;color:#991B1B;border-radius:10px;padding:9px 11px;font-size:12.5px;font-weight:800;">هذا الصنف ما له باركود مسجل في الكاشير، فما ينطبع له ملصق باركود</div>' : `
+      <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+        <span style="font-size:13px;font-weight:800;flex:1;">الكمية</span>
+        <button type="button" onclick="lqStep(-1)" style="width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);font-size:20px;font-weight:900;cursor:pointer;color:var(--text);">−</button>
+        <input id="lqQty" type="number" inputmode="numeric" min="1" max="500" value="1" onkeydown="if(event.key==='Enter')lqInsert()" style="width:70px;height:42px;text-align:center;font-size:17px;font-weight:900;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);">
+        <button type="button" onclick="lqStep(1)" style="width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);font-size:20px;font-weight:900;cursor:pointer;color:var(--text);">+</button>
+      </div>
+      ${Number(it.stock) > 1 ? `<button type="button" onclick="document.getElementById('lqQty').value=${Math.min(500, Math.round(Number(it.stock)))}" style="margin-top:8px;border:none;background:none;color:#2563EB;font-size:12.5px;font-weight:800;cursor:pointer;padding:0;">الكمية = المخزون (${Math.round(Number(it.stock))})</button>` : ''}
+      <button type="button" onclick="lqInsert()" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;color:#fff;background:#16A34A;">إدراج</button>`}
+      <button type="button" onclick="lqCancelPick()" style="width:100%;margin-top:8px;border:none;background:none;color:var(--textMuted);font-size:13px;font-weight:800;cursor:pointer;">رجوع للبحث</button>
+    </div>`;
+  if (!noBc) setTimeout(() => { const q = document.getElementById('lqQty'); if (q) { q.focus(); q.select(); } }, 150);
+}
+
+function lqStep(d) {
+  const el = document.getElementById('lqQty');
+  if (el) el.value = Math.min(500, Math.max(1, (parseInt(el.value, 10) || 1) + d));
+}
+
+function lqCancelPick() {
+  lqPicked = null;
+  document.getElementById('lqPick').innerHTML = '';
+  const s = document.getElementById('lqSearch');
+  lqSearchInput();
+  s.focus();
+}
+
+function lqInsert() {
+  const it = latestItems['i' + lqPicked];
+  if (!it || !it.barcode) return;
+  const qty = Math.min(500, Math.max(1, parseInt(document.getElementById('lqQty').value, 10) || 1));
+  const k = 'i' + it.id;
+  if (labelQueue[k]) labelQueue[k].qty = Math.min(500, labelQueue[k].qty + qty);
+  else labelQueue[k] = { id: Number(it.id), qty: qty };
+  saveLabelQueue();
+  try { if (typeof showQuickToast === 'function') showQuickToast('أُدرج ' + it.name + ' × ' + qty, true); } catch (e) {}
+  lqPicked = null;
+  document.getElementById('lqPick').innerHTML = '';
+  const s = document.getElementById('lqSearch');
+  s.value = '';
+  document.getElementById('lqResults').innerHTML = '';
+  renderLabelQueue();
+  s.focus();
+}
+
+function lqSetQty(k, v) {
+  if (!labelQueue[k]) return;
+  labelQueue[k].qty = Math.min(500, Math.max(1, parseInt(v, 10) || 1));
+  saveLabelQueue();
+  renderLabelQueue();
+}
+
+function lqRemove(k) {
+  delete labelQueue[k];
+  saveLabelQueue();
+  renderLabelQueue();
+}
+
+function lqClear() {
+  if (!Object.keys(labelQueue).length) return;
+  if (!confirm('تفريغ القائمة كلها؟')) return;
+  labelQueue = {};
+  saveLabelQueue();
+  renderLabelQueue();
+}
+
+function renderLabelQueue() {
+  const el = document.getElementById('lqList');
+  if (!el) return;
+  const keys = Object.keys(labelQueue);
+  let items = 0, labels = 0;
+  const rows = keys.map(k => {
+    const q = labelQueue[k];
+    const it = latestItems[k];
+    items++; labels += q.qty;
+    const name = it ? it.name : ('صنف ' + q.id);
+    const bad = !it || !it.barcode;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--border2);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(String(name))}</div>
+        <div style="font-size:11.5px;color:${bad ? '#DC2626' : 'var(--textMuted)'};font-weight:700;">${bad ? 'بدون باركود - ما ينطبع' : fmtMoney(it.price) + ' د.ل'}</div>
+      </div>
+      <button type="button" onclick="lqSetQty('${k}', ${q.qty - 1})" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);font-size:17px;font-weight:900;cursor:pointer;color:var(--text);">−</button>
+      <input type="number" inputmode="numeric" value="${q.qty}" onchange="lqSetQty('${k}', this.value)" style="width:52px;height:32px;text-align:center;font-size:14px;font-weight:900;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);">
+      <button type="button" onclick="lqSetQty('${k}', ${q.qty + 1})" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);font-size:17px;font-weight:900;cursor:pointer;color:var(--text);">+</button>
+      <button type="button" onclick="lqRemove('${k}')" aria-label="حذف" style="width:32px;height:32px;border-radius:9px;border:none;background:#FEE2E2;color:#DC2626;font-size:16px;font-weight:900;cursor:pointer;">✕</button>
+    </div>`;
+  }).join('');
+  el.innerHTML = keys.length
+    ? `<div style="display:flex;justify-content:space-between;align-items:center;margin:18px 2px 4px;">
+        <span style="font-size:14px;font-weight:900;">القائمة <span style="color:var(--textMuted);font-size:12.5px;">· ${items} صنف · ${labels} ملصق</span></span>
+        <button type="button" onclick="lqClear()" style="border:none;background:none;color:#DC2626;font-size:12.5px;font-weight:800;cursor:pointer;">تفريغ</button>
+      </div>${rows}`
+    : '<div class="emptyMsg" style="margin-top:18px;line-height:1.9;">القائمة فاضية<br><span style="font-size:12px;">ابحث عن صنف فوق، اختر الكمية، واضغط إدراج</span></div>';
+  const btn = document.getElementById('lqPrintBtn');
+  if (btn) {
+    btn.textContent = labels ? 'طباعة (' + labels + ' ملصق)' : 'طباعة';
+    btn.disabled = !labels;
+    btn.style.opacity = labels ? '1' : '.5';
+  }
+}
+
+function lqPrint() {
+  const keys = Object.keys(labelQueue);
+  const jobs = [];
+  const skipped = [];
+  keys.forEach(k => {
+    const it = latestItems[k];
+    if (!it || !it.barcode) { skipped.push(it ? it.name : k); return; }
+    const r = renderLabelCanvas({ name: it.name, price: it.price, barcode: it.barcode }, labelSettings, labelSettings.template || 'standard');
+    jobs.push({ itemId: String(it.id), name: String(it.name), copies: labelQueue[k].qty, png: r.canvas.toDataURL('image/png').split(',')[1] });
+  });
+  if (!jobs.length) { alert('ما في أصناف قابلة للطباعة في القائمة'); return; }
+  const total = jobs.reduce((a, j) => a + j.copies, 0);
+  let msg = 'طباعة ' + total + ' ملصق لـ ' + jobs.length + ' صنف؟';
+  if (skipped.length) msg += '\n\nبيتخطى ' + skipped.length + ' صنف بدون باركود';
+  if (!confirm(msg)) return;
+  const statusEl = document.getElementById('lqStatus');
+  sendLabelPrintJob(jobs, labelSettings, statusEl, document.getElementById('lqPrintBtn'));
+  // بعد نجاح الطباعة نسأل عن تفريغ القائمة
+  const obs = new MutationObserver(() => {
+    if (statusEl.textContent && statusEl.querySelector('span[style*="16A34A"]')) {
+      obs.disconnect();
+      setTimeout(() => { if (confirm('تمت الطباعة ✓\nتفريغ القائمة؟')) { labelQueue = {}; saveLabelQueue(); renderLabelQueue(); } }, 400);
+    } else if (statusEl.querySelector('span[style*="DC2626"]')) obs.disconnect();
+  });
+  obs.observe(statusEl, { childList: true, subtree: true });
+}
+
 const itemCardOfferLabel = {};
 
 /* ================= البضاعة التالفة =================
@@ -3397,6 +3629,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'طباعة باركود', kw: 'طباعة باركود ملصقات ملصق قائمة طباعة', run: "openBatchLabels()" },
   { name: 'استهلاك Firebase', kw: 'استهلاك فايربيس فاير بيس حصة مساحة تحميل سيرفر', run: "openUsage()" },
   { name: 'تحديث السكريبت', kw: 'تحديث سكريبت سكربت الكاشير تركيب نسخة', run: "openScriptUpdate()" },
   { name: 'تقرير الأرباح', kw: 'ارباح ربح صافي هامش راكد راكدة قيمة المخزون', run: "openModal('reportsModal');setReportView('profit')" },
@@ -3605,9 +3838,17 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.22.0';
+const APP_VERSION = '2.23.0';
 const APP_BUILD_DATE = '2026-09-30';
 const APP_RELEASES = [
+  { v: '2.23.0', date: '2026-09-30', items: [
+    'زر "طباعة" في الإجراءات السريعة ← طباعة باركود لمجموعة أصناف: ابحث، اختر الكمية، إدراج، وكرر، ثم طباعة الكل مرة وحدة',
+    'القائمة محفوظة لو قفلت التطبيق، وتقدر تعدل الكميات أو تحذف قبل الطباعة',
+    'زر "الكمية = المخزون" للبضاعة الجديدة، وتنبيه للأصناف بدون باركود'
+  ] },
+  { v: '2.22.1', date: '2026-09-30', items: [
+    'آخر الفواتير: خانة بحث واحدة بدل خانتين - رقم الإيصال، والكاميرا، وأيقونة التقويم لتصفح يوم معيّن'
+  ] },
   { v: '2.22.0', date: '2026-09-30', items: [
     'رئيسية أبسط بدون تكرار: 6 مربعات (نفاد المخزون، النواقص، المرتجعات، ديون المشتريات، بيع بسعر 0، بطاقة صنف)',
     'الإجراءات السريعة صارت 6: فحص سعر، الجرد، التالف، المفقودات، الملاحظات، سجل الحركات',
