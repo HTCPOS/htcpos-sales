@@ -2950,9 +2950,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.14.1';
+const APP_VERSION = '2.15.0';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.15.0', date: '2026-09-29', items: [
+    'نسخة احتياطية يومية تلقائية (قاعدة بيانات الكاشير + كل بيانات Firebase) تُرسل على تليجرام',
+    'حالة آخر نسخة احتياطية تظهر في شاشة الأخطاء وحالة الكاشير وفي حول التطبيق، مع تنبيه لو فشلت أو تأخرت'
+  ] },
   { v: '2.14.1', date: '2026-09-29', items: [
     'قالب "نظام الكاشير" مطابق لملصق البرنامج بالمليمتر: خط عادي للاسم والأرقام، نفس عرض وارتفاع الباركود، ونفس مكان اسم المحل الرأسي',
     'حواف الخط أنظف وأكثر امتلاءً في الطباعة الحرارية'
@@ -3086,6 +3090,7 @@ function openAboutApp() {
     <div class="abSec">الكاشير</div>
     <div class="abRow"><span class="k">الحالة</span><span class="v" style="direction:rtl;color:${st.color};white-space:normal;">${escapeHtml(st.title)}</span></div>
     <div class="abRow"><span class="k">آخر اتصال</span><span class="v" style="direction:rtl;">${lastSeen}</span></div>
+    <div class="abRow"><span class="k">آخر نسخة احتياطية</span><span class="v" style="direction:rtl;${backupStatus && backupStatus.ok === false ? 'color:#DC2626;' : ''}">${backupStatus && backupStatus.at ? escapeHtml(String(backupStatus.at).slice(0, 16)) + (backupStatus.ok === false ? ' (فشلت)' : '') : '—'}</span></div>
     <div class="abSec">الجديد في الإصدار ${APP_VERSION}</div>
     <div class="abLog"><ul style="margin:0;padding:0;">${APP_RELEASES[0].items.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}</ul></div>
     ${APP_RELEASES.slice(1).map(r => `<details style="margin-top:10px;"><summary style="font-size:12px;color:var(--textMuted);font-weight:800;cursor:pointer;">الإصدار ${r.v} — ${appBuildDateLabel(r.date, true)}</summary><div class="abLog" style="margin-top:6px;"><ul style="margin:0;padding:0;">${r.items.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}</ul></div></details>`).join('')}
@@ -3495,6 +3500,7 @@ let errorLogEntries = [];
 function startErrorMonitoring() {
   db.ref('.info/serverTimeOffset').on('value', snap => { serverTimeOffset = snap.val() || 0; });
   db.ref('data/scriptStatus').on('value', snap => { scriptStatus = snap.val(); renderCashierStatus(); });
+  db.ref('data/backupStatus').on('value', snap => { backupStatus = snap.val(); try { if (isModalOpen('errorsModal')) renderErrorsStatusCard(); } catch (e) {} });
   db.ref('data/errorLog').limitToLast(100).on('value', snap => {
     const val = snap.val() || {};
     errorLogEntries = Object.keys(val).map(k => Object.assign({ key: k }, val[k])).reverse();
@@ -3535,6 +3541,20 @@ function renderCashierStatus() {
   if (document.getElementById('errorsModal').style.display === 'flex') renderErrorsStatusCard();
 }
 
+// سطر "آخر نسخة احتياطية" (بيتسجل من السكريبت في data/backupStatus)
+let backupStatus = null;
+function backupStatusHtml() {
+  const b = backupStatus;
+  const box = (bg, color, html) => `<div style="margin-top:10px;background:${bg};color:${color};border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:700;line-height:1.7;">${html}</div>`;
+  if (!b || !b.at) return box('#F1F5F9', '#475569', 'آخر نسخة احتياطية: لم تُسجل بعد (تتم تلقائيًا بعد دقيقة من تشغيل كمبيوتر الكاشير)');
+  const d = new Date(String(b.at).replace(' ', 'T'));
+  const days = (Date.now() - d.getTime()) / 86400000;
+  const when = isNaN(d) ? String(b.at) : d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
+  if (!b.ok) return box('#FEF2F2', '#B91C1C', 'فشلت آخر نسخة احتياطية (' + escapeHtml(when) + ')<div style="font-weight:600;color:#1E293B;">' + escapeHtml(b.msg || '') + '</div><div style="font-weight:600;color:#1E293B;">تُعاد تلقائيًا كل ساعة - التفاصيل في قائمة الأخطاء بالأسفل.</div>');
+  if (days > 2) return box('#FEF3C7', '#92400E', 'آخر نسخة احتياطية من ' + Math.floor(days) + ' أيام (' + escapeHtml(when) + ') - تأكد إن كمبيوتر الكاشير يشتغل والسكريبت شغال');
+  return box('#F0FDF4', '#15803D', 'آخر نسخة احتياطية: ' + escapeHtml(when) + ' · ' + (b.sizeMb || 0) + ' ميجا' + (b.telegram ? ' · أُرسلت لتليجرام' : ' · <span style="color:#B45309;">لم تُرسل لتليجرام</span>'));
+}
+
 function renderErrorsStatusCard() {
   const st = getCashierState();
   const el = document.getElementById('errorsStatusCard');
@@ -3542,7 +3562,8 @@ function renderErrorsStatusCard() {
   el.style.color = st.color;
   el.innerHTML = '● ' + escapeHtml(st.title) +
     (st.reason ? '<div style="color:#1E293B;font-weight:600;margin-top:4px;"><b>السبب:</b> ' + escapeHtml(st.reason) + '</div>' : '') +
-    (st.fix ? '<div style="color:#1E293B;font-weight:600;"><b>الحل:</b> ' + escapeHtml(st.fix) + '</div>' : '');
+    (st.fix ? '<div style="color:#1E293B;font-weight:600;"><b>الحل:</b> ' + escapeHtml(st.fix) + '</div>' : '') +
+    backupStatusHtml();
 }
 
 function renderErrorsModal() {
