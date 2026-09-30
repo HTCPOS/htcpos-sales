@@ -673,21 +673,22 @@
   </div>
 
   <div class="statsGrid">
-    <div class="statCard" onclick="openModal('purchaseDebtsModal')" style="cursor:pointer">
-      <div class="statIcon" style="background:#FEF3C7;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/><circle cx="16" cy="17" r="1"/></svg></div>
-      <div><div class="num" id="statPurchaseDebts">0</div><div class="lbl">ديون مشتريات</div></div>
-    </div>
-    <div class="statCard" onclick="openPriceCheckModal()" style="cursor:pointer">
-      <div class="statIcon" style="background:#DBEAFE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
-      <div><div class="num" id="statProducts">0</div><div class="lbl">فحص سعر</div></div>
-    </div>
     <div class="statCard" onclick="openModal('lowStockModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#DC2626"/></svg></div>
       <div><div class="num" id="statLowStock">0</div><div class="lbl">تنبيه نفاد المخزون</div></div>
     </div>
+    <div class="statCard" id="shortagesRow" onclick="openModal('shortagesModal')" style="cursor:pointer;">
+      <svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+      <div class="statIcon" style="background:#FFEDD5;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5"/><path d="M12 12v4m0 0 2-2m-2 2-2-2"/></svg></div>
+      <div><div class="num" id="statShortages">0</div><div class="lbl">النواقص</div></div>
+    </div>
     <div class="statCard" onclick="openModal('returnsModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#EDE9FE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 12 4l9 5-9 5-9-5Z"/><path d="M3 9v7l9 5 9-5V9M12 14v5"/></svg></div>
       <div><div class="num" id="statReturns">0</div><div class="lbl">المرتجعات</div></div>
+    </div>
+    <div class="statCard" onclick="openModal('purchaseDebtsModal')" style="cursor:pointer">
+      <div class="statIcon" style="background:#FEF3C7;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/><circle cx="16" cy="17" r="1"/></svg></div>
+      <div><div class="num" id="statPurchaseDebts">0</div><div class="lbl">ديون مشتريات</div></div>
     </div>
     <div class="statCard" onclick="openModal('zeroPriceModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
@@ -697,22 +698,9 @@
       <div class="statIcon" style="background:#E0F2FE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="M7 13h4"/><path d="M7 16h2"/></svg></div>
       <div><div class="num" style="font-size:14px;">بطاقة صنف</div><div class="lbl">بحث/مسح صنف</div></div>
     </div>
-    <div class="statCard" id="shortagesRow" onclick="openModal('shortagesModal')" style="cursor:pointer; grid-column:span 2;">
-      <svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
-      <div class="statIcon" style="background:#FFEDD5;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5"/><path d="M12 12v4m0 0 2-2m-2 2-2-2"/></svg></div>
-      <div><div class="num" id="statShortages">0</div><div class="lbl">النواقص</div></div>
-    </div>
   </div>
 
-  <div class="alertBanner" id="alertBannerBox" style="display:none">
-    <svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
-    <div class="icn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5"/></svg></div>
-    <div class="txt">
-      <div class="t1">تنبيه نفاد المخزون</div>
-      <div class="t2" id="alertBannerText">لديك منتجات نفدت أو على وشك النفاد</div>
-    </div>
-    <button class="go" onclick="openModal('lowStockModal')">عرض</button>
-  </div>
+  
 
   <div class="sectionHead"><a href="#" onclick="event.preventDefault();openAllInvoices()">عرض الكل</a><h3>آخر الفواتير</h3></div>
   <div style="margin:0 16px 10px;">
@@ -736,16 +724,12 @@
 
   <div class="sectionHead"><h3>إجراءات سريعة</h3></div>
   <div class="quickGrid" style="grid-template-columns:repeat(3,1fr);">
-    <div class="quickItem" onclick="openModal('reportsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><div class="ql">التقارير</div></div>
-    <div class="quickItem" onclick="openProductsHub('out')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8 6 3h12l3 5M12 12v5M9.5 14.5h5"/></svg></div><div class="ql">إدارة المخزون</div></div>
-    <div class="quickItem" onclick="openModal('returnsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5h-3"/></svg></div><div class="ql">المرتجعات</div></div>
-    <div class="quickItem" onclick="openModal('shortagesModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div><div class="ql">النواقص</div></div>
+    <div class="quickItem" onclick="openPriceCheckModal()"><div class="qi"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div class="ql">فحص سعر</div></div>
     <div class="quickItem" onclick="openInventoryCount()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><div class="ql">الجرد</div></div>
-    <div class="quickItem" onclick="openModal('missingItemsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div><div class="ql">المفقودات</div></div>
     <div class="quickItem" onclick="openDamagedModal()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m9 10 6 6M15 10l-6 6"/></svg></div><div class="ql">التالف</div></div>
-    <div class="quickItem" onclick="openModal('activityLogModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l2 3v15H6V6Z"/><path d="M9 11h6M9 15h6"/></svg></div><div class="ql">سجل الحركات</div></div>
+    <div class="quickItem" onclick="openModal('missingItemsModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div><div class="ql">المفقودات</div></div>
     <div class="quickItem" onclick="openNotesModal()"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#CA8A04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4Z"/><path d="M17 4v3h3"/><path d="M8 11h8M8 15h5"/></svg></div><div class="ql">الملاحظات</div></div>
-    <div class="quickItem" onclick="openModal('errorsModal')" style="position:relative;"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg></div><div class="ql">الأخطاء</div><span class="badge" id="errorsBadge" style="display:none;top:6px;left:6px;">0</span></div>
+    <div class="quickItem" onclick="openModal('activityLogModal')"><div class="qi"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l2 3v15H6V6Z"/><path d="M9 11h6M9 15h6"/></svg></div><div class="ql">سجل الحركات</div></div>
   </div>
   </div>
 
@@ -1113,6 +1097,12 @@
       <button onclick="closeModal('generalSettingsModal');openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">إعدادات طباعة الباركود</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <button onclick="closeModal('generalSettingsModal');openModal('errorsModal');" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg style="width:22px;height:22px;" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">الأخطاء وحالة الكاشير</span>
+        <span id="errorsBadge" style="display:none;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#DC2626;color:#fff;font-size:11.5px;font-weight:800;align-items:center;justify-content:center;">0</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       <button onclick="closeModal('generalSettingsModal');openUsage();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
@@ -3615,9 +3605,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.21.0';
+const APP_VERSION = '2.22.0';
 const APP_BUILD_DATE = '2026-09-30';
 const APP_RELEASES = [
+  { v: '2.22.0', date: '2026-09-30', items: [
+    'رئيسية أبسط بدون تكرار: 6 مربعات (نفاد المخزون، النواقص، المرتجعات، ديون المشتريات، بيع بسعر 0، بطاقة صنف)',
+    'الإجراءات السريعة صارت 6: فحص سعر، الجرد، التالف، المفقودات، الملاحظات، سجل الحركات',
+    'حذف شريط تنبيه المخزون المكرر (الجرس والمربع يكفون)',
+    'الأخطاء انتقلت للإعدادات مع عدّاد أحمر'
+  ] },
   { v: '2.21.0', date: '2026-09-30', items: [
     'استهلاك Firebase صار بقياس ذاتي مجاني 100% (بدون Google Cloud): التطبيق يحسب كل ما ينزل عليه، والسكريبت يحسب ما ينزّله',
     'احتياط 30% على التقدير عشان التنبيه يجي أبكر',
@@ -4386,7 +4382,7 @@ function archiveInvoices(invoices) {
 function renderSummary() {
   const s = latestSummary;
   document.getElementById('heroTotal').textContent = fmtMoney(s.netSalesToday) + ' د.ل';
-  document.getElementById('statProducts').textContent = s.totalProducts ?? 0;
+  { const sp = document.getElementById('statProducts'); if (sp) sp.textContent = s.totalProducts ?? 0; }
   document.getElementById('statReturns').textContent = s.returnsCount ?? 0;
   document.getElementById('statShortages').textContent = s.shortagesCount ?? 0;
 }
@@ -4432,14 +4428,9 @@ function updateCombinedAlertBadge() {
   if (total > 0) {
     alertBadge.style.display = 'flex';
     alertBadge.textContent = total;
-    document.getElementById('alertBannerBox').style.display = 'flex';
-    const parts = [];
-    if (visibleLowStock > 0) parts.push(visibleLowStock + ' منتج نفد أو على وشك النفاد');
-    if (visibleZeroPrice > 0) parts.push(visibleZeroPrice + ' صنف بيع بسعر 0');
-    document.getElementById('alertBannerText').textContent = 'لديك ' + parts.join(' و ');
+
   } else {
     alertBadge.style.display = 'none';
-    document.getElementById('alertBannerBox').style.display = 'none';
   }
 }
 
