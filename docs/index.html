@@ -320,6 +320,10 @@
   .gsClear .ico, .cpClear .ico { width:12px; height:12px; vertical-align:middle; }
   .phIc .ico { width:21px; height:21px; }
   .gsSec .ico { width:15px; height:15px; margin-left:4px; }
+  /* التقارير: المبيعات / الأرباح */
+  .repSeg { display:flex; background:var(--surface2); border-radius:12px; padding:3px; margin-top:12px; }
+  .repSeg button { flex:1; border:none; background:none; padding:9px; border-radius:10px; font-size:13.5px; font-weight:800; color:var(--textMuted); cursor:pointer; transition:background-color .2s ease, color .2s ease; }
+  .repSeg button.on { background:var(--surface); color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,.12); }
   /* مركز الأصناف */
   .phCam { flex-shrink:0; width:48px; border:none; border-radius:14px; background:var(--surface2); color:#2563EB; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .phShorts { display:flex; gap:6px; margin-top:10px; flex-shrink:0; }
@@ -821,6 +825,10 @@
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('reportsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>التقارير</h3>
+    <div class="repSeg" id="repSeg">
+      <button type="button" class="on" data-view="sales" onclick="setReportView('sales')">المبيعات</button>
+      <button type="button" data-view="profit" onclick="setReportView('profit')">الأرباح</button>
+    </div>
     <div style="display:flex;gap:6px;margin:12px 0;overflow-x:auto;">
       <button class="alertTab reportTab" data-period="day" onclick="setReportPeriod('day')">يومي</button>
       <button class="alertTab reportTab" data-period="week" onclick="setReportPeriod('week')">أسبوعي</button>
@@ -2610,6 +2618,262 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= تقرير الأرباح ================= */
+// السكريبت بيحسب من قاعدة بيانات الكاشير مباشرة (التكلفة محفوظة وقت البيع في كل سطر فاتورة = دقة 100%)،
+// والتطبيق بيضيف خسائر التالف من Firebase عشان يطلع صافي الربح الحقيقي.
+const ICO_WARN = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+let currentReportView = 'sales';
+let profitReq = null;
+let profitRep = null; // { v, range, label, damaged, damagedCount, file, pdf, preparing }
+let profitUi = { list: 'profit', slow: 30, slowAll: false };
+
+function setReportView(v) {
+  currentReportView = v;
+  document.querySelectorAll('#repSeg button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  setReportPeriod(currentReportPeriod || 'day');
+}
+
+function profitLocalDate(ts) {
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function loadProfitReport(range, period, label) {
+  const el = document.getElementById('reportsBody');
+  const periodLabel = label || { day: 'اليوم', week: 'آخر 7 أيام', month: 'هذا الشهر', year: 'هذه السنة' }[period] || '';
+  if (!scriptSupports('profitQuery')) {
+    el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">تقرير الأرباح يحتاج تحديث السكريبت على كمبيوتر الكاشير<br><span style="font-size:12px;">انسخ آخر نسخة من StoreSalesAlert.ps1 وشغّل أمر run.txt</span></div>';
+    return;
+  }
+  el.innerHTML = '<div style="font-size:12px;color:var(--textMuted);font-weight:700;margin:4px 2px 8px;">جاري حساب الأرباح من كمبيوتر الكاشير...</div>' + skeletonHtml(7);
+  const token = {};
+  profitReq = token;
+  const ref = db.ref('commands/profitQuery').push();
+  const resRef = db.ref('data/profitResults/' + ref.key);
+  let done = false;
+  let tm = null;
+  const handler = snap => {
+    const v = snap.val();
+    if (!v || done) return;
+    done = true;
+    clearTimeout(tm);
+    resRef.off('value', handler);
+    resRef.remove().catch(() => {});
+    if (profitReq !== token) return;
+    onProfitResult(v, range, periodLabel);
+  };
+  resRef.on('value', handler);
+  tm = setTimeout(() => {
+    if (done) return;
+    done = true;
+    resRef.off('value', handler);
+    ref.remove().catch(() => {});
+    if (profitReq !== token) return;
+    el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">كمبيوتر الكاشير لم يرد خلال 45 ثانية<br><span style="font-size:12px;">تأكد إنه شغال والشريط أخضر، وجرّب مرة ثانية</span></div>';
+  }, 45000);
+  ref.set({ from: range.from, to: range.to, at: firebase.database.ServerValue.TIMESTAMP }).catch(err => {
+    if (done) return;
+    done = true;
+    clearTimeout(tm);
+    resRef.off('value', handler);
+    if (profitReq !== token) return;
+    el.innerHTML = '<div class="emptyMsg">تعذّر إرسال الطلب: ' + escapeHtml(err && err.message ? err.message : String(err)) + '</div>';
+  });
+}
+
+function onProfitResult(v, range, label) {
+  const el = document.getElementById('reportsBody');
+  if (!v.ok) {
+    el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;color:#DC2626;">تعذّر حساب الأرباح<br><span style="font-size:12px;color:var(--textMuted);">' + escapeHtml(v.msg || '') + '</span></div>';
+    return;
+  }
+  // خسائر التالف في نفس الفترة (من Firebase)
+  liveOnce('data/damaged').then(snap => {
+    let damaged = 0, damagedCount = 0;
+    Object.values(snap.val() || {}).forEach(d => {
+      if (!d || d.cancelledAt || !d.at) return;
+      const day = profitLocalDate(d.at);
+      if (day >= range.from && day <= range.to) { damaged += Number(d.totalCost || 0); damagedCount++; }
+    });
+    return { damaged, damagedCount };
+  }).catch(() => ({ damaged: 0, damagedCount: 0 })).then(dm => {
+    profitRep = { v: v, range: range, label: label, damaged: dm.damaged, damagedCount: dm.damagedCount, file: null, pdf: null, preparing: false };
+    profitUi = { list: 'profit', slow: 30, slowAll: false };
+    renderProfitReport();
+  });
+}
+
+function profitArr(x) { return Array.isArray(x) ? x : (x ? Object.values(x) : []); }
+
+function profitCalc(rep) {
+  const s = rep.v.summary || {};
+  const gross = Number(s.gross || 0) > 0 ? Number(s.gross) : Number(s.netSales || 0) + Number(s.invDiscount || 0);
+  const net = Number(s.grossProfit || 0) - Number(rep.damaged || 0);
+  const margin = Number(s.netRevenue || 0) > 0 ? (Number(s.grossProfit || 0) / Number(s.netRevenue)) * 100 : 0;
+  const netMargin = Number(s.netRevenue || 0) > 0 ? (net / Number(s.netRevenue)) * 100 : 0;
+  return { s, gross, net, margin, netMargin };
+}
+
+function profitSlowList(rep, days) {
+  return profitArr(rep.v.slow).filter(x => x.days < 0 || x.days >= days);
+}
+
+function renderProfitReport() {
+  const rep = profitRep;
+  const el = document.getElementById('reportsBody');
+  if (!rep || !el) return;
+  const { s, gross, net, margin, netMargin } = profitCalc(rep);
+  const money = n => fmtMoney(n) + ' <span style="font-size:.78em;font-weight:700;">د.ل</span>';
+  const pos = net >= 0;
+  const row = (label, val, opt) => {
+    const o = opt || {};
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 2px;${o.total ? 'border-top:1.5px solid var(--border);margin-top:2px;font-weight:900;' : 'border-bottom:1px solid var(--border2);'}">
+      <span style="font-size:13px;${o.total ? '' : 'color:var(--textMuted);font-weight:700;'}">${label}</span>
+      <span style="font-size:${o.total ? '15px' : '13.5px'};font-weight:${o.total ? 900 : 800};${o.color ? 'color:' + o.color + ';' : ''}direction:ltr;">${o.minus ? '− ' : ''}${money(val)}</span></div>`;
+  };
+  let h = '';
+  h += `<div style="font-size:12px;color:var(--textMuted);font-weight:800;margin:2px 2px 8px;">${escapeHtml(rep.label)}${rep.range ? ' · ' + escapeHtml(rep.range.from) + (rep.range.to !== rep.range.from ? ' ← ' + escapeHtml(rep.range.to) : '') : ''}</div>`;
+  // البطاقة الرئيسية
+  h += `<div style="border-radius:18px;padding:18px 18px 16px;color:#fff;background:${pos ? 'linear-gradient(135deg,#059669,#10B981)' : 'linear-gradient(135deg,#B91C1C,#EF4444)'};box-shadow:0 8px 22px -10px ${pos ? 'rgba(5,150,105,.6)' : 'rgba(185,28,28,.6)'};">
+    <div style="font-size:13px;font-weight:800;opacity:.9;">صافي الربح</div>
+    <div style="font-size:30px;font-weight:900;margin-top:4px;direction:ltr;text-align:right;">${fmtMoney(net)} <span style="font-size:15px;">د.ل</span></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:800;opacity:.95;">
+      <span>هامش ${netMargin.toFixed(1)}%</span><span>${s.invoices || 0} فاتورة</span><span>${Number(s.qtySold || 0)} قطعة</span>
+    </div></div>`;
+  // تنبيه الدقة
+  if (Number(s.zeroCostLines || 0) > 0) {
+    h += `<div style="margin-top:12px;background:#FEF3C7;color:#92400E;border-radius:12px;padding:11px 13px;font-size:12.5px;font-weight:700;line-height:1.75;">
+      ${ICO_WARN} ${s.zeroCostLines} سطر بيع بتكلفة صفر (قيمتها ${fmtMoney(s.zeroCostRevenue)} د.ل) - ربحها محسوب 100%، فالربح الحقيقي أقل من المعروض.
+      <button type="button" onclick="openProductsHub('pricing')" style="display:block;margin-top:7px;border:none;background:#92400E;color:#fff;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;">عرض الأصناف اللي تكلفتها صفر</button></div>`;
+  }
+  // التفاصيل
+  h += `<div style="margin-top:12px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:6px 12px;">
+    ${row('إجمالي المبيعات', gross)}
+    ${Number(s.invDiscount || 0) ? row('الخصومات', s.invDiscount, { minus: true, color: '#B45309' }) : ''}
+    ${row('المرتجعات (' + (s.returnsCount || 0) + ')', s.returnsValue, { minus: true, color: '#B45309' })}
+    ${row('صافي المبيعات', s.netRevenue, { total: true })}
+    ${row('تكلفة البضاعة المباعة', s.cogs, { minus: true, color: '#64748B' })}
+    ${row('مجمل الربح · ' + margin.toFixed(1) + '%', s.grossProfit, { total: true, color: Number(s.grossProfit) >= 0 ? '#059669' : '#DC2626' })}
+    ${row('خسائر التالف (' + rep.damagedCount + ')', rep.damaged, { minus: true, color: '#DC2626' })}
+    ${row('صافي الربح', net, { total: true, color: pos ? '#059669' : '#DC2626' })}
+  </div>`;
+
+  // الأصناف
+  const lists = { profit: profitArr(rep.v.topProfit), qty: profitArr(rep.v.topQty), loss: profitArr(rep.v.losers) };
+  const chip = (key, label, n, fn) => `<button type="button" class="lsChip${profitUi[fn] === key ? ' on' : ''}" style="direction:rtl;" onclick="profitUi.${fn}=${typeof key === 'number' ? key : "'" + key + "'"};${fn === 'slow' ? 'profitUi.slowAll=false;' : ''}profitRep.file=null;renderProfitReport();">${label}${n !== null ? ' <b style="opacity:.75;">' + n + '</b>' : ''}</button>`;
+  h += `<div class="gsSec" style="margin-top:20px;"><span>الأصناف في الفترة</span></div>
+    <div class="lsChips" style="margin:6px 0 4px;">${chip('profit', 'الأكثر ربحًا', null, 'list')}${chip('qty', 'الأكثر مبيعًا', null, 'list')}${lists.loss.length ? chip('loss', 'بخسارة', lists.loss.length, 'list') : ''}</div>`;
+  const cur = lists[profitUi.list] || [];
+  h += cur.length ? cur.map((it, i) => `<div class="searchResultRow gsRow" onclick="openItemFromHub(${Number(it.id)})">
+      <div class="n"><span style="display:inline-block;min-width:22px;color:var(--textMuted);font-weight:900;">${i + 1}</span>${escapeHtml(String(it.name || ''))}
+        <div class="gsSub" style="margin-right:22px;">الكمية ${Number(it.qty)} · المبيعات ${fmtMoney(it.revenue)} د.ل</div></div>
+      <div class="p" style="font-weight:900;color:${Number(it.profit) >= 0 ? '#059669' : '#DC2626'};direction:ltr;">${fmtMoney(it.profit)}</div></div>`).join('')
+    : '<div class="emptyMsg">لا توجد مبيعات في هذه الفترة</div>';
+
+  // الأصناف الراكدة
+  const bk = rep.v.slowBuckets || {};
+  const bc = d => (bk['d' + d] || {}).count || 0;
+  const bv = d => (bk['d' + d] || {}).value || 0;
+  const slowList = profitSlowList(rep, profitUi.slow);
+  h += `<div class="gsSec" style="margin-top:22px;"><span>الأصناف الراكدة</span></div>
+    <div style="font-size:12px;color:var(--textMuted);font-weight:700;margin:2px 4px 6px;line-height:1.7;">أصناف عندك منها مخزون وما انباعت من فترة - فلوس محبوسة على الرف</div>
+    <div class="lsChips" style="margin:6px 0 4px;">${chip(30, '30+ يوم', bc(30), 'slow')}${chip(60, '60+ يوم', bc(60), 'slow')}${chip(90, '90+ يوم', bc(90), 'slow')}</div>
+    <div style="background:var(--surface2);border-radius:12px;padding:10px 13px;margin:8px 0;font-size:13px;font-weight:800;display:flex;justify-content:space-between;"><span>قيمة محبوسة (بالتكلفة)</span><span style="color:#B45309;direction:ltr;">${fmtMoney(bv(profitUi.slow))} د.ل</span></div>`;
+  const shownSlow = profitUi.slowAll ? slowList : slowList.slice(0, 25);
+  h += shownSlow.length ? shownSlow.map(it => `<div class="searchResultRow gsRow" onclick="openItemFromHub(${Number(it.id)})">
+      <div class="n">${escapeHtml(String(it.name || ''))}<div class="gsSub">الكمية ${Number(it.qty)} · ${it.days < 0 ? '<span style="color:#DC2626;">لم يُبع أبدًا</span>' : 'آخر بيع منذ ' + it.days + ' يوم'}</div></div>
+      <div class="p" style="font-weight:900;direction:ltr;">${fmtMoney(it.value)}</div></div>`).join('')
+    : '<div class="emptyMsg">لا توجد أصناف راكدة</div>';
+  if (!profitUi.slowAll && slowList.length > shownSlow.length) h += `<button type="button" class="gsMore" onclick="profitUi.slowAll=true;renderProfitReport();">عرض الكل (${slowList.length})</button>`;
+
+  // قيمة المخزون
+  const st = rep.v.stock || {};
+  const stat = (label, val, color) => `<div style="flex:1;min-width:0;background:var(--surface2);border-radius:12px;padding:10px 8px;text-align:center;"><div style="font-size:11px;color:var(--textMuted);font-weight:800;">${label}</div><div style="font-size:14.5px;font-weight:900;margin-top:3px;${color ? 'color:' + color + ';' : ''}direction:ltr;">${fmtMoney(val)}</div></div>`;
+  h += `<div class="gsSec" style="margin-top:22px;"><span>قيمة المخزون الحالية</span><span class="gsCnt">${st.items || 0} صنف</span></div>
+    <div style="display:flex;gap:6px;margin-top:6px;">${stat('بالتكلفة', st.costValue)}${stat('بسعر البيع', st.saleValue)}${stat('ربح متوقع', Number(st.saleValue || 0) - Number(st.costValue || 0), '#059669')}</div>`;
+  const notes = [];
+  if (st.zeroCostItems) notes.push(st.zeroCostItems + ' صنف في المخزون تكلفته صفر (القيمة بالتكلفة أقل من الحقيقة)');
+  if (st.serviceItems) notes.push(st.serviceItems + ' صنف خدمة بكمية ضخمة مستبعد من الحساب');
+  if (notes.length) h += `<div style="font-size:11.5px;color:var(--textMuted);font-weight:700;margin:8px 4px 0;line-height:1.8;">${notes.map(escapeHtml).join('<br>')}</div>`;
+
+  h += `<button id="profitPdfBtn" type="button" onclick="profitPdfAction()" style="width:100%;margin-top:18px;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;background:${rep.file ? '#16A34A' : '#2563EB'};">${rep.file ? 'مشاركة التقرير' : 'تصدير PDF'}</button>`;
+  h += `<div style="text-align:center;font-size:11px;color:var(--textMuted);margin:10px 0 4px;">محسوب من كمبيوتر الكاشير ${escapeHtml(String(rep.v.generatedAt || ''))}${rep.v.ms ? ' · ' + (rep.v.ms / 1000).toFixed(1) + ' ث' : ''}</div>`;
+  el.innerHTML = h;
+}
+
+function buildProfitPdfHtml(rep) {
+  const store = (typeof labelSettings !== 'undefined' && labelSettings.storeName) ? String(labelSettings.storeName) : 'منظومة المبيعات';
+  const { s, gross, net, margin, netMargin } = profitCalc(rep);
+  const td = 'padding:8px;border-bottom:1px solid #F1F5F9;';
+  const line = (label, val, bold, color) => `<tr><td style="${td}${bold ? 'font-weight:900;' : 'color:#475569;font-weight:700;'}">${label}</td><td style="${td}text-align:left;font-weight:${bold ? 900 : 800};${color ? 'color:' + color + ';' : ''}">${fmtMoney(val)} د.ل</td></tr>`;
+  const itemsTable = (title, list, withProfit) => list.length ? `<div style="font-size:19px;font-weight:900;margin:22px 0 8px;">${title}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;"><tr style="background:#F1F5F9;font-weight:900;"><td style="padding:8px;">#</td><td style="padding:8px;">الصنف</td><td style="padding:8px;text-align:center;">الكمية</td><td style="padding:8px;text-align:left;">المبيعات</td>${withProfit ? '<td style="padding:8px;text-align:left;">الربح</td>' : ''}</tr>
+    ${list.map((it, i) => `<tr><td style="${td}">${i + 1}</td><td style="${td}font-weight:700;">${escapeHtml(String(it.name || ''))}</td><td style="${td}text-align:center;">${Number(it.qty)}</td><td style="${td}text-align:left;">${fmtMoney(it.revenue)}</td>${withProfit ? `<td style="${td}text-align:left;font-weight:900;color:${Number(it.profit) >= 0 ? '#059669' : '#DC2626'};">${fmtMoney(it.profit)}</td>` : ''}</tr>`).join('')}</table>` : '';
+  const slow = profitSlowList(rep, profitUi.slow).slice(0, 40);
+  const st = rep.v.stock || {};
+  return `<div style="background:#fff;color:#1E293B;padding:10px 18px;font-size:15px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1E293B;padding-bottom:12px;">
+      <div><div style="font-size:26px;font-weight:900;">تقرير الأرباح</div><div style="font-size:15px;color:#475569;font-weight:700;margin-top:4px;">${escapeHtml(store)}</div></div>
+      <div style="text-align:left;"><div style="font-size:18px;font-weight:800;">${escapeHtml(rep.label)}</div><div style="font-size:13px;color:#475569;margin-top:3px;">${escapeHtml(rep.range.from)}${rep.range.to !== rep.range.from ? ' ← ' + escapeHtml(rep.range.to) : ''}</div></div>
+    </div>
+    <div style="display:flex;gap:12px;margin:16px 0;">
+      <div style="flex:1;background:${net >= 0 ? '#ECFDF5' : '#FEF2F2'};border-radius:12px;padding:14px;"><div style="font-size:13px;color:#475569;font-weight:800;">صافي الربح</div><div style="font-size:26px;font-weight:900;color:${net >= 0 ? '#059669' : '#DC2626'};">${fmtMoney(net)} د.ل</div><div style="font-size:13px;font-weight:800;color:#475569;">هامش ${netMargin.toFixed(1)}%</div></div>
+      <div style="flex:1;background:#F8FAFC;border-radius:12px;padding:14px;"><div style="font-size:13px;color:#475569;font-weight:800;">الفواتير / القطع</div><div style="font-size:26px;font-weight:900;">${s.invoices || 0} / ${Number(s.qtySold || 0)}</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;">
+      ${line('إجمالي المبيعات', gross)}
+      ${Number(s.invDiscount || 0) ? line('− الخصومات', s.invDiscount) : ''}
+      ${line('− المرتجعات (' + (s.returnsCount || 0) + ')', s.returnsValue)}
+      ${line('صافي المبيعات', s.netRevenue, true)}
+      ${line('− تكلفة البضاعة المباعة', s.cogs)}
+      ${line('مجمل الربح (' + margin.toFixed(1) + '%)', s.grossProfit, true, '#059669')}
+      ${line('− خسائر التالف (' + rep.damagedCount + ')', rep.damaged)}
+      ${line('صافي الربح', net, true, net >= 0 ? '#059669' : '#DC2626')}
+    </table>
+    ${Number(s.zeroCostLines || 0) ? `<div style="margin-top:12px;background:#FEF3C7;color:#92400E;border-radius:10px;padding:10px;font-size:13px;font-weight:700;">ملاحظة: ${s.zeroCostLines} سطر بيع بتكلفة صفر (${fmtMoney(s.zeroCostRevenue)} د.ل) - الربح الحقيقي أقل من المعروض.</div>` : ''}
+    ${itemsTable('الأكثر ربحًا', profitArr(rep.v.topProfit), true)}
+    ${itemsTable('الأكثر مبيعًا', profitArr(rep.v.topQty), true)}
+    <div style="font-size:19px;font-weight:900;margin:22px 0 8px;">الأصناف الراكدة (${profitUi.slow}+ يوم)</div>
+    ${slow.length ? `<table style="width:100%;border-collapse:collapse;font-size:14px;"><tr style="background:#F1F5F9;font-weight:900;"><td style="padding:8px;">الصنف</td><td style="padding:8px;text-align:center;">الكمية</td><td style="padding:8px;">آخر بيع</td><td style="padding:8px;text-align:left;">القيمة بالتكلفة</td></tr>
+      ${slow.map(it => `<tr><td style="${td}font-weight:700;">${escapeHtml(String(it.name || ''))}</td><td style="${td}text-align:center;">${Number(it.qty)}</td><td style="${td}">${it.days < 0 ? 'لم يُبع' : 'منذ ' + it.days + ' يوم'}</td><td style="${td}text-align:left;font-weight:800;">${fmtMoney(it.value)}</td></tr>`).join('')}</table>` : '<div style="color:#475569;">لا توجد أصناف راكدة</div>'}
+    <div style="font-size:19px;font-weight:900;margin:22px 0 8px;">قيمة المخزون الحالية (${st.items || 0} صنف)</div>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;">
+      ${line('بالتكلفة', st.costValue)}${line('بسعر البيع', st.saleValue)}${line('الربح المتوقع', Number(st.saleValue || 0) - Number(st.costValue || 0), true, '#059669')}
+    </table>
+    <div style="margin-top:18px;font-size:12px;color:#94A3B8;text-align:center;">محسوب من قاعدة بيانات الكاشير ${escapeHtml(String(rep.v.generatedAt || ''))} - التكلفة المحفوظة وقت البيع</div>
+  </div>`;
+}
+
+function profitPdfAction() {
+  const rep = profitRep;
+  const btn = document.getElementById('profitPdfBtn');
+  if (!rep || !btn || rep.preparing) return;
+  const title = 'تقرير الأرباح - ' + rep.label;
+  if (!rep.file) {
+    const libErr = pdfLibsError();
+    if (libErr) { alert(libErr); return; }
+    rep.preparing = true;
+    btn.disabled = true;
+    btn.textContent = 'جاري تجهيز التقرير...';
+    buildPdfFileFromHtml(buildProfitPdfHtml(rep), title).then(res => {
+      rep.preparing = false; rep.file = res.file; rep.pdf = res.pdf;
+      if (profitRep !== rep) return;
+      btn.disabled = false; btn.style.background = '#16A34A'; btn.textContent = 'مشاركة التقرير';
+    }).catch(err => {
+      rep.preparing = false; btn.disabled = false; btn.textContent = 'تصدير PDF';
+      alert('تعذّر تجهيز الـ PDF: ' + (err && err.message ? err.message : err));
+    });
+    return;
+  }
+  if (navigator.canShare && navigator.canShare({ files: [rep.file] })) {
+    navigator.share({ files: [rep.file], title: title }).catch(err => { if (!err || err.name !== 'AbortError') alert('تعذّر فتح قائمة المشاركة'); });
+  } else if (rep.pdf && typeof rep.pdf.save === 'function') {
+    rep.pdf.save(rep.file.name);
+  } else {
+    alert('تعذّر مشاركة الملف على هذا الجهاز.');
+  }
+}
+
 /* ================= مركز الأصناف ================= */
 // شاشة واحدة لكل ما يخص البضاعة: بحث + كاميرا + اختصارات + فلاتر بأعدادها + قائمة سريعة.
 // الضغط على أي صنف يفتح بطاقة الصنف (التفاصيل والتعديل والباركود والتالف).
@@ -2744,7 +3008,8 @@ function productsHubRfid() {
 // كل البحث من بيانات موجودة في الذاكرة أصلًا (فوري)، والفواتير من النسخة المحفوظة + زر للبحث في الكاشير
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
-  { name: 'التقارير', kw: 'تقرير تقارير مبيعات ارباح صافي', run: "openModal('reportsModal')" },
+  { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'تقرير الأرباح', kw: 'ارباح ربح صافي هامش راكد راكدة قيمة المخزون', run: "openModal('reportsModal');setReportView('profit')" },
   { name: 'الأصناف التي نفدت', kw: 'مخزون كميات نفد نفاد ادارة', run: "openProductsHub('out')" },
   { name: 'المرتجعات', kw: 'مرتجع مرتجعات ارجاع', run: "openModal('returnsModal')" },
   { name: 'النواقص', kw: 'نواقص طلبيات مورد', run: "openModal('shortagesModal')" },
@@ -2950,9 +3215,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.15.0';
+const APP_VERSION = '2.16.0';
 const APP_BUILD_DATE = '2026-09-29';
 const APP_RELEASES = [
+  { v: '2.16.0', date: '2026-09-30', items: [
+    'تبويب الأرباح في التقارير: صافي الربح بعد الخصومات والمرتجعات وخسائر التالف، بدقة 100% من تكلفة وقت البيع',
+    'الأصناف الأكثر ربحًا والأكثر مبيعًا والتي بيعت بخسارة',
+    'الأصناف الراكدة (30/60/90 يوم) مع القيمة المحبوسة، وقيمة المخزون بالتكلفة وبسعر البيع',
+    'تنبيه عند وجود مبيعات بتكلفة صفر، وتصدير التقرير PDF'
+  ] },
   { v: '2.15.0', date: '2026-09-29', items: [
     'نسخة احتياطية يومية تلقائية (قاعدة بيانات الكاشير + كل بيانات Firebase) تُرسل على تليجرام',
     'حالة آخر نسخة احتياطية تظهر في شاشة الأخطاء وحالة الكاشير وفي حول التطبيق، مع تنبيه لو فشلت أو تأخرت'
@@ -8583,6 +8854,7 @@ function setReportPeriod(period) {
     }
     return;
   }
+  if (currentReportView === 'profit') { loadProfitReport(reportRangeForPeriod(period), period); return; }
   loadReportForPeriod(period);
 }
 
@@ -8592,6 +8864,7 @@ function loadCustomRangeReport() {
   const el = document.getElementById('reportsBody');
   if (!fromStr || !toStr) { el.innerHTML = '<div class="emptyMsg">اختر تاريخ البداية والنهاية</div>'; return; }
   if (fromStr > toStr) { el.innerHTML = '<div class="emptyMsg">تاريخ البداية يجب يكون قبل تاريخ النهاية</div>'; return; }
+  if (currentReportView === 'profit') { loadProfitReport({ from: fromStr, to: toStr }, 'range', 'نطاق مخصص'); return; }
   runReportQuery({ from: fromStr, to: toStr }, 'range', el, 'من ' + fromStr + ' إلى ' + toStr);
 }
 
