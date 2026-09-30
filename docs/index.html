@@ -2637,6 +2637,7 @@ function damagedPdfAction() {
 // ترفع ملف StoreSalesAlert.ps1 من الجوال -> commands/scriptUpdate -> السكريبت يفحصه ويركّبه ويعيد تشغيل نفسه.
 // الحالة ترجع في data/scriptUpdateStatus: checking | installing | done | rejected | rolledback
 let scriptUpdateStatus = null;
+let cleanupStatus = null;
 let scriptUpdFile = null; // { name, content, sha256, version, size }
 let scriptUpdPendingId = null;
 let scriptUpdTimer = null;
@@ -3431,9 +3432,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.18.0';
+const APP_VERSION = '2.19.0';
 const APP_BUILD_DATE = '2026-09-30';
 const APP_RELEASES = [
+  { v: '2.19.0', date: '2026-09-30', items: [
+    'حماية حصة السيرفر: الكاشير يرفع البيانات لما تتغير بس، والأصناف المتغيرة بس بدل القائمة كاملة',
+    'الأرشيف يتحمّل آخر 3 شهور، والفترات الأقدم تنطلب وقت الحاجة',
+    'تنظيف يومي للنتائج المؤقتة فقط (ردود التقارير والطباعة) - الأرشيف والسجلات وكل البيانات لا تُحذف أبدًا',
+    'مؤشر انقطاع الكاشير صار يعتمد على نبضة السكريبت'
+  ] },
   { v: '2.18.0', date: '2026-09-30', items: [
     'تعديلات بوت تليجرام (السعر والتكلفة والجملة والكمية) صارت تظهر في سجل التعديلات بشارة "من تليجرام"، من كم إلى كم',
     'التراجع يشتغل على تعديلات تليجرام بنفس الطريقة',
@@ -3590,6 +3597,7 @@ function openAboutApp() {
     <div class="abRow"><span class="k">الحالة</span><span class="v" style="direction:rtl;color:${st.color};white-space:normal;">${escapeHtml(st.title)}</span></div>
     <div class="abRow"><span class="k">إصدار السكريبت</span><span class="v">${escapeHtml(runningScriptVersion() || 'قديم')}</span></div>
     <div class="abRow"><span class="k">آخر اتصال</span><span class="v" style="direction:rtl;">${lastSeen}</span></div>
+    <div class="abRow"><span class="k">آخر تنظيف للسيرفر</span><span class="v" style="direction:rtl;${cleanupStatus && cleanupStatus.ok === false ? 'color:#DC2626;' : ''}">${cleanupStatus && cleanupStatus.at ? escapeHtml(String(cleanupStatus.at)) + ' · ' + Number(cleanupStatus.total || 0) + ' نتيجة مؤقتة' : '—'}</span></div>
     <div class="abRow"><span class="k">آخر نسخة احتياطية</span><span class="v" style="direction:rtl;${backupStatus && backupStatus.ok === false ? 'color:#DC2626;' : ''}">${backupStatus && backupStatus.at ? escapeHtml(String(backupStatus.at).slice(0, 16)) + (backupStatus.ok === false ? ' (فشلت)' : '') : '—'}</span></div>
     <div class="abSec">الجديد في الإصدار ${APP_VERSION}</div>
     <div class="abLog"><ul style="margin:0;padding:0;">${APP_RELEASES[0].items.map(x => '<li>' + escapeHtml(x) + '</li>').join('')}</ul></div>
@@ -3983,10 +3991,12 @@ function fmtMoney(n) {
 }
 
 function checkOffline() {
+  // من نبضة السكريبت (كل 15 ثانية) - الملخص صار يترفع بس لما يتغير، فوقته ما يصلحش للحكم على الاتصال
   const icon = document.getElementById('offlineIcon');
-  if (!latestSummary.lastSync) { icon.style.display = 'none'; return; }
-  const diffSec = (Date.now() - new Date(latestSummary.lastSync).getTime())/1000;
-  icon.style.display = diffSec > 30 ? 'flex' : 'none';
+  const seen = scriptStatus && scriptStatus.lastSeen ? Number(scriptStatus.lastSeen) : (latestSummary.lastSync ? new Date(latestSummary.lastSync).getTime() : 0);
+  if (!seen) { icon.style.display = 'none'; return; }
+  const diffSec = (Date.now() - seen) / 1000;
+  icon.style.display = diffSec > 60 ? 'flex' : 'none';
 }
 setInterval(checkOffline, 5000);
 
@@ -4001,6 +4011,7 @@ function startErrorMonitoring() {
   db.ref('.info/serverTimeOffset').on('value', snap => { serverTimeOffset = snap.val() || 0; });
   db.ref('data/scriptStatus').on('value', snap => { scriptStatus = snap.val(); renderCashierStatus(); });
   db.ref('data/scriptUpdateStatus').on('value', snap => onScriptUpdateStatus(snap.val()));
+  db.ref('data/cleanupStatus').on('value', snap => { cleanupStatus = snap.val(); });
   db.ref('data/backupStatus').on('value', snap => { backupStatus = snap.val(); try { if (isModalOpen('errorsModal')) renderErrorsStatusCard(); } catch (e) {} });
   db.ref('data/errorLog').limitToLast(100).on('value', snap => {
     const val = snap.val() || {};
@@ -5977,13 +5988,18 @@ function runWithCashier(ctx, sendFn, offlineFn, timeoutMs) {
 let archiveCache = null;
 let archiveCacheAt = 0;
 let archiveCachePromise = null;
+function archiveCacheStart() {
+  const d = new Date(); d.setDate(d.getDate() - 92);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
 
 function loadArchiveCache() {
   if (archiveCachePromise) return archiveCachePromise;
   if (archiveCache && Date.now() - archiveCacheAt < 60000) return Promise.resolve(archiveCache);
   let q;
   if (!archiveCache) {
-    q = db.ref('data/dailyArchive').once('value').then(snap => { archiveCache = snap.val() || {}; });
+    // آخر 3 شهور بس (توفير الحصة) - الفترات الأقدم بتنطلب من السيرفر وقت الحاجة
+    q = db.ref('data/dailyArchive').orderByKey().startAt(archiveCacheStart()).once('value').then(snap => { archiveCache = snap.val() || {}; });
   } else {
     // تحديث من آخر يوم موجود عندنا (شامله، عشان فواتير النهارده بتزيد)
     const days = Object.keys(archiveCache).sort();
@@ -6003,7 +6019,7 @@ function loadArchiveCache() {
 
 // أرشيف يوم واحد بس - مصفوفة فواتير/مرتجعات (أو فاضية لو مفيش)
 function fetchArchiveDay(dateStr) {
-  if (archiveCache) return loadArchiveCache().then(c => Object.values(c[dateStr] || {}).filter(Boolean));
+  if (archiveCache && dateStr >= archiveCacheStart()) return loadArchiveCache().then(c => Object.values(c[dateStr] || {}).filter(Boolean));
   return db.ref('data/dailyArchive/' + dateStr).once('value').then(snap => {
     const val = snap.val();
     return val ? Object.values(val).filter(Boolean) : [];
@@ -6032,7 +6048,7 @@ function fetchArchiveRange(fromStr, toStr) {
     });
     return flat;
   };
-  if (archiveCache) return loadArchiveCache().then(flatten);
+  if (archiveCache && fromStr >= archiveCacheStart()) return loadArchiveCache().then(flatten);
   return db.ref('data/dailyArchive').orderByKey().startAt(fromStr).endAt(toStr).once('value').then(snap => flatten(snap.val()));
 }
 
