@@ -2667,6 +2667,7 @@ function usageLevelInfo(level) {
 }
 
 function onFirebaseUsage(v) {
+  if (usageCheckPending && v && v.at && Number(v.at) !== usageCheckPending) usageCheckPending = 0;
   firebaseUsage = v;
   const tag = document.getElementById('usageSettingsTag');
   if (tag) {
@@ -2675,6 +2676,21 @@ function onFirebaseUsage(v) {
     else tag.textContent = '';
   }
   try { if (isModalOpen('usageModal')) renderUsage(); } catch (e) {}
+}
+
+let usageCheckPending = 0;
+function usageCheckNow() {
+  if (usageCheckPending) return;
+  usageCheckPending = firebaseUsage && firebaseUsage.at ? Number(firebaseUsage.at) : 1;
+  db.ref('commands/usageCheckNow').set(firebase.database.ServerValue.TIMESTAMP).catch(err => { usageCheckPending = 0; alert('تعذّر إرسال الطلب: ' + (err && err.message ? err.message : err)); });
+  setTimeout(() => { if (usageCheckPending) { usageCheckPending = 0; renderUsage(); } }, 60000);
+  renderUsage();
+}
+
+function usageCheckBtnHtml() {
+  return usageCheckPending
+    ? '<button type="button" disabled style="width:100%;margin-top:14px;border:none;border-radius:12px;padding:12px;font-size:13.5px;font-weight:800;background:var(--surface2);color:var(--textMuted);">جاري الفحص من كمبيوتر الكاشير...</button>'
+    : '<button type="button" onclick="usageCheckNow()" style="width:100%;margin-top:14px;border:none;border-radius:12px;padding:12px;font-size:13.5px;font-weight:800;cursor:pointer;background:#2563EB;color:#fff;">افحص الآن</button>';
 }
 
 function openUsage() {
@@ -2720,13 +2736,15 @@ function renderUsage() {
     el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">هذه الميزة تحتاج تحديث السكريبت على الكاشير<br><span style="font-size:12px;">الإعدادات ← تحديث السكريبت على الكاشير</span></div>';
     return;
   }
-  if (!u) { el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">أول قراءة تصل خلال دقائق من تشغيل السكريبت، وبعدها كل ساعة</div>'; return; }
+  if (!u) { el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">أول قراءة تصل خلال دقائق من تشغيل السكريبت، وبعدها كل ساعة</div>' + usageCheckBtnHtml(); return; }
   const when = u.at ? new Date(u.at) : null;
   const whenStr = when ? when.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }) + ' ' + when.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }) : '—';
   if (!u.ok) {
     el.innerHTML = `<div style="margin-top:12px;background:#FEE2E2;color:#991B1B;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:800;line-height:1.8;">${escapeHtml(u.msg || 'تعذّر قراءة الاستهلاك')}</div>
-      ${u.detail ? `<div style="font-size:11px;color:var(--textMuted);margin:8px 4px;direction:ltr;text-align:left;word-break:break-word;">${escapeHtml(String(u.detail).slice(0, 300))}</div>` : ''}
-      <div style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:10px;">آخر محاولة ${whenStr} · تُعاد كل ساعة</div>`;
+      ${u.step ? `<div style="font-size:12px;color:var(--textMuted);font-weight:700;margin:8px 4px 0;">الخطوة: ${escapeHtml(u.step)}${u.http ? ' · HTTP ' + escapeHtml(String(u.http)) : ''}${u.gStatus ? ' · ' + escapeHtml(u.gStatus) : ''}</div>` : ''}
+      ${u.log ? scriptUpdLogHtml(u.log, false) : (u.detail ? `<div style="font-size:11px;color:var(--textMuted);margin:8px 4px;direction:ltr;text-align:left;word-break:break-word;">${escapeHtml(String(u.detail).slice(0, 300))}</div>` : '')}
+      ${usageCheckBtnHtml()}
+      <div style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:10px;">آخر محاولة ${whenStr} · تُعاد تلقائيًا كل ساعة</div>`;
     return;
   }
   const li = usageLevelInfo(u.level);
@@ -2745,6 +2763,8 @@ function renderUsage() {
   h += `<div style="font-size:11.5px;color:var(--textMuted);font-weight:700;margin:14px 4px 0;line-height:1.9;">
       تنبيه على تليجرام عند 50% و80% و95% من الحد الشهري، أو لو يوم استهلك أكثر من 3 أضعاف المعتاد.<br>
       الأرقام رسمية من Google · آخر قراءة ${whenStr} · تتحدث كل ساعة</div>`;
+  h += usageCheckBtnHtml();
+  if (u.log) h += `<details style="margin-top:10px;"><summary style="font-size:12px;color:var(--textMuted);font-weight:800;cursor:pointer;">سجل آخر فحص</summary>${scriptUpdLogHtml(u.log, false)}</details>`;
   el.innerHTML = h;
 }
 
@@ -3548,9 +3568,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.20.0';
+const APP_VERSION = '2.20.1';
 const APP_BUILD_DATE = '2026-09-30';
 const APP_RELEASES = [
+  { v: '2.20.1', date: '2026-09-30', items: [
+    'استهلاك Firebase: سجل تفصيلي لكل خطوة، ولو فيه خطأ يظهر رد Google كامل والسبب والحل',
+    'زر "افحص الآن" بدل انتظار ساعة'
+  ] },
   { v: '2.20.0', date: '2026-09-30', items: [
     'خانة "استهلاك Firebase" في الإعدادات: التحميل هذا الشهر والمساحة بأرقام Google الرسمية، مع رسم آخر 30 يوم',
     'الحالة آمن / انتبه / خطر، وتنبيه تليجرام عند 50% و80% و95% أو يوم استهلاك غير طبيعي'
