@@ -6,7 +6,7 @@
 <title>HTC POS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="المبيعات">
 <meta name="theme-color" content="#2563EB">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Arial, sans-serif; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif; }
   html, body { height:100%; overflow:hidden; background:var(--bg); }
   /* آيفون بيعمل زوم تلقائي على أي حقل كتابة خط حجمه أقل من 16px - بنمنع ده هنا لكل الحقول
      (بما فيها الحقول اللي بتتولد بالجافاسكريبت) بدل ما نعدل كل حقل لوحده */
@@ -320,6 +320,37 @@
   .gsClear .ico, .cpClear .ico { width:12px; height:12px; vertical-align:middle; }
   .phIc .ico { width:21px; height:21px; }
   .gsSec .ico { width:15px; height:15px; margin-left:4px; }
+
+  /* ===== نوافذ الرسائل بتصميم التطبيق ===== */
+  .uiDlgBg { position:fixed; inset:0; z-index:100000; display:flex; align-items:flex-end; justify-content:center; background:rgba(15,23,42,0); transition:background-color .22s ease; }
+  .uiDlgBg.show { background:rgba(15,23,42,.45); }
+  .uiDlg { width:100%; max-width:520px; background:var(--surface); color:var(--text); border-radius:24px 24px 0 0; padding:22px 20px calc(18px + env(safe-area-inset-bottom, 0px)); text-align:center; box-shadow:0 -12px 40px rgba(0,0,0,.22); transform:translateY(105%); transition:transform .28s cubic-bezier(.2,.85,.25,1); }
+  .uiDlgBg.show .uiDlg { transform:none; }
+  .uiDlgIc { width:54px; height:54px; border-radius:17px; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+  .uiDlgT { font-size:17px; font-weight:700; line-height:1.6; margin-bottom:4px; }
+  .uiDlgM { font-size:14.5px; color:var(--textMuted); line-height:1.85; white-space:pre-line; max-height:45vh; overflow-y:auto; }
+  .uiDlgIn { width:100%; margin-top:14px; border:1.5px solid var(--border); border-radius:13px; padding:12px 14px; background:var(--surface2); color:var(--text); font-family:inherit; text-align:right; box-sizing:border-box; }
+  textarea.uiDlgIn { direction:ltr; text-align:left; font-size:13px !important; }
+  .uiDlgBtns { display:flex; gap:10px; margin-top:18px; }
+  .uiDlgB { flex:1; border:none; border-radius:14px; padding:14px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .uiDlgOk { color:#fff; }
+  .uiDlgCancel { background:var(--surface2); color:var(--text); }
+  @media (prefers-reduced-motion: reduce) { .uiDlg, .uiDlgBg { transition:none; } }
+  /* الخط: كل الأزرار والحقول بنفس خط التطبيق */
+  button, input, select, textarea { font-family:inherit; }
+  /* ===== الوضع الليلي: الألوان الفاتحة المكتوبة داخل الشاشات تتحول لنسخ داكنة ===== */
+  body.dark-theme [style*="background:#FEE2E2"], body.dark-theme [style*="background:#FEF2F2"], body.dark-theme [style*="background: rgb(254, 242, 242)"], body.dark-theme [style*="background: rgb(254, 226, 226)"] { background:rgba(239,68,68,.16) !important; }
+  body.dark-theme [style*="background:#FEF3C7"], body.dark-theme [style*="background:#FFFBEB"], body.dark-theme [style*="background: rgb(255, 251, 235)"], body.dark-theme [style*="background: rgb(254, 243, 199)"] { background:rgba(245,158,11,.16) !important; }
+  body.dark-theme [style*="background:#DCFCE7"], body.dark-theme [style*="background:#F0FDF4"], body.dark-theme [style*="background:#ECFDF5"], body.dark-theme [style*="background: rgb(240, 253, 244)"], body.dark-theme [style*="background: rgb(220, 252, 231)"] { background:rgba(34,197,94,.15) !important; }
+  body.dark-theme [style*="background:#DBEAFE"], body.dark-theme [style*="background:#EFF6FF"], body.dark-theme [style*="background: rgb(239, 246, 255)"], body.dark-theme [style*="background: rgb(219, 234, 254)"] { background:rgba(59,130,246,.16) !important; }
+  body.dark-theme [style*="background:#E0F2FE"] { background:rgba(14,165,233,.16) !important; }
+  body.dark-theme [style*="background:#F1F5F9"], body.dark-theme [style*="background:#F8FAFC"], body.dark-theme [style*="background: rgb(241, 245, 249)"], body.dark-theme [style*="background: rgb(248, 250, 252)"] { background:var(--surface2) !important; }
+  body.dark-theme [style*="color:#991B1B"], body.dark-theme [style*="color:#B91C1C"], body.dark-theme [style*="color: rgb(153, 27, 27)"] { color:#FCA5A5 !important; }
+  body.dark-theme [style*="color:#92400E"], body.dark-theme [style*="color:#B45309"], body.dark-theme [style*="color: rgb(146, 64, 14)"] { color:#FCD34D !important; }
+  body.dark-theme [style*="color:#15803D"], body.dark-theme [style*="color:#166534"] { color:#86EFAC !important; }
+  body.dark-theme [style*="color:#1D4ED8"], body.dark-theme [style*="color:#1E40AF"] { color:#93C5FD !important; }
+  body.dark-theme [style*="color:#0369A1"] { color:#7DD3FC !important; }
+  body.dark-theme [style*="color:#1E293B"], body.dark-theme [style*="color: rgb(30, 41, 59)"] { color:var(--text) !important; }
   /* التقارير: المبيعات / الأرباح */
   .repSeg { display:flex; background:var(--surface2); border-radius:12px; padding:3px; margin-top:12px; }
   .repSeg button { flex:1; border:none; background:none; padding:9px; border-radius:10px; font-size:13.5px; font-weight:800; color:var(--textMuted); cursor:pointer; transition:background-color .2s ease, color .2s ease; }
@@ -862,7 +893,7 @@
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="text" id="productsFilterInput" placeholder="ابحث بالاسم أو الباركود..." autocomplete="off" oninput="renderProductsListDebounced()">
     </div>
-    <div id="productsList" onscroll="onProductsListScroll()"><div class="emptyMsg">جاري التحميل...</div></div>
+    <div id="productsList" onscroll="onProductsListScroll()"></div>
   </div>
 </div>
 
@@ -1813,8 +1844,8 @@ function doLogin() {
   if (!email || !pass) { errBox.textContent = 'اكتب الإيميل وكلمة المرور'; return; }
   auth.signInWithEmailAndPassword(email, pass).then(() => {
     if (faceIdSupported() && !localStorage.getItem('faceIdCred')) {
-      setTimeout(() => {
-        if (confirm('تفعيل تسجيل الدخول ببصمة الوجه في المرة الجاية؟')) {
+      setTimeout(async () => {
+        if (await uiConfirm('تفعيل تسجيل الدخول ببصمة الوجه في المرة الجاية؟')) {
           registerFaceId(email, pass);
         }
       }, 400);
@@ -1855,8 +1886,8 @@ function checkMainSystemStillOpen() {
 }
 setInterval(checkMainSystemStillOpen, 30000);
 
-function doLogout() {
-  if (confirm('تسجيل خروج؟')) { appUnlockedThisSession = false; auth.signOut(); }
+async function doLogout() {
+  if (await uiConfirm('تسجيل خروج؟')) { appUnlockedThisSession = false; auth.signOut(); }
 }
 
 // بترسم شاشة إعدادات الصوت والاهتزاز كاملة - كل سياق (النقر، الباركود، الإيصال، إيصال الإيداع)
@@ -2529,9 +2560,9 @@ function lqRemove(k) {
   renderLabelQueue();
 }
 
-function lqClear() {
+async function lqClear() {
   if (!Object.keys(labelQueue).length) return;
-  if (!confirm('تفريغ القائمة كلها؟')) return;
+  if (!await uiConfirm('تفريغ القائمة كلها؟')) return;
   labelQueue = {};
   saveLabelQueue();
   renderLabelQueue();
@@ -2556,7 +2587,7 @@ function renderLabelQueue() {
       <button type="button" onclick="lqSetQty('${k}', ${q.qty - 1})" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);font-size:17px;font-weight:900;cursor:pointer;color:var(--text);">−</button>
       <input type="number" inputmode="numeric" value="${q.qty}" onchange="lqSetQty('${k}', this.value)" style="width:52px;height:32px;text-align:center;font-size:14px;font-weight:900;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text);">
       <button type="button" onclick="lqSetQty('${k}', ${q.qty + 1})" style="width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);font-size:17px;font-weight:900;cursor:pointer;color:var(--text);">+</button>
-      <button type="button" onclick="lqRemove('${k}')" aria-label="حذف" style="width:32px;height:32px;border-radius:9px;border:none;background:#FEE2E2;color:#DC2626;font-size:16px;font-weight:900;cursor:pointer;">✕</button>
+      <button type="button" onclick="lqRemove('${k}')" aria-label="حذف" style="width:32px;height:32px;border-radius:9px;border:none;background:#FEE2E2;color:#DC2626;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>`;
   }).join('');
   el.innerHTML = keys.length
@@ -2573,7 +2604,7 @@ function renderLabelQueue() {
   }
 }
 
-function lqPrint() {
+async function lqPrint() {
   const keys = Object.keys(labelQueue);
   const jobs = [];
   const skipped = [];
@@ -2587,14 +2618,14 @@ function lqPrint() {
   const total = jobs.reduce((a, j) => a + j.copies, 0);
   let msg = 'طباعة ' + total + ' ملصق لـ ' + jobs.length + ' صنف؟';
   if (skipped.length) msg += '\n\nبيتخطى ' + skipped.length + ' صنف بدون باركود';
-  if (!confirm(msg)) return;
+  if (!await uiConfirm(msg)) return;
   const statusEl = document.getElementById('lqStatus');
   sendLabelPrintJob(jobs, labelSettings, statusEl, document.getElementById('lqPrintBtn'));
   // بعد نجاح الطباعة نسأل عن تفريغ القائمة
   const obs = new MutationObserver(() => {
     if (statusEl.textContent && statusEl.querySelector('span[style*="16A34A"]')) {
       obs.disconnect();
-      setTimeout(() => { if (confirm('تمت الطباعة ✓\nتفريغ القائمة؟')) { labelQueue = {}; saveLabelQueue(); renderLabelQueue(); } }, 400);
+      setTimeout(async () => { if (await uiConfirm('تمت الطباعة ✓\nتفريغ القائمة؟')) { labelQueue = {}; saveLabelQueue(); renderLabelQueue(); } }, 400);
     } else if (statusEl.querySelector('span[style*="DC2626"]')) obs.disconnect();
   });
   obs.observe(statusEl, { childList: true, subtree: true });
@@ -2688,7 +2719,7 @@ function updateDamagedSummary() {
     </div>${warn}`;
 }
 
-function submitDamaged() {
+async function submitDamaged() {
   const it = damagedFormItemId ? latestItems['i' + damagedFormItemId] : null;
   if (!it) { alert('اختر الصنف الأول'); return; }
   const qty = Number(String(document.getElementById('dmQty').value).replace(',', '.'));
@@ -2701,7 +2732,7 @@ function submitDamaged() {
   if (qty > stock) { alert('الكمية التالفة أكبر من المخزون الموجود.\nأقصى كمية: ' + stock); document.getElementById('dmQty').focus(); return; }
   const after = Math.max(0, Math.round((stock - qty) * 1000) / 1000);
   const total = Math.round(qty * cost * 1000) / 1000;
-  if (!confirm('تسجيل تالف؟\n\n' + it.name + '\nالكمية: ' + qty + ' (' + damagedFormReason + ')\nالخسارة: ' + fmtMoney(total) + ' د.ل\nالمخزون: ' + stock + ' ← ' + after + '\n\nالكمية ستُخصم من مخزون الكاشير.')) return;
+  if (!await uiConfirm('تسجيل تالف؟\n\n' + it.name + '\nالكمية: ' + qty + ' (' + damagedFormReason + ')\nالخسارة: ' + fmtMoney(total) + ' د.ل\nالمخزون: ' + stock + ' ← ' + after + '\n\nالكمية ستُخصم من مخزون الكاشير.')) return;
 
   const btn = document.getElementById('dmSubmit');
   btn.disabled = true;
@@ -2816,10 +2847,10 @@ function loadDamagedLog() {
 
 // إلغاء تسجيل تالف: الكمية بترجع للمخزون بنفس طريق التعديل (increment موجب)
 function cancelDamaged(id, btn) {
-  liveOnce('data/damaged').then(snap => {
+  liveOnce('data/damaged').then(async snap => {
     const r = (snap.val() || {})[id];
     if (!r || r.cancelledAt) return;
-    if (!confirm('إلغاء تسجيل التالف؟\n\n' + r.itemName + ' × ' + r.qty + '\nالكمية سترجع لمخزون الكاشير.')) return;
+    if (!await uiConfirm('إلغاء تسجيل التالف؟\n\n' + r.itemName + ' × ' + r.qty + '\nالكمية سترجع لمخزون الكاشير.')) return;
     if (btn) btn.disabled = true;
     const reqId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
     const it = latestItems['i' + r.itemId];
@@ -2892,6 +2923,87 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= نوافذ الرسائل بتصميم التطبيق (بدل نوافذ الآيفون الرمادية) =================
+   uiAlert(msg) / uiConfirm(msg, opts) / uiPrompt(msg, def) - بترجع Promise.
+   window.alert نفسها بقت بتطلع بالتصميم ده تلقائيًا. */
+const uiDlgQueue = [];
+let uiDlgOpen = false;
+
+function uiDlgKind(msg) {
+  const m = String(msg || '');
+  if (/تعذّر|تعذر|خطأ|فشل|غير صالح|مرفوض|رفض|لا يمكن|مش ممكن/.test(m)) return 'error';
+  if (/تم |✓|نُسخ|نجح/.test(m)) return 'ok';
+  return 'info';
+}
+
+function uiDialog(opts) {
+  return new Promise(resolve => {
+    uiDlgQueue.push({ opts, resolve });
+    if (!uiDlgOpen) uiDlgNext();
+  });
+}
+
+function uiDlgNext() {
+  const job = uiDlgQueue.shift();
+  if (!job) { uiDlgOpen = false; return; }
+  uiDlgOpen = true;
+  const o = job.opts;
+  const kind = o.kind || 'info';
+  const pal = {
+    error: { c: '#DC2626', bg: 'rgba(220,38,38,.12)', ic: '<path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/>' },
+    ok: { c: '#16A34A', bg: 'rgba(22,163,74,.12)', ic: '<path d="m8 12.5 3 3 5-6"/><circle cx="12" cy="12" r="9"/>' },
+    info: { c: '#2563EB', bg: 'rgba(37,99,235,.12)', ic: '<path d="M12 11v5M12 7.5h.01"/><circle cx="12" cy="12" r="9"/>' },
+    ask: { c: '#2563EB', bg: 'rgba(37,99,235,.12)', ic: '<path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/><circle cx="12" cy="12" r="9"/>' },
+    danger: { c: '#DC2626', bg: 'rgba(220,38,38,.12)', ic: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>' }
+  }[kind] || {};
+  const lines = String(o.msg == null ? '' : o.msg).split('\n');
+  const title = o.title || (lines.length > 1 && lines[0].length < 60 ? lines.shift() : '');
+  const body = lines.join('\n').trim();
+  const wrap = document.createElement('div');
+  wrap.className = 'uiDlgBg';
+  wrap.innerHTML = `<div class="uiDlg" role="dialog" aria-modal="true">
+      <div class="uiDlgIc" style="color:${pal.c};background:${pal.bg};"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${pal.ic}</svg></div>
+      ${title ? `<div class="uiDlgT">${escapeHtml(title)}</div>` : ''}
+      ${body ? `<div class="uiDlgM">${escapeHtml(body)}</div>` : ''}
+      ${o.prompt ? `<${o.multiline ? 'textarea rows="4"' : 'input type="text"'} class="uiDlgIn" ${o.readonly ? 'readonly' : ''}>${o.multiline ? escapeHtml(o.def || '') + '</textarea>' : ''}` : ''}
+      <div class="uiDlgBtns">
+        ${o.cancel ? `<button type="button" class="uiDlgB uiDlgCancel">${escapeHtml(o.cancelText || 'إلغاء')}</button>` : ''}
+        <button type="button" class="uiDlgB uiDlgOk" style="background:${o.okColor || (kind === 'danger' ? '#DC2626' : '#2563EB')};">${escapeHtml(o.okText || 'حسنًا')}</button>
+      </div></div>`;
+  document.body.appendChild(wrap);
+  const inp = wrap.querySelector('.uiDlgIn');
+  if (inp && !o.multiline) inp.value = o.def == null ? '' : String(o.def);
+  const finish = val => {
+    wrap.classList.remove('show');
+    document.removeEventListener('keydown', onKey, true);
+    setTimeout(() => { wrap.remove(); job.resolve(val); uiDlgNext(); }, 220);
+  };
+  const okVal = () => o.prompt ? (inp ? inp.value : '') : true;
+  const cancelVal = () => o.prompt ? null : false;
+  function onKey(e) {
+    if (e.key === 'Escape') { e.preventDefault(); finish(cancelVal()); }
+    else if (e.key === 'Enter' && !(o.multiline)) { e.preventDefault(); finish(okVal()); }
+  }
+  wrap.querySelector('.uiDlgOk').onclick = () => finish(okVal());
+  const cb = wrap.querySelector('.uiDlgCancel'); if (cb) cb.onclick = () => finish(cancelVal());
+  wrap.addEventListener('click', e => { if (e.target === wrap) finish(o.cancel ? cancelVal() : okVal()); });
+  document.addEventListener('keydown', onKey, true);
+  requestAnimationFrame(() => {
+    wrap.classList.add('show');
+    if (inp) setTimeout(() => { inp.focus(); if (o.readonly || o.selectAll) inp.select(); }, 250);
+  });
+}
+
+function uiAlert(msg, title) { return uiDialog({ msg, title, kind: uiDlgKind(msg) }); }
+function uiConfirm(msg, opts) {
+  const o = opts || {};
+  const danger = o.danger != null ? o.danger : /حذف|مسح|إلغاء|تفريغ|خروج|تجاهل|استرجاع/.test(String(msg));
+  return uiDialog({ msg, title: o.title, kind: danger ? 'danger' : 'ask', cancel: true, okText: o.okText || (danger ? 'نعم، تأكيد' : 'تأكيد'), cancelText: o.cancelText || 'إلغاء' });
+}
+function uiPrompt(msg, def) { return uiDialog({ msg, kind: 'ask', prompt: true, def, cancel: true, okText: 'حفظ', selectAll: true }); }
+function uiCopyBox(text) { return uiDialog({ msg: 'انسخ النص من هنا', kind: 'info', prompt: true, multiline: true, readonly: true, def: text, okText: 'تم' }); }
+window.alert = function (msg) { uiAlert(msg); };
+
 /* ================= التحكم عن بعد (الحارس المتصل) =================
    guardian.ps1 برنامج صغير مستقل على الكاشير، متصل بـ Firebase لحاله (نبضة كل 20 ثانية في data/guardianStatus).
    حتى لو السكريبت الأساسي وقف، الحارس يستقبل أوامرك من commands/rescue: restart / start / rollback،
@@ -2910,12 +3022,12 @@ function onGuardianData() {
   try { if (isModalOpen('errorsModal')) renderRescuePanel(); } catch (e) {}
 }
 
-function sendRescue(action) {
+async function sendRescue(action) {
   if (!guardianOnline()) { alert('الحارس غير متصل الآن، فالأمر ما يوصل للكاشير'); return; }
   const labels = { restart: 'إعادة تشغيل السكريبت', start: 'تشغيل السكريبت', rollback: 'استرجاع النسخة السابقة من السكريبت' };
   let msg = labels[action] + '؟';
   if (action === 'rollback') msg += '\n\nيرجع السكريبت للنسخة اللي كانت قبل آخر تحديث.';
-  if (!confirm(msg)) return;
+  if (!await uiConfirm(msg)) return;
   const id = db.ref('commands').push().key;
   rescuePendingId = id;
   db.ref('commands/rescue').set({ id: id, action: action, at: firebase.database.ServerValue.TIMESTAMP }).then(() => {
@@ -3593,9 +3705,9 @@ function phLowThreshold() {
   return isFinite(n) && n > 0 ? n : 3;
 }
 
-function phSetLowThreshold() {
+async function phSetLowThreshold() {
   const cur = phLowThreshold();
-  const v = prompt('الصنف يُعتبر "قرب يخلص" لما كميته تكون أقل من أو تساوي:', String(cur));
+  const v = await uiPrompt('الصنف يُعتبر "قرب يخلص" لما كميته تكون أقل من أو تساوي:', String(cur));
   if (v === null) return;
   const n = Number(String(v).replace(',', '.'));
   if (!(n > 0) || n > 1000) { alert('اكتب رقم أكبر من صفر'); return; }
@@ -3923,9 +4035,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.25.1';
+const APP_VERSION = '2.26.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.26.0', date: '2026-10-01', items: [
+    'كل الرسائل والتأكيدات صارت بتصميم التطبيق (تطلع من تحت بأيقونة ولون حسب النوع) بدل نوافذ الآيفون الرمادية',
+    'خط عربي احترافي جديد (IBM Plex Sans Arabic) لكل التطبيق',
+    'الوضع الليلي: المربعات الملونة الفاتحة صارت بدرجات داكنة مريحة للعين',
+    'أيقونة بدل الرمز النصي في زر الحذف، وتحميل لامع بدل "جاري التحميل"'
+  ] },
   { v: '2.25.1', date: '2026-10-01', items: [
     'المنتجات: حذف الأزرار المكررة (جرد، باركود، تالف، النواقص - كلها في الرئيسية) وزر RFID صار أيقونة جنب الكاميرا، فالقائمة أكبر'
   ] },
@@ -4098,9 +4216,9 @@ function appRunModeLabel() {
 function copyTextToClipboard(text, okMsg) {
   const done = () => { try { showQuickToast(okMsg || 'نُسخ', true); } catch (e) {} };
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(done).catch(() => prompt('انسخ من هنا:', text));
+    navigator.clipboard.writeText(text).then(done).catch(() => uiCopyBox(text));
   } else {
-    prompt('انسخ من هنا:', text);
+    uiCopyBox(text);
   }
 }
 
@@ -4639,8 +4757,8 @@ function copyErrorText(key) {
   const e = errorLogEntries.find(x => x.key === key);
   if (!e) return;
   const txt = (e.time || '') + ' | ' + (e.where || '') + '\n' + (e.msg || '');
-  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('نُسخ')).catch(() => prompt('انسخ النص:', txt));
-  else prompt('انسخ النص:', txt);
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert('نُسخ')).catch(() => uiCopyBox(txt));
+  else uiCopyBox(txt);
 }
 
 function getErrorsSeenKey() { try { return localStorage.getItem('errorsSeenKey') || ''; } catch (e) { return ''; } }
@@ -4655,8 +4773,8 @@ function updateErrorsBadge() {
   if (b) { b.textContent = n > 99 ? '99+' : n; b.style.display = n ? 'flex' : 'none'; }
 }
 
-function clearErrorLog() {
-  if (!confirm('مسح كل الأخطاء؟')) return;
+async function clearErrorLog() {
+  if (!await uiConfirm('مسح كل الأخطاء؟')) return;
   db.ref('data/errorLog').remove().catch(err => alert('ما قدرت أمسح: ' + (err && err.message ? err.message : err)));
 }
 
@@ -5416,11 +5534,11 @@ function onCustomerPicked(customerId, customerName) {
   }
 }
 
-function assignDebtToCustomer(customerId, customerName) {
+async function assignDebtToCustomer(customerId, customerName) {
   if (!pendingDebtItem) return;
   const note = (document.getElementById('debtItemNoteInput').value || '').trim();
   const confirmMsg = 'تأكيد تسجيل دين "' + pendingDebtItem.name + '" (' + fmtMoney(pendingDebtItem.amount) + ' د.ل) على حساب "' + customerName + '"؟';
-  if (!confirm(confirmMsg)) return;
+  if (!await uiConfirm(confirmMsg)) return;
   const itemLabel = pendingDebtItem.name;
   const amountLabel = fmtMoney(pendingDebtItem.amount);
   const debtRef = db.ref('data/debts').push();
@@ -5570,7 +5688,7 @@ function processReceiptOcrBlob(blob) {
         document.getElementById('invoiceSearchInput').value = num;
         searchInvoiceByNumber();
       } else {
-        const manual = prompt('لم أتمكن من التأكد من الرقم بوضوح. القراءة ظهرت هكذا:\n"' + text.trim().slice(0, 120) + '"\n\nاكتب رقم الإيصال بنفسك:', '');
+        const manual = await uiPrompt('لم أتمكن من التأكد من الرقم بوضوح. القراءة ظهرت هكذا:\n"' + text.trim().slice(0, 120) + '"\n\nاكتب رقم الإيصال بنفسك:', '');
         if (manual && manual.trim()) {
           document.getElementById('invoiceSearchInput').value = manual.trim();
           searchInvoiceByNumber();
@@ -6343,8 +6461,8 @@ function retakeReceiptPhoto() {
   openCardReceiptOcrCamera();
 }
 
-function cancelReceiptReview() {
-  if (!confirm('تجاهل بيانات الإيصال التي تمت قراءتها؟')) return;
+async function cancelReceiptReview() {
+  if (!await uiConfirm('تجاهل بيانات الإيصال التي تمت قراءتها؟')) return;
   receiptCaptureState = null;
   closeModal('receiptReviewModal');
 }
@@ -6678,7 +6796,7 @@ function openAllInvoices() {
       <input type="date" id="allInvoicesTo" value="${fmt(now)}" style="flex:1;">
       <button onclick="loadAllInvoicesRange()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">عرض</button>
     </div>
-    <div id="allInvoicesResults"><div class="emptyMsg">جاري التحميل...</div></div>
+    <div id="allInvoicesResults">${skeletonHtml(6)}</div>
   `;
   openModal('invoiceResultsModal');
   loadAllInvoicesRange();
@@ -6907,8 +7025,8 @@ function closeCountDraft() {
   renderCountDraftBanner();
 }
 
-function cancelInventoryCount() {
-  if (!confirm('إلغاء الجرد؟ كل الأصناف التي عُدّت في هذا الجرد ستُحذف، ولن يُرسل أي تعديل للكاشير.')) return;
+async function cancelInventoryCount() {
+  if (!await uiConfirm('إلغاء الجرد؟ كل الأصناف التي عُدّت في هذا الجرد ستُحذف، ولن يُرسل أي تعديل للكاشير.')) return;
   closeCountDraft();
   renderInventoryCountList();
 }
@@ -7116,11 +7234,11 @@ function renderItemCardBackBar(show) {
   bar.style.display = 'block';
 }
 
-function itemCardBackToResults() {
+async function itemCardBackToResults() {
   // لو فيه تعديل مفتوح وفيه خانات اتغيرت ومحدش ضغط حفظ، نسأل الأول
   const d = document.getElementById('itemCardDetail');
   const dirty = Array.from(d.querySelectorAll('input')).some(i => !i.disabled && i.value !== i.defaultValue);
-  if (dirty && !confirm('يوجد تعديل لم يُحفظ. الرجوع لنتائج البحث بدون حفظ؟')) return;
+  if (dirty && !await uiConfirm('يوجد تعديل لم يُحفظ. الرجوع لنتائج البحث بدون حفظ؟')) return;
   const keep = itemCardResultsScroll;
   itemCardManualSearch(); // بيبني القايمة من جديد بالقيم الحالية (لو صنف اتعدل تبان قيمته الجديدة)
   document.getElementById('itemCardResults').scrollTop = keep;
@@ -7684,10 +7802,10 @@ function updateCountProgress() {
   document.getElementById('countProgress').textContent = n + ' صنف عُدّ';
 }
 
-function finishInventoryCount() {
+async function finishInventoryCount() {
   const entries = Object.entries(countSession);
   if (!entries.length) { alert('لا يوجد أصناف عُدّت بعد'); return; }
-  if (!confirm('تأكيد إنهاء الجرد؟ الفروقات ستُصحَّح في النظام وتُسجَّل في المفقودات.')) return;
+  if (!await uiConfirm('تأكيد إنهاء الجرد؟ الفروقات ستُصحَّح في النظام وتُسجَّل في المفقودات.')) return;
 
   db.ref('data/lastCountDate').once('value').then(snap => {
     const prevDate = snap.val() || null;
@@ -7829,8 +7947,8 @@ function saveNote() {
   }
 }
 
-function deleteNote(noteId) {
-  if (!confirm('تأكيد حذف هذه الملاحظة؟')) return;
+async function deleteNote(noteId) {
+  if (!await uiConfirm('تأكيد حذف هذه الملاحظة؟')) return;
   db.ref('data/notes/' + noteId).remove().then(loadNotesList);
 }
 
@@ -7958,7 +8076,7 @@ function loadEditHistory() {
   });
 }
 
-function undoEditHistory(key, btn) {
+async function undoEditHistory(key, btn) {
   const e = editHistoryCache[key];
   if (!e || e.undoneAt) return;
   const itemId = e.itemId;
@@ -7996,7 +8114,7 @@ function undoEditHistory(key, btn) {
   if (!lines.length) { alert('لا يوجد شيء للتراجع عنه في هذا التعديل'); return; }
   let msg = 'ترجع ' + (e.itemName || 'الصنف') + ' للقيم القديمة؟\n\n' + lines.join('\n');
   if (warnings.length) msg += '\n\n' + warnings.join('\n');
-  if (!confirm(msg)) return;
+  if (!await uiConfirm(msg)) return;
 
   if (btn) { btn.disabled = true; btn.textContent = '...'; }
   const reqId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
@@ -8187,8 +8305,8 @@ function saveCustomerEdit() {
   }).catch(err => alert('حدثت مشكلة وقت الحفظ: ' + (err && err.message ? err.message : err)));
 }
 
-function deleteCustomer(customerId, customerName) {
-  if (!confirm('تأكيد حذف الزبون "' + customerName + '"؟ (متاح فقط لأن الحساب متزن حاليًا)')) return;
+async function deleteCustomer(customerId, customerName) {
+  if (!await uiConfirm('تأكيد حذف الزبون "' + customerName + '"؟ (متاح فقط لأن الحساب متزن حاليًا)')) return;
   db.ref('data/customers/' + customerId).remove().then(() => {
     logActivity('حذف زبون', customerName);
     loadCustomers();
@@ -8226,7 +8344,7 @@ function closeDepositModalAnimated() {
   closeModal('depositModal');
 }
 
-function submitDeposit() {
+async function submitDeposit() {
   if (!pendingDepositCustomer) return;
   const amount = Number(document.getElementById('depositAmountInput').value);
   if (!amount || amount <= 0) { alert('اكتب مبلغ صحيح'); return; }
@@ -8237,7 +8355,7 @@ function submitDeposit() {
   const customerId = pendingDepositCustomer.id;
   const customerName = pendingDepositCustomer.name;
   const confirmMsg = (kind === 'purchase' ? 'تأكيد تسديد ' : 'تأكيد إيداع ') + fmtMoney(amount) + ' د.ل (' + method + ') ' + (kind === 'purchase' ? 'لـ' : 'على حساب') + ' "' + customerName + '"؟';
-  if (!confirm(confirmMsg)) return;
+  if (!await uiConfirm(confirmMsg)) return;
   const path = kind === 'purchase' ? 'data/purchaseDeposits' : 'data/deposits';
   const depositRef = db.ref(path).push();
   const depositId = depositRef.key;
@@ -8394,8 +8512,8 @@ function renderPurchaseDebtsSuppliers() {
   }).join('');
 }
 
-function deletePurchaseDebtFromAccount(id, itemName, customerId, customerName) {
-  if (!confirm('تأكيد إنك سددت "' + itemName + '"؟')) return;
+async function deletePurchaseDebtFromAccount(id, itemName, customerId, customerName) {
+  if (!await uiConfirm('تأكيد إنك سددت "' + itemName + '"؟')) return;
   db.ref('data/purchaseDebts/' + id).update({ paid: true, paidAt: new Date().toISOString() }).then(() => {
     logActivity('تسديد دين مشتريات', itemName + ' - ' + customerName);
     openCustomerDebt(customerId, customerName);
@@ -8404,11 +8522,11 @@ function deletePurchaseDebtFromAccount(id, itemName, customerId, customerName) {
 
 function cancelDeposit(depositId, customerId, customerName, kind) {
   const path = (kind === 'purchase') ? 'data/purchaseDeposits/' : 'data/deposits/';
-  db.ref(path + depositId).once('value').then(snap => {
+  db.ref(path + depositId).once('value').then(async snap => {
     const dep = snap.val();
     const amountLabel = dep ? fmtMoney(dep.amount) + ' د.ل (' + (dep.method || '') + ')' : '';
     const who = kind === 'purchase' ? 'تسديد "' + customerName + '"' : 'الزبون "' + customerName + '"';
-    if (!confirm('تأكيد إلغاء الإيداع ' + amountLabel + ' الخاص بـ ' + who + '؟')) return;
+    if (!await uiConfirm('تأكيد إلغاء الإيداع ' + amountLabel + ' الخاص بـ ' + who + '؟')) return;
 
     const finishCancel = () => {
       db.ref(path + depositId).remove().then(() => {
@@ -8608,12 +8726,12 @@ function debtReminderPdfAction() {
   }
 }
 
-function debtReminderTextOnly() {
+async function debtReminderTextOnly() {
   const r = debtReminder;
   if (!r) return;
   // رسالة بس: من غير سطر "مرفق كشف الحساب"
   const text = r.text.split('\n').filter(l => l.indexOf('مرفق كشف الحساب') === -1).join('\n');
-  if (!r.num && !confirm('هذا الزبون ما له رقم هاتف محفوظ (أو الرقم ناقص).\nتفتح واتساب وتختار الشخص بنفسك؟\n\nيمكنك إضافة رقمه من "تعديل بيانات الزبون".')) return;
+  if (!r.num && !await uiConfirm('هذا الزبون ما له رقم هاتف محفوظ (أو الرقم ناقص).\nتفتح واتساب وتختار الشخص بنفسك؟\n\nيمكنك إضافة رقمه من "تعديل بيانات الزبون".')) return;
   const url = 'https://wa.me/' + (r.num || '') + '?text=' + encodeURIComponent(text);
   logActivity('تذكير بالدين', r.customerName + ' - ' + fmtMoney(r.amount) + ' د.ل' + (r.num ? ' - ' + r.phone : ''));
   closeModal('debtReminderModal');
@@ -9520,19 +9638,19 @@ function fulfillShortageItem(it) {
   });
 }
 
-function markShortageFulfilled(id) {
+async function markShortageFulfilled(id) {
   const it = latestShortages.find(x => x.id === id);
   if (!it) return;
-  if (!confirm('تأكيد إنك اشتريت "' + it.name + '"؟')) return;
+  if (!await uiConfirm('تأكيد إنك اشتريت "' + it.name + '"؟')) return;
   fulfillShortageItem(it).then(() => setTimeout(loadShortages, 800));
 }
 
 // زرار "شراء الكل" - بيشتغل بس على التبويب الحالي (محلي أو الصين)، مش على "بدون تصنيف"
-function buyAllShortagesInCurrentFilter() {
+async function buyAllShortagesInCurrentFilter() {
   if (currentShortageSourceFilter === 'unclassified') return;
   const items = latestShortages.filter(it => it.source === currentShortageSourceFilter);
   if (!items.length) { alert('هذه القائمة فارغة حاليًا'); return; }
-  if (!confirm('تأكيد إنك اشتريت كل أصناف "' + currentShortageSourceFilter + '" (' + items.length + ' صنف)؟')) return;
+  if (!await uiConfirm('تأكيد إنك اشتريت كل أصناف "' + currentShortageSourceFilter + '" (' + items.length + ' صنف)؟')) return;
   Promise.all(items.map(it => fulfillShortageItem(it))).then(() => {
     loadShortages();
   }).catch(err => alert('حصل خطأ أثناء الحفظ: ' + (err && err.message ? err.message : err)));
