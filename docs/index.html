@@ -6,7 +6,35 @@
 <title>HTC POS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<script>
+/* خط التطبيق (يتختار من الإعدادات ← الخط) - بيتطبق قبل ما الصفحة ترسم عشان ما يرمش */
+window.APP_FONTS = [
+  { id: 'ibm', name: 'IBM Plex Sans Arabic', desc: 'رسمي ونظيف (الافتراضي)', css: "'IBM Plex Sans Arabic'", g: 'IBM+Plex+Sans+Arabic:wght@400;500;600;700' },
+  { id: 'system', name: 'خط الآيفون', desc: 'نفس خط نظام الجوال (SF Arabic)', css: "-apple-system, BlinkMacSystemFont, system-ui", g: '' },
+  { id: 'cairo', name: 'Cairo', desc: 'ناعم وعصري - الأشهر في التطبيقات العربية', css: "'Cairo'", g: 'Cairo:wght@400;500;600;700;800' },
+  { id: 'tajawal', name: 'Tajawal', desc: 'خفيف وواضح', css: "'Tajawal'", g: 'Tajawal:wght@400;500;700;800' },
+  { id: 'almarai', name: 'Almarai', desc: 'عريض ومريح للقراءة', css: "'Almarai'", g: 'Almarai:wght@400;700;800' },
+  { id: 'notokufi', name: 'Noto Kufi Arabic', desc: 'كوفي حديث من Google', css: "'Noto Kufi Arabic'", g: 'Noto+Kufi+Arabic:wght@400;500;600;700;800' },
+  { id: 'notosans', name: 'Noto Sans Arabic', desc: 'متوازن وكلاسيكي', css: "'Noto Sans Arabic'", g: 'Noto+Sans+Arabic:wght@400;500;600;700;800' },
+  { id: 'readex', name: 'Readex Pro', desc: 'هندسي وأنيق', css: "'Readex Pro'", g: 'Readex+Pro:wght@400;500;600;700' },
+  { id: 'changa', name: 'Changa', desc: 'مميز بطابع حديث', css: "'Changa'", g: 'Changa:wght@400;500;600;700;800' },
+  { id: 'rubik', name: 'Rubik', desc: 'دائري ولطيف', css: "'Rubik'", g: 'Rubik:wght@400;500;600;700;800' }
+];
+window.applyAppFont = function (id, save) {
+  const f = window.APP_FONTS.find(x => x.id === id) || window.APP_FONTS[0];
+  if (f.g) {
+    let l = document.getElementById('appFontLink');
+    if (!l) { l = document.createElement('link'); l.id = 'appFontLink'; l.rel = 'stylesheet'; document.head.appendChild(l); }
+    const href = 'https://fonts.googleapis.com/css2?family=' + f.g + '&display=swap';
+    if (l.href !== href) l.href = href;
+  }
+  document.documentElement.style.setProperty('--appFont', f.css);
+  if (save) { try { localStorage.setItem('appFont', f.id); } catch (e) {} }
+  return f;
+};
+(function () { let id = 'ibm'; try { id = localStorage.getItem('appFont') || 'ibm'; } catch (e) {} window.applyAppFont(id, false); })();
+</script>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +42,7 @@
 <meta name="apple-mobile-web-app-title" content="المبيعات">
 <meta name="theme-color" content="#2563EB">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif; }
+  * { margin:0; padding:0; box-sizing:border-box; font-family:var(--appFont, 'IBM Plex Sans Arabic'), 'Segoe UI', Tahoma, Arial, sans-serif; }
   html, body { height:100%; overflow:hidden; background:var(--bg); }
   /* آيفون بيعمل زوم تلقائي على أي حقل كتابة خط حجمه أقل من 16px - بنمنع ده هنا لكل الحقول
      (بما فيها الحقول اللي بتتولد بالجافاسكريبت) بدل ما نعدل كل حقل لوحده */
@@ -1126,6 +1154,15 @@
   </div>
 </div>
 
+<div class="modalBg" id="fontModal" onclick="if(event.target===this)closeModal('fontModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('fontModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>خط التطبيق</h3>
+    <div style="font-size:12.5px;color:var(--textMuted);font-weight:600;margin-top:6px;">اختر الخط اللي يريح عينك - يتغير فورًا على هذا الجهاز</div>
+    <div id="fontList" style="margin-top:12px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="usageModal" onclick="if(event.target===this)closeModal('usageModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('usageModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1164,6 +1201,12 @@
         <svg style="width:22px;height:22px;" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">الأخطاء وحالة الكاشير</span>
         <span id="errorsBadge" style="display:none;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#DC2626;color:#fff;font-size:11.5px;font-weight:800;align-items:center;justify-content:center;">0</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <button onclick="closeModal('generalSettingsModal');openFontPicker();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 10 4h1l6 16M6.5 14h8"/><path d="M19 9v11"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">الخط</span>
+        <span id="fontSettingsTag" style="font-size:12px;font-weight:600;color:var(--textMuted);"></span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       <button onclick="closeModal('generalSettingsModal');openUsage();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
@@ -2923,6 +2966,41 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= اختيار خط التطبيق ================= */
+function currentFontId() { try { return localStorage.getItem('appFont') || 'ibm'; } catch (e) { return 'ibm'; } }
+function updateFontTag() {
+  const el = document.getElementById('fontSettingsTag');
+  const f = (window.APP_FONTS || []).find(x => x.id === currentFontId());
+  if (el && f) el.textContent = f.name;
+}
+function openFontPicker() {
+  // نحمّل كل الخطوط مرة وحدة عشان المعاينة تطلع بخطها الحقيقي
+  if (!document.getElementById('fontPreviewLink')) {
+    const l = document.createElement('link'); l.id = 'fontPreviewLink'; l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?' + APP_FONTS.filter(f => f.g).map(f => 'family=' + f.g).join('&') + '&display=swap';
+    document.head.appendChild(l);
+  }
+  renderFontList();
+  openModal('fontModal');
+}
+function renderFontList() {
+  const cur = currentFontId();
+  document.getElementById('fontList').innerHTML = APP_FONTS.map(f => `
+    <button type="button" onclick="pickFont('${f.id}')" style="width:100%;display:flex;align-items:center;gap:12px;text-align:right;padding:13px 14px;margin-bottom:8px;border-radius:14px;cursor:pointer;background:var(--surface);color:var(--text);border:${f.id === cur ? '2px solid #2563EB' : '1px solid var(--border2)'};">
+      <span style="flex:1;min-width:0;">
+        <span style="display:block;font-size:17px;font-weight:700;line-height:1.5;font-family:${f.css.replace(/"/g, '&quot;')}, sans-serif;">منظومة المبيعات · 1,250.00 د.ل</span>
+        <span style="display:block;font-size:13px;font-weight:400;color:var(--textMuted);line-height:1.6;font-family:${f.css.replace(/"/g, '&quot;')}, sans-serif;">${f.name} - ${f.desc}</span>
+      </span>
+      <span style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;${f.id === cur ? 'background:#2563EB;color:#fff;' : 'border:2px solid var(--border);'}">${f.id === cur ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' : ''}</span>
+    </button>`).join('');
+}
+function pickFont(id) {
+  applyAppFont(id, true);
+  renderFontList();
+  updateFontTag();
+}
+setTimeout(updateFontTag, 0);
+
 /* ================= نوافذ الرسائل بتصميم التطبيق (بدل نوافذ الآيفون الرمادية) =================
    uiAlert(msg) / uiConfirm(msg, opts) / uiPrompt(msg, def) - بترجع Promise.
    window.alert نفسها بقت بتطلع بالتصميم ده تلقائيًا. */
@@ -3826,6 +3904,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'خط التطبيق', kw: 'خط الخط خطوط فونت font شكل الكتابة', run: "openFontPicker()" },
   { name: 'طباعة باركود', kw: 'طباعة باركود ملصقات ملصق قائمة طباعة', run: "openBatchLabels()" },
   { name: 'استهلاك Firebase', kw: 'استهلاك فايربيس فاير بيس حصة مساحة تحميل سيرفر', run: "openUsage()" },
   { name: 'تحديث السكريبت', kw: 'تحديث سكريبت سكربت الكاشير تركيب نسخة', run: "openScriptUpdate()" },
@@ -4035,9 +4114,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.26.0';
+const APP_VERSION = '2.27.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.27.0', date: '2026-10-01', items: [
+    'اختيار خط التطبيق من الإعدادات ← الخط: 10 خطوط عربية احترافية بمعاينة حية (منها خط الآيفون وCairo وTajawal وAlmarai)'
+  ] },
   { v: '2.26.0', date: '2026-10-01', items: [
     'كل الرسائل والتأكيدات صارت بتصميم التطبيق (تطلع من تحت بأيقونة ولون حسب النوع) بدل نوافذ الآيفون الرمادية',
     'خط عربي احترافي جديد (IBM Plex Sans Arabic) لكل التطبيق',
