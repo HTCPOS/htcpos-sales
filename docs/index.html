@@ -4114,9 +4114,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.28.0';
+const APP_VERSION = '2.28.1';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.28.1', date: '2026-10-01', items: [
+    'قراءة الإيصال أسرع: يلتقط الإيصال أسرع بمرتين ونص، وقراءتين + القراءة السريعة، ولقطات إضافية فقط لو حقل ما اتأكد'
+  ] },
   { v: '2.28.0', date: '2026-10-01', items: [
     'قراءة إيصال البطاقة بالتصويت: 4 لقطات خلال ثانية، والرقم اللي يتكرر في قراءتين على الأقل هو اللي يُعتمد',
     'فحوصات منطقية: تاريخ بعيد عن اليوم أو مبلغ غير معقول يُعرض للمراجعة',
@@ -5977,7 +5980,8 @@ function closeCardReceiptOcrCamera() {
 
 function scheduleCardReceiptOcrScan() {
   if (!cardReceiptOcrScanning) return;
-  cardReceiptOcrScanTimer = setTimeout(attemptCardReceiptOcrScan, 800);
+  // Apple Vision سريع - نفحص كل ثلث ثانية تقريبًا بدل 0.8 ثانية، فيلقط الإيصال أول ما يدخل الإطار
+  cardReceiptOcrScanTimer = setTimeout(attemptCardReceiptOcrScan, 300);
 }
 
 // المرحلة 1: فحص خفيف وسريع كل ثانية تقريبًا - بس عشان نعرف "في إيصال واضح جوه الإطار ولا لأ"
@@ -6019,7 +6023,7 @@ async function attemptCardReceiptOcrScan() {
     if (foundCount >= 2) {
       playFeedback('deposit'); // لقينا الإيصال - قراءة ناجحة
       if (statusEl) statusEl.textContent = 'لقيت الإيصال - جاري التحليل الدقيق...';
-      await finalizeCardReceiptCapture(video, guide);
+      await finalizeCardReceiptCapture(video, guide, quick);
     } else {
       if (statusEl) statusEl.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6"/></svg> وجّه الكاميرا على الإيصال كامل داخل الإطار';
       scheduleCardReceiptOcrScan();
@@ -6057,62 +6061,16 @@ async function nativeVisionOcrProcess(canvas) {
   };
 }
 
-async function finalizeCardReceiptCapture(video, guide) {
-  cardReceiptOcrScanning = false;
-  if (cardReceiptOcrScanTimer) { clearTimeout(cardReceiptOcrScanTimer); cardReceiptOcrScanTimer = null; }
-
-  // تصويت بين عدة لقطات: بناخد 4 لقطات خلال ثانية تقريبًا. اليد بتتحرك شوية فالضوء والانعكاس
-  // بيتغيروا من لقطة للتانية - فلو انعكاس غطى المبلغ في لقطة، غالبًا اللقطات التانية شايفاه.
-  // الرقم اللي يتكرر في أغلب القراءات هو اللي بيتعتمد (مش قراءة وحدة).
-  const statusEl = document.getElementById('cardReceiptOcrStatus');
-  if (statusEl) statusEl.textContent = 'ثبّت الجوال لحظة... جاري التصوير';
-  const frames = [];
-  for (let i = 0; i < 4; i++) {
-    try { frames.push(cropVideoToGuideCanvas(video, guide, 2, null)); } catch (e) {}
-    if (i < 3) await new Promise(r => setTimeout(r, 260));
-  }
-  if (!frames.length) { openCardReceiptOcrCamera(); return; }
-  const finalCanvas = frames[0];
-  const imageDataUrl = finalCanvas.toDataURL('image/jpeg', 0.92);
-
-  if (cardReceiptOcrStream) { cardReceiptOcrStream.getTracks().forEach(t => t.stop()); cardReceiptOcrStream = null; }
-  closeModal('cardReceiptOcrCameraModal');
-
-  let resultA, resultB, debugImageA, debugImageB, extraResults = [];
-
-  if (!isVisionOcrAvailable()) {
-    alert('قارئ الصور الجديد (Apple Vision) غير موجود في هذه النسخة من التطبيق.\n\nتأكد أن آخر نسخة IPA رُفعت من نفس الملفات التي جهّزناها (package.json المحدّث) وأن الـ GitHub Action انتهى بنجاح، وثبّت هذه النسخة مرة أخرى.');
-    openCardReceiptOcrCamera();
-    return;
-  }
-
-  try {
-    const variantA = finalCanvas; // اللقطة الأولى خام
-    const variantB = receiptLightEnhance(finalCanvas); // نفس اللقطة بمعالجة خفيفة
-    debugImageA = variantA.toDataURL('image/jpeg', 0.85);
-    debugImageB = variantB.toDataURL('image/jpeg', 0.85);
-    const all = await Promise.all([variantA, variantB, ...frames.slice(1)].map(c => nativeVisionOcrProcess(c).catch(() => null)));
-    resultA = all[0] || { text: '', lines: [] };
-    resultB = all[1] || { text: '', lines: [] };
-    extraResults = all.slice(2).filter(Boolean);
-  } catch (e) {
-    alert('حدثت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - حاول مرة أخرى');
-    openCardReceiptOcrCamera();
-    return;
-  }
-
-  const fieldsA = extractReceiptFields(resultA);
-  const fieldsB = extractReceiptFields(resultB);
-  let merged = mergeDualReadings(fieldsA, fieldsB, finalCanvas);
-  const fieldsAll = [fieldsA, fieldsB, ...extraResults.map(r => extractReceiptFields(r))];
-
-  // التصويت على الحقول المهمة: لازم قيمة تتكرر في قراءتين على الأقل، وتكون أكتر قيمة متكررة
-  // (لو قيمتين متعادلين في العدد = تعارض = مراجعة يدوية، ما نخمنش في فلوس)
-  ['amount', 'reference_number', 'datetime'].forEach(k => {
+// التصويت على الحقول المهمة: لازم قيمة تتكرر في قراءتين على الأقل، وتكون أكتر قيمة متكررة
+// (لو قيمتين متعادلين في العدد = تعارض = مراجعة يدوية، ما نخمنش في فلوس). بترجع الحقول اللي لسه ما اتأكدتش.
+const RECEIPT_KEY_FIELDS = ['amount', 'reference_number', 'datetime'];
+function voteReceiptKeyFields(fieldsAll, merged) {
+  const pending = [];
+  RECEIPT_KEY_FIELDS.forEach(k => {
     const def = RECEIPT_FIELD_DEFS[k];
     const counts = {}; const src = {};
     fieldsAll.forEach(f => {
-      const x = f[k];
+      const x = f && f[k];
       if (!x || x.ambiguous || !x.raw_value) return;
       const v = normalizeFieldValue(k, x.raw_value);
       if (!v || (def && !def.pattern.test(v))) return;
@@ -6120,14 +6078,71 @@ async function finalizeCardReceiptCapture(video, guide) {
       if (!src[v]) src[v] = x;
     });
     const ranked = Object.keys(counts).sort((p, q) => counts[q] - counts[p]);
-    if (!ranked.length) return;
     const top = ranked[0], second = ranked[1];
-    if (counts[top] >= 2 && (!second || counts[top] > counts[second])) {
+    if (top && counts[top] >= 2 && (!second || counts[top] > counts[second])) {
       merged[k] = { value: top, raw_value: src[top].raw_value, confidence: Math.min(99, 80 + counts[top] * 4), verified: true, needs_review: false, bbox: src[top].bbox || null, votes: counts[top] + '/' + fieldsAll.length };
-    } else if (second) {
-      merged[k] = { value: null, raw_value: src[top].raw_value, confidence: 0, verified: false, needs_review: true, bbox: null, votes: 'تعارض' };
+    } else {
+      pending.push(k);
+      if (second) merged[k] = { value: null, raw_value: src[top].raw_value, confidence: 0, verified: false, needs_review: true, bbox: null, votes: 'تعارض' };
     }
   });
+  return pending;
+}
+
+async function finalizeCardReceiptCapture(video, guide, quickResult) {
+  cardReceiptOcrScanning = false;
+  if (cardReceiptOcrScanTimer) { clearTimeout(cardReceiptOcrScanTimer); cardReceiptOcrScanTimer = null; }
+
+  const finalCanvas = cropVideoToGuideCanvas(video, guide, 2, null);
+  const imageDataUrl = finalCanvas.toDataURL('image/jpeg', 0.92);
+  const statusEl = document.getElementById('cardReceiptOcrStatus');
+  const stopCamera = () => {
+    if (cardReceiptOcrStream) { cardReceiptOcrStream.getTracks().forEach(t => t.stop()); cardReceiptOcrStream = null; }
+    closeModal('cardReceiptOcrCameraModal');
+  };
+
+  let resultA, resultB, debugImageA, debugImageB, extraResults = [];
+
+  if (!isVisionOcrAvailable()) {
+    stopCamera();
+    alert('قارئ الصور الجديد (Apple Vision) غير موجود في هذه النسخة من التطبيق.\n\nتأكد أن آخر نسخة IPA رُفعت من نفس الملفات التي جهّزناها (package.json المحدّث) وأن الـ GitHub Action انتهى بنجاح، وثبّت هذه النسخة مرة أخرى.');
+    openCardReceiptOcrCamera();
+    return;
+  }
+
+  // 1) القراءتين الأساسيتين (نفس السرعة القديمة) + القراءة السريعة اللي لقت الإيصال أصلًا كصوت تالت مجاني
+  try {
+    const variantB = receiptLightEnhance(finalCanvas);
+    debugImageA = finalCanvas.toDataURL('image/jpeg', 0.85);
+    debugImageB = variantB.toDataURL('image/jpeg', 0.85);
+    const [rA, rB] = await Promise.all([nativeVisionOcrProcess(finalCanvas), nativeVisionOcrProcess(variantB)]);
+    resultA = rA || { text: '', lines: [] };
+    resultB = rB || { text: '', lines: [] };
+  } catch (e) {
+    stopCamera();
+    alert('حدثت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - حاول مرة أخرى');
+    openCardReceiptOcrCamera();
+    return;
+  }
+  const fieldsA = extractReceiptFields(resultA);
+  const fieldsB = extractReceiptFields(resultB);
+  let merged = mergeDualReadings(fieldsA, fieldsB, finalCanvas);
+  const fieldsAll = [fieldsA, fieldsB];
+  if (quickResult && quickResult.text) { fieldsAll.push(extractReceiptFields(quickResult)); extraResults.push(quickResult); }
+  let pending = voteReceiptKeyFields(fieldsAll, merged);
+
+  // 2) لقطات إضافية بس لو حقل مهم لسه ما اتأكدش - وحدة وحدة، ونوقف أول ما يتأكد كله (أقصى 3)
+  for (let i = 0; i < 3 && pending.length && cardReceiptOcrStream; i++) {
+    if (statusEl) statusEl.textContent = 'ثبّت الجوال لحظة... تأكيد إضافي';
+    await new Promise(r => setTimeout(r, 120));
+    let r = null;
+    try { r = await nativeVisionOcrProcess(cropVideoToGuideCanvas(video, guide, 2, null)); } catch (e) {}
+    if (!r) continue;
+    extraResults.push(r);
+    fieldsAll.push(extractReceiptFields(r));
+    pending = voteReceiptKeyFields(fieldsAll, merged);
+  }
+  stopCamera();
 
   // فحوصات منطقية: تاريخ بعيد عن اليوم، أو مبلغ غير معقول = مراجعة يدوية
   if (merged.datetime && merged.datetime.value) {
@@ -6143,7 +6158,7 @@ async function finalizeCardReceiptCapture(video, guide) {
     const a = Number(merged.amount.value);
     if (!(a > 0) || a > 50000) { merged.amount.needs_review = true; merged.amount.verified = false; merged.amount.warn = 'المبلغ غير معقول - تأكد منه'; }
   }
-  const resultC = extraResults.length ? { text: extraResults.map((r, i) => '--- لقطة ' + (i + 2) + ' ---\n' + (r.text || '(فارغ)')).join('\n') } : null;
+  const resultC = extraResults.length ? { text: extraResults.map((r, i) => '--- قراءة إضافية ' + (i + 1) + ' ---\n' + (r.text || '(فارغ)')).join('\n') } : null;
 
   receiptCaptureState = {
     imageDataUrl: imageDataUrl,
