@@ -1548,10 +1548,23 @@ window.applyAppFont = function (id, save) {
       </div>
       <button onclick="closeBarcodeScanner()" style="width:100%; margin-top:8px; background:#FEE2E2; color:#DC2626; border:none; border-radius:12px; padding:10px; font-weight:700; font-size:12px; cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> إلغاء ورجوع</button>
     </div>
-    <div id="incrementFeedback" style="display:none; background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:16px; margin-top:12px; text-align:center;">
-      <div id="incItemName" style="font-weight:800; font-size:15px; margin-bottom:4px; color:#14532D;"></div>
-      <div id="incItemCount" style="font-size:32px; font-weight:900; color:#16A34A;"></div>
-      <div style="font-size:11px; color:#64748B;">عُدّت حتى الآن</div>
+    <div id="incrementFeedback" style="display:none; background:#F0FDF4; border:1.5px solid #16A34A; border-radius:14px; padding:10px 12px; margin-top:10px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; min-width:0;">
+          <div id="incItemName" style="font-weight:800; font-size:14px; color:#14532D; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+          <div id="incItemStock" style="font-size:12px; color:#475569; margin-top:2px;"></div>
+        </div>
+        <div style="text-align:center; flex-shrink:0;">
+          <div id="incItemCount" style="font-size:24px; font-weight:900; color:#16A34A; line-height:1.1;"></div>
+          <div style="font-size:10.5px; color:#64748B;">عُدّت</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center; margin-top:8px;">
+        <button type="button" onclick="incAdjust(-1)" aria-label="ناقص واحد" style="width:40px; height:40px; border-radius:11px; border:1px solid #BBF7D0; background:var(--surface); color:#16A34A; font-size:20px; font-weight:900; cursor:pointer; flex-shrink:0;">−</button>
+        <input type="number" inputmode="numeric" lang="en" id="incManualInput" placeholder="اكتب العدد بيدك" onkeydown="if(event.key==='Enter')incSetManual()" style="flex:1; min-width:0; height:40px; padding:0 10px; border:1.5px solid #BBF7D0; border-radius:11px; font-size:16px; text-align:center; background:var(--surface); color:var(--text);">
+        <button type="button" onclick="incAdjust(1)" aria-label="زائد واحد" style="width:40px; height:40px; border-radius:11px; border:1px solid #BBF7D0; background:var(--surface); color:#16A34A; font-size:20px; font-weight:900; cursor:pointer; flex-shrink:0;">+</button>
+        <button type="button" onclick="incSetManual()" style="height:40px; padding:0 14px; border:none; border-radius:11px; background:#16A34A; color:#fff; font-size:13.5px; font-weight:800; cursor:pointer; flex-shrink:0;">حفظ</button>
+      </div>
     </div>
     <div id="scanSessionCount" style="text-align:center; font-size:12px; color:#94A3B8; margin-top:10px;"></div>
   </div>
@@ -4114,9 +4127,20 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.28.3';
+const APP_VERSION = '2.29.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.29.0', date: '2026-10-01', items: [
+    'الجرد بالمسح (+1): المربع الأخضر صار أصغر وأنظف، ويعرض المخزون بالنظام',
+    'تقدر تكتب العدد بيدك أو تعدّله بـ − و+ من نفس المربع بدون ما تمسح كل قطعة'
+  ] },
+  { v: '2.28.5', date: '2026-10-01', items: [
+    'الجرد: حذف زر الإغلاق الأحمر الزائد اللي كان يبقى ظاهر فوق الشاشة بعد قفل الكاميرا'
+  ] },
+  { v: '2.28.4', date: '2026-10-01', items: [
+    'ديون المشتريات صارت تطابق حساب الزبون: تخصم التسديدات وتقاصّ مع ديون الزبون عليك، ويظهر فقط من أنت فعلًا مديون له',
+    'رقم "ديون مشتريات" في الرئيسية = عدد الأشخاص اللي عليك لهم فلوس فعلًا'
+  ] },
   { v: '2.28.3', date: '2026-10-01', items: [
     'إصلاح خطأ "invalid image" عند تصوير إيصال ثاني: القارئ ينتظر لين الكاميرا تجهز فعلًا، والخطأ يظهر فقط لو فشل 8 ثواني متواصلة'
   ] },
@@ -4916,11 +4940,8 @@ function startListening() {
   db.ref('data/items').on('value', snap => {
     latestItems = snap.val() || {};
   });
-  db.ref('data/purchaseDebts').on('value', snap => {
-    const val = snap.val();
-    const el = document.getElementById('statPurchaseDebts');
-    if (el) el.textContent = val ? Object.values(val).filter(d => !d.paid).length : 0;
-  });
+  db.ref('data/purchaseDebts').on('value', () => refreshPurchaseDebtsStat());
+  db.ref('data/purchaseDeposits').on('value', () => refreshPurchaseDebtsStat());
   db.ref('data/lowStockItems').on('value', snap => {
     const val = snap.val();
     latestLowStockItems = val ? Object.values(val) : [];
@@ -7266,9 +7287,7 @@ function openBarcodeScanner() {
   updateScanSessionCount();
   setScanMode('increment');
   openModal('barcodeScannerModal');
-  document.getElementById('emergencyCloseScanner').style.display = 'flex';
-  document.getElementById('emergencyCloseScanner').style.alignItems = 'center';
-  document.getElementById('emergencyCloseScanner').style.justifyContent = 'center';
+  // (زر الطوارئ الأحمر اتشال - نافذة الكاميرا فيها زر إغلاق خاص بيها، والزر ده كان بيفضل ظاهر بالغلط)
   // الكاميرا ما بتتفعلش تلقائي هنا خالص - المستخدم لازم يدوس زر "فعّل الكاميرا" بنفسه (startCameraScan).
   // ده عشان أي مشكلة تحصل من مكتبة الكاميرا متأثرش على باقي أزرار الشاشة قبل ما المستخدم يطلبها فعليًا.
 }
@@ -7851,9 +7870,7 @@ function onBarcodeScanned(code) {
     updateCountProgress();
     updateScanSessionCount();
 
-    document.getElementById('incItemName').textContent = match.name;
-    document.getElementById('incItemCount').textContent = countSession[match.id];
-    document.getElementById('incrementFeedback').style.display = 'block';
+    incShowItem(match);
     return;
   }
 
@@ -7871,6 +7888,41 @@ function onBarcodeScanned(code) {
   qtyInput.value = countSession[match.id] !== undefined ? countSession[match.id] : '';
   document.getElementById('scanCountBox').style.display = 'block';
   setTimeout(() => { qtyInput.focus(); qtyInput.select(); }, 100);
+}
+
+// ===== وضع "مسح = +1": المربع الأخضر المختصر - الاسم + المخزون بالنظام + العدد، وتعديل يدوي =====
+let incCurrentItem = null;
+function incShowItem(it) {
+  incCurrentItem = it;
+  document.getElementById('incItemName').textContent = it.name;
+  document.getElementById('incItemStock').textContent = 'المخزون بالنظام: ' + Number(it.stock || 0);
+  document.getElementById('incItemCount').textContent = countSession[it.id] !== undefined ? countSession[it.id] : 0;
+  const inp = document.getElementById('incManualInput');
+  if (inp && document.activeElement !== inp) inp.value = '';
+  document.getElementById('incrementFeedback').style.display = 'block';
+}
+function incAdjust(d) {
+  if (!incCurrentItem) return;
+  const id = incCurrentItem.id;
+  const cur = countSession[id] !== undefined ? Number(countSession[id]) : 0;
+  const next = Math.max(0, cur + d);
+  draftSetCount(id, next);
+  updateCountProgress(); updateScanSessionCount();
+  incShowItem(incCurrentItem);
+}
+function incSetManual() {
+  if (!incCurrentItem) return;
+  const inp = document.getElementById('incManualInput');
+  const v = parseInt(inp.value, 10);
+  if (isNaN(v) || v < 0) { inp.focus(); return; }
+  draftSetCount(incCurrentItem.id, v);
+  // نمنع إن نفس المسحة اللي لسه في الكاميرا تزود واحد فوق الرقم اللي كتبته
+  lastIncrementedId = incCurrentItem.id; lastIncrementTime = Date.now();
+  updateCountProgress(); updateScanSessionCount();
+  inp.value = '';
+  inp.blur();
+  incShowItem(incCurrentItem);
+  try { showQuickToast('تم حفظ العدد: ' + v, true); } catch (e) {}
 }
 
 function confirmScanAndNext() {
@@ -8676,44 +8728,70 @@ function startPurchaseDebtEntry() {
 
 let latestPurchaseDebts = [];
 
+// رصيد كل زبون بنفس طريقة حساب الزبون بالظبط (موجب = هو مديون لك، سالب = انت مديون له)
+// بيتستخدم في شاشة ديون المشتريات ورقمها في الرئيسية عشان يطابقوا حساب الزبون دايمًا
+function computeCustomerNets() {
+  return Promise.all([
+    liveOnce('data/customers'), liveOnce('data/debts'), liveOnce('data/deposits'),
+    liveOnce('data/purchaseDebts'), liveOnce('data/purchaseDeposits')
+  ]).then(([custSnap, debtSnap, depSnap, pdSnap, ppSnap]) => {
+    const arr = snap => { const v = snap.val(); return v ? Object.entries(v).map(([id, x]) => ({ id, ...x })) : []; };
+    const customers = arr(custSnap), debts = arr(debtSnap), deposits = arr(depSnap), purchaseDebts = arr(pdSnap), purchaseDeposits = arr(ppSnap);
+    const out = {};
+    const ids = new Set(customers.map(c => c.id));
+    purchaseDebts.forEach(d => { if (d.customerId) ids.add(d.customerId); });
+    ids.forEach(id => {
+      const c = customers.find(x => x.id === id) || {};
+      const debtTotal = debts.filter(d => d.customerId === id && (!d.paid || d.autoSettled)).reduce((s, d) => s + Number(d.amount || 0), 0);
+      const depositTotal = deposits.filter(p => p.customerId === id).reduce((s, p) => s + Number(p.amount || 0), 0);
+      const pItems = purchaseDebts.filter(d => d.customerId === id && !d.paid);
+      const purchaseTotal = pItems.reduce((s, d) => s + Number(d.price || 0), 0);
+      const purchaseDepositTotal = purchaseDeposits.filter(p => p.customerId === id).reduce((s, p) => s + Number(p.amount || 0), 0);
+      const net = (debtTotal - depositTotal) - (purchaseTotal - purchaseDepositTotal);
+      out[id] = { id, name: c.name || (pItems[0] && pItems[0].customerName) || 'بدون اسم', net, purchaseItems: pItems };
+    });
+    // أصناف مشتريات بدون زبون محدد: تفضل دين كامل (مافيش حساب نقدر نخصم منه)
+    const orphan = purchaseDebts.filter(d => !d.customerId && !d.paid);
+    if (orphan.length) out.unknown = { id: 'unknown', name: 'بدون اسم', net: -orphan.reduce((s, d) => s + Number(d.price || 0), 0), purchaseItems: orphan };
+    return out;
+  });
+}
+
+function refreshPurchaseDebtsStat() {
+  computeCustomerNets().then(nets => {
+    const el = document.getElementById('statPurchaseDebts');
+    if (el) el.textContent = Object.values(nets).filter(n => n.net < -0.001).length;
+  }).catch(() => {});
+}
+
 function loadPurchaseDebts() {
   const el = document.getElementById('purchaseDebtsList');
   const totalEl = document.getElementById('purchaseDebtsTotal');
   el.innerHTML = skeletonHtml();
   totalEl.textContent = '';
-  liveOnce('data/purchaseDebts').then(snap => {
-    const val = snap.val();
-    const all = val ? Object.entries(val).map(([id, d]) => ({ id, ...d })) : [];
-    latestPurchaseDebts = all.filter(it => !it.paid);
+  computeCustomerNets().then(nets => {
+    latestPurchaseDebts = Object.values(nets).filter(n => n.net < -0.001);
     renderPurchaseDebtsSuppliers();
+    const st = document.getElementById('statPurchaseDebts');
+    if (st) st.textContent = latestPurchaseDebts.length;
   });
 }
 
 function renderPurchaseDebtsSuppliers() {
   const el = document.getElementById('purchaseDebtsList');
   const totalEl = document.getElementById('purchaseDebtsTotal');
-  if (!latestPurchaseDebts.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد ديون مشتريات مسجلة</div>'; totalEl.textContent = ''; return; }
-  const grandTotal = latestPurchaseDebts.reduce((sum, it) => sum + Number(it.price || 0), 0);
-  totalEl.textContent = 'إجمالي الديون: ' + fmtMoney(grandTotal) + ' د.ل (' + latestPurchaseDebts.length + ' صنف)';
-
-  const byCustomer = {};
-  latestPurchaseDebts.forEach(it => {
-    const key = it.customerId || 'unknown';
-    if (!byCustomer[key]) byCustomer[key] = { name: it.customerName || 'بدون اسم', items: [] };
-    byCustomer[key].items.push(it);
-  });
-  const groups = Object.keys(byCustomer).map(id => ({ id: id, name: byCustomer[id].name, items: byCustomer[id].items }))
-    .sort((a,b) => a.name.localeCompare(b.name));
-  el.innerHTML = groups.map(g => {
-    const total = g.items.reduce((sum, it) => sum + Number(it.price || 0), 0);
-    return `<div class="searchResultRow" style="cursor:pointer" onclick="openCustomerDebt('${g.id}','${g.name.replace(/'/g,"")}')">
+  // latestPurchaseDebts هنا = الزبائن اللي انت فعلًا مديون لهم (بعد التسديدات والمقاصة مع ديونهم عليك)
+  if (!latestPurchaseDebts.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد ديون مشتريات - كل الحسابات مسددة</div>'; totalEl.textContent = ''; return; }
+  const grandTotal = latestPurchaseDebts.reduce((sum, g) => sum + (-g.net), 0);
+  totalEl.textContent = 'إجمالي ما عليك: ' + fmtMoney(grandTotal) + ' د.ل (' + latestPurchaseDebts.length + (latestPurchaseDebts.length === 1 ? ' شخص' : ' أشخاص') + ')';
+  const groups = latestPurchaseDebts.slice().sort((a, b) => a.net - b.net);
+  el.innerHTML = groups.map(g => `<div class="searchResultRow" style="cursor:pointer" onclick="openCustomerDebt('${g.id}','${String(g.name).replace(/'/g, "")}')">
       <div style="flex:1;min-width:0;">
         <div class="n">${escapeHtml(g.name)}</div>
-        <div class="p">${g.items.length} صنف</div>
+        <div class="p">${g.purchaseItems.length ? g.purchaseItems.length + ' صنف مشتريات' : 'رصيد مستحق له'}</div>
       </div>
-      <div style="font-weight:800;color:#B45309;">${fmtMoney(total)} د.ل</div>
-    </div>`;
-  }).join('');
+      <div style="font-weight:800;color:#B45309;">${fmtMoney(-g.net)} د.ل</div>
+    </div>`).join('');
 }
 
 async function deletePurchaseDebtFromAccount(id, itemName, customerId, customerName) {
@@ -10263,6 +10341,6 @@ document.addEventListener('click', function(e) {
   }
 });
 </script>
-<button id="emergencyCloseScanner" onclick="forceCloseScanner()" style="display:none; position:fixed; top:calc(env(safe-area-inset-top) + 14px); left:14px; z-index:2147483647; background:#DC2626; color:#fff; border:3px solid #fff; border-radius:50%; width:52px; height:52px; font-size:22px; font-weight:900; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.4);"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+<span id="emergencyCloseScanner" style="display:none;"></span>
 </body>
 </html>
