@@ -4114,9 +4114,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.28.2';
+const APP_VERSION = '2.28.3';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.28.3', date: '2026-10-01', items: [
+    'إصلاح خطأ "invalid image" عند تصوير إيصال ثاني: القارئ ينتظر لين الكاميرا تجهز فعلًا، والخطأ يظهر فقط لو فشل 8 ثواني متواصلة'
+  ] },
   { v: '2.28.2', date: '2026-10-01', items: [
     'المبلغ ما عاد يطلع فاضي: لو قراءة وحدة بس شافته ومافي تعارض، يتعبّى في شاشة المراجعة للتأكيد',
     'تسامح مع أخطاء القارئ داخل الأرقام (O بدل 0، l بدل 1)',
@@ -5954,6 +5957,9 @@ let pendingReceiptOcrJson = null; // آخر JSON مؤكَّد من المستخ�
 function openCardReceiptOcrCamera() {
   openModal('cardReceiptOcrCameraModal');
   cardReceiptScanFailCount = 0;
+  window.__cardOcrFailSince = 0;
+  // نفصل أي صورة قديمة من المرة اللي فاتت عشان ما نقراش إطار ميت من الكاميرا السابقة
+  try { const v0 = document.getElementById('cardReceiptOcrVideo'); if (v0) { v0.pause(); v0.srcObject = null; } } catch (e) {}
   // (شيلنا تسخين Tesseract المسبق من هنا - قارئ الإيصال بقى بيعتمد على Apple Vision المحلي
   // اللي مش محتاج تجهيز/تحميل زي ده خالص)
   const statusEl = document.getElementById('cardReceiptOcrStatus');
@@ -6000,7 +6006,9 @@ async function attemptCardReceiptOcrScan() {
   if (!cardReceiptOcrScanning) return;
   const video = document.getElementById('cardReceiptOcrVideo');
   const guide = document.getElementById('cardReceiptOcrGuide');
-  if (!video || !video.videoWidth) { scheduleCardReceiptOcrScan(); return; }
+  // الكاميرا لازم تكون جاهزة فعلًا (بتعرض صورة) والإطار ظاهر بمقاسه قبل أي محاولة قراءة
+  const gr = guide ? guide.getBoundingClientRect() : null;
+  if (!video || !video.videoWidth || video.readyState < 2 || !gr || gr.width < 40 || gr.height < 40) { scheduleCardReceiptOcrScan(); return; }
 
   if (!isVisionOcrAvailable()) {
     // مفيش نظام قديم نرجعله تاني - لو المكتبة الجديدة مش موجودة، نوضح السبب بالظبط بدل ما نحاول
@@ -6018,6 +6026,7 @@ async function attemptCardReceiptOcrScan() {
     const rawCanvas = cropVideoToGuideCanvas(video, guide, 2, null);
     const quick = await nativeVisionOcrProcess(rawCanvas);
     cardReceiptScanFailCount = 0;
+    window.__cardOcrFailSince = 0;
     if (!cardReceiptOcrScanning) return;
     const text = (quick && quick.text) || '';
     const hasAmount = /\b\d{1,6}[.,\s]\s?\d{3}\b/.test(text);
@@ -6034,8 +6043,12 @@ async function attemptCardReceiptOcrScan() {
       scheduleCardReceiptOcrScan();
     }
   } catch (e) {
+    const em = String((e && e.message) || e || '');
+    // "صورة غير صالحة" = الكاميرا لسه بتجهز، مش عطل - نكمل من غير ما نحسبها
+    if (/invalid image/i.test(em)) { scheduleCardReceiptOcrScan(); return; }
     cardReceiptScanFailCount++;
-    if (cardReceiptScanFailCount >= 10) {
+    if (!window.__cardOcrFailSince) window.__cardOcrFailSince = Date.now();
+    if (Date.now() - window.__cardOcrFailSince >= 8000 && cardReceiptScanFailCount >= 5) {
       cardReceiptOcrScanning = false;
       const errMsg = (e && e.message) ? e.message : String(e);
       alert('تعذّر تشغيل قارئ الصور الآن.\n\nتفاصيل تقنية: ' + errMsg + '\n\nأغلق الكاميرا وحاول مرة أخرى بعد قليل. لو استمرت المشكلة، أرسل لقطة شاشة من هذه الرسالة.');
@@ -6052,7 +6065,10 @@ async function attemptCardReceiptOcrScan() {
 async function nativeVisionOcrProcess(canvas) {
   const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Ocr;
   if (!plugin || typeof plugin.process !== 'function') return null;
+  // صورة فاضية (الكاميرا لسه بتفتح) = مفيش حاجة نقراها - ما نبعتهاش للقارئ عشان ما يرجعش "invalid image"
+  if (!canvas || canvas.width < 40 || canvas.height < 40) return null;
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  if (!dataUrl || dataUrl.length < 2000) return null;
   const res = await plugin.process({ image: dataUrl });
   const results = (res && res.results) || [];
   if (!results.length) return null;
