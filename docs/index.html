@@ -4114,9 +4114,18 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.27.0';
+const APP_VERSION = '2.28.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.28.0', date: '2026-10-01', items: [
+    'قراءة إيصال البطاقة بالتصويت: 4 لقطات خلال ثانية، والرقم اللي يتكرر في قراءتين على الأقل هو اللي يُعتمد',
+    'فحوصات منطقية: تاريخ بعيد عن اليوم أو مبلغ غير معقول يُعرض للمراجعة',
+    'تنبيه عند إيداع مبلغ أكبر من المستحق على الزبون'
+  ] },
+  { v: '2.27.1', date: '2026-10-01', items: [
+    'قراءة إيصال البطاقة: التاريخ يُقرأ حتى لو الوقت في سطر منفصل',
+    'قراءة ثالثة "حَكَم" بدقة أعلى لو القراءتين اختلفوا أو وحدة ما لقت المبلغ - يُعتمد الرقم لو اتفقت عليه قراءتين من ثلاث'
+  ] },
   { v: '2.27.0', date: '2026-10-01', items: [
     'اختيار خط التطبيق من الإعدادات ← الخط: 10 خطوط عربية احترافية بمعاينة حية (منها خط الآيفون وCairo وTajawal وAlmarai)'
   ] },
@@ -6052,15 +6061,24 @@ async function finalizeCardReceiptCapture(video, guide) {
   cardReceiptOcrScanning = false;
   if (cardReceiptOcrScanTimer) { clearTimeout(cardReceiptOcrScanTimer); cardReceiptOcrScanTimer = null; }
 
-  // تكبير x2 كافي جدًا لخط الإيصال المطبوع وأسرع بكتير من x3 (حجم الصورة يبقى أقل بحوالي النص،
-  // فسرعة المعالجة والقراءة تتحسن بنفس النسبة تقريبًا من غير ما الدقة تتأثر)
-  const finalCanvas = cropVideoToGuideCanvas(video, guide, 2, null);
+  // تصويت بين عدة لقطات: بناخد 4 لقطات خلال ثانية تقريبًا. اليد بتتحرك شوية فالضوء والانعكاس
+  // بيتغيروا من لقطة للتانية - فلو انعكاس غطى المبلغ في لقطة، غالبًا اللقطات التانية شايفاه.
+  // الرقم اللي يتكرر في أغلب القراءات هو اللي بيتعتمد (مش قراءة وحدة).
+  const statusEl = document.getElementById('cardReceiptOcrStatus');
+  if (statusEl) statusEl.textContent = 'ثبّت الجوال لحظة... جاري التصوير';
+  const frames = [];
+  for (let i = 0; i < 4; i++) {
+    try { frames.push(cropVideoToGuideCanvas(video, guide, 2, null)); } catch (e) {}
+    if (i < 3) await new Promise(r => setTimeout(r, 260));
+  }
+  if (!frames.length) { openCardReceiptOcrCamera(); return; }
+  const finalCanvas = frames[0];
   const imageDataUrl = finalCanvas.toDataURL('image/jpeg', 0.92);
 
   if (cardReceiptOcrStream) { cardReceiptOcrStream.getTracks().forEach(t => t.stop()); cardReceiptOcrStream = null; }
   closeModal('cardReceiptOcrCameraModal');
 
-  let resultA, resultB, debugImageA, debugImageB;
+  let resultA, resultB, debugImageA, debugImageB, extraResults = [];
 
   if (!isVisionOcrAvailable()) {
     alert('قارئ الصور الجديد (Apple Vision) غير موجود في هذه النسخة من التطبيق.\n\nتأكد أن آخر نسخة IPA رُفعت من نفس الملفات التي جهّزناها (package.json المحدّث) وأن الـ GitHub Action انتهى بنجاح، وثبّت هذه النسخة مرة أخرى.');
@@ -6068,20 +6086,15 @@ async function finalizeCardReceiptCapture(video, guide) {
     return;
   }
 
-  // المبلغ فلوس حقيقية - الدقة أهم من السرعة هنا. بنعمل القراءتين دايمًا بدون استثناء ونقارن
-  // بينهم فعليًا (Dual Verification حقيقي)، حتى لو القراءة الأولى شكلها سليم ظاهريًا - لأن رقم
-  // غلط "شكله سليم" (زي 1400.000 بدل 140.000) أخطر من نص ثانية وقت إضافي في القراءة
   try {
-    const variantA = finalCanvas; // الصورة الخام - أفضل حاجة لـ Vision
-    const variantB = receiptLightEnhance(finalCanvas); // معالجة خفيفة مختلفة - قراءة مستقلة فعليًا
+    const variantA = finalCanvas; // اللقطة الأولى خام
+    const variantB = receiptLightEnhance(finalCanvas); // نفس اللقطة بمعالجة خفيفة
     debugImageA = variantA.toDataURL('image/jpeg', 0.85);
     debugImageB = variantB.toDataURL('image/jpeg', 0.85);
-    const [rA, rB] = await Promise.all([
-      nativeVisionOcrProcess(variantA),
-      nativeVisionOcrProcess(variantB)
-    ]);
-    resultA = rA || { text: '', lines: [] };
-    resultB = rB || { text: '', lines: [] };
+    const all = await Promise.all([variantA, variantB, ...frames.slice(1)].map(c => nativeVisionOcrProcess(c).catch(() => null)));
+    resultA = all[0] || { text: '', lines: [] };
+    resultB = all[1] || { text: '', lines: [] };
+    extraResults = all.slice(2).filter(Boolean);
   } catch (e) {
     alert('حدثت مشكلة وقت تحليل الإيصال: ' + (e && e.message ? e.message : e) + ' - حاول مرة أخرى');
     openCardReceiptOcrCamera();
@@ -6091,6 +6104,46 @@ async function finalizeCardReceiptCapture(video, guide) {
   const fieldsA = extractReceiptFields(resultA);
   const fieldsB = extractReceiptFields(resultB);
   let merged = mergeDualReadings(fieldsA, fieldsB, finalCanvas);
+  const fieldsAll = [fieldsA, fieldsB, ...extraResults.map(r => extractReceiptFields(r))];
+
+  // التصويت على الحقول المهمة: لازم قيمة تتكرر في قراءتين على الأقل، وتكون أكتر قيمة متكررة
+  // (لو قيمتين متعادلين في العدد = تعارض = مراجعة يدوية، ما نخمنش في فلوس)
+  ['amount', 'reference_number', 'datetime'].forEach(k => {
+    const def = RECEIPT_FIELD_DEFS[k];
+    const counts = {}; const src = {};
+    fieldsAll.forEach(f => {
+      const x = f[k];
+      if (!x || x.ambiguous || !x.raw_value) return;
+      const v = normalizeFieldValue(k, x.raw_value);
+      if (!v || (def && !def.pattern.test(v))) return;
+      counts[v] = (counts[v] || 0) + 1;
+      if (!src[v]) src[v] = x;
+    });
+    const ranked = Object.keys(counts).sort((p, q) => counts[q] - counts[p]);
+    if (!ranked.length) return;
+    const top = ranked[0], second = ranked[1];
+    if (counts[top] >= 2 && (!second || counts[top] > counts[second])) {
+      merged[k] = { value: top, raw_value: src[top].raw_value, confidence: Math.min(99, 80 + counts[top] * 4), verified: true, needs_review: false, bbox: src[top].bbox || null, votes: counts[top] + '/' + fieldsAll.length };
+    } else if (second) {
+      merged[k] = { value: null, raw_value: src[top].raw_value, confidence: 0, verified: false, needs_review: true, bbox: null, votes: 'تعارض' };
+    }
+  });
+
+  // فحوصات منطقية: تاريخ بعيد عن اليوم، أو مبلغ غير معقول = مراجعة يدوية
+  if (merged.datetime && merged.datetime.value) {
+    const m = String(merged.datetime.value).match(/(\d{2})\/(\d{2})\/(\d{2,4})\s+(\d{2}):(\d{2})/);
+    if (m) {
+      const yr = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+      const d = new Date(yr, Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5]));
+      const days = (Date.now() - d.getTime()) / 86400000;
+      if (isNaN(days) || days > 10 || days < -1) { merged.datetime.needs_review = true; merged.datetime.verified = false; merged.datetime.warn = 'التاريخ بعيد عن اليوم - تأكد منه'; }
+    }
+  }
+  if (merged.amount && merged.amount.value) {
+    const a = Number(merged.amount.value);
+    if (!(a > 0) || a > 50000) { merged.amount.needs_review = true; merged.amount.verified = false; merged.amount.warn = 'المبلغ غير معقول - تأكد منه'; }
+  }
+  const resultC = extraResults.length ? { text: extraResults.map((r, i) => '--- لقطة ' + (i + 2) + ' ---\n' + (r.text || '(فارغ)')).join('\n') } : null;
 
   receiptCaptureState = {
     imageDataUrl: imageDataUrl,
@@ -6100,6 +6153,7 @@ async function finalizeCardReceiptCapture(video, guide) {
     debug: {
       textA: (resultA && resultA.text) || '(فارغ)',
       textB: (resultB && resultB.text) || '(فارغ)',
+      textC: resultC ? (resultC.text || '(فارغ)') : '',
       imageA: debugImageA,
       imageB: debugImageB
     }
@@ -6236,6 +6290,18 @@ function extractReceiptFields(ocrData) {
   // سطر) لنفس سبب المبلغ فوق - منعًا لالتصاق تاريخ ووقت من سطرين مختلفين تمامًا بالغلط
   const dtMatch = fullText.match(/(\d{2}\/\d{2}\/\d{2})[^\S\n]{0,4}(\d{2}:\d{2}:\d{2})/);
   if (dtMatch) { claim('datetime', dtMatch[1] + ' ' + dtMatch[2], 88, findLineInfoContaining(lines, dtMatch[0])); maskMatch(dtMatch); }
+  else {
+    // Apple Vision أحيانًا بيحط التاريخ في سطر والوقت في السطر اللي بعده - ندوّر على كل واحد لوحده
+    // (بس لو كل واحد فيهم موجود مرة وحدة، عشان ما نخلطش تاريخين أو وقتين)
+    const dOnly = Array.from(fullText.matchAll(/(?<![\d\/])(\d{2}\/\d{2}\/\d{2})(?![\d\/])/g));
+    const tOnly = Array.from(fullText.matchAll(/(?<![\d:])(\d{2}:\d{2}:\d{2})(?![\d:])/g));
+    if (dOnly.length === 1 && tOnly.length === 1) {
+      claim('datetime', dOnly[0][1] + ' ' + tOnly[0][1], 80, findLineInfoContaining(lines, dOnly[0][1]));
+      maskMatch(dOnly[0]);
+      const tm = scanText.match(new RegExp(tOnly[0][1].replace(/:/g, ':')));
+      if (tm) maskMatch(tm);
+    }
+  }
 
   // من هنا هنشتغل على scanText (بعد ما اتمسحت منه كل الأجزاء اللي اتاخدت فعلًا) بدل fullText
   // عشان نفس الرقم ميترشحش لحقلين مختلفين، مع الحفاظ على طول النص زي ما هو عشان الإحداثيات تفضل صح
@@ -8314,6 +8380,7 @@ function loadCustomers() {
 
       const net = salesNet - purchaseNet; // موجب = هو مديون لك، سالب = انت مديون له
       window.__customersById[c.id] = c; // لازم نحفظها هنا عشان نافذة التعديل تقدر توصلها من غير ما نمرر نص خام جوه onclick
+      window.__customerNet = window.__customerNet || {}; window.__customerNet[c.id] = net;
       return { ...c, net, count: genuinelyUnpaid.length };
     }).sort((a,b) => b.net - a.net);
 
@@ -8437,7 +8504,12 @@ async function submitDeposit() {
   const customerId = pendingDepositCustomer.id;
   const customerName = pendingDepositCustomer.name;
   const confirmMsg = (kind === 'purchase' ? 'تأكيد تسديد ' : 'تأكيد إيداع ') + fmtMoney(amount) + ' د.ل (' + method + ') ' + (kind === 'purchase' ? 'لـ' : 'على حساب') + ' "' + customerName + '"؟';
-  if (!await uiConfirm(confirmMsg)) return;
+  let warnMsg = '';
+  if (kind !== 'purchase') {
+    const due = (window.__customerNet || {})[customerId];
+    if (typeof due === 'number' && amount > due + 0.001) warnMsg = 'تنبيه: المبلغ أكبر من المستحق على الزبون (' + fmtMoney(Math.max(0, due)) + ' د.ل)\n\n';
+  }
+  if (!await uiConfirm(warnMsg + confirmMsg)) return;
   const path = kind === 'purchase' ? 'data/purchaseDeposits' : 'data/deposits';
   const depositRef = db.ref(path).push();
   const depositId = depositRef.key;
