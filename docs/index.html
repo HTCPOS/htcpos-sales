@@ -1029,13 +1029,7 @@
         <input type="text" id="phSearch" placeholder="بحث بالاسم أو الباركود..." autocomplete="off" autocorrect="off" spellcheck="false" oninput="onProductsHubSearch()">
       </div>
       <button type="button" class="phCam" onclick="productsHubCamera()" aria-label="مسح بالكاميرا"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></button>
-    </div>
-    <div class="phShorts">
-      <button type="button" class="phShort" onclick="openInventoryCount()"><span class="phIc" style="color:#2563EB;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span><span>جرد</span></button>
-      <button type="button" class="phShort" onclick="openLabelSettings()"><span class="phIc" style="color:#7C3AED;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span><span>باركود</span></button>
-      <button type="button" class="phShort" onclick="openDamagedModal()"><span class="phIc" style="color:#DC2626;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span><span>تالف</span></button>
-      <button type="button" class="phShort" onclick="openModal('shortagesModal')"><span class="phIc" style="color:#EA580C;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.6L22 7H6"/></svg></span><span>النواقص</span></button>
-      <button type="button" class="phShort" onclick="productsHubRfid()" style="opacity:.5;"><span class="phIc" style="color:#64748B;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="2"/></svg></span><span>RFID</span></button>
+      <button type="button" class="phCam" onclick="productsHubRfid()" aria-label="جرد RFID" title="RFID" style="color:#64748B;opacity:.55;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="2"/></svg></button>
     </div>
     <div id="phChips" class="lsChips" style="flex-shrink:0;margin-top:10px;"></div>
     <div id="phList" onscroll="onProductsHubScroll()" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin-top:10px;"></div>
@@ -3124,7 +3118,8 @@ let scriptUpdPendingId = null;
 let scriptUpdTimer = null;
 
 function scriptVersionCompare(a, b) {
-  const pa = String(a || '0').split('.').map(Number), pb = String(b || '0').split('.').map(Number);
+  const clean = v => String(v || '0').replace(/^[^0-9]+/, '');
+  const pa = clean(a).split('.').map(Number), pb = clean(b).split('.').map(Number);
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
     const x = pa[i] || 0, y = pb[i] || 0;
     if (x !== y) return x > y ? 1 : -1;
@@ -3156,7 +3151,17 @@ function scriptUpdPickFile(input) {
     const content = String(r.result || '');
     let err = '';
     let version = '';
-    if (!content.startsWith('# StoreSalesAlert - ASCII launcher')) err = 'هذا مو ملف السكريبت المجهّز (StoreSalesAlert.ps1)';
+    if (content.startsWith('# StoreAlerts Guardian')) {
+      if (/[^\x00-\x7F]/.test(content)) err = 'الملف فيه حروف غير إنجليزية - استخدم الملف كما وصلك بدون تعديل';
+      else {
+        const gm = content.match(/\$GV\s*=\s*"([^"]+)"/);
+        if (!gm) err = 'ملف الحارس ما فيه رقم إصدار';
+        else if (!scriptSupports('guardianUpdate')) err = 'حدّث السكريبت أول (3.5.0 أو أحدث) عشان يقدر يركّب الحارس';
+        else { scriptUpdFile = { kind: 'guardian', name: f.name, content, version: gm[1], size: content.length, sha256: await sha256Hex(content) }; renderScriptUpdate(); return; }
+      }
+      scriptUpdFile = { error: err, name: f.name }; renderScriptUpdate(); return;
+    }
+    if (!content.startsWith('# StoreSalesAlert - ASCII launcher')) err = 'هذا مو ملف السكريبت ولا ملف الحارس';
     else if (/[^\x00-\x7F]/.test(content)) err = 'الملف فيه حروف غير إنجليزية - استخدم الملف كما وصلك بدون تعديل';
     else if (content.indexOf('update_pending') < 0) err = 'هذي نسخة قديمة من السكريبت ما تدعم التحديث عن بعد';
     else {
@@ -3185,7 +3190,7 @@ async function scriptUpdSend() {
   if (btn) { btn.disabled = true; btn.textContent = 'جاري رفع الملف...'; }
   const id = db.ref('commands').push().key;
   try {
-    await db.ref('commands/scriptUpdate').set({ id, content: f.content, sha256: f.sha256, name: f.name, version: f.version, at: firebase.database.ServerValue.TIMESTAMP });
+    await db.ref(f.kind === 'guardian' ? 'commands/guardianUpdate' : 'commands/scriptUpdate').set({ id, content: f.content, sha256: f.sha256, name: f.name, version: f.version, at: firebase.database.ServerValue.TIMESTAMP });
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = 'تحديث الآن'; }
     alert('تعذّر رفع الملف: ' + (e && e.message ? e.message : e));
@@ -3200,7 +3205,7 @@ async function scriptUpdSend() {
 
 async function scriptUpdCancel() {
   if (!scriptUpdPendingId) return;
-  try { await db.ref('commands/scriptUpdate').remove(); } catch (e) {}
+  try { await db.ref(scriptUpdFile && scriptUpdFile.kind === 'guardian' ? 'commands/guardianUpdate' : 'commands/scriptUpdate').remove(); } catch (e) {}
   scriptUpdPendingId = null;
   scriptUpdFile = null;
   renderScriptUpdate();
@@ -3212,7 +3217,7 @@ function onScriptUpdateStatus(v) {
     scriptUpdPendingId = null;
     scriptUpdFile = null;
     clearTimeout(scriptUpdTimer);
-    if (v.state === 'done') showQuickToast('تم تحديث السكريبت إلى ' + v.version, true);
+    if (v.state === 'done') showQuickToast((v.kind === 'guardian' ? 'تم تحديث الحارس إلى ' : 'تم تحديث السكريبت إلى ') + v.version, true);
   }
   try { if (isModalOpen('scriptUpdateModal')) renderScriptUpdate(); } catch (e) {}
 }
@@ -3263,6 +3268,7 @@ function renderScriptUpdate() {
   const st = getCashierState();
   const supported = scriptSupports('scriptUpdate');
   let h = `<div class="abRow"><span class="k">إصدار السكريبت الحالي</span><span class="v" style="font-weight:900;">${run ? escapeHtml(run) : '<span style="color:var(--textMuted);font-weight:700;">قديم</span>'}</span></div>
+    <div class="abRow"><span class="k">إصدار الحارس</span><span class="v" style="font-weight:900;">${guardianStatus && guardianStatus.v ? escapeHtml(String(guardianStatus.v)) : '<span style="color:var(--textMuted);font-weight:700;">—</span>'}</span></div>
     <div class="abRow"><span class="k">الكاشير</span><span class="v" style="direction:rtl;color:${st.color};white-space:normal;">${escapeHtml(st.title)}</span></div>`;
   if (!supported) {
     h += `<div style="margin-top:14px;background:#FEF3C7;color:#92400E;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;line-height:1.8;">التحديث عن بعد يحتاج تركيب أول مرة من عند الكاشير: انسخ StoreSalesAlert.ps1 وشغّل أمر run.txt. بعدها كل التحديثات تكون من هنا.</div>`;
@@ -3274,7 +3280,7 @@ function renderScriptUpdate() {
   if (scriptUpdPendingId) {
     const mine = us && us.id === scriptUpdPendingId ? us.state : 'sent';
     h += `<div style="margin-top:14px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:8px 12px;">
-      <div style="font-size:13px;font-weight:900;margin:4px 2px 4px;">التحديث إلى ${escapeHtml(f && f.version ? f.version : '')}</div>${scriptUpdStepsHtml(mine, f)}</div>`;
+      <div style="font-size:13px;font-weight:900;margin:4px 2px 4px;">${f && f.kind === 'guardian' ? 'تحديث الحارس' : 'التحديث'} إلى ${escapeHtml(f && f.version ? f.version : '')}</div>${scriptUpdStepsHtml(mine, f)}</div>`;
     if (us && us.id === scriptUpdPendingId) h += scriptUpdLogHtml(us.log, true);
     if (mine === 'sent' && f && f.sentAt && Date.now() - f.sentAt > 55000) {
       h += `<div style="margin-top:10px;font-size:12.5px;color:#B45309;font-weight:700;line-height:1.8;">الكاشير ما استلم الطلب بعد. الطلب محفوظ وراح يتنفذ أول ما يتصل الكاشير.</div>`;
@@ -3288,15 +3294,17 @@ function renderScriptUpdate() {
   // اختيار الملف
   h += `<label style="display:block;margin-top:16px;border:2px dashed var(--border);border-radius:14px;padding:18px;text-align:center;cursor:pointer;">
       <input type="file" style="display:none;" onchange="scriptUpdPickFile(this)">
-      <div style="font-size:14px;font-weight:800;color:#2563EB;">اختر ملف StoreSalesAlert.ps1</div>
+      <div style="font-size:14px;font-weight:800;color:#2563EB;">اختر الملف (السكريبت أو الحارس)</div>
       <div style="font-size:12px;color:var(--textMuted);margin-top:4px;">من الملفات على جوالك</div></label>`;
   if (f && f.error) {
     h += `<div style="margin-top:12px;background:#FEE2E2;color:#991B1B;border-radius:12px;padding:11px 13px;font-size:13px;font-weight:700;line-height:1.7;">${escapeHtml(f.error)}</div>`;
   } else if (f) {
-    const cmp = run ? scriptVersionCompare(f.version, run) : 1;
+    const isG = f.kind === 'guardian';
+    const curV = isG ? (guardianStatus && guardianStatus.v ? String(guardianStatus.v) : '') : run;
+    const cmp = curV ? scriptVersionCompare(f.version, curV) : 1;
     h += `<div style="margin-top:12px;background:var(--surface2);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;line-height:1.9;">
         <div>الملف: <b>${escapeHtml(f.name)}</b> (${Math.round(f.size / 1024)} KB)</div>
-        <div>الإصدار: <b>${escapeHtml(run || 'قديم')}</b> ← <b style="color:#16A34A;">${escapeHtml(f.version)}</b></div></div>`;
+        <div>${isG ? 'الحارس' : 'السكريبت'}: <b>${escapeHtml(curV || 'قديم')}</b> ← <b style="color:#16A34A;">${escapeHtml(f.version)}</b></div></div>`;
     if (cmp <= 0) h += `<div style="margin-top:8px;font-size:12.5px;color:#B45309;font-weight:800;">${cmp === 0 ? 'هذي نفس النسخة الشغالة حاليًا' : 'هذي نسخة أقدم من الشغالة حاليًا'}</div>`;
     h += `<button id="suSendBtn" type="button" onclick="scriptUpdSend()" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;background:#2563EB;">${cmp <= 0 ? 'تركيبها على أي حال' : 'تحديث الآن'}</button>`;
   }
@@ -3915,9 +3923,16 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '2.24.1';
+const APP_VERSION = '2.25.1';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '2.25.1', date: '2026-10-01', items: [
+    'المنتجات: حذف الأزرار المكررة (جرد، باركود، تالف، النواقص - كلها في الرئيسية) وزر RFID صار أيقونة جنب الكاميرا، فالقائمة أكبر'
+  ] },
+  { v: '2.25.0', date: '2026-10-01', items: [
+    'تحديث الحارس عن بعد من نفس شاشة تحديث السكريبت (يتعرف على نوع الملف تلقائيًا)',
+    'عرض إصدار الحارس في شاشة التحديث'
+  ] },
   { v: '2.24.1', date: '2026-10-01', items: [
     'سجل التحكم عن بعد يكمل نفسه: بعد إعادة التشغيل يظهر سطر أخضر لما توصل نبضة السكريبت (أو أحمر لو ما وصلت خلال دقيقتين)'
   ] },
