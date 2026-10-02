@@ -1059,7 +1059,7 @@ setTimeout(() => window.hideSplash(), 4000);
     <div class="searchBox" style="margin:0;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="text" id="invoiceSearchInput" placeholder="رقم الإيصال أو الطلب..." onkeydown="if(event.key==='Enter')searchInvoiceByNumber()" style="min-width:0;">
-      <button onclick="openReceiptOcrCamera()" style="background:none;border:none;padding:0 4px;cursor:pointer;display:flex;align-items:center;" title="قراءة رقم الإيصال بالكاميرا"><span class="ic ic-qr" style="width:22px;height:22px;"></span></button>
+      <button onclick="window.__receiptOcrTarget=null;openReceiptOcrCamera()" style="background:none;border:none;padding:0 4px;cursor:pointer;display:flex;align-items:center;" title="قراءة رقم الإيصال بالكاميرا"><span class="ic ic-qr" style="width:22px;height:22px;"></span></button>
       <label title="تصفح فواتير يوم معيّن" style="position:relative;display:flex;align-items:center;padding:0 4px;cursor:pointer;">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
         <input type="date" id="invoiceDateInput" lang="en" onchange="if(this.value){browseInvoicesByDate();const el=this;setTimeout(()=>{el.value='';},800);}" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0;">
@@ -1242,6 +1242,11 @@ setTimeout(() => window.hideSplash(), 4000);
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('customerDebtModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3 id="customerDebtTitle">حساب الزبون</h3>
+    <div class="rcptBar" style="display:flex;gap:8px;align-items:center;background:var(--surface);border-radius:18px;padding:8px;margin:2px 0 12px;box-shadow:0 1px 2px rgba(15,23,42,.05);">
+      <input id="rcptNumInput" type="text" inputmode="text" autocomplete="off" placeholder="إضافة إيصال: P2832" onkeydown="if(event.key==='Enter'){event.preventDefault();rcptAddManual();}" style="flex:1;min-width:0;height:46px;border:none;background:var(--surface2);border-radius:13px;padding:0 14px;font-size:15px;color:var(--text);">
+      <button type="button" onclick="rcptAddManual()" style="height:46px;padding:0 14px;border:none;border-radius:13px;background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">إضافة</button>
+      <button type="button" onclick="openReceiptOcrForDebt()" aria-label="تصوير الإيصال" style="width:50px;height:46px;border:none;border-radius:13px;background:#16A34A;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
+    </div>
     <div id="customerDebtBody"></div>
   </div>
 </div>
@@ -1460,6 +1465,14 @@ setTimeout(() => window.hideSplash(), 4000);
         <span style="flex:1;"><span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--text);">جرد RFID <span style="font-size:11px;font-weight:800;background:#FEF3C7;color:#B45309;border-radius:8px;padding:2px 8px;">قريبًا</span></span><span style="display:block;font-size:12.5px;color:var(--textMuted);margin-top:2px;">يقرأ رف كامل بثواني - لما يوصل الجهاز</span></span>
       </button>
     </div>
+  </div>
+</div>
+
+<div class="modalBg" id="rcptDebtModal" onclick="if(event.target===this)closeModal('rcptDebtModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('rcptDebtModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>إضافة إيصال للحساب</h3>
+    <div id="rcptDebtBody"></div>
   </div>
 </div>
 
@@ -3324,6 +3337,163 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= إضافة إيصال الكاشير لحساب الزبون (دين) =================
+   حساب الزبون ← اكتب رقم الإيصال أو صوّره بالكاميرا ← نجيب الفاتورة من الأرشيف (أو من الكاشير
+   مباشرة لو مش في الأرشيف) ← مراجعة (التاريخ والوقت والأصناف والإجمالي) ← تسجيل الدين بإجمالي الفاتورة.
+   الكاميرا بتقرأ رقم الإيصال بس - كل الباقي من الفاتورة نفسها (أدق 100%). */
+let rcptDraft = null; // { cust:{id,name}, inv, dupes:[] }
+
+function rcptNormalize(q) {
+  const d = String(q || '').replace(/[^0-9]/g, '');
+  return d ? 'P' + d : '';
+}
+function rcptDigits(x) { return String(x || '').replace(/[^0-9]/g, ''); }
+
+function openReceiptOcrForDebt() {
+  if (!window.__debtCust) return;
+  window.__receiptOcrTarget = 'debt';
+  openReceiptOcrCamera();
+}
+
+function rcptAddManual() {
+  const inp = document.getElementById('rcptNumInput');
+  const num = rcptNormalize(inp && inp.value);
+  if (!num) { uiAlert('اكتب رقم الإيصال (مثال: P2832) أو صوّره بالكاميرا'); if (inp) inp.focus(); return; }
+  if (inp) inp.blur();
+  rcptLookupAndReview(num);
+}
+
+// يدوّر على فاتورة بيع بالرقم: الأرشيف أولًا، وبعدين الكاشير مباشرة (لو متصل)
+function findInvoiceByNumber(num) {
+  const want = rcptDigits(num);
+  const pick = list => (list || []).find(e => e && e.type !== 'return' && rcptDigits(e.number) === want) || null;
+  return fetchFullArchiveFlat().catch(() => []).then(flat => {
+    const hit = pick(flat);
+    if (hit) return { inv: hit, source: 'الأرشيف' };
+    if (typeof cashierLooksOnline === 'function' && !cashierLooksOnline()) return { inv: null, source: 'offline' };
+    return new Promise(resolve => {
+      const pushRef = db.ref('commands/invoiceQuery').push();
+      const resultRef = db.ref('data/invoiceQueryResults/' + pushRef.key);
+      let done = false;
+      const finish = r => { if (done) return; done = true; try { resultRef.off('value', cb); } catch (e) {} resolve(r); };
+      const cb = snap => {
+        if (snap.val() === null) return;
+        const res = Object.values(snap.val() || {});
+        resultRef.remove().catch(() => {});
+        finish({ inv: pick(res), source: 'الكاشير مباشرة' });
+      };
+      resultRef.on('value', cb);
+      pushRef.set({ type: 'search', query: num }).catch(() => finish({ inv: null, source: 'error' }));
+      setTimeout(() => finish({ inv: null, source: 'timeout' }), 25000);
+    });
+  });
+}
+
+function rcptLookupAndReview(num) {
+  const cust = window.__debtCust;
+  if (!cust) return;
+  rcptDraft = { cust, num, inv: null, dupes: [], loading: true };
+  renderRcptReview();
+  openModal('rcptDebtModal');
+  Promise.all([findInvoiceByNumber(num), liveOnce('data/debts').catch(() => null)]).then(([found, debtSnap]) => {
+    if (!rcptDraft || rcptDraft.num !== num) return;
+    rcptDraft.loading = false;
+    rcptDraft.inv = found.inv;
+    rcptDraft.source = found.source;
+    const all = debtSnap && debtSnap.val() ? Object.values(debtSnap.val()) : [];
+    const want = rcptDigits(num);
+    const names = {};
+    all.forEach(d => { if (d && rcptDigits(d.invoiceNumber) === want) names[d.customerName || 'زبون'] = true; });
+    rcptDraft.dupes = Object.keys(names);
+    renderRcptReview();
+  });
+}
+
+function renderRcptReview() {
+  const el = document.getElementById('rcptDebtBody');
+  const r = rcptDraft;
+  if (!el || !r) return;
+  if (r.loading) {
+    el.innerHTML = `<div style="text-align:center;font-size:14px;color:var(--textMuted);margin:10px 0;">جاري البحث عن الإيصال <b style="color:var(--text);">${escapeHtml(r.num)}</b>...</div>` + skeletonHtml(3);
+    return;
+  }
+  if (!r.inv) {
+    const why = r.source === 'offline' ? 'غير موجود في الأرشيف، والكاشير غير متصل الآن' : r.source === 'timeout' ? 'غير موجود في الأرشيف، والكاشير ما رد' : 'ما لقيت فاتورة بيع بهذا الرقم';
+    el.innerHTML = `<div style="background:#FEE2E2;color:#991B1B;border-radius:16px;padding:14px;font-size:14px;font-weight:700;line-height:1.8;text-align:center;margin-top:8px;">
+        ما لقيت الإيصال <span dir="ltr">${escapeHtml(r.num)}</span><br><span style="font-weight:600;font-size:13px;">${why}</span></div>
+      <div style="font-size:13px;color:var(--textMuted);text-align:center;margin-top:12px;line-height:1.8;">تأكد من الرقم واكتبه بيدك، أو صوّر الإيصال مرة ثانية</div>
+      <button type="button" onclick="closeModal('rcptDebtModal')" style="width:100%;margin-top:14px;border:none;border-radius:16px;height:50px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;">رجوع</button>`;
+    return;
+  }
+  const inv = r.inv;
+  const d = new Date(inv.date);
+  const dateTxt = isNaN(d.getTime()) ? escapeHtml(String(inv.date || '')) : d.toLocaleDateString('ar-EG-u-nu-latn', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const timeTxt = isNaN(d.getTime()) ? '' : d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const items = inv.items || [];
+  const total = Number(inv.amount || 0);
+  const itemsHtml = items.length ? items.map(it => `<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border2);font-size:14px;">
+        <span style="font-weight:700;">${escapeHtml(String(it.name || ''))}</span><span style="color:var(--textMuted);white-space:nowrap;direction:ltr;">${Number(it.qty || 1)} × ${fmtMoney(it.price)}</span></div>`).join('')
+    : '<div style="font-size:13px;color:var(--textMuted);padding:8px 0;">بدون تفاصيل أصناف</div>';
+  const warn = [];
+  if (r.dupes.length) warn.push(`<div style="background:#FEE2E2;color:#991B1B;border-radius:14px;padding:12px 14px;font-size:13.5px;font-weight:700;line-height:1.8;margin-top:10px;">هذا الإيصال مسجّل قبل كدين على حساب: ${r.dupes.map(escapeHtml).join('، ')}<br><span style="font-weight:600;">ما يمكن تسجيله مرة ثانية</span></div>`);
+  if (inv.hasReturn) warn.push(`<div style="background:#FEF3C7;color:#92400E;border-radius:14px;padding:11px 14px;font-size:13px;font-weight:700;margin-top:10px;">تنبيه: على هذه الفاتورة مرتجع - تأكد من المبلغ</div>`);
+  el.innerHTML = `
+    <div style="background:var(--surface);border-radius:18px;padding:14px 16px;margin-top:6px;box-shadow:0 1px 2px rgba(15,23,42,.05);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:var(--textMuted);font-weight:600;">رقم الإيصال</span>
+        <span style="font-size:18px;font-weight:800;direction:ltr;">${escapeHtml(String(inv.number || r.num))}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        <span style="font-size:13px;color:var(--textMuted);font-weight:600;">التاريخ والوقت</span>
+        <span style="font-size:14px;font-weight:700;">${dateTxt}${timeTxt ? ' · ' + timeTxt : ''}</span></div>
+      <div style="margin-top:10px;">${itemsHtml}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <span style="font-size:15px;font-weight:800;">الإجمالي (مبلغ الدين)</span>
+        <span style="font-size:22px;font-weight:800;color:#16A34A;direction:ltr;">${fmtMoney(total)} د.ل</span></div>
+    </div>
+    ${warn.join('')}
+    <div style="font-size:13px;color:var(--textMuted);margin:12px 4px 6px;">على حساب: <b style="color:var(--text);">${escapeHtml(r.cust.name)}</b> · المصدر: ${escapeHtml(r.source || '')}</div>
+    <input id="rcptNote" type="text" placeholder="ملاحظة (اختياري)" style="width:100%;height:46px;border:1.5px solid var(--border);border-radius:14px;padding:0 14px;background:var(--surface);color:var(--text);font-size:15px;box-sizing:border-box;">
+    <button type="button" id="rcptSaveBtn" onclick="rcptSave()" ${r.dupes.length || !(total > 0) ? 'disabled' : ''} style="width:100%;margin-top:12px;border:none;border-radius:18px;height:56px;background:${r.dupes.length || !(total > 0) ? 'var(--surface2)' : 'linear-gradient(180deg,#2BB35A,#15803D)'};color:${r.dupes.length || !(total > 0) ? 'var(--textMuted)' : '#fff'};font-size:16.5px;font-weight:700;cursor:pointer;">تسجيل الدين ${fmtMoney(total)} د.ل</button>
+    <button type="button" onclick="closeModal('rcptDebtModal')" style="width:100%;margin-top:10px;border:none;background:none;color:var(--textMuted);font-size:14px;font-weight:700;cursor:pointer;">إلغاء</button>`;
+}
+
+async function rcptSave() {
+  const r = rcptDraft;
+  if (!r || !r.inv || r.dupes.length) return;
+  const inv = r.inv, cust = r.cust;
+  const total = Number(inv.amount || 0);
+  if (!(total > 0)) return;
+  const btn = document.getElementById('rcptSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'جاري التسجيل...'; }
+  const note = ((document.getElementById('rcptNote') || {}).value || '').trim();
+  const items = (inv.items || []).filter(it => it && it.name);
+  const itemsSum = items.reduce((s, it) => s + Number(it.qty || 1) * Number(it.price || 0), 0);
+  const nowIso = new Date().toISOString();
+  const base = { customerId: cust.id, customerName: cust.name, invoiceNumber: String(inv.number || r.num), date: inv.date, createdAt: nowIso, paid: false, source: 'receipt' };
+  if (note) base.note = note;
+  // نفس شكل الديون الحالية (صنف لكل سجل) لو مجموع الأصناف = الإجمالي، وإلا سجل واحد بالإجمالي (فيه خصم مثلًا)
+  let records;
+  if (items.length && Math.abs(itemsSum - total) < 0.01) {
+    records = items.map(it => Object.assign({}, base, { itemName: it.name, qty: Number(it.qty || 1), price: Number(it.price || 0), amount: Math.round(Number(it.qty || 1) * Number(it.price || 0) * 1000) / 1000 }));
+  } else {
+    records = [Object.assign({}, base, { itemName: 'فاتورة ' + base.invoiceNumber + (items.length ? ': ' + items.map(it => it.name).join('، ') : ''), qty: 1, price: total, amount: total })];
+  }
+  try {
+    for (const rec of records) await db.ref('data/debts').push().set(rec);
+    logActivity('إضافة دين من إيصال', base.invoiceNumber + ' (' + fmtMoney(total) + ' د.ل) على ' + cust.name + (note ? ' - ملاحظة: ' + note : ''));
+    let settled = false;
+    try { const info = await reconcileSalesAccount(cust.id); settled = info && info.settledCount > 0; } catch (e) {}
+    closeModal('rcptDebtModal');
+    const inp = document.getElementById('rcptNumInput'); if (inp) inp.value = '';
+    rcptDraft = null;
+    uiAlert('تم تسجيل الإيصال ' + base.invoiceNumber + ' (' + fmtMoney(total) + ' د.ل) على حساب ' + cust.name + (settled ? '\nوسُدّد تلقائيًا من رصيد فائض عنده' : ''));
+    openCustomerDebt(cust.id, cust.name);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'تسجيل الدين ' + fmtMoney(total) + ' د.ل'; }
+    uiAlert('تعذّر التسجيل: ' + (e && e.message ? e.message : e));
+  }
+}
+
 /* ================= مشاهدة الفاتورة في الكاميرا (Hik-Connect) =================
    زر "شاهد في الكاميرا" في تفاصيل أي فاتورة: يحسب وقت التشغيل (قبل الفاتورة بدقيقة + فرق ساعة جهاز
    التسجيل)، يعرضه كبير وواضح، ينسخه، ويفتح تطبيق Hik-Connect. (Hik-Connect ما يسمح لتطبيق تاني
@@ -4598,9 +4768,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.3.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '3.3.0', date: '2026-10-02', items: [
+    'حساب الزبون: إضافة إيصال كدين بكتابة رقمه أو تصويره بالكاميرا - التاريخ والوقت والأصناف والإجمالي تُسحب من الفاتورة نفسها (الأرشيف أو الكاشير مباشرة)',
+    'مراجعة قبل التسجيل، ومنع تسجيل نفس الإيصال مرتين، وتنبيه لو على الفاتورة مرتجع'
+  ] },
   { v: '3.2.0', date: '2026-10-02', items: [
     'زر "شاهد الفاتورة في الكاميرا" في تفاصيل أي فاتورة: يعرض وقت التشغيل كبير (قبل الفاتورة بدقيقة)، ينسخه، ويفتح Hik-Connect',
     'إعدادات الكاميرا: كاميرا الكاشير، ثواني قبل الفاتورة، فرق ساعة جهاز التسجيل، وطريقة فتح Hik-Connect (رابط أو اختصار Shortcuts)'
@@ -6487,6 +6661,7 @@ function openReceiptOcrCamera() {
 
 function closeReceiptOcrCamera() {
   receiptOcrScanning = false;
+  window.__receiptOcrTarget = null;
   if (receiptOcrScanTimer) { clearTimeout(receiptOcrScanTimer); receiptOcrScanTimer = null; }
   if (receiptOcrStream) {
     receiptOcrStream.getTracks().forEach(t => t.stop());
@@ -6560,8 +6735,10 @@ function attemptReceiptOcrScan() {
         receiptOcrScanning = false;
         playFeedback('invoice'); // قراءة ناجحة
         const num = 'P' + best[1];
-        document.getElementById('invoiceSearchInput').value = num;
+        const target = window.__receiptOcrTarget;
         closeReceiptOcrCamera();
+        if (target === 'debt') { rcptLookupAndReview(num); return; }
+        document.getElementById('invoiceSearchInput').value = num;
         searchInvoiceByNumber();
       } else {
         scheduleReceiptOcrScan(); // لسه ما لقيناهوش، نجرب تاني من غير ما نضايق المستخدم برسالة فشل
@@ -9652,6 +9829,7 @@ async function debtReminderTextOnly() {
 }
 
 function openCustomerDebt(customerId, customerName) {
+  window.__debtCust = { id: customerId, name: customerName };
   document.getElementById('customerDebtTitle').textContent = 'حساب ' + customerName;
   const el = document.getElementById('customerDebtBody');
   el.innerHTML = skeletonHtml();
