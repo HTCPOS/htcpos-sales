@@ -216,6 +216,13 @@ window.applyAppFont = function (id, save) {
   .heroIllustration { position:absolute; top:12px; left:10px; opacity:.95; pointer-events:none; }
   .heroCard .label { font-size:13px; opacity:.85; max-width:62%; }
   .heroCard .amount { font-size:32px; font-weight:800; margin:6px 0 14px; position:relative; z-index:1; }
+  .heroLblRow { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
+  .heroEye { width:34px; height:34px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    background:rgba(255,255,255,.18); color:#fff; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .2s, transform .15s; }
+  .heroEye:active { transform:scale(.92); background:rgba(255,255,255,.28); }
+  #heroTotal { cursor:pointer; transition:opacity .14s ease, filter .14s ease, transform .14s ease; -webkit-tap-highlight-color:transparent; }
+  #heroTotal.heroSwap { opacity:0; filter:blur(6px); transform:scale(.97); }
+  #heroTotal .heroDots { display:inline-block; letter-spacing:6px; font-weight:900; transform:translateY(-2px); }
   .heroPill { display:inline-flex; align-items:center; gap:6px; background:#fff; color:#16A34A;
     padding:8px 14px; border-radius:20px; font-size:13px; font-weight:700; position:relative; z-index:1; }
   body.dark-theme .heroPill { color:#16A34A; }
@@ -1029,8 +1036,9 @@ setTimeout(() => window.hideSplash(), 4000);
       <path d="M92 18 L96 8 L101 16 L108 6 L112 15" fill="none" stroke="#4ADE80" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M108 6 L112 6 L112 10" fill="none" stroke="#4ADE80" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <div class="label">صافي المبيعات (بعد المرتجعات)</div>
-    <div class="amount" id="heroTotal">0.00 د.ل</div>
+    <div class="heroLblRow"><div class="label">صافي المبيعات (بعد المرتجعات)</div>
+      <button type="button" class="heroEye" id="heroEyeBtn" onclick="toggleHeroAmount()" aria-label="إظهار المبلغ"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div>
+    <div class="amount heroHidden" id="heroTotal" onclick="toggleHeroAmount()"><span class="heroDots" aria-label="المبلغ مخفي">••••••</span></div>
     <div class="heroPill"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> اليوم</div>
   </div>
 
@@ -1484,6 +1492,18 @@ setTimeout(() => window.hideSplash(), 4000);
     <h3>الديون</h3>
     <div class="searchBox" style="margin:2px 0 12px;"><input id="dhSearch" type="text" placeholder="ابحث بالاسم أو الهاتف..." oninput="renderDebtsHub()" autocomplete="off" style="min-width:0;"></div>
     <div id="dhBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="dayCloseModal" onclick="if(event.target===this)closeModal('dayCloseModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('dayCloseModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>إقفال اليوم</h3>
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:8px 12px;margin-bottom:12px;">
+      <span style="font-size:13.5px;font-weight:700;flex:1;">اليوم</span>
+      <input id="dcDate" type="date" lang="en" onchange="if(this.value)openDayClose(this.value)" style="height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 8px;background:var(--surface2);color:var(--text);font-size:14px;">
+    </div>
+    <div id="dcBody"></div>
   </div>
 </div>
 
@@ -1968,6 +1988,11 @@ setTimeout(() => window.hideSplash(), 4000);
   <div class="modalSheet" style="max-height:85vh;">
     <button class="closeM" onclick="closeModal('errorsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>الأخطاء وحالة الكاشير</h3>
+    <div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin:6px 0 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;"><b style="font-size:14.5px;">سلامة الحسابات</b>
+        <button type="button" onclick="runIntegrityCheck()" style="border:none;background:var(--surface2);color:var(--text);border-radius:10px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;">افحص الآن</button></div>
+      <div id="integrityBox"></div>
+    </div>
     <div id="errorsStatusCard" style="border-radius:12px;padding:12px;margin:10px 0;font-size:13px;font-weight:700;line-height:1.7;"></div>
     <div id="rescuePanel"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
@@ -3364,6 +3389,223 @@ function damagedPdfAction() {
   }
 }
 
+/* =====================================================================
+   النظام المحاسبي (4.1.0)
+   - كل حركة فلوس ليها أثر: "تسجيل السداد" اليدوي بيسجّل حركة في data/payments (دفتر نقدية بس،
+     ما بيدخلش في حسبة الرصيد عشان ما يتخصمش مرتين - الرصيد زي ما هو بيتحسب من الديون والإيداعات)
+   - إقفال اليوم: حساب الدرج (المتوقع مقابل المعدود) ويتحفظ في data/dayClosings/{يوم}
+   - اليوم المقفل: أي حركة عليه بتطلب تأكيد وتتسجل في سجل النشاط
+   - منع تكرار الرقم المرجعي للبطاقة، وتقريب المبالغ لـ 3 خانات، وفحص سلامة الحسابات
+   ===================================================================== */
+function r3(x) { return Math.round(Number(x || 0) * 1000) / 1000; }
+
+// نافذة اختيار بأزرار (نفس شكل نوافذ التطبيق) - بترجع قيمة الاختيار أو null لو اتلغت
+function uiChoose(title, msg, choices) {
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.className = 'uiDlgBg';
+    wrap.innerHTML = `<div class="uiDlg" role="dialog" aria-modal="true">
+        <div class="uiDlgT">${escapeHtml(title)}</div>
+        ${msg ? `<div class="uiDlgM">${escapeHtml(msg)}</div>` : ''}
+        <div class="uiDlgBtns">${choices.map((c, i) => `<button type="button" class="uiDlgB" data-i="${i}" style="background:${c.color || '#2563EB'};color:#fff;">${escapeHtml(c.label)}</button>`).join('')}</div>
+        <button type="button" class="uiChooseCancel" style="display:block;margin:12px auto 0;border:none;background:none;color:var(--textMuted);font-size:14px;font-weight:700;cursor:pointer;">إلغاء</button>
+      </div>`;
+    document.body.appendChild(wrap);
+    requestAnimationFrame(() => wrap.classList.add('show'));
+    const done = v => { wrap.classList.remove('show'); setTimeout(() => wrap.remove(), 250); resolve(v); };
+    wrap.addEventListener('click', e => {
+      if (e.target === wrap) return done(null);
+      const b = e.target.closest('[data-i]');
+      if (b) return done(choices[Number(b.dataset.i)].value);
+      if (e.target.closest('.uiChooseCancel')) done(null);
+    });
+  });
+}
+function askPayMethod(title, amount) {
+  return uiChoose(title, fmtMoney(amount) + ' د.ل - كيف كان الدفع؟', [
+    { label: 'نقدي', value: 'نقدي', color: '#16A34A' },
+    { label: 'بطاقة', value: 'بطاقة', color: '#2563EB' }
+  ]);
+}
+
+// ===== اليوم المقفل =====
+function acctDayKey(v) { return dhDayKeyOf(v || Date.now()); }
+async function guardClosedDay(dateVal, what) {
+  const key = acctDayKey(dateVal);
+  let closed = null;
+  try { const snap = await db.ref('data/dayClosings/' + key).once('value'); closed = snap.val(); } catch (e) {}
+  if (!closed || !closed.closedAt) return true;
+  const ok = await uiConfirm('يوم ' + dhDayLabel(key) + ' مقفل\nتم إقفاله وحساب الدرج. ' + what + ' بيغيّر أرقام يوم مقفل.\n\nمتأكد تكمل؟', { kind: 'danger', okText: 'متأكد، كمّل' });
+  if (ok) logActivity('تعديل على يوم مقفل', what + ' - ' + key);
+  return ok;
+}
+
+// ===== منع تكرار الرقم المرجعي للبطاقة =====
+async function findCardRefOwner(ref) {
+  const want = String(ref || '').replace(/\s+/g, '');
+  if (want.length < 4) return null;
+  const [a, b] = await Promise.all([liveOnce('data/deposits').catch(() => null), liveOnce('data/purchaseDeposits').catch(() => null)]);
+  const all = [...Object.values((a && a.val()) || {}), ...Object.values((b && b.val()) || {})];
+  const hit = all.find(p => p && String(p.refNumber || '').replace(/\s+/g, '') === want);
+  return hit ? (hit.customerName || 'زبون') : null;
+}
+
+// ===== إقفال اليوم (حساب الدرج) =====
+let dayCloseKey = null, dayCloseCalc = null;
+function openDayClose(key) {
+  dayCloseKey = key || acctDayKey();
+  const inp = document.getElementById('dcDate'); if (inp) inp.value = dayCloseKey;
+  document.getElementById('dcBody').innerHTML = skeletonHtml(5);
+  openModal('dayCloseModal');
+  loadDayClose();
+}
+async function loadDayClose() {
+  const key = dayCloseKey;
+  const inDay = v => acctDayKey(v) === key;
+  const [inv, dS, pS, ppS, payS, clS] = await Promise.all([
+    fetchArchiveDay(key).catch(() => []), liveOnce('data/debts'), liveOnce('data/deposits'), liveOnce('data/purchaseDeposits'),
+    db.ref('data/payments').once('value').catch(() => null), db.ref('data/dayClosings/' + key).once('value').catch(() => null)
+  ]);
+  if (key !== dayCloseKey) return;
+  const vals = s => Object.values((s && s.val()) || {}).filter(Boolean);
+  const sales = inv.filter(e => e.type !== 'return').reduce((s, e) => s + Number(e.amount || 0), 0);
+  const returns = inv.filter(e => e.type === 'return').reduce((s, e) => s + Math.abs(Number(e.amount || 0)), 0);
+  const credit = vals(dS).filter(d => inDay(d.date || d.createdAt)).reduce((s, d) => s + Number(d.amount || 0), 0);
+  const deps = vals(pS).filter(p => inDay(p.at) && p.method !== 'مقاصة');
+  const pdeps = vals(ppS).filter(p => inDay(p.at) && p.method !== 'مقاصة');
+  const pays = vals(payS).filter(p => inDay(p.at));
+  const cashIn = deps.filter(p => p.method === 'نقدي').reduce((s, p) => s + Number(p.amount || 0), 0) + pays.filter(p => p.dir === 'in' && p.method === 'نقدي').reduce((s, p) => s + Number(p.amount || 0), 0);
+  const cardIn = deps.filter(p => p.method === 'بطاقة').reduce((s, p) => s + Number(p.amount || 0), 0) + pays.filter(p => p.dir === 'in' && p.method === 'بطاقة').reduce((s, p) => s + Number(p.amount || 0), 0);
+  const cashOut = pdeps.filter(p => p.method === 'نقدي').reduce((s, p) => s + Number(p.amount || 0), 0) + pays.filter(p => p.dir === 'out' && p.method === 'نقدي').reduce((s, p) => s + Number(p.amount || 0), 0);
+  const closed = clS && clS.val();
+  dayCloseCalc = { key, sales: r3(sales), returns: r3(returns), credit: r3(credit), cashIn: r3(cashIn), cardIn: r3(cardIn), cashOut: r3(cashOut), invCount: inv.length, closed };
+  renderDayClose();
+}
+function dcExpected(c, cardSales) { return r3(c.sales - c.returns - (Number(cardSales) || 0) - c.credit + c.cashIn - c.cashOut); }
+function renderDayClose() {
+  const c = dayCloseCalc; if (!c) return;
+  const cl = c.closed;
+  const cardSales = cl ? cl.cardSales : (Number((document.getElementById('dcCard') || {}).value) || 0);
+  const exp = dcExpected(c, cardSales);
+  const row = (label, val, sign, hint) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border2);">
+      <span style="font-size:14px;font-weight:600;">${label}${hint ? `<span style="display:block;font-size:11.5px;color:var(--textMuted);font-weight:500;margin-top:2px;">${hint}</span>` : ''}</span>
+      <span style="font-size:15px;font-weight:800;direction:ltr;white-space:nowrap;color:${sign === '-' ? '#DC2626' : sign === '+' ? '#16A34A' : 'var(--text)'};">${sign === '-' ? '−' : sign === '+' ? '+' : ''}${fmtMoney(val)}</span></div>`;
+  let h = `<div style="background:var(--surface);border-radius:18px;padding:4px 16px;box-shadow:0 1px 2px rgba(15,23,42,.05);">
+      ${row('مبيعات الكاشير', c.sales, '', c.invCount + ' فاتورة من الأرشيف')}
+      ${row('المرتجعات', c.returns, '-')}
+      ${row('بيع على الحساب (ديون اليوم)', c.credit, '-', 'ما دخلت الدرج')}
+      ${row('تحصيل ديون نقدي', c.cashIn, '+')}
+      ${row('تسديد مشتريات نقدي', c.cashOut, '-')}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border2);">
+        <span style="font-size:14px;font-weight:600;">مبيعات بالبطاقة في الكاشير<span style="display:block;font-size:11.5px;color:var(--textMuted);font-weight:500;margin-top:2px;">من تقرير الكاشير (ما تدخل الدرج)</span></span>
+        ${cl ? `<span style="font-size:15px;font-weight:800;color:#DC2626;direction:ltr;">−${fmtMoney(cl.cardSales || 0)}</span>` : `<input id="dcCard" type="text" inputmode="decimal" lang="en" value="${cardSales || ''}" placeholder="0" oninput="renderDayCloseTotals()" style="width:110px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:700;">`}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 12px;">
+        <span style="font-size:15.5px;font-weight:800;">المفروض في الدرج</span>
+        <span id="dcExp" style="font-size:21px;font-weight:800;direction:ltr;">${fmtMoney(exp)}</span></div>
+    </div>
+    ${c.cardIn > 0.005 ? `<div style="font-size:12.5px;color:var(--textMuted);margin:8px 6px 0;">تحصيل بالبطاقة اليوم: ${fmtMoney(c.cardIn)} د.ل (في البنك، مش في الدرج)</div>` : ''}`;
+  if (cl) {
+    const diff = r3(cl.counted - cl.expected);
+    h += `<div style="background:var(--surface);border-radius:18px;padding:14px 16px;margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">المعدود فعلًا</span><b style="direction:ltr;">${fmtMoney(cl.counted)}</b></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;"><span style="font-weight:700;">الفرق</span><b style="direction:ltr;color:${Math.abs(diff) < 0.005 ? '#16A34A' : diff > 0 ? '#2563EB' : '#DC2626'};">${Math.abs(diff) < 0.005 ? 'مطابق ✓' : (diff > 0 ? 'زيادة +' : 'عجز −') + fmtMoney(Math.abs(diff))}</b></div>
+        ${cl.note ? `<div style="font-size:13px;color:var(--textMuted);margin-top:8px;">ملاحظة: ${escapeHtml(cl.note)}</div>` : ''}
+        <div style="font-size:12px;color:var(--textMuted);margin-top:8px;">🔒 مقفل ${new Date(cl.closedAt).toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+      </div>
+      <button type="button" onclick="reopenDay()" style="width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:16px;height:48px;background:var(--surface);color:#DC2626;font-size:14.5px;font-weight:700;cursor:pointer;">إعادة فتح اليوم</button>`;
+  } else {
+    h += `<div style="background:var(--surface);border-radius:18px;padding:14px 16px;margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+          <span style="font-size:15px;font-weight:800;">المعدود في الدرج</span>
+          <input id="dcCounted" type="text" inputmode="decimal" lang="en" placeholder="عدّ الدرج واكتب" oninput="renderDayCloseTotals()" style="width:140px;height:46px;text-align:center;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:17px;font-weight:800;">
+        </div>
+        <div id="dcDiff" style="text-align:center;font-size:15px;font-weight:800;margin-top:12px;min-height:20px;"></div>
+        <input id="dcNote" type="text" placeholder="ملاحظة (اختياري) - مثلًا سبب العجز" style="width:100%;height:44px;margin-top:10px;border:1.5px solid var(--border);border-radius:12px;padding:0 12px;background:var(--surface2);color:var(--text);font-size:14.5px;box-sizing:border-box;">
+      </div>
+      <button type="button" id="dcSaveBtn" onclick="saveDayClose()" style="width:100%;margin-top:12px;border:none;border-radius:18px;height:56px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16.5px;font-weight:700;cursor:pointer;">🔒 إقفال اليوم</button>`;
+  }
+  document.getElementById('dcBody').innerHTML = h;
+}
+function renderDayCloseTotals() {
+  const c = dayCloseCalc; if (!c || c.closed) return;
+  const exp = dcExpected(c, (document.getElementById('dcCard') || {}).value);
+  const e = document.getElementById('dcExp'); if (e) e.textContent = fmtMoney(exp);
+  const cv = (document.getElementById('dcCounted') || {}).value;
+  const d = document.getElementById('dcDiff');
+  if (!d) return;
+  if (cv === '' || cv == null) { d.textContent = ''; return; }
+  const diff = r3(Number(cv) - exp);
+  d.style.color = Math.abs(diff) < 0.005 ? '#16A34A' : diff > 0 ? '#2563EB' : '#DC2626';
+  d.textContent = Math.abs(diff) < 0.005 ? 'مطابق ✓' : (diff > 0 ? 'زيادة +' : 'عجز −') + fmtMoney(Math.abs(diff)) + ' د.ل';
+}
+async function saveDayClose() {
+  const c = dayCloseCalc; if (!c || c.closed) return;
+  const cvRaw = (document.getElementById('dcCounted') || {}).value;
+  if (cvRaw === '' || isNaN(Number(cvRaw))) { uiAlert('عدّ الدرج واكتب المبلغ المعدود أولًا'); return; }
+  const cardSales = r3((document.getElementById('dcCard') || {}).value);
+  const expected = dcExpected(c, cardSales), counted = r3(cvRaw), diff = r3(counted - expected);
+  const note = ((document.getElementById('dcNote') || {}).value || '').trim();
+  const msg = 'إقفال ' + dhDayLabel(c.key) + '\nالمفروض ' + fmtMoney(expected) + ' · المعدود ' + fmtMoney(counted) + '\n' + (Math.abs(diff) < 0.005 ? 'مطابق ✓' : (diff > 0 ? 'زيادة ' : 'عجز ') + fmtMoney(Math.abs(diff)) + ' د.ل') + '\n\nبعد الإقفال أي تعديل على هذا اليوم يحتاج تأكيد.';
+  if (!(await uiConfirm(msg, { okText: 'إقفال' }))) return;
+  const rec = { sales: c.sales, returns: c.returns, credit: c.credit, cashIn: c.cashIn, cashOut: c.cashOut, cardIn: c.cardIn, cardSales, expected, counted, diff, closedAt: new Date().toISOString() };
+  if (note) rec.note = note;
+  try {
+    await db.ref('data/dayClosings/' + c.key).set(rec);
+    logActivity('إقفال اليوم', c.key + ' - المفروض ' + fmtMoney(expected) + '، المعدود ' + fmtMoney(counted) + (Math.abs(diff) < 0.005 ? ' (مطابق)' : (diff > 0 ? ' (زيادة ' : ' (عجز ') + fmtMoney(Math.abs(diff)) + ')'));
+    showQuickToast('تم إقفال اليوم 🔒', true);
+    loadDayClose();
+  } catch (e) { uiAlert('تعذّر الإقفال: ' + (e && e.message ? e.message : e)); }
+}
+async function reopenDay() {
+  const c = dayCloseCalc; if (!c || !c.closed) return;
+  if (!(await uiConfirm('إعادة فتح ' + dhDayLabel(c.key) + '؟\nالإقفال القديم يتحفظ في سجل النشاط.', { kind: 'danger', okText: 'إعادة الفتح' }))) return;
+  try {
+    await db.ref('data/dayClosings/' + c.key).remove();
+    logActivity('إعادة فتح يوم', c.key + ' - كان: المفروض ' + fmtMoney(c.closed.expected) + '، المعدود ' + fmtMoney(c.closed.counted));
+    loadDayClose();
+  } catch (e) { uiAlert('تعذّرت إعادة الفتح'); }
+}
+
+// ===== فحص سلامة الحسابات =====
+async function runIntegrityCheck() {
+  const box = document.getElementById('integrityBox');
+  if (box) box.innerHTML = '<div style="font-size:13px;color:var(--textMuted);padding:8px 0;">جاري الفحص...</div>';
+  const [cS, dS, pS, pdS, ppS] = await Promise.all(['data/customers', 'data/debts', 'data/deposits', 'data/purchaseDebts', 'data/purchaseDeposits'].map(p => liveOnce(p).catch(() => null)));
+  const ent = s => Object.entries((s && s.val()) || {}).map(([id, x]) => ({ id, ...(x || {}) }));
+  const customers = (cS && cS.val()) || {};
+  const debts = ent(dS), deps = ent(pS), pdebts = ent(pdS), pdeps = ent(ppS);
+  const issues = [];
+  const badAmt = (list, field, label) => { const n = list.filter(x => !isFinite(Number(x[field])) || Number(x[field]) <= 0).length; if (n) issues.push({ lvl: 'err', t: n + ' ' + label + ' بمبلغ غير صحيح (صفر أو سالب أو فاضي)' }); };
+  badAmt(debts, 'amount', 'دين'); badAmt(deps, 'amount', 'إيداع'); badAmt(pdebts, 'price', 'صنف مشتريات'); badAmt(pdeps, 'amount', 'تسديد مشتريات');
+  const noCust = [...debts, ...deps].filter(x => !x.customerId).length;
+  if (noCust) issues.push({ lvl: 'warn', t: noCust + ' حركة بدون زبون مرتبط' });
+  // زبون محذوف وعنده رصيد مفتوح
+  const orphanIds = new Set([...debts, ...deps, ...pdebts, ...pdeps].map(x => x.customerId).filter(id => id && !customers[id]));
+  if (orphanIds.size) {
+    const list = await computeDebtsOverview().catch(() => []);
+    const open = list.filter(x => orphanIds.has(x.id) && Math.abs(x.net) > 0.005);
+    if (open.length) issues.push({ lvl: 'err', t: open.length + ' زبون محذوف وعنده رصيد مفتوح: ' + open.map(x => x.name + ' (' + fmtMoney(x.net) + ')').join('، ') });
+  }
+  // نفس الرقم المرجعي للبطاقة مسجل أكثر من مرة
+  const refs = {};
+  [...deps, ...pdeps].forEach(p => { const r = String(p.refNumber || '').replace(/\s+/g, ''); if (r.length >= 4) (refs[r] = refs[r] || []).push(p.customerName || '?'); });
+  Object.entries(refs).filter(([, v]) => v.length > 1).forEach(([r, v]) => issues.push({ lvl: 'err', t: 'الرقم المرجعي ' + r + ' مسجل ' + v.length + ' مرات (' + v.join('، ') + ')' }));
+  // نفس الإيصال مسجل كدين على أكثر من زبون
+  const inv = {};
+  debts.forEach(d => { const n = String(d.invoiceNumber || '').replace(/[^0-9]/g, ''); if (n) (inv[n] = inv[n] || new Set()).add(d.customerId); });
+  Object.entries(inv).filter(([, v]) => v.size > 1).forEach(([n]) => issues.push({ lvl: 'warn', t: 'الإيصال P' + n + ' مسجل كدين على أكثر من زبون' }));
+  // كسور غريبة (أكثر من 3 خانات عشرية)
+  const odd = [...debts.map(d => d.amount), ...deps.map(p => p.amount)].filter(v => isFinite(Number(v)) && Math.abs(Number(v) - r3(v)) > 1e-9).length;
+  if (odd) issues.push({ lvl: 'info', t: odd + ' مبلغ فيه كسور أكثر من 3 خانات (فروق تقريب بسيطة)' });
+  const ok = !issues.some(i => i.lvl === 'err');
+  const color = { err: '#DC2626', warn: '#D97706', info: 'var(--textMuted)' };
+  if (box) box.innerHTML = (issues.length ? issues.map(i => `<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border2);font-size:13.5px;line-height:1.7;"><span style="color:${color[i.lvl]};font-weight:900;">${i.lvl === 'err' ? '✕' : i.lvl === 'warn' ? '!' : '·'}</span><span>${escapeHtml(i.t)}</span></div>`).join('')
+    : `<div style="font-size:14px;font-weight:800;color:#16A34A;padding:6px 0;">✓ الحسابات سليمة - ${debts.length} دين، ${deps.length} إيداع، ${pdebts.length} مشتريات، ${pdeps.length} تسديد</div>`)
+    + `<div style="font-size:11.5px;color:var(--textMuted);margin-top:8px;">آخر فحص: ${new Date().toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</div>`;
+  return { ok, issues };
+}
+
 /* ================= الديون: شاشة واحدة لكل الناس (لك + عليك) =================
    نفس حسبة حساب الزبون بالظبط: (مبيعات − إيداعات) − (مشتريات − تسديدات مشتريات).
    موجب = لك عنده، سالب = عليك له. والمقاصة: لو الطرفين مفتوحين، زر يقفل الأقل من الجهتين
@@ -3437,6 +3679,7 @@ function renderDebtsHub() {
   let h = `<div style="display:flex;gap:8px;">
       ${card('لك عند الناس', fmtMoney(sumFor), '#16A34A')}${card('عليك للناس', fmtMoney(sumOn), '#DC2626')}${card('الصافي', (net >= 0 ? '+' : '−') + fmtMoney(Math.abs(net)), net >= 0 ? '#16A34A' : '#DC2626')}
     </div>
+    <button type="button" onclick="openDayClose()" style="width:100%;margin-top:10px;height:44px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">🔒 إقفال اليوم وحساب الدرج</button>
     <div class="lsChips" style="margin:14px 0 10px;">${tab('all', 'الكل', null)}${tab('for', 'لك', forYou.length)}${tab('on', 'عليك', onYou.length)}${tab('days', 'حسب اليوم', null)}</div>`;
   if (debtsHubTab === 'days') {
     document.getElementById('dhBody').innerHTML = h + '<div id="dhDaysWrap"></div>';
@@ -3477,6 +3720,7 @@ async function debtsOffset(id, name, amount) {
   if (!(amount > 0)) return;
   const msg = 'مقاصة ' + fmtMoney(amount) + ' د.ل مع "' + name + '"؟\n\nيتسكّر ' + fmtMoney(amount) + ' من ديونه عندك، و' + fmtMoney(amount) + ' من اللي لك عليه في المشتريات. الصافي ما يتغير.';
   if (!(await uiConfirm(msg, { okText: 'تأكيد المقاصة' }))) return;
+  if (!(await guardClosedDay(Date.now(), 'مقاصة'))) return;
   const now = new Date().toISOString();
   const base = { customerId: id, customerName: name, amount: amount, method: 'مقاصة', at: now, createdAt: now };
   try {
@@ -3731,6 +3975,7 @@ async function rcptSave() {
   const inv = r.inv, cust = r.cust;
   const total = Number(inv.amount || 0);
   if (!(total > 0)) return;
+  if (!(await guardClosedDay(inv.date, 'تسجيل دين من إيصال'))) return;
   const btn = document.getElementById('rcptSaveBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'جاري التسجيل...'; }
   const note = ((document.getElementById('rcptNote') || {}).value || '').trim();
@@ -3893,6 +4138,38 @@ function updateFontTag() {
   if (el && f) el.textContent = f.name;
 }
 function openCountChooser() { openModal('countChooserModal'); }
+
+/* ===== إخفاء صافي المبيعات في الرئيسية (زي التطبيقات البنكية) =====
+   مخفي دايمًا عند فتح التطبيق (ومن أول رسم للصفحة - مفيش لحظة يبان فيها الرقم)، وزر العين يظهره/يخفيه.
+   ولو التطبيق راح للخلفية ورجع، يتخفي تاني. القيمة الحقيقية محفوظة على جنب ومش مكتوبة في الصفحة وهو مخفي. */
+let heroShown = false, heroValue = '0.00 د.ل';
+const HERO_EYE_ON = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const HERO_EYE_OFF = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+function setHeroAmount(txt) {
+  heroValue = txt;
+  if (heroShown) { const el = document.getElementById('heroTotal'); if (el) el.textContent = txt; }
+}
+function renderHeroAmount(animate) {
+  const el = document.getElementById('heroTotal'), btn = document.getElementById('heroEyeBtn');
+  if (!el) return;
+  const apply = () => {
+    if (heroShown) { el.textContent = heroValue; el.classList.remove('heroHidden'); }
+    else { el.innerHTML = '<span class="heroDots" aria-label="المبلغ مخفي">••••••</span>'; el.classList.add('heroHidden'); }
+    if (btn) { btn.innerHTML = heroShown ? HERO_EYE_ON : HERO_EYE_OFF; btn.setAttribute('aria-label', heroShown ? 'إخفاء المبلغ' : 'إظهار المبلغ'); }
+    el.classList.remove('heroSwap');
+  };
+  if (!animate) { apply(); return; }
+  el.classList.add('heroSwap');
+  setTimeout(apply, 140);
+}
+function toggleHeroAmount() {
+  heroShown = !heroShown;
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+  renderHeroAmount(true);
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && heroShown) { heroShown = false; renderHeroAmount(false); }
+});
 
 function openFontPicker() {
   // نحمّل كل الخطوط مرة وحدة عشان المعاينة تطلع بخطها الحقيقي
@@ -4841,6 +5118,7 @@ const GS_SCREENS = [
   { name: 'سجل الحركات', kw: 'سجل حركات تعديلات تراجع', run: "openModal('activityLogModal')" },
   { name: 'الملاحظات', kw: 'ملاحظات ملاحظة', run: "openNotesModal()" },
   { name: 'الزبائن', kw: 'زبائن زبون ديون دين حساب ايداع سداد', run: "openModal('customersModal')" },
+  { name: 'إقفال اليوم (حساب الدرج)', kw: 'اقفال إقفال قفل اليوم الدرج الصندوق عد الكاش النقدية عجز زيادة', run: "openDayClose()" },
   { name: 'الديون حسب اليوم', kw: 'ديون اليوم يومي كل يوم تاريخ حسب اليوم', run: "openDebtsHub('days')" },
   { name: 'الديون (لك وعليك)', kw: 'ديون دين مستحق لك عليك مقاصة صافي حسابات', run: "openDebtsHub()" },
   { name: 'ديون المشتريات', kw: 'مشتريات محل محلات مورد موردين ديون', run: "openModal('purchaseDebtsModal')" },
@@ -5038,9 +5316,20 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.1.1';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '4.1.1', date: '2026-10-02', items: [
+    'صافي المبيعات في الرئيسية مخفي عند فتح التطبيق (••••••) مع زر عين لإظهاره، ويتخفي تاني لما التطبيق يروح للخلفية'
+  ] },
+  { v: '4.1.0', date: '2026-10-02', items: [
+    'إقفال اليوم: حساب الدرج (مبيعات − مرتجعات − بطاقة − ديون اليوم + تحصيل نقدي − تسديد نقدي) مقابل المعدود، ويطلع الفرق (مطابق/زيادة/عجز)',
+    'اليوم المقفل: أي إيداع أو سداد أو مقاصة أو دين عليه يحتاج تأكيد ويتسجل في سجل النشاط',
+    '"تسجيل السداد" يسأل نقدي/بطاقة ويسجّل حركة الفلوس - مفيش سداد بدون أثر',
+    'إلغاء الإيداع يتأرشف كامل مع السبب قبل ما ينشال - مفيش حركة تختفي',
+    'منع تسجيل نفس الرقم المرجعي للبطاقة مرتين، وتقريب كل المبالغ لـ 3 خانات',
+    'فحص سلامة الحسابات في شاشة الأخطاء (مبالغ غلط، زبائن محذوفين برصيد، تكرار)'
+  ] },
   { v: '4.0.0', date: '2026-10-02', items: [
     'النسخة النهائية المعتمدة: مراجعة شاملة لكل الشاشات (54 شاشة) بالوضع العادي والليلي',
     'نوافذ الإدخال تطلع فوق الكيبورد، وكيبورد أرقام للأسئلة اللي تطلب رقم (مثل حد "قرب يخلص")',
@@ -5989,7 +6278,7 @@ function archiveInvoices(invoices) {
 
 function renderSummary() {
   const s = latestSummary;
-  document.getElementById('heroTotal').textContent = fmtMoney(s.netSalesToday) + ' د.ل';
+  setHeroAmount(fmtMoney(s.netSalesToday) + ' د.ل');
   { const sp = document.getElementById('statProducts'); if (sp) sp.textContent = s.totalProducts ?? 0; }
   document.getElementById('statReturns').textContent = s.returnsCount ?? 0;
   document.getElementById('statShortages').textContent = s.shortagesCount ?? 0;
@@ -6266,7 +6555,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة اللي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) زي أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -6404,6 +6693,7 @@ function openModal(id) {
   if (id === 'generalSettingsModal') { const vt = document.getElementById('settingsVersionTag'); if (vt) vt.textContent = 'v' + APP_VERSION; }
   if (id === 'errorsModal') { renderErrorsModal(); markErrorsSeen(); }
   if (id === 'purchaseDebtsModal') loadPurchaseDebts();
+  if (id === 'errorsModal') setTimeout(() => { try { runIntegrityCheck(); } catch (e) {} }, 50);
   if (id === 'zeroPriceModal') loadZeroPriceModal();
 }
 // الإغلاق بحركة (النافذة بتنزل والخلفية بتفتح) - opts.instant للإغلاق الفوري (زي بعد السحب لتحت)
@@ -9633,8 +9923,8 @@ function closeDepositModalAnimated() {
 
 async function submitDeposit() {
   if (!pendingDepositCustomer) return;
-  const amount = Number(document.getElementById('depositAmountInput').value);
-  if (!amount || amount <= 0) { alert('اكتب مبلغ صحيح'); return; }
+  const amount = r3(document.getElementById('depositAmountInput').value);
+  if (!amount || amount <= 0) { uiAlert('اكتب مبلغ صحيح'); return; }
   const method = pendingDepositMethod;
   const refNumber = method === 'بطاقة' ? document.getElementById('depositRefInput').value.trim() : '';
   const receiptDateTime = method === 'بطاقة' ? document.getElementById('depositDateInput').value.trim() : '';
@@ -9647,7 +9937,12 @@ async function submitDeposit() {
     const due = (window.__customerNet || {})[customerId];
     if (typeof due === 'number' && amount > due + 0.001) warnMsg = 'تنبيه: المبلغ أكبر من المستحق على الزبون (' + fmtMoney(Math.max(0, due)) + ' د.ل)\n\n';
   }
+  if (refNumber) {
+    const owner = await findCardRefOwner(refNumber);
+    if (owner) { uiAlert('الرقم المرجعي ' + refNumber + ' مسجّل قبل كإيداع على حساب: ' + owner + '\nما يمكن تسجيل نفس عملية البطاقة مرتين.'); return; }
+  }
   if (!await uiConfirm(warnMsg + confirmMsg)) return;
+  if (!(await guardClosedDay(Date.now(), kind === 'purchase' ? 'تسديد مشتريات' : 'إيداع مبلغ'))) return;
   const path = kind === 'purchase' ? 'data/purchaseDeposits' : 'data/deposits';
   const depositRef = db.ref(path).push();
   const depositId = depositRef.key;
@@ -9826,11 +10121,18 @@ function renderPurchaseDebtsSuppliers() {
 }
 
 async function deletePurchaseDebtFromAccount(id, itemName, customerId, customerName) {
-  if (!await uiConfirm('تأكيد إنك سددت "' + itemName + '"؟')) return;
-  db.ref('data/purchaseDebts/' + id).update({ paid: true, paidAt: new Date().toISOString() }).then(() => {
-    logActivity('تسديد دين مشتريات', itemName + ' - ' + customerName);
-    openCustomerDebt(customerId, customerName);
-  });
+  let price = 0;
+  try { const sn = await db.ref('data/purchaseDebts/' + id).once('value'); price = Number((sn.val() || {}).price || 0); } catch (e) {}
+  const method = await askPayMethod('تسديد "' + itemName + '" لـ ' + customerName, price);
+  if (!method) return;
+  if (!(await guardClosedDay(Date.now(), 'تسديد مشتريات'))) return;
+  const now = new Date().toISOString();
+  try {
+    await db.ref('data/purchaseDebts/' + id).update({ paid: true, paidAt: now, paidMethod: method });
+    await db.ref('data/payments').push().set({ kind: 'purchasePaid', dir: 'out', amount: r3(price), method, customerId, customerName, purchaseId: id, itemName: itemName || '', at: now });
+    logActivity('تسديد دين مشتريات', itemName + ' (' + fmtMoney(price) + ' د.ل - ' + method + ') - ' + customerName);
+  } catch (e) { uiAlert('تعذّر التسديد: ' + (e && e.message ? e.message : e)); }
+  openCustomerDebt(customerId, customerName);
 }
 
 function cancelDeposit(depositId, customerId, customerName, kind) {
@@ -9840,6 +10142,12 @@ function cancelDeposit(depositId, customerId, customerName, kind) {
     const amountLabel = dep ? fmtMoney(dep.amount) + ' د.ل (' + (dep.method || '') + ')' : '';
     const who = kind === 'purchase' ? 'تسديد "' + customerName + '"' : 'الزبون "' + customerName + '"';
     if (!await uiConfirm('تأكيد إلغاء الإيداع ' + amountLabel + ' الخاص بـ ' + who + '؟')) return;
+    const reason = await uiPrompt('سبب الإلغاء (يتحفظ مع الإيداع في الأرشيف):', '');
+    if (reason === null || reason === false) return;
+    if (dep && !(await guardClosedDay(dep.at, 'إلغاء إيداع'))) return;
+    // الأرشفة الأول: الإيداع كامل + السبب + الوقت في data/voided (عشان مفيش حركة تختفي من غير أثر)
+    try { await db.ref('data/voided/' + (kind === 'purchase' ? 'purchaseDeposits' : 'deposits') + '/' + depositId).set({ record: dep || null, reason: String(reason || '').trim(), voidedAt: new Date().toISOString() }); }
+    catch (e) { uiAlert('تعذّر أرشفة الإيداع قبل إلغائه - ما اتلغى شي'); return; }
 
     const finishCancel = () => {
       db.ref(path + depositId).remove().then(() => {
@@ -10589,11 +10897,18 @@ function checkDebtReturns(debts, customerId, customerName) {
   });
 }
 
-function markDebtPaid(debtId, customerId, customerName, itemName, amount) {
-  db.ref('data/debts/' + debtId).update({ paid: true, paidAt: new Date().toISOString() }).then(() => {
-    logActivity('سداد دين', (itemName || '') + ' (' + fmtMoney(amount||0) + ' د.ل) - ' + customerName);
-    openCustomerDebt(customerId, customerName);
-  });
+async function markDebtPaid(debtId, customerId, customerName, itemName, amount) {
+  // كل سداد لازم يكون له حركة فلوس: نسأل الطريقة ونسجّلها في دفتر النقدية (data/payments)
+  const method = await askPayMethod('تسجيل سداد "' + (itemName || '') + '"', amount || 0);
+  if (!method) return;
+  if (!(await guardClosedDay(Date.now(), 'تسجيل سداد'))) return;
+  const now = new Date().toISOString();
+  try {
+    await db.ref('data/debts/' + debtId).update({ paid: true, paidAt: now, paidMethod: method });
+    await db.ref('data/payments').push().set({ kind: 'debtPaid', dir: 'in', amount: r3(amount), method, customerId, customerName, debtId, itemName: itemName || '', at: now });
+    logActivity('سداد دين', (itemName || '') + ' (' + fmtMoney(amount || 0) + ' د.ل - ' + method + ') - ' + customerName);
+  } catch (e) { uiAlert('تعذّر تسجيل السداد: ' + (e && e.message ? e.message : e)); }
+  openCustomerDebt(customerId, customerName);
 }
 
 function markDebtReturned(debtId, customerId, customerName, itemName, amount) {
