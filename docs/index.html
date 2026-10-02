@@ -1038,9 +1038,9 @@ setTimeout(() => window.hideSplash(), 4000);
       <div class="statIcon" style="background:#EDE9FE;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 12 4l9 5-9 5-9-5Z"/><path d="M3 9v7l9 5 9-5V9M12 14v5"/></svg></div>
       <div><div class="num" id="statReturns">0</div><div class="lbl">المرتجعات</div></div>
     </div>
-    <div class="statCard" onclick="openModal('purchaseDebtsModal')" style="cursor:pointer">
+    <div class="statCard" onclick="openDebtsHub()" style="cursor:pointer">
       <div class="statIcon" style="background:#FEF3C7;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 10h8M8 14h5"/><circle cx="16" cy="17" r="1"/></svg></div>
-      <div><div class="num" id="statPurchaseDebts">0</div><div class="lbl">ديون مشتريات</div></div>
+      <div><div class="num" id="statPurchaseDebts">0</div><div class="lbl" id="statDebtsLbl">الديون</div></div>
     </div>
     <div class="statCard" onclick="openModal('zeroPriceModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 2.5 18a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
@@ -1465,6 +1465,15 @@ setTimeout(() => window.hideSplash(), 4000);
         <span style="flex:1;"><span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--text);">جرد RFID <span style="font-size:11px;font-weight:800;background:#FEF3C7;color:#B45309;border-radius:8px;padding:2px 8px;">قريبًا</span></span><span style="display:block;font-size:12.5px;color:var(--textMuted);margin-top:2px;">يقرأ رف كامل بثواني - لما يوصل الجهاز</span></span>
       </button>
     </div>
+  </div>
+</div>
+
+<div class="modalBg" id="debtsHubModal" onclick="if(event.target===this)closeModal('debtsHubModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('debtsHubModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>الديون</h3>
+    <div class="searchBox" style="margin:2px 0 12px;"><input id="dhSearch" type="text" placeholder="ابحث بالاسم أو الهاتف..." oninput="renderDebtsHub()" autocomplete="off" style="min-width:0;"></div>
+    <div id="dhBody"></div>
   </div>
 </div>
 
@@ -3337,6 +3346,139 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= الديون: شاشة واحدة لكل الناس (لك + عليك) =================
+   نفس حسبة حساب الزبون بالظبط: (مبيعات − إيداعات) − (مشتريات − تسديدات مشتريات).
+   موجب = لك عنده، سالب = عليك له. والمقاصة: لو الطرفين مفتوحين، زر يقفل الأقل من الجهتين
+   (إيداع "مقاصة" في المبيعات + تسديد "مقاصة" في المشتريات بنفس المبلغ) - الصافي ما يتغير. */
+let debtsHubData = [];
+let debtsHubTab = 'all';
+
+function computeDebtsOverview() {
+  return Promise.all([
+    liveOnce('data/customers'), liveOnce('data/debts'), liveOnce('data/deposits'),
+    liveOnce('data/purchaseDebts'), liveOnce('data/purchaseDeposits')
+  ]).then(([cS, dS, pS, pdS, ppS]) => {
+    const arr = snap => { const v = snap && snap.val(); return v ? Object.entries(v).map(([id, x]) => ({ id, ...x })) : []; };
+    const customers = arr(cS), debts = arr(dS), deposits = arr(pS), pdebts = arr(pdS), pdeps = arr(ppS);
+    const ids = new Set(customers.map(c => c.id));
+    debts.forEach(d => d.customerId && ids.add(d.customerId));
+    pdebts.forEach(d => d.customerId && ids.add(d.customerId));
+    const ts = x => { const t = new Date(x || 0).getTime(); return isNaN(t) ? 0 : t; };
+    const out = [];
+    ids.forEach(id => {
+      const c = customers.find(x => x.id === id) || {};
+      const myD = debts.filter(d => d.customerId === id);
+      const myP = deposits.filter(p => p.customerId === id);
+      const myPD = pdebts.filter(d => d.customerId === id);
+      const myPP = pdeps.filter(p => p.customerId === id);
+      const debtTotal = myD.filter(d => !d.paid || d.autoSettled).reduce((s, d) => s + Number(d.amount || 0), 0);
+      const depTotal = myP.reduce((s, p) => s + Number(p.amount || 0), 0);
+      const salesNet = debtTotal - depTotal;
+      const purchaseNet = myPD.filter(d => !d.paid).reduce((s, d) => s + Number(d.price || 0), 0) - myPP.reduce((s, p) => s + Number(p.amount || 0), 0);
+      const net = salesNet - purchaseNet;
+      const last = Math.max(0, ...myD.map(d => Math.max(ts(d.date), ts(d.createdAt))), ...myP.map(p => ts(p.at)), ...myPD.map(d => ts(d.at)), ...myPP.map(p => ts(p.at)));
+      if (Math.abs(salesNet) < 0.005 && Math.abs(purchaseNet) < 0.005) return;
+      out.push({ id, name: c.name || (myD[0] && myD[0].customerName) || (myPD[0] && myPD[0].customerName) || 'بدون اسم', phone: c.phone || '', salesNet, purchaseNet, net, last });
+    });
+    return out;
+  });
+}
+
+function openDebtsHub(tab) {
+  debtsHubTab = tab || 'all';
+  const s = document.getElementById('dhSearch'); if (s) s.value = '';
+  document.getElementById('dhBody').innerHTML = skeletonHtml(5);
+  openModal('debtsHubModal');
+  loadDebtsHub();
+}
+
+function loadDebtsHub() {
+  computeDebtsOverview().then(list => { debtsHubData = list; renderDebtsHub(); refreshDebtsStatFrom(list); })
+    .catch(() => { document.getElementById('dhBody').innerHTML = '<div class="emptyMsg">تعذّر تحميل الديون</div>'; });
+}
+
+function dhAgo(t) {
+  if (!t) return '';
+  const days = Math.floor((Date.now() - t) / 86400000);
+  return days <= 0 ? 'اليوم' : days === 1 ? 'أمس' : days < 30 ? 'قبل ' + days + ' يوم' : new Date(t).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' });
+}
+
+function renderDebtsHub() {
+  const list = debtsHubData;
+  const forYou = list.filter(x => x.net > 0.005), onYou = list.filter(x => x.net < -0.005);
+  const sumFor = forYou.reduce((s, x) => s + x.net, 0), sumOn = onYou.reduce((s, x) => s - x.net, 0);
+  const net = sumFor - sumOn;
+  const q = normalizeArabicName((document.getElementById('dhSearch') || {}).value || '');
+  let rows = debtsHubTab === 'for' ? forYou : debtsHubTab === 'on' ? onYou : list.filter(x => Math.abs(x.net) > 0.005 || (x.salesNet > 0.005 && x.purchaseNet > 0.005));
+  if (q) rows = rows.filter(x => normalizeArabicName(x.name).includes(q) || String(x.phone).includes(q));
+  rows = rows.slice().sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+  const card = (label, val, color) => `<div style="flex:1;min-width:0;background:var(--surface);border-radius:16px;padding:12px 8px;text-align:center;box-shadow:0 1px 2px rgba(15,23,42,.05);">
+      <div style="font-size:12px;color:var(--textMuted);font-weight:600;">${label}</div>
+      <div style="font-size:17px;font-weight:800;color:${color};margin-top:4px;direction:ltr;">${val}</div></div>`;
+  const tab = (k, label, n) => `<button type="button" class="lsChip${debtsHubTab === k ? ' on' : ''}" onclick="debtsHubTab='${k}';renderDebtsHub();">${label}${n !== null ? ' <b style="opacity:.75;">' + n + '</b>' : ''}</button>`;
+  let h = `<div style="display:flex;gap:8px;">
+      ${card('لك عند الناس', fmtMoney(sumFor), '#16A34A')}${card('عليك للناس', fmtMoney(sumOn), '#DC2626')}${card('الصافي', (net >= 0 ? '+' : '−') + fmtMoney(Math.abs(net)), net >= 0 ? '#16A34A' : '#DC2626')}
+    </div>
+    <div class="lsChips" style="margin:14px 0 10px;">${tab('all', 'الكل', null)}${tab('for', 'لك', forYou.length)}${tab('on', 'عليك', onYou.length)}</div>`;
+  if (!rows.length) {
+    h += `<div class="emptyMsg">${q ? 'لا يوجد نتائج' : debtsHubTab === 'on' ? 'ما عليك لأحد شيء' : debtsHubTab === 'for' ? 'ما لك عند أحد شيء' : 'كل الحسابات مسددة'}</div>`;
+  } else {
+    h += rows.map(x => {
+      const pos = x.net >= 0;
+      const parts = [];
+      if (Math.abs(x.salesNet) > 0.005) parts.push('مبيعات ' + fmtMoney(x.salesNet));
+      if (Math.abs(x.purchaseNet) > 0.005) parts.push('مشتريات ' + fmtMoney(x.purchaseNet));
+      const canOffset = x.salesNet > 0.005 && x.purchaseNet > 0.005;
+      const off = Math.min(x.salesNet, x.purchaseNet);
+      const safe = String(x.name).replace(/'/g, '');
+      return `<div class="searchResultRow" style="display:block;cursor:pointer;" onclick="openCustomerDebt('${x.id}','${safe}')">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <span style="font-size:15px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(x.name)}</span>
+            <span style="font-size:16px;font-weight:800;color:${pos ? '#16A34A' : '#DC2626'};direction:ltr;white-space:nowrap;">${pos ? '' : '−'}${fmtMoney(Math.abs(x.net))} د.ل</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:5px;">
+            <span style="font-size:12px;color:var(--textMuted);">${parts.join(' · ')}${x.last ? ' · آخر حركة: ' + dhAgo(x.last) : ''}</span>
+            <span style="font-size:11.5px;font-weight:700;color:${pos ? '#16A34A' : '#DC2626'};white-space:nowrap;">${pos ? 'لك' : 'عليك'}</span>
+          </div>
+          ${canOffset ? `<button type="button" onclick="event.stopPropagation();debtsOffset('${x.id}','${safe}',${off})" style="margin-top:10px;width:100%;height:40px;border:1.5px solid #BBF7D0;background:#ECFDF3;color:#15803D;border-radius:12px;font-size:13.5px;font-weight:700;cursor:pointer;">مقاصة ${fmtMoney(off)} د.ل (تقفل من الطرفين)</button>` : ''}
+        </div>`;
+    }).join('');
+  }
+  document.getElementById('dhBody').innerHTML = h;
+}
+
+async function debtsOffset(id, name, amount) {
+  amount = Math.round(Number(amount) * 1000) / 1000;
+  if (!(amount > 0)) return;
+  const msg = 'مقاصة ' + fmtMoney(amount) + ' د.ل مع "' + name + '"؟\n\nيتسكّر ' + fmtMoney(amount) + ' من ديونه عندك، و' + fmtMoney(amount) + ' من اللي لك عليه في المشتريات. الصافي ما يتغير.';
+  if (!(await uiConfirm(msg, { okText: 'تأكيد المقاصة' }))) return;
+  const now = new Date().toISOString();
+  const base = { customerId: id, customerName: name, amount: amount, method: 'مقاصة', at: now, createdAt: now };
+  try {
+    await db.ref('data/deposits').push().set(Object.assign({}, base, { note: 'مقاصة مع المشتريات' }));
+    await db.ref('data/purchaseDeposits').push().set(Object.assign({}, base, { note: 'مقاصة مع المبيعات' }));
+    logActivity('مقاصة', fmtMoney(amount) + ' د.ل - ' + name);
+    try { await reconcileSalesAccount(id); } catch (e) {}
+    showQuickToast('تمت المقاصة ' + fmtMoney(amount) + ' د.ل', true);
+    loadDebtsHub();
+  } catch (e) {
+    uiAlert('تعذّرت المقاصة: ' + (e && e.message ? e.message : e));
+  }
+}
+
+function refreshDebtsStatFrom(list) {
+  const el = document.getElementById('statPurchaseDebts');
+  const lbl = document.getElementById('statDebtsLbl');
+  if (!el) return;
+  const sumFor = list.filter(x => x.net > 0).reduce((s, x) => s + x.net, 0);
+  const sumOn = list.filter(x => x.net < 0).reduce((s, x) => s - x.net, 0);
+  const net = sumFor - sumOn;
+  el.textContent = Math.round(Math.abs(net)).toLocaleString('en-US');
+  el.style.color = net >= 0 ? '' : '#DC2626';
+  if (lbl) lbl.textContent = net >= 0 ? 'الديون (صافي لك)' : 'الديون (صافي عليك)';
+}
+function refreshDebtsStat() { computeDebtsOverview().then(refreshDebtsStatFrom).catch(() => {}); }
+
 /* ================= إضافة إيصال الكاشير لحساب الزبون (دين) =================
    حساب الزبون ← اكتب رقم الإيصال أو صوّره بالكاميرا ← نجيب الفاتورة من الأرشيف (أو من الكاشير
    مباشرة لو مش في الأرشيف) ← مراجعة (التاريخ والوقت والأصناف والإجمالي) ← تسجيل الدين بإجمالي الفاتورة.
@@ -4573,6 +4715,7 @@ const GS_SCREENS = [
   { name: 'سجل الحركات', kw: 'سجل حركات تعديلات تراجع', run: "openModal('activityLogModal')" },
   { name: 'الملاحظات', kw: 'ملاحظات ملاحظة', run: "openNotesModal()" },
   { name: 'الزبائن', kw: 'زبائن زبون ديون دين حساب ايداع سداد', run: "openModal('customersModal')" },
+  { name: 'الديون (لك وعليك)', kw: 'ديون دين مستحق لك عليك مقاصة صافي حسابات', run: "openDebtsHub()" },
   { name: 'ديون المشتريات', kw: 'مشتريات محل محلات مورد موردين ديون', run: "openModal('purchaseDebtsModal')" },
   { name: 'مركز الأصناف', kw: 'منتجات اصناف صنف مخزون نفد قليل تسعير rfid', run: "openProductsHub()" },
   { name: 'كل المنتجات', kw: 'منتجات اصناف صنف', run: "openModal('productsModal')" },
@@ -4768,9 +4911,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '3.3.0';
+const APP_VERSION = '3.4.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '3.4.0', date: '2026-10-02', items: [
+    'شاشة "الديون" الموحدة: لك عند الناس، عليك للناس، والصافي - مع تبويبات (الكل/لك/عليك) وبحث',
+    'كل شخص بصافي حسابه وتفصيل مبيعات/مشتريات وآخر حركة، وبضغطة يفتح حسابه',
+    'مقاصة بضغطة: لو الطرفين مفتوحين، يتسكّر الأقل من الجهتين بحركة واضحة في السجل',
+    'مربع "الديون" في الرئيسية يعرض الصافي (لك أو عليك)'
+  ] },
   { v: '3.3.0', date: '2026-10-02', items: [
     'حساب الزبون: إضافة إيصال كدين بكتابة رقمه أو تصويره بالكاميرا - التاريخ والوقت والأصناف والإجمالي تُسحب من الفاتورة نفسها (الأرشيف أو الكاشير مباشرة)',
     'مراجعة قبل التسجيل، ومنع تسجيل نفس الإيصال مرتين، وتنبيه لو على الفاتورة مرتجع'
@@ -5669,6 +5818,8 @@ function startListening() {
   });
   db.ref('data/purchaseDebts').on('value', () => refreshPurchaseDebtsStat());
   db.ref('data/purchaseDeposits').on('value', () => refreshPurchaseDebtsStat());
+  db.ref('data/debts').on('value', () => refreshPurchaseDebtsStat());
+  db.ref('data/deposits').on('value', () => refreshPurchaseDebtsStat());
   db.ref('data/lowStockItems').on('value', snap => {
     const val = snap.val();
     latestLowStockItems = val ? Object.values(val) : [];
@@ -5969,7 +6120,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة اللي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) زي أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -9442,6 +9593,7 @@ async function submitDeposit() {
     closeDepositModalAnimated();
 
     const finishUp = () => {
+      if (document.getElementById('debtsHubModal').style.display === 'flex') loadDebtsHub();
       if (document.getElementById('customersModal').style.display === 'flex') loadCustomers();
       if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName);
     };
@@ -9564,12 +9716,7 @@ function computeCustomerNets() {
   });
 }
 
-function refreshPurchaseDebtsStat() {
-  computeCustomerNets().then(nets => {
-    const el = document.getElementById('statPurchaseDebts');
-    if (el) el.textContent = Object.values(nets).filter(n => n.net < -0.001).length;
-  }).catch(() => {});
-}
+function refreshPurchaseDebtsStat() { refreshDebtsStat(); }
 
 function loadPurchaseDebts() {
   const el = document.getElementById('purchaseDebtsList');
@@ -9579,8 +9726,7 @@ function loadPurchaseDebts() {
   computeCustomerNets().then(nets => {
     latestPurchaseDebts = Object.values(nets).filter(n => n.net < -0.001);
     renderPurchaseDebtsSuppliers();
-    const st = document.getElementById('statPurchaseDebts');
-    if (st) st.textContent = latestPurchaseDebts.length;
+    refreshDebtsStat();
   });
 }
 
