@@ -1463,6 +1463,22 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="camPlayModal" onclick="if(event.target===this)closeModal('camPlayModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('camPlayModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>مشاهدة في الكاميرا</h3>
+    <div id="camPlayBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="camSettingsModal" onclick="if(event.target===this)closeModal('camSettingsModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('camSettingsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>إعدادات الكاميرا</h3>
+    <div id="camSettingsBody"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="fontModal" onclick="if(event.target===this)closeModal('fontModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('fontModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1515,6 +1531,14 @@ setTimeout(() => window.hideSplash(), 4000);
         <button onclick="openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
         <span class="setIc" style="--ic:#2563EB;color:#2563EB;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg></span>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">إعدادات طباعة الباركود</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      </div>
+      <div class="setSec">الكاميرات</div>
+      <div class="setGroup">
+        <button onclick="openCamSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
+        <span class="setIc" style="--ic:#0EA5E9;color:#0EA5E9;"><svg viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:22px;height:22px;"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg></span>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">إعدادات الكاميرا (Hik-Connect)</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       </div>
@@ -3300,6 +3324,129 @@ function damagedPdfAction() {
   }
 }
 
+/* ================= مشاهدة الفاتورة في الكاميرا (Hik-Connect) =================
+   زر "شاهد في الكاميرا" في تفاصيل أي فاتورة: يحسب وقت التشغيل (قبل الفاتورة بدقيقة + فرق ساعة جهاز
+   التسجيل)، يعرضه كبير وواضح، ينسخه، ويفتح تطبيق Hik-Connect. (Hik-Connect ما يسمح لتطبيق تاني
+   يفتحه على وقت محدد، فبنسهّل الخطوة الأخيرة: تختار الوقت المعروض قدامك.)
+   الإعدادات محفوظة على الجوال بس (localStorage). */
+const CAM_DEFAULTS = { cam: 1, camCount: 4, preSec: 60, offsetSec: 0, mode: 'scheme', scheme: 'hik-connect://', shortcut: 'هيك' };
+let camLastDate = null;
+function camSettings() {
+  try { return Object.assign({}, CAM_DEFAULTS, JSON.parse(localStorage.getItem('camSettings') || '{}')); } catch (e) { return Object.assign({}, CAM_DEFAULTS); }
+}
+function saveCamSettings(st) { try { localStorage.setItem('camSettings', JSON.stringify(st)); } catch (e) {} }
+const CAM_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const CAM_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+function camPad(n) { return String(n).padStart(2, '0'); }
+
+function openCamPlayback(dateVal) {
+  camLastDate = dateVal;
+  renderCamPlayback();
+  openModal('camPlayModal');
+}
+
+function renderCamPlayback() {
+  const st = camSettings();
+  const base = new Date(camLastDate);
+  const el = document.getElementById('camPlayBody');
+  if (isNaN(base.getTime())) { el.innerHTML = '<div class="emptyMsg">وقت الفاتورة غير معروف</div>'; return; }
+  const d = new Date(base.getTime() - st.preSec * 1000 + st.offsetSec * 1000);
+  const t = camPad(d.getHours()) + ':' + camPad(d.getMinutes()) + ':' + camPad(d.getSeconds());
+  const inv = camPad(base.getHours()) + ':' + camPad(base.getMinutes()) + ':' + camPad(base.getSeconds());
+  const dateTxt = CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  let chips = '';
+  for (let i = 1; i <= Math.max(1, Math.min(16, Number(st.camCount) || 4)); i++) {
+    chips += `<button type="button" class="lsChip${Number(st.cam) === i ? ' on' : ''}" onclick="camPick(${i})">كاميرا ${i}</button>`;
+  }
+  el.innerHTML = `
+    <div style="text-align:center;background:var(--surface);border-radius:20px;padding:20px 14px;margin-top:10px;box-shadow:0 1px 2px rgba(15,23,42,.05);">
+      <div style="font-size:14px;color:var(--textMuted);font-weight:600;">${dateTxt}</div>
+      <div style="font-size:46px;font-weight:800;letter-spacing:1px;margin:6px 0 2px;direction:ltr;font-variant-numeric:tabular-nums;">${t}</div>
+      <div style="font-size:12.5px;color:var(--textMuted);">${st.preSec ? 'قبل الفاتورة بـ ' + Math.round(st.preSec / 60 * 10) / 10 + ' دقيقة · ' : ''}وقت الفاتورة ${inv}${st.offsetSec ? ' · فرق ساعة الكاميرا ' + (st.offsetSec > 0 ? '+' : '') + st.offsetSec + ' ث' : ''}</div>
+    </div>
+    <div class="lsChips" style="margin:14px 0 4px;justify-content:center;">${chips}</div>
+    <button type="button" onclick="camOpenHik('${t.slice(0, 5)}')" style="width:100%;margin-top:12px;border:none;border-radius:18px;height:56px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16.5px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px -12px rgba(21,128,61,.55);">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg>
+      افتح Hik-Connect</button>
+    <button type="button" onclick="copyTextToClipboard('${t.slice(0, 5)}', 'نُسخ الوقت ${t.slice(0, 5)}')" style="width:100%;margin-top:10px;border:1.5px solid var(--border);border-radius:16px;height:48px;background:var(--surface);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;">نسخ الوقت</button>
+    <div style="margin-top:16px;background:var(--surface);border-radius:16px;padding:12px 14px;font-size:13px;line-height:2;color:var(--textMuted);">
+      <b style="color:var(--text);">في Hik-Connect:</b> اضغط <b style="color:var(--text);">كاميرا ${st.cam}</b> ← أيقونة <b style="color:var(--text);">التشغيل</b> ⟲ ← اختر يوم <b style="color:var(--text);">${d.getDate()} ${CAM_MONTHS[d.getMonth()]}</b> ← اسحب الشريط لـ <b style="color:var(--text);direction:ltr;display:inline-block;">${t.slice(0, 5)}</b>
+    </div>
+    <div id="camOpenHint"></div>
+    <button type="button" onclick="openCamSettings()" style="display:block;margin:14px auto 0;border:none;background:none;color:#16A34A;font-size:13.5px;font-weight:700;cursor:pointer;">إعدادات الكاميرا</button>`;
+}
+
+function camPick(i) { const st = camSettings(); st.cam = i; saveCamSettings(st); renderCamPlayback(); }
+
+function camOpenHik(timeTxt) {
+  const st = camSettings();
+  try { navigator.clipboard && navigator.clipboard.writeText(timeTxt); } catch (e) {}
+  const url = st.mode === 'shortcut' ? 'shortcuts://run-shortcut?name=' + encodeURIComponent(st.shortcut || 'هيك') : (st.scheme || 'hik-connect://');
+  let left = false;
+  const onHide = () => { if (document.visibilityState === 'hidden') left = true; };
+  document.addEventListener('visibilitychange', onHide);
+  try { window.location.href = url; } catch (e) {}
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHide);
+    if (left) return;
+    const h = document.getElementById('camOpenHint');
+    if (h) h.innerHTML = `<div style="margin-top:12px;background:#FEF3C7;color:#92400E;border-radius:14px;padding:11px 13px;font-size:13px;font-weight:600;line-height:1.8;">
+      ما انفتح Hik-Connect؟ استخدم طريقة <b>الاختصار</b> (تشتغل دايمًا): من إعدادات الكاميرا اختر "اختصار Shortcuts" واتبع الخطوات.
+      <button type="button" onclick="openCamSettings()" style="display:block;margin-top:6px;border:none;background:#92400E;color:#fff;border-radius:10px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;">إعدادات الكاميرا</button></div>`;
+  }, 1600);
+}
+
+function openCamSettings() { renderCamSettings(); openModal('camSettingsModal'); }
+
+function renderCamSettings() {
+  const st = camSettings();
+  const row = (label, inner, hint) => `<div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;"><span style="font-size:14px;font-weight:700;">${label}</span>${inner}</div>
+      ${hint ? `<div style="font-size:12px;color:var(--textMuted);margin-top:6px;line-height:1.7;">${hint}</div>` : ''}</div>`;
+  const num = (id, val, w) => `<input id="${id}" type="number" inputmode="numeric" lang="en" value="${val}" style="width:${w || 80}px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:15px;">`;
+  document.getElementById('camSettingsBody').innerHTML = `
+    <div class="setSec">الكاميرات</div>
+    ${row('كاميرا الكاشير', num('camSetCam', st.cam), 'رقم الكاميرا اللي تصوّر الكاشير في Hik-Connect')}
+    ${row('عدد الكاميرات', num('camSetCount', st.camCount))}
+    <div class="setSec">التوقيت</div>
+    ${row('ابدأ قبل الفاتورة (ثانية)', num('camSetPre', st.preSec), 'عشان تشوف الزبون وهو يجي للكاشير')}
+    ${row('فرق ساعة جهاز التسجيل (ثانية)', num('camSetOffset', st.offsetSec), 'لو ساعة الكاميرات مقدّمة عن الكاشير اكتب رقم موجب، ولو مأخرة اكتب سالب')}
+    <div class="setSec">طريقة فتح Hik-Connect</div>
+    <div class="lsChips" style="margin-bottom:10px;">
+      <button type="button" class="lsChip${st.mode !== 'shortcut' ? ' on' : ''}" onclick="camSetMode('scheme')">رابط مباشر</button>
+      <button type="button" class="lsChip${st.mode === 'shortcut' ? ' on' : ''}" onclick="camSetMode('shortcut')">اختصار Shortcuts</button>
+    </div>
+    ${st.mode === 'shortcut'
+      ? row('اسم الاختصار', `<input id="camSetShortcut" type="text" value="${escapeHtml(st.shortcut)}" style="width:130px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:15px;">`,
+        'مرة وحدة: افتح تطبيق <b>الاختصارات</b> ← <b>+</b> ← إضافة إجراء ← <b>فتح التطبيق</b> ← اختر <b>Hik-Connect</b> ← سمّ الاختصار نفس الاسم هنا ← تم.')
+      : row('الرابط', `<input id="camSetScheme" type="text" value="${escapeHtml(st.scheme)}" dir="ltr" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`,
+        'لو ما فتح التطبيق، جرّب <b dir="ltr">hikconnect://</b> أو استخدم طريقة الاختصار (مضمونة)')}
+    <button type="button" onclick="camSaveSettings(true)" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:16px;height:48px;background:var(--surface);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;">جرّب فتح Hik-Connect</button>
+    <button type="button" onclick="camSaveSettings(false)" style="width:100%;margin-top:10px;border:none;border-radius:16px;height:52px;background:#16A34A;color:#fff;font-size:16px;font-weight:700;cursor:pointer;">حفظ</button>`;
+}
+
+function camReadForm() {
+  const st = camSettings();
+  const v = id => document.getElementById(id);
+  if (v('camSetCam')) st.cam = Math.max(1, parseInt(v('camSetCam').value, 10) || 1);
+  if (v('camSetCount')) st.camCount = Math.max(1, Math.min(16, parseInt(v('camSetCount').value, 10) || 4));
+  if (st.cam > st.camCount) st.camCount = st.cam;
+  if (v('camSetPre')) st.preSec = Math.max(0, parseInt(v('camSetPre').value, 10) || 0);
+  if (v('camSetOffset')) st.offsetSec = parseInt(v('camSetOffset').value, 10) || 0;
+  if (v('camSetScheme')) st.scheme = v('camSetScheme').value.trim() || CAM_DEFAULTS.scheme;
+  if (v('camSetShortcut')) st.shortcut = v('camSetShortcut').value.trim() || CAM_DEFAULTS.shortcut;
+  return st;
+}
+function camSetMode(m) { const st = camReadForm(); st.mode = m; saveCamSettings(st); renderCamSettings(); }
+function camSaveSettings(test) {
+  const st = camReadForm();
+  saveCamSettings(st);
+  if (test) { camOpenHik(''); return; }
+  try { showQuickToast('تم حفظ إعدادات الكاميرا', true); } catch (e) {}
+  closeModal('camSettingsModal');
+  if (isModalOpen('camPlayModal')) renderCamPlayback();
+}
+
 /* ================= اختيار خط التطبيق ================= */
 function currentFontId() { try { return localStorage.getItem('appFont') || 'ibm'; } catch (e) { return 'ibm'; } }
 function updateFontTag() {
@@ -4240,6 +4387,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'إعدادات الكاميرا', kw: 'كاميرا كاميرات مراقبة هيك hik connect تسجيل', run: "openCamSettings()" },
   { name: 'خط التطبيق', kw: 'خط الخط خطوط فونت font شكل الكتابة', run: "openFontPicker()" },
   { name: 'طباعة باركود', kw: 'طباعة باركود ملصقات ملصق قائمة طباعة', run: "openBatchLabels()" },
   { name: 'استهلاك Firebase', kw: 'استهلاك فايربيس فاير بيس حصة مساحة تحميل سيرفر', run: "openUsage()" },
@@ -4450,9 +4598,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '3.2.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '3.2.0', date: '2026-10-02', items: [
+    'زر "شاهد الفاتورة في الكاميرا" في تفاصيل أي فاتورة: يعرض وقت التشغيل كبير (قبل الفاتورة بدقيقة)، ينسخه، ويفتح Hik-Connect',
+    'إعدادات الكاميرا: كاميرا الكاشير، ثواني قبل الفاتورة، فرق ساعة جهاز التسجيل، وطريقة فتح Hik-Connect (رابط أو اختصار Shortcuts)'
+  ] },
   { v: '3.1.0', date: '2026-10-01', items: [
     'تصميم جديد لشاشة الدخول والافتتاحية: خلفية بيضاء بأشكال خضراء ناعمة، شعار HTC/POS مرسوم متجه (حاد بأي حجم)، وخانات بعنوان وتلميح',
     'زر "نسيت كلمة المرور؟" يرسل رابط تغيير كلمة المرور لإيميلك',
@@ -5452,6 +5604,7 @@ function showInvoiceDetail(inv) {
     html += `<div class="searchResultRow"><div class="n">طريقة الدفع</div><div class="p">${escapeHtml(inv.payment)}</div></div>`;
   }
   html += `<div class="searchResultRow"><div class="n">التاريخ</div><div class="p">${new Date(inv.date).toLocaleString('ar-EG-u-nu-latn')}</div></div>`;
+  html += `<button type="button" onclick="openCamPlayback('${String(inv.date).replace(/'/g, '')}')" style="width:100%;margin:2px 0 10px;border:none;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;gap:10px;background:#ECFDF3;color:#15803D;font-size:15px;font-weight:700;cursor:pointer;border:1.5px solid #BBF7D0;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg>شاهد الفاتورة في الكاميرا</button>`;
   html += `<div class="searchResultRow"><div class="n">الاجمالي</div><div class="p">${fmtMoney(inv.amount)} د.ل</div></div>`;
   if (!items.length) {
     html += '<div class="emptyMsg">لا توجد تفاصيل أصناف</div>';
@@ -5642,7 +5795,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة اللي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) زي أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
