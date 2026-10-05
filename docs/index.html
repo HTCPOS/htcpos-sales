@@ -1523,6 +1523,14 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="tsSetupModal" onclick="if(event.target===this)closeModal('tsSetupModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('tsSetupModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>ربط الكاميرات عن بعد</h3>
+    <div id="tsSetupBody"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="camPlayModal" onclick="if(event.target===this)closeModal('camPlayModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('camPlayModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -4007,12 +4015,75 @@ async function rcptSave() {
   }
 }
 
+/* ================= ربط الكاميرات عن بعد (Tailscale) - من الجوال =================
+   الخطوات: مفتاح من موقع Tailscale -> التطبيق يبعته للسكريبت -> السكريبت يحمّل ويثبّت ويربط الكاشير
+   كجسر لشبكة الكاميرات (192.168.0.0/24) -> موافقة مرة وحدة من موقع Tailscale -> VLC يشتغل من أي مكان. */
+let tsStatusRef = null;
+function openTailscaleSetup() {
+  renderTsSetup(null, null);
+  openModal('tsSetupModal');
+  db.ref('data/scriptStatus').once('value').then(sn => { window.__tsScript = sn.val() || {}; renderTsSetup(window.__tsScript, window.__tsLast || null); }).catch(() => {});
+  if (tsStatusRef) try { tsStatusRef.off(); } catch (e) {}
+  tsStatusRef = db.ref('data/tailscaleStatus');
+  tsStatusRef.on('value', sn => { window.__tsLast = sn.val(); if (isModalOpen('tsSetupModal')) renderTsSetup(window.__tsScript || null, window.__tsLast); });
+}
+function renderTsSetup(ss, st) {
+  const el = document.getElementById('tsSetupBody'); if (!el) return;
+  const feats = (ss && ss.features) || [];
+  const ready = feats.indexOf('tailscaleSetup') !== -1;
+  const ts = (ss && ss.ts) || {};
+  const box = (inner) => `<div style="background:var(--surface);border-radius:18px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(15,23,42,.05);">${inner}</div>`;
+  const stepT = (n, t) => `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span style="width:26px;height:26px;border-radius:50%;background:#16A34A;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${n}</span><b style="font-size:15px;">${t}</b></div>`;
+  let h = '';
+  // الحالة
+  const stTxt = !ss ? 'جاري التحقق...' : !ready ? '⚠️ حدّث السكريبت لـ 3.6.0 أولًا (الإعدادات ← تحديث السكريبت)' : ts.running ? '✅ Tailscale شغال على الكاشير' : ts.installed ? 'Tailscale مثبّت بس متوقف' : 'لسه ما اتثبّت على الكاشير';
+  h += box(`<div style="font-size:14px;font-weight:700;">${stTxt}</div>${st && st.ip ? `<div style="font-size:12.5px;color:var(--textMuted);margin-top:4px;direction:ltr;text-align:right;">${escapeHtml(st.ip)}</div>` : ''}`);
+  h += box(stepT(1, 'اعمل مفتاح من موقع Tailscale') + `<div style="font-size:13px;color:var(--textMuted);line-height:1.9;">افتح الصفحة ← <b style="color:var(--text);">Generate auth key</b> ← اترك الإعدادات زي ما هي ← <b style="color:var(--text);">Generate key</b> ← <b style="color:var(--text);">Copy</b></div>
+      <button type="button" onclick="window.open('https://login.tailscale.com/admin/settings/keys','_blank')" style="width:100%;margin-top:10px;height:46px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface2);color:var(--text);font-size:14.5px;font-weight:700;cursor:pointer;">فتح صفحة المفاتيح ↗</button>`);
+  h += box(stepT(2, 'الصق المفتاح وثبّت على الكاشير') + `<input id="tsKey" type="text" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="tskey-auth-..." style="width:100%;height:48px;border:1.5px solid var(--border);border-radius:14px;padding:0 12px;background:var(--surface2);color:var(--text);font-size:14px;box-sizing:border-box;">
+      <button type="button" onclick="startTsSetup()" ${ready ? '' : 'disabled'} style="width:100%;margin-top:10px;height:52px;border:none;border-radius:16px;background:${ready ? 'linear-gradient(180deg,#2BB35A,#15803D)' : 'var(--surface2)'};color:${ready ? '#fff' : 'var(--textMuted)'};font-size:16px;font-weight:700;cursor:pointer;">ثبّت على الكاشير</button>
+      ${st && st.log ? `<div style="margin-top:12px;background:var(--surface2);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.9;max-height:220px;overflow:auto;">${(Array.isArray(st.log) ? st.log : Object.values(st.log)).map(l => `<div style="color:${l.l === 'err' ? '#DC2626' : l.l === 'ok' ? '#16A34A' : 'var(--text)'};"><span style="color:var(--textMuted);direction:ltr;display:inline-block;">${escapeHtml(l.t || '')}</span> ${escapeHtml(l.m || '')}</div>`).join('')}${st.state === 'running' ? '<div style="color:var(--textMuted);">⏳ شغال...</div>' : ''}</div>` : ''}`);
+  h += box(stepT(3, 'وافق مرة وحدة من موقع Tailscale') + `<div style="font-size:13px;color:var(--textMuted);line-height:1.9;">جنب <b style="color:var(--text);">htc-cashier</b> اضغط <b style="color:var(--text);">⋯</b> ← <b style="color:var(--text);">Edit route settings</b> ← فعّل <b style="color:var(--text);direction:ltr;display:inline-block;">192.168.0.0/24</b> ← Save<br>ومرة ثانية <b style="color:var(--text);">⋯</b> ← <b style="color:var(--text);">Disable key expiry</b></div>
+      <button type="button" onclick="window.open('https://login.tailscale.com/admin/machines','_blank')" style="width:100%;margin-top:10px;height:46px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface2);color:var(--text);font-size:14.5px;font-weight:700;cursor:pointer;">فتح صفحة الأجهزة ↗</button>`);
+  h += box(stepT(4, 'جرّب من برا المحل') + `<div style="font-size:13px;color:var(--textMuted);line-height:1.9;">شغّل Tailscale في جوالك (Connected)، وافتح أي فاتورة ← <b style="color:var(--text);">شاهد الفاتورة في الكاميرا</b> ← <b style="color:var(--text);">افتح على الدقيقة (VLC)</b>. قبلها حط كلمة مرور جهاز الكاميرات في <a href="#" onclick="event.preventDefault();openCamSettings();" style="color:#16A34A;font-weight:700;">إعدادات الكاميرا</a>.</div>`);
+  const keep = (document.getElementById('tsKey') || {}).value || '';
+  el.innerHTML = h;
+  const k = document.getElementById('tsKey'); if (k && keep) k.value = keep;
+}
+async function startTsSetup() {
+  const key = ((document.getElementById('tsKey') || {}).value || '').trim();
+  if (!/^tskey-[A-Za-z0-9\-_]+$/.test(key)) { uiAlert('الصق المفتاح من موقع Tailscale - لازم يبدأ بـ tskey-'); return; }
+  if (!(await uiConfirm('نثبّت Tailscale على كمبيوتر الكاشير ونربطه بحسابك؟\nياخذ دقيقة أو دقيقتين، وتشوف التقدم هنا.', { okText: 'ثبّت' }))) return;
+  try {
+    await db.ref('commands/tailscaleSetup').set({ id: 'ts' + Date.now(), authKey: key, routes: '192.168.0.0/24', hostname: 'htc-cashier', at: Date.now() });
+    const k = document.getElementById('tsKey'); if (k) k.value = '';
+    logActivity('ربط الكاميرات عن بعد', 'إرسال أمر تثبيت Tailscale للكاشير');
+    showQuickToast('اتبعت للكاشير - تابع السجل', true);
+  } catch (e) { uiAlert('تعذّر الإرسال: ' + (e && e.message ? e.message : e)); }
+}
+
+// ===== VLC: فتح التسجيل على الدقيقة بالظبط (RTSP من جهاز Hikvision) =====
+function camVlcUrl(d, st) {
+  const p2 = n => String(n).padStart(2, '0');
+  const ts = d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + 'T' + p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds()) + 'Z';
+  const user = encodeURIComponent(st.dvrUser || 'admin'), pass = encodeURIComponent(st.dvrPass || '');
+  const rtsp = 'rtsp://' + user + ':' + pass + '@' + (st.dvrHost || '192.168.0.100') + ':' + (st.dvrPort || 554) + '/Streaming/tracks/' + (Number(st.cam) || 1) + '01?starttime=' + ts;
+  return 'vlc-x-callback://x-callback-url/stream?url=' + encodeURIComponent(rtsp);
+}
+function camOpenVlc() {
+  const st = camSettings();
+  if (!st.dvrPass) { uiAlert('حط كلمة مرور جهاز الكاميرات في إعدادات الكاميرا أولًا (تنحفظ في جوالك بس)'); openCamSettings(); return; }
+  const base = new Date(camLastDate);
+  const d = new Date(base.getTime() - st.preSec * 1000 + st.offsetSec * 1000);
+  window.location.href = camVlcUrl(d, st);
+}
+
 /* ================= مشاهدة الفاتورة في الكاميرا (Hik-Connect) =================
    زر "شاهد في الكاميرا" في تفاصيل أي فاتورة: يحسب وقت التشغيل (قبل الفاتورة بدقيقة + فرق ساعة جهاز
    التسجيل)، يعرضه كبير وواضح، ينسخه، ويفتح تطبيق Hik-Connect. (Hik-Connect ما يسمح لتطبيق تاني
    يفتحه على وقت محدد، فبنسهّل الخطوة الأخيرة: تختار الوقت المعروض قدامك.)
    الإعدادات محفوظة على الجوال بس (localStorage). */
-const CAM_DEFAULTS = { cam: 1, camCount: 4, preSec: 60, offsetSec: 0, mode: 'scheme', scheme: 'hik-connect://', shortcut: 'هيك' };
+const CAM_DEFAULTS = { cam: 1, camCount: 4, preSec: 60, offsetSec: 0, mode: 'scheme', scheme: 'hik-connect://', shortcut: 'هيك', dvrHost: '192.168.0.100', dvrPort: 554, dvrUser: 'admin', dvrPass: '' };
 let camLastDate = null;
 function camSettings() {
   try { return Object.assign({}, CAM_DEFAULTS, JSON.parse(localStorage.getItem('camSettings') || '{}')); } catch (e) { return Object.assign({}, CAM_DEFAULTS); }
@@ -4048,7 +4119,8 @@ function renderCamPlayback() {
       <div style="font-size:12.5px;color:var(--textMuted);">${st.preSec ? 'قبل الفاتورة بـ ' + Math.round(st.preSec / 60 * 10) / 10 + ' دقيقة · ' : ''}وقت الفاتورة ${inv}${st.offsetSec ? ' · فرق ساعة الكاميرا ' + (st.offsetSec > 0 ? '+' : '') + st.offsetSec + ' ث' : ''}</div>
     </div>
     <div class="lsChips" style="margin:14px 0 4px;justify-content:center;">${chips}</div>
-    <button type="button" onclick="camOpenHik('${t.slice(0, 5)}')" style="width:100%;margin-top:12px;border:none;border-radius:18px;height:56px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16.5px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px -12px rgba(21,128,61,.55);">
+    <button type="button" onclick="camOpenVlc()" style="width:100%;margin-top:12px;border:none;border-radius:18px;height:56px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg,#F97316,#EA580C);color:#fff;font-size:16.5px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px -12px rgba(234,88,12,.5);">▶ افتح على الدقيقة بالظبط (VLC)</button>
+    <button type="button" onclick="camOpenHik('${t.slice(0, 5)}')" style="width:100%;margin-top:10px;border:none;border-radius:18px;height:56px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16.5px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px -12px rgba(21,128,61,.55);">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg>
       افتح Hik-Connect</button>
     <button type="button" onclick="copyTextToClipboard('${t.slice(0, 5)}', 'نُسخ الوقت ${t.slice(0, 5)}')" style="width:100%;margin-top:10px;border:1.5px solid var(--border);border-radius:16px;height:48px;background:var(--surface);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;">نسخ الوقت</button>
@@ -4094,6 +4166,11 @@ function renderCamSettings() {
     <div class="setSec">التوقيت</div>
     ${row('ابدأ قبل الفاتورة (ثانية)', num('camSetPre', st.preSec), 'عشان تشوف الزبون وهو يجي للكاشير')}
     ${row('فرق ساعة جهاز التسجيل (ثانية)', num('camSetOffset', st.offsetSec), 'لو ساعة الكاميرات مقدّمة عن الكاشير اكتب رقم موجب، ولو مأخرة اكتب سالب')}
+    <div class="setSec">الفتح على الدقيقة بالظبط (VLC)</div>
+    ${row('عنوان جهاز الكاميرات', `<input id="camSetHost" type="text" dir="ltr" value="${escapeHtml(st.dvrHost)}" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`)}
+    ${row('اسم المستخدم', `<input id="camSetUser" type="text" dir="ltr" autocapitalize="off" value="${escapeHtml(st.dvrUser)}" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`)}
+    ${row('كلمة المرور', `<input id="camSetPass" type="password" dir="ltr" autocomplete="off" value="${escapeHtml(st.dvrPass)}" placeholder="••••••" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`, 'تنحفظ في جوالك بس - ما تنرفع لأي مكان. ومن برا المحل لازم Tailscale يكون شغال في جوالك.')}
+    <button type="button" onclick="camSaveSettings(false);openTailscaleSetup();" style="width:100%;margin:0 0 10px;height:46px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">ربط الكاميرات عن بعد (Tailscale) ←</button>
     <div class="setSec">طريقة فتح Hik-Connect</div>
     <div class="lsChips" style="margin-bottom:10px;">
       <button type="button" class="lsChip${st.mode !== 'shortcut' ? ' on' : ''}" onclick="camSetMode('scheme')">رابط مباشر</button>
@@ -4118,6 +4195,9 @@ function camReadForm() {
   if (v('camSetOffset')) st.offsetSec = parseInt(v('camSetOffset').value, 10) || 0;
   if (v('camSetScheme')) st.scheme = v('camSetScheme').value.trim() || CAM_DEFAULTS.scheme;
   if (v('camSetShortcut')) st.shortcut = v('camSetShortcut').value.trim() || CAM_DEFAULTS.shortcut;
+  if (v('camSetHost')) st.dvrHost = v('camSetHost').value.trim() || CAM_DEFAULTS.dvrHost;
+  if (v('camSetUser')) st.dvrUser = v('camSetUser').value.trim() || 'admin';
+  if (v('camSetPass')) st.dvrPass = v('camSetPass').value;
   return st;
 }
 function camSetMode(m) { const st = camReadForm(); st.mode = m; saveCamSettings(st); renderCamSettings(); }
@@ -5102,6 +5182,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'ربط الكاميرات عن بعد (Tailscale)', kw: 'كاميرا عن بعد tailscale تيلسكيل vpn برا المحل من البيت', run: "openTailscaleSetup()" },
   { name: 'إعدادات الكاميرا', kw: 'كاميرا كاميرات مراقبة هيك hik connect تسجيل', run: "openCamSettings()" },
   { name: 'خط التطبيق', kw: 'خط الخط خطوط فونت font شكل الكتابة', run: "openFontPicker()" },
   { name: 'طباعة باركود', kw: 'طباعة باركود ملصقات ملصق قائمة طباعة', run: "openBatchLabels()" },
@@ -5316,9 +5397,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.1.1';
+const APP_VERSION = '4.2.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '4.2.0', date: '2026-10-03', items: [
+    'ربط الكاميرات عن بعد (Tailscale) من الجوال: مفتاح ← السكريبت يثبّت ويربط الكاشير تلقائيًا مع سجل مباشر',
+    'زر "افتح على الدقيقة بالظبط (VLC)" في مشاهدة الفاتورة - يشغّل تسجيل جهاز Hikvision على وقت الفاتورة',
+    'إعدادات الكاميرا: عنوان جهاز الكاميرات واسم المستخدم وكلمة المرور (محفوظة في الجوال بس)'
+  ] },
   { v: '4.1.1', date: '2026-10-02', items: [
     'صافي المبيعات في الرئيسية مخفي عند فتح التطبيق (••••••) مع زر عين لإظهاره، ويتخفي تاني لما التطبيق يروح للخلفية'
   ] },
@@ -6555,7 +6641,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة اللي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal', 'tsSetupModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) زي أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
