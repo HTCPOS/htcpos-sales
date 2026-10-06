@@ -3650,6 +3650,38 @@ async function runIntegrityCheck() {
   return { ok, issues };
 }
 
+/* ===== التسوية التلقائية للحساب (مقاصة المبيعات مع المشتريات) =====
+   لو الزبون عليه مبيعات مفتوحة ولك عليه مشتريات مفتوحة -> نقاصّ الأقل تلقائيًا (إيداع "مقاصة" في المبيعات +
+   تسديد "مقاصة" في المشتريات بنفس المبلغ). الرصيد الإجمالي ما يتغير، والأصناف تتسدد من الأقدم للأحدث.
+   نفس معادلات الحساب بالظبط (ما اتغيرتش). المقاصة مش فلوس، فما تدخل في إقفال اليوم. */
+async function settleAccountAuto(customerId, customerName) {
+  const [dS, pS, pdS, ppS] = await Promise.all([liveOnce('data/debts'), liveOnce('data/deposits'), liveOnce('data/purchaseDebts'), liveOnce('data/purchaseDeposits')]);
+  const mine = sn => Object.values((sn && sn.val()) || {}).filter(x => x && x.customerId === customerId);
+  const salesNet = mine(dS).filter(d => !d.paid || d.autoSettled).reduce((s, d) => s + Number(d.amount || 0), 0) - mine(pS).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const purchaseNet = mine(pdS).filter(d => !d.paid).reduce((s, d) => s + Number(d.price || 0), 0) - mine(ppS).reduce((s, p) => s + Number(p.amount || 0), 0);
+  if (!(salesNet > 0.005 && purchaseNet > 0.005)) return 0;
+  const m = r3(Math.min(salesNet, purchaseNet));
+  const now = new Date().toISOString();
+  const base = { customerId, customerName, amount: m, method: 'مقاصة', auto: true, at: now, createdAt: now };
+  await db.ref('data/deposits').push().set(Object.assign({}, base, { note: 'مقاصة تلقائية مع المشتريات' }));
+  await db.ref('data/purchaseDeposits').push().set(Object.assign({}, base, { note: 'مقاصة تلقائية مع المبيعات' }));
+  logActivity('مقاصة تلقائية', fmtMoney(m) + ' د.ل - ' + customerName);
+  return m;
+}
+// تسوية كل الحسابات اللي فيها الطرفين مفتوحين (من شاشة الديون)
+async function settleAllAccounts() {
+  const list = (await computeDebtsOverview()).filter(x => x.salesNet > 0.005 && x.purchaseNet > 0.005);
+  if (!list.length) { showQuickToast('كل الحسابات متسوية ✓', true); return; }
+  const lines = list.map(x => '• ' + x.name + ': ' + fmtMoney(Math.min(x.salesNet, x.purchaseNet)) + ' د.ل').join('\n');
+  if (!(await uiConfirm('مقاصة تلقائية لـ ' + list.length + (list.length === 1 ? ' حساب' : ' حسابات') + ':\n' + lines + '\n\nالرصيد الإجمالي لكل زبون ما يتغير - بس الأصناف تتسدد من الطرفين.', { okText: 'سوّها' }))) return;
+  let n = 0;
+  for (const x of list) {
+    try { if (await settleAccountAuto(x.id, x.name)) { n++; await reconcileSalesAccount(x.id); } } catch (e) {}
+  }
+  showQuickToast('تمت المقاصة لـ ' + n + (n === 1 ? ' حساب' : ' حسابات'), true);
+  loadDebtsHub();
+}
+
 /* ================= الديون: شاشة واحدة لكل الناس (لك + عليك) =================
    نفس حسبة حساب الزبون بالظبط: (مبيعات − إيداعات) − (مشتريات − تسديدات مشتريات).
    موجب = لك عنده، سالب = عليك له. والمقاصة: لو الطرفين مفتوحين، زر يقفل الأقل من الجهتين
@@ -3723,6 +3755,7 @@ function renderDebtsHub() {
   let h = `<div style="display:flex;gap:8px;">
       ${card('لك عند الناس', fmtMoney(sumFor), '#16A34A')}${card('عليك للناس', fmtMoney(sumOn), '#DC2626')}${card('الصافي', (net >= 0 ? '+' : '−') + fmtMoney(Math.abs(net)), net >= 0 ? '#16A34A' : '#DC2626')}
     </div>
+    ${list.some(x => x.salesNet > 0.005 && x.purchaseNet > 0.005) ? `<button type="button" onclick="settleAllAccounts()" style="width:100%;margin-top:10px;height:46px;border:1.5px solid #BBF7D0;border-radius:14px;background:#ECFDF3;color:#15803D;font-size:14px;font-weight:800;cursor:pointer;">🔁 مقاصة تلقائية لـ ${list.filter(x => x.salesNet > 0.005 && x.purchaseNet > 0.005).length} حسابات (مبيعات ↔ مشتريات)</button>` : ''}
     <button type="button" onclick="openDayClose()" style="width:100%;margin-top:10px;height:44px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">🔒 إقفال اليوم وحساب الدرج</button>
     <div class="lsChips" style="margin:14px 0 10px;">${tab('all', 'الكل', null)}${tab('for', 'لك', forYou.length)}${tab('on', 'عليك', onYou.length)}${tab('days', 'حسب اليوم', null)}</div>`;
   if (debtsHubTab === 'days') {
@@ -5543,9 +5576,16 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.3.3';
+const APP_VERSION = '4.4.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '4.4.0', date: '2026-10-06', items: [
+    'مقاصة تلقائية: لو الزبون عليه مبيعات ولك عليه مشتريات، يتقاصّ الأقل تلقائيًا وتتسدد الأصناف من الطرفين (الرصيد الإجمالي ما يتغير)',
+    'أصناف المبيعات والمشتريات تتسدد من الأقدم للأحدث، ولو المبلغ ما كفى صنف يكتب جنبه: سُدد منه X · متبقي Y · السعر Z',
+    'المسددة في الحساب منطوية تحت "المسددة (n)" مع طريقة السداد',
+    'زر "مقاصة تلقائية لكل الحسابات" في شاشة الديون للحسابات القديمة',
+    'تصحيح عنوان قسم المبيعات: "(ما عليه لك)"'
+  ] },
   { v: '4.3.3', date: '2026-10-05', items: [
     'الوقت في كل التطبيق (الفواتير، الديون، مبيعات الصنف، السجل...) بنظام 24 ساعة زي الكاميرات وبعده نظام 12 ساعة: 23:31 · 11:31 م'
   ] },
@@ -10616,7 +10656,7 @@ function openCustomerDebt(customerId, customerName) {
   // بنعيد التسوية الشاملة أول ما نفتح الحساب (مش بس وقت الإيداع نفسه) - شبكة أمان: لو لأي سبب
   // حدث إيداع أو دين فات عليه التسوية التلقائية، فتح الحساب نفسه بيصححه فورًا من غير ما تحتاجي
   // تعملي أي حاجة زيادة
-  reconcileSalesAccount(customerId).catch(() => {}).then(() => {
+  settleAccountAuto(customerId, customerName).catch(() => 0).then(() => reconcileSalesAccount(customerId)).catch(() => {}).then(() => {
   Promise.all([
     liveOnce('data/debts'),
     liveOnce('data/deposits'),
@@ -10680,16 +10720,33 @@ function openCustomerDebt(customerId, customerName) {
       <button onclick="shareStatementView()" style="flex:1;background:#DCFCE7;color:#16A34A;border:none;border-radius:12px;padding:11px;font-weight:700;font-size:12.5px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.7 7.6-4.4M8.2 13.3l7.6 4.4"/></svg> مشاركة</button>
     </div>`;
 
-    html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;"><span class="ic ic-moneybag"></span> حساب المبيعات (ما له عندك)</div>`;
+    html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;"><span class="ic ic-moneybag"></span> حساب المبيعات (ما عليه لك)</div>`;
     html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','sales')" style="width:100%;margin:6px 0 10px;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
 
     if (mine.length) {
+      // الإيداعات بتسدد من الأقدم: اللي فضل منها بعد الأصناف المسددة كاملة بيتخصم من أقدم صنف مفتوح
+      const autoPaidTotal = myAllDebts.filter(d => d.paid && d.autoSettled).reduce((s, d) => s + Number(d.amount || 0), 0);
+      const leftover = r3(depositTotal - autoPaidTotal);
+      const oldestOpen = mine.slice().sort((a, b) => new Date(a.date) - new Date(b.date))[0];
       html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف المستحقة</div>`;
-      html += mine.map(d => renderDebtRow(d, customerId, customerName, false)).join('');
+      html += mine.map(d => {
+        let r = renderDebtRow(d, customerId, customerName, false);
+        const amt = Number(d.amount || 0);
+        if (oldestOpen && d.id === oldestOpen.id && leftover > 0.005 && leftover < amt) {
+          r = r.replace('لم يسدد بعد', `<span style="color:#B45309;">سُدد منه ${fmtMoney(leftover)} · متبقي ${fmtMoney(amt - leftover)} · السعر ${fmtMoney(amt)}</span>`);
+        }
+        return r;
+      }).join('');
     } else {
       html += `<div class="emptyMsg">لا يوجد أصناف مستحقة</div>`;
     }
 
+    if (paidDebts.length) {
+      const how = d => d.autoSettled ? 'من الإيداعات/المقاصة' : (d.paidMethod ? d.paidMethod : 'يدوي');
+      html += `<details class="paidFold" style="margin:10px 0 0;"><summary style="font-size:12.5px;color:var(--textMuted);font-weight:800;cursor:pointer;padding:8px 2px;list-style:none;">✓ المسددة (${paidDebts.length}) ▾</summary>
+        ${paidDebts.map(d => `<div class="searchResultRow" style="opacity:.75;"><div style="flex:1;min-width:0;"><div class="n">${escapeHtml(d.itemName || 'دين')}</div><div class="p">${fmtMoney(d.amount)} د.ل${d.invoiceNumber ? ' · فاتورة ' + escapeHtml(String(d.invoiceNumber)) : ''}</div></div><div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">مسدد ✓ <span style="font-weight:600;color:var(--textMuted);">(${how(d)})</span></div></div>`).join('')}
+      </details>`;
+    }
     if (myDeposits.length) {
       html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:16px 0 4px;">الإيداعات</div>`;
       html += myDeposits.map(p => renderDepositRow(p, customerId, customerName, 'sales')).join('');
@@ -10704,8 +10761,25 @@ function openCustomerDebt(customerId, customerName) {
       html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','purchase')" style="width:100%;margin:6px 0 10px;background:#FEF3C7;color:#B45309;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#B45309" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> تسديد مبلغ للمحل</button>`;
 
       if (myPurchases.length) {
-        html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف التي اشتريتها</div>`;
-        html += myPurchases.map(it => renderPurchaseDebtRow(it, customerId, customerName)).join('');
+        // التسديدات (نقدي/بطاقة/مقاصة) بتغطي الأصناف من الأقدم للأحدث - عرض بس، المعادلة زي ما هي
+        let cover = purchaseDepositTotal;
+        const oldestFirst = myPurchases.slice().sort((a, b) => new Date(a.at) - new Date(b.at));
+        const coveredIds = new Set(); let partial = null;
+        for (const it of oldestFirst) {
+          const pr = Number(it.price || 0);
+          if (cover + 0.001 >= pr) { coveredIds.add(it.id); cover -= pr; }
+          else { if (cover > 0.005) partial = { id: it.id, rest: r3(pr - cover) }; break; }
+        }
+        const openP = myPurchases.filter(it => !coveredIds.has(it.id)), doneP = myPurchases.filter(it => coveredIds.has(it.id));
+        if (openP.length) {
+          html += `<div style="font-size:12px;color:#94A3B8;font-weight:700;margin:12px 0 4px;">الأصناف التي اشتريتها (لم تُسدَّد)</div>`;
+          html += openP.map(it => { let r = renderPurchaseDebtRow(it, customerId, customerName); if (partial && partial.id === it.id) r = r.replace('لم يسدد بعد', `<span style="color:#B45309;">سُدد منه ${fmtMoney(Number(it.price || 0) - partial.rest)} · متبقي ${fmtMoney(partial.rest)} · السعر ${fmtMoney(it.price)}</span>`); return r; }).join('');
+        }
+        if (doneP.length) {
+          html += `<details class="paidFold" style="margin:10px 0 0;"><summary style="font-size:12.5px;color:var(--textMuted);font-weight:800;cursor:pointer;padding:8px 2px;list-style:none;">✓ المسددة من المشتريات (${doneP.length}) ▾</summary>
+            ${doneP.map(it => `<div class="searchResultRow" style="opacity:.75;"><div style="flex:1;min-width:0;"><div class="n">${escapeHtml(it.itemName || '')}</div><div class="p">${fmtMoney(it.price)} د.ل</div></div><div style="font-weight:800;color:#16A34A;font-size:12px;white-space:nowrap;">مسدد ✓ <span style="font-weight:600;color:var(--textMuted);">(تسديد/مقاصة)</span></div></div>`).join('')}
+          </details>`;
+        }
       }
 
       if (myPurchaseDeposits.length) {
@@ -11145,6 +11219,27 @@ function checkDebtReturns(debts, customerId, customerName) {
 }
 
 async function markDebtPaid(debtId, customerId, customerName, itemName, amount) {
+  // لو الصنف ده مسدد جزئيًا (أقدم صنف مفتوح وفاضل عليه جزء من الإيداعات): نسجل الباقي بس كإيداع،
+  // والتسوية التلقائية تقفله - عشان الجزء المدفوع قبل ما يتحسبش مرتين
+  try {
+    const [dS, pS] = await Promise.all([liveOnce('data/debts'), liveOnce('data/deposits')]);
+    const myD = Object.entries((dS && dS.val()) || {}).map(([id, d]) => ({ id, ...d })).filter(d => d.customerId === customerId);
+    const depTotal = Object.values((pS && pS.val()) || {}).filter(p => p && p.customerId === customerId).reduce((s, p) => s + Number(p.amount || 0), 0);
+    const leftover = r3(depTotal - myD.filter(d => d.paid && d.autoSettled).reduce((s, d) => s + Number(d.amount || 0), 0));
+    const oldest = myD.filter(d => !d.paid).sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+    const amt = Number(amount || 0);
+    if (oldest && oldest.id === debtId && leftover > 0.005 && leftover < amt) {
+      const rest = r3(amt - leftover);
+      const method = await askPayMethod('سداد باقي "' + (itemName || '') + '" (سُدد منه ' + fmtMoney(leftover) + ')', rest);
+      if (!method) return;
+      if (!(await guardClosedDay(Date.now(), 'تسجيل سداد'))) return;
+      const now = new Date().toISOString();
+      await db.ref('data/deposits').push().set({ customerId, customerName, amount: rest, method, note: 'سداد باقي ' + (itemName || ''), at: now, createdAt: now });
+      logActivity('سداد دين', (itemName || '') + ' - الباقي ' + fmtMoney(rest) + ' د.ل (' + method + ') - ' + customerName);
+      openCustomerDebt(customerId, customerName);
+      return;
+    }
+  } catch (e) {}
   // كل سداد لازم يكون له حركة فلوس: نسأل الطريقة ونسجّلها في دفتر النقدية (data/payments)
   const method = await askPayMethod('تسجيل سداد "' + (itemName || '') + '"', amount || 0);
   if (!method) return;
