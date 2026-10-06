@@ -1523,6 +1523,16 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="itemSalesModal" onclick="if(event.target===this)closeModal('itemSalesModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('itemSalesModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>مبيعات صنف</h3>
+    <div class="searchBox" style="margin:2px 0 0;"><input id="isInput" type="text" placeholder="اكتب اسم الصنف..." autocomplete="off" oninput="isSuggestNow()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();runItemSales();}" style="min-width:0;"></div>
+    <div id="isSuggest" style="overflow:hidden;margin-top:6px;box-shadow:0 1px 2px rgba(15,23,42,.06);"></div>
+    <div id="isBody" style="margin-top:10px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="tsSetupModal" onclick="if(event.target===this)closeModal('tsSetupModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('tsSetupModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -4015,6 +4025,113 @@ async function rcptSave() {
   }
 }
 
+/* ================= مبيعات صنف: اكتب اسم الصنف -> كل فواتير بيعه =================
+   من أرشيف التطبيق (آخر 3 شهور) - يشتغل حتى والكاشير مطفي. المطابقة بالاسم (اختيار من الاقتراحات = مطابقة تامة،
+   كتابة حرة = يحتوي على). المرتجعات تطلع بالأحمر وتنخصم من الصافي. */
+let isQuery = '', isExact = false, isDays = 30;
+function openItemSales(name) {
+  isQuery = name || ''; isExact = !!name;
+  const inp = document.getElementById('isInput'); if (inp) inp.value = isQuery;
+  document.getElementById('isSuggest').innerHTML = '';
+  openModal('itemSalesModal');
+  if (isQuery) runItemSales(); else { document.getElementById('isBody').innerHTML = '<div class="emptyMsg">اكتب اسم الصنف أو جزء منه</div>'; setTimeout(() => { try { inp.focus(); } catch (e) {} }, 350); }
+}
+const isNorm = t => normalizeArabicName(String(t || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+async function isSuggestNow() {
+  const q = isNorm((document.getElementById('isInput') || {}).value);
+  isExact = false;
+  const box = document.getElementById('isSuggest');
+  if (q.length < 2) { box.innerHTML = ''; return; }
+  let names = [];
+  try { const sn = await liveOnce('data/items'); names = Object.values(sn.val() || {}).map(x => x && x.name).filter(Boolean); } catch (e) {}
+  const seen = new Set();
+  const hits = names.filter(n => { const k = isNorm(n); if (seen.has(k) || !k.includes(q)) return false; seen.add(k); return true; }).slice(0, 6);
+  box.innerHTML = hits.map(n => `<button type="button" class="isSug" onclick="isPick(this.dataset.n)" data-n="${escapeHtml(n)}" style="display:block;width:100%;text-align:right;border:none;background:var(--surface);color:var(--text);padding:11px 14px;border-bottom:1px solid var(--border2);font-size:14.5px;font-weight:600;cursor:pointer;">${escapeHtml(n)}</button>`).join('');
+  box.style.borderRadius = hits.length ? '14px' : '';
+}
+function isPick(n) {
+  document.getElementById('isInput').value = n;
+  document.getElementById('isSuggest').innerHTML = '';
+  isQuery = n; isExact = true;
+  document.getElementById('isInput').blur();
+  runItemSales();
+}
+function isSetDays(d) { isDays = d; runItemSales(); }
+async function runItemSales() {
+  const raw = (document.getElementById('isInput') || {}).value || isQuery;
+  const q = isNorm(raw);
+  const el = document.getElementById('isBody');
+  if (q.length < 2) { el.innerHTML = '<div class="emptyMsg">اكتب حرفين على الأقل</div>'; return; }
+  isQuery = raw;
+  document.getElementById('isSuggest').innerHTML = '';
+  el.innerHTML = skeletonHtml(5);
+  let flat = [], debtByInv = {};
+  try {
+    const today = dhDayKeyOf(Date.now());
+    flat = isDays > 92 ? await fetchArchiveRange('2000-01-01', today) : await fetchFullArchiveFlat();
+  } catch (e) { el.innerHTML = '<div class="emptyMsg">تعذّر تحميل الأرشيف</div>'; return; }
+  try {
+    const ds = await liveOnce('data/debts');
+    Object.values((ds && ds.val()) || {}).forEach(d => { const n = String((d && d.invoiceNumber) || '').replace(/[^0-9]/g, ''); if (n) (debtByInv[n] = debtByInv[n] || new Set()).add(d.customerName || 'زبون'); });
+  } catch (e) {}
+  const since = isDays > 92 ? 0 : Date.now() - isDays * 86400000;
+  const match = n => { const k = isNorm(n); return isExact ? k === q : k.includes(q); };
+  const rows = [];
+  flat.forEach(e => {
+    if (!e || !e.items) return;
+    const t = new Date(e.date).getTime();
+    if (!(t >= since)) return;
+    (Array.isArray(e.items) ? e.items : Object.values(e.items)).forEach(it => {
+      if (it && match(it.name)) rows.push({ e, it, t, ret: e.type === 'return' });
+    });
+  });
+  rows.sort((a, b) => b.t - a.t);
+  const sold = rows.filter(r => !r.ret), ret = rows.filter(r => r.ret);
+  const qSold = sold.reduce((s, r) => s + Number(r.it.qty || 0), 0), qRet = ret.reduce((s, r) => s + Number(r.it.qty || 0), 0);
+  const aSold = sold.reduce((s, r) => s + Number(r.it.qty || 0) * Number(r.it.price || 0), 0), aRet = ret.reduce((s, r) => s + Number(r.it.qty || 0) * Number(r.it.price || 0), 0);
+  const invCount = new Set(sold.map(r => r.e.id || r.e.number)).size;
+  const names = new Set(rows.map(r => r.it.name));
+  const chip = (d, l) => `<button type="button" class="lsChip${isDays === d ? ' on' : ''}" onclick="isSetDays(${d})">${l}</button>`;
+  const card = (l, v, c) => `<div style="flex:1;min-width:0;background:var(--surface);border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 1px 2px rgba(15,23,42,.05);"><div style="font-size:12px;color:var(--textMuted);font-weight:600;">${l}</div><div style="font-size:17px;font-weight:800;margin-top:4px;color:${c || 'var(--text)'};">${v}</div></div>`;
+  let h = `<div class="lsChips" style="margin-bottom:10px;">${chip(1, 'اليوم')}${chip(7, 'أسبوع')}${chip(30, 'شهر')}${chip(92, '3 شهور')}${chip(9999, 'الكل')}</div>`;
+  if (!rows.length) { el.innerHTML = h + `<div class="emptyMsg">ما في مبيعات لـ "${escapeHtml(raw)}" في هذه الفترة</div>`; return; }
+  h += `<div style="display:flex;gap:8px;">${card('المباع', fmtQty(qSold - qRet) + ' قطعة', '#16A34A')}${card('المبلغ', fmtMoney(aSold - aRet))}${card('الفواتير', invCount)}</div>`;
+  h += `<div style="font-size:12.5px;color:var(--textMuted);margin:8px 4px 10px;">آخر بيع: ${sold.length ? dhAgo(sold[0].t) + ' ' + new Date(sold[0].t).toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }) : '—'}${qRet ? ' · <span style="color:#DC2626;">مرتجع: ' + fmtQty(qRet) + ' (' + fmtMoney(aRet) + ')</span>' : ''}${!isExact && names.size > 1 ? ' · يشمل ' + names.size + ' أصناف بنفس الكلمة' : ''}</div>`;
+  // كرت لكل فاتورة بكامل تفاصيلها (كل أصنافها، والصنف المطلوب مميز)
+  const invs = [], seenInv = {};
+  rows.forEach(r => { const k = (r.e.type || '') + ':' + (r.e.id || r.e.number); if (!seenInv[k]) { seenInv[k] = true; invs.push(r); } });
+  window.__isInv = invs.map(r => r.e);
+  const longDate = t => { const d = new Date(t); return CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ' · ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }); };
+  h += `<div style="font-size:12.5px;color:var(--textMuted);margin:0 4px 8px;">${invs.length} ${invs.length === 1 ? 'فاتورة' : 'فاتورة'} بالتفاصيل الكاملة</div>`;
+  h += invs.map((r, i) => {
+    const e = r.e, ret = e.type === 'return';
+    const lines = (Array.isArray(e.items) ? e.items : Object.values(e.items || {})).filter(Boolean);
+    const digits = String(e.number || '').replace(/[^0-9]/g, '');
+    const debtors = !ret && debtByInv[digits] ? Array.from(debtByInv[digits]) : [];
+    const badges = [];
+    if (e.payment) badges.push(`<span style="background:var(--surface2);border-radius:8px;padding:2px 8px;">${escapeHtml(String(e.payment))}</span>`);
+    if (e.orderNo) badges.push(`<span style="background:var(--surface2);border-radius:8px;padding:2px 8px;">طلب ${escapeHtml(String(e.orderNo))}</span>`);
+    if (debtors.length) badges.push(`<span style="background:#FEF3C7;color:#92400E;border-radius:8px;padding:2px 8px;">دين على: ${escapeHtml(debtors.join('، '))}</span>`);
+    if (e.hasReturn) badges.push(`<span style="background:#FEE2E2;color:#991B1B;border-radius:8px;padding:2px 8px;">عليها مرتجع</span>`);
+    return `<div class="searchResultRow" style="display:block;${ret ? 'box-shadow:inset 3px 0 0 #DC2626;' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;" onclick="showInvoiceDetail(window.__isInv[${i}])">
+          <span style="font-size:16px;font-weight:800;direction:ltr;">${ret ? '<span style="color:#DC2626;">مرتجع</span> ' : ''}${escapeHtml(String(e.number || ''))}</span>
+          <span style="font-size:16px;font-weight:800;direction:ltr;white-space:nowrap;color:${ret ? '#DC2626' : 'var(--text)'};">${ret ? '−' : ''}${fmtMoney(e.amount)} د.ل</span>
+        </div>
+        <div style="font-size:12.5px;color:var(--textMuted);margin-top:3px;">${longDate(r.t)}</div>
+        ${badges.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;font-size:11.5px;font-weight:700;">${badges.join('')}</div>` : ''}
+        <div style="margin-top:9px;border-top:1px solid var(--border2);padding-top:6px;">
+          ${lines.map(it => { const hit = match(it.name); return `<div style="display:flex;justify-content:space-between;gap:8px;padding:5px ${hit ? '8px' : '0'};margin:2px 0;border-radius:8px;font-size:13.5px;${hit ? 'background:rgba(22,163,74,.10);font-weight:800;color:#15803D;' : ''}">
+              <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(String(it.name || ''))}</span>
+              <span style="direction:ltr;white-space:nowrap;">${fmtQty(it.qty)} × ${fmtMoney(it.price)} = ${fmtMoney(Number(it.qty || 0) * Number(it.price || 0))}</span></div>`; }).join('')}
+        </div>
+        ${!ret ? `<button type="button" onclick="openCamPlayback('${String(e.date).replace(/'/g, '')}')" style="margin-top:8px;width:100%;height:38px;border:1.5px solid var(--border);border-radius:11px;background:var(--surface);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;">📹 شاهد في الكاميرا</button>` : ''}
+      </div>`;
+  }).join('');
+  el.innerHTML = h;
+}
+function fmtQty(n) { n = Number(n || 0); return Number.isInteger(n) ? String(n) : n.toFixed(2); }
+
 /* ================= ربط الكاميرات عن بعد (Tailscale) - من الجوال =================
    الخطوات: مفتاح من موقع Tailscale -> التطبيق يبعته للسكريبت -> السكريبت يحمّل ويثبّت ويربط الكاشير
    كجسر لشبكة الكاميرات (192.168.0.0/24) -> موافقة مرة وحدة من موقع Tailscale -> VLC يشتغل من أي مكان. */
@@ -5182,6 +5299,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'مبيعات صنف (كل فواتير الصنف)', kw: 'مبيعات صنف فواتير الصنف كم بعت بيع منتج حركة الصنف', run: "openItemSales()" },
   { name: 'ربط الكاميرات عن بعد (Tailscale)', kw: 'كاميرا عن بعد tailscale تيلسكيل vpn برا المحل من البيت', run: "openTailscaleSetup()" },
   { name: 'إعدادات الكاميرا', kw: 'كاميرا كاميرات مراقبة هيك hik connect تسجيل', run: "openCamSettings()" },
   { name: 'خط التطبيق', kw: 'خط الخط خطوط فونت font شكل الكتابة', run: "openFontPicker()" },
@@ -5397,9 +5515,17 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.2.0';
+const APP_VERSION = '4.3.1';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '4.3.1', date: '2026-10-05', items: [
+    'مبيعات صنف: كل فاتورة تظهر بالتفاصيل الكاملة (كل أصنافها، التاريخ والوقت، طريقة الدفع، رقم الطلب، الزبون لو دين، المرتجع) والصنف المطلوب مميز بالأخضر',
+    'خيار "الكل" للبحث في الأرشيف كامل، وزر الكاميرا في كل فاتورة'
+  ] },
+  { v: '4.3.0', date: '2026-10-05', items: [
+    'مبيعات صنف: اكتب اسم الصنف ويظهر كل فواتير بيعه (اليوم/أسبوع/شهر/3 شهور) مع المباع والمبلغ وعدد الفواتير والمرتجعات',
+    'زر "كل فواتير بيع هذا الصنف" في بطاقة الصنف، والضغط على أي فاتورة يفتح تفاصيلها'
+  ] },
   { v: '4.2.0', date: '2026-10-03', items: [
     'ربط الكاميرات عن بعد (Tailscale) من الجوال: مفتاح ← السكريبت يثبّت ويربط الكاشير تلقائيًا مع سجل مباشر',
     'زر "افتح على الدقيقة بالظبط (VLC)" في مشاهدة الفاتورة - يشغّل تسجيل جهاز Hikvision على وقت الفاتورة',
@@ -6641,7 +6767,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة اللي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal', 'tsSetupModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) زي أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -8962,6 +9088,7 @@ function showItemCardDetail(itemId) {
       ${itemCardOfferLabel[it.id] ? `<button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:#FEF3C7;color:#B45309;border:1.5px dashed #F59E0B;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg> اطبع ملصق بالسعر الجديد</button>` : ''}
       <button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#2563EB;border:1.5px solid #BFDBFE;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg> طباعة باركود</button>
       <button onclick="openDamagedForm(${it.id})" style="width:100%;margin-top:8px;background:var(--surface);color:#DC2626;border:1.5px solid #FCA5A5;border-radius:12px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> تسجيل تالف</button>
+      <button type="button" onclick="openItemSales('${String(it.name || '').replace(/'/g, "\\'")}')" style="width:100%;margin-top:8px;height:48px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:14.5px;font-weight:700;cursor:pointer;">🧾 كل فواتير بيع هذا الصنف</button>
     </div>
   `;
   renderItemCardEditStatus(it.id);
