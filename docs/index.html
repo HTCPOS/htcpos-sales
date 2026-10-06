@@ -895,6 +895,32 @@ window.hideSplash = function () {
 };
 setTimeout(() => window.hideSplash(), 4000);
 </script>
+<script>
+/* ===== الوقت في كل التطبيق: نظام 24 ساعة (نفس الكاميرات) وبعده نظام 12 ساعة =====
+   بدل ما نعدّل 35 مكان، بنوحّد عرض الوقت من الجذر: أي عرض وقت بالعربي يطلع "23:31 · 11:31 م" */
+(function () {
+  const pad = n => String(n).padStart(2, '0');
+  const isAr = l => typeof l === 'string' && l.indexOf('ar') === 0;
+  const dual = (d, sec) => {
+    const h = d.getHours(), m = pad(d.getMinutes()), s = pad(d.getSeconds());
+    return pad(h) + ':' + m + (sec ? ':' + s : '') + ' · ' + (h % 12 || 12) + ':' + m + (sec ? ':' + s : '') + ' ' + (h < 12 ? 'ص' : 'م');
+  };
+  const oTime = Date.prototype.toLocaleTimeString, oStr = Date.prototype.toLocaleString;
+  window.fmtTimeDual = (d, sec) => dual(d instanceof Date ? d : new Date(d), !!sec);
+  Date.prototype.toLocaleTimeString = function (l, o) {
+    if (!isAr(l) || isNaN(this.getTime())) return oTime.call(this, l, o);
+    return dual(this, !o || !!o.second);
+  };
+  Date.prototype.toLocaleString = function (l, o) {
+    if (!isAr(l) || isNaN(this.getTime())) return oStr.call(this, l, o);
+    if (o && !o.hour) return oStr.call(this, l, o); // تاريخ بس من غير وقت
+    const dOpts = {};
+    if (o) ['weekday', 'day', 'month', 'year'].forEach(k => { if (o[k]) dOpts[k] = o[k]; });
+    const datePart = (o && !Object.keys(dOpts).length) ? '' : this.toLocaleDateString(l, Object.keys(dOpts).length ? dOpts : undefined);
+    return (datePart ? datePart + ' · ' : '') + dual(this, !o || !!o.second);
+  };
+})();
+</script>
 <!-- ================= LOGIN ================= -->
 <div id="loginScreen" class="booting lg2">
   <div class="lgBg" aria-hidden="true"><svg viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">
@@ -4232,7 +4258,9 @@ function renderCamPlayback() {
   el.innerHTML = `
     <div style="text-align:center;background:var(--surface);border-radius:20px;padding:20px 14px;margin-top:10px;box-shadow:0 1px 2px rgba(15,23,42,.05);">
       <div style="font-size:14px;color:var(--textMuted);font-weight:600;">${dateTxt}</div>
-      <div style="font-size:46px;font-weight:800;letter-spacing:1px;margin:6px 0 2px;direction:ltr;font-variant-numeric:tabular-nums;">${t}</div>
+      <div style="font-size:46px;font-weight:800;letter-spacing:1px;margin:6px 0 0;direction:ltr;font-variant-numeric:tabular-nums;">${t}</div>
+      <div style="font-size:12px;color:var(--textMuted);font-weight:700;margin-top:-2px;">نظام 24 ساعة (نفس الكاميرات)</div>
+      <div style="font-size:19px;font-weight:800;color:#16A34A;margin:8px 0 6px;direction:rtl;font-variant-numeric:tabular-nums;">${(d.getHours() % 12 || 12)}:${camPad(d.getMinutes())}:${camPad(d.getSeconds())} ${d.getHours() < 12 ? 'صباحًا' : 'مساءً'}</div>
       <div style="font-size:12.5px;color:var(--textMuted);">${st.preSec ? 'قبل الفاتورة بـ ' + Math.round(st.preSec / 60 * 10) / 10 + ' دقيقة · ' : ''}وقت الفاتورة ${inv}${st.offsetSec ? ' · فرق ساعة الكاميرا ' + (st.offsetSec > 0 ? '+' : '') + st.offsetSec + ' ث' : ''}</div>
     </div>
     <div class="lsChips" style="margin:14px 0 4px;justify-content:center;">${chips}</div>
@@ -5515,9 +5543,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.3.1';
+const APP_VERSION = '4.3.3';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '4.3.3', date: '2026-10-05', items: [
+    'الوقت في كل التطبيق (الفواتير، الديون، مبيعات الصنف، السجل...) بنظام 24 ساعة زي الكاميرات وبعده نظام 12 ساعة: 23:31 · 11:31 م'
+  ] },
+  { v: '4.3.2', date: '2026-10-05', items: [
+    'مشاهدة في الكاميرا: الوقت كبير بنظام 24 ساعة (نفس شريط الكاميرات) وتحته نفس الوقت بنظام 12 ساعة (صباحًا/مساءً)'
+  ] },
   { v: '4.3.1', date: '2026-10-05', items: [
     'مبيعات صنف: كل فاتورة تظهر بالتفاصيل الكاملة (كل أصنافها، التاريخ والوقت، طريقة الدفع، رقم الطلب، الزبون لو دين، المرتجع) والصنف المطلوب مميز بالأخضر',
     'خيار "الكل" للبحث في الأرشيف كامل، وزر الكاميرا في كل فاتورة'
