@@ -1,0 +1,326 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ============================================================
+#  HTC POS - Camera bridge setup (Android machine / Termux)
+#  Run once with:
+#    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
+#  Safe to re-run: it overwrites the server + boot files cleanly.
+# ============================================================
+set -e
+
+CAM_DIR="$HOME/cam"
+BOOT_DIR="$HOME/.termux/boot"
+CONF="$CAM_DIR/camsrv.conf"
+PY="$CAM_DIR/camsrv.py"
+RUN="$CAM_DIR/run.sh"
+PREFIX_BIN="$PREFIX/bin"
+
+echo "==================================================="
+echo "   HTC POS - Camera bridge installer"
+echo "==================================================="
+mkdir -p "$CAM_DIR" "$BOOT_DIR"
+
+# ---------- 1) packages ----------
+echo
+echo ">> [1/6] Checking packages (python, ffmpeg, curl)..."
+pkg install -y python ffmpeg curl >/dev/null 2>&1 || true
+pip install --quiet requests >/dev/null 2>&1 || pip install requests || true
+
+# ---------- 2) cloudflared ----------
+echo ">> [2/6] Installing cloudflared..."
+if [ ! -x "$PREFIX_BIN/cloudflared" ]; then
+  # armeabi-v7a machine -> 32-bit arm build
+  curl -sL -o "$PREFIX_BIN/cloudflared" \
+    https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm
+  chmod +x "$PREFIX_BIN/cloudflared"
+fi
+echo "   cloudflared ready."
+
+# ---------- 3) secrets (asked once, kept only on this machine) ----------
+echo
+echo ">> [3/6] Settings (stored ONLY on this machine, not on GitHub)."
+if [ -f "$CONF" ]; then
+  echo "   Found existing settings at $CONF - keeping them."
+  echo "   (delete that file and re-run if you want to change them)"
+else
+  # defaults
+  DEF_DVR_IP="192.168.0.100"
+  DEF_DVR_USER="htcpos"
+  DEF_TZ_OFFSET="2"     # Libya = UTC+2
+  DEF_FB="https://htcpos-6f17b-default-rtdb.europe-west1.firebasedatabase.app"
+  DEF_APIKEY="AIzaSyBVvW-gB2p0MR85iXgyE35flEfbusrgn0Y"
+  DEF_EMAIL="htcstore100@gmail.com"
+
+  read -p "   DVR IP [$DEF_DVR_IP]: " DVR_IP;        DVR_IP=${DVR_IP:-$DEF_DVR_IP}
+  read -p "   DVR username [$DEF_DVR_USER]: " DVR_USER; DVR_USER=${DVR_USER:-$DEF_DVR_USER}
+  read -p "   DVR password for '$DVR_USER': " DVR_PASS
+  while [ -z "$DVR_PASS" ]; do read -p "   DVR password (required): " DVR_PASS; done
+
+  read -p "   Camera access code for the app [htc-cam-k7m2]: " CAM_CODE
+  CAM_CODE=${CAM_CODE:-htc-cam-k7m2}
+
+  read -p "   Firebase email [$DEF_EMAIL]: " FB_EMAIL; FB_EMAIL=${FB_EMAIL:-$DEF_EMAIL}
+  read -p "   Firebase password for '$FB_EMAIL': " FB_PASS
+  while [ -z "$FB_PASS" ]; do read -p "   Firebase password (required): " FB_PASS; done
+
+  umask 077
+  cat > "$CONF" <<EOF
+DVR_IP=$DVR_IP
+DVR_USER=$DVR_USER
+DVR_PASS=$DVR_PASS
+CAM_CODE=$CAM_CODE
+TZ_OFFSET=$DEF_TZ_OFFSET
+FB_URL=$DEF_FB
+FB_APIKEY=$DEF_APIKEY
+FB_EMAIL=$FB_EMAIL
+FB_PASS=$FB_PASS
+PORT=8787
+EOF
+  chmod 600 "$CONF"
+  echo "   Saved settings (permissions 600)."
+fi
+
+# ---------- 4) the server ----------
+echo ">> [4/6] Writing camera server..."
+cat > "$PY" <<'PYEOF'
+#!/data/data/com.termux/files/usr/bin/python
+# HTC POS camera bridge: serves a short HLS clip of the DVR archive,
+# starting at the minute of an invoice. One ffmpeg job at a time.
+import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+HOME = os.path.expanduser("~")
+CAMDIR = os.path.join(HOME, "cam")
+CONF = os.path.join(CAMDIR, "camsrv.conf")
+HLS = os.path.join(CAMDIR, "hls")
+
+def load_conf():
+    c = {}
+    with open(CONF) as f:
+        for line in f:
+            line = line.strip()
+            if "=" in line and not line.startswith("#"):
+                k, v = line.split("=", 1); c[k] = v
+    return c
+
+CF = load_conf()
+PORT = int(CF.get("PORT", "8787"))
+TZ = int(CF.get("TZ_OFFSET", "2"))
+CODE = CF.get("CAM_CODE", "")
+DVR_IP = CF["DVR_IP"]; DVR_USER = CF["DVR_USER"]; DVR_PASS = CF["DVR_PASS"]
+
+# channel map: app sends cam=1..4 -> DVR channel 101/201/301/401 (main stream)
+def channel(cam):
+    cam = int(cam)
+    if cam < 1 or cam > 4: raise ValueError("cam 1..4")
+    return cam * 100 + 1
+
+_lock = threading.Lock()
+_proc = {"p": None, "started": 0, "key": None}
+
+def rtsp_url(ch, start_utc):
+    # start_utc: "YYYYMMDDTHHMMSSZ"
+    auth = "%s:%s" % (urllib.parse.quote(DVR_USER), urllib.parse.quote(DVR_PASS))
+    return ("rtsp://%s@%s:554/Streaming/tracks/%d?starttime=%s"
+            % (auth, DVR_IP, ch, start_utc))
+
+def stop_ffmpeg():
+    p = _proc["p"]
+    if p and p.poll() is None:
+        try: p.send_signal(signal.SIGINT); p.wait(timeout=5)
+        except Exception:
+            try: p.kill()
+            except Exception: pass
+    _proc["p"] = None; _proc["key"] = None
+
+def start_ffmpeg(ch, start_utc, key):
+    stop_ffmpeg()
+    if os.path.isdir(HLS): shutil.rmtree(HLS, ignore_errors=True)
+    os.makedirs(HLS, exist_ok=True)
+    url = rtsp_url(ch, start_utc)
+    # copy video (hevc) into fMP4 HLS -> iPhone plays H.265 natively, no transcode
+    cmd = [
+        "ffmpeg", "-nostdin", "-loglevel", "error",
+        "-rtsp_transport", "tcp", "-i", url,
+        "-c", "copy", "-an",
+        "-f", "hls", "-hls_time", "2", "-hls_list_size", "10",
+        "-hls_flags", "delete_segments+append_list+omit_endlist",
+        "-hls_segment_type", "fmp4",
+        "-hls_segment_filename", os.path.join(HLS, "seg%d.m4s"),
+        os.path.join(HLS, "index.m3u8"),
+    ]
+    p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    _proc.update(p=p, started=time.time(), key=key)
+
+# auto-stop watchdog: kill ffmpeg if no playlist request for 90s
+_last_touch = {"t": time.time()}
+def watchdog():
+    while True:
+        time.sleep(20)
+        if _proc["p"] and (time.time() - _last_touch["t"] > 90):
+            with _lock: stop_ffmpeg()
+
+class H(BaseHTTPRequestHandler):
+    def log_message(self, *a): pass
+    def _cors(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "*")
+    def do_OPTIONS(self):
+        self.send_response(204); self._cors(); self.end_headers()
+    def do_GET(self):
+        u = urllib.parse.urlparse(self.path)
+        q = urllib.parse.parse_qs(u.query)
+        path = u.path
+
+        if path == "/health":
+            self.send_response(200); self._cors()
+            self.send_header("Content-Type","application/json"); self.end_headers()
+            self.wfile.write(b'{"ok":true}'); return
+
+        # /play?code=..&cam=2&t=YYYYMMDDHHMMSS  (t = LOCAL time of the invoice)
+        if path == "/play":
+            if q.get("code",[""])[0] != CODE:
+                self.send_response(403); self._cors(); self.end_headers()
+                self.wfile.write(b"bad code"); return
+            try:
+                cam = q.get("cam",["2"])[0]; ch = channel(cam)
+                t = q.get("t",[""])[0]
+                if len(t) != 14: raise ValueError("t=YYYYMMDDHHMMSS")
+                # local -> utc (subtract offset hours), keep it simple via epoch
+                import datetime
+                lt = datetime.datetime.strptime(t, "%Y%m%d%H%M%S")
+                ut = lt - datetime.timedelta(hours=TZ)
+                start_utc = ut.strftime("%Y%m%dT%H%M%SZ")
+                key = "%s-%s" % (ch, start_utc)
+            except Exception as e:
+                self.send_response(400); self._cors(); self.end_headers()
+                self.wfile.write(str(e).encode()); return
+            with _lock:
+                if _proc["key"] != key or not _proc["p"] or _proc["p"].poll() is not None:
+                    start_ffmpeg(ch, start_utc, key)
+            _last_touch["t"] = time.time()
+            self.send_response(200); self._cors()
+            self.send_header("Content-Type","application/json"); self.end_headers()
+            self.wfile.write(b'{"hls":"/hls/index.m3u8"}'); return
+
+        # serve HLS files
+        if path.startswith("/hls/"):
+            _last_touch["t"] = time.time()
+            fn = os.path.join(HLS, os.path.basename(path))
+            if not os.path.isfile(fn):
+                # playlist may need a moment to appear
+                for _ in range(25):
+                    if os.path.isfile(fn): break
+                    time.sleep(0.2)
+            if not os.path.isfile(fn):
+                self.send_response(404); self._cors(); self.end_headers(); return
+            ct = "application/vnd.apple.mpegurl" if fn.endswith(".m3u8") else "video/mp4"
+            data = open(fn,"rb").read()
+            self.send_response(200); self._cors()
+            self.send_header("Content-Type",ct)
+            self.send_header("Content-Length",str(len(data))); self.end_headers()
+            self.wfile.write(data); return
+
+        self.send_response(404); self._cors(); self.end_headers()
+
+if __name__ == "__main__":
+    threading.Thread(target=watchdog, daemon=True).start()
+    srv = ThreadingHTTPServer(("127.0.0.1", PORT), H)
+    print("camsrv on 127.0.0.1:%d" % PORT, flush=True)
+    srv.serve_forever()
+PYEOF
+echo "   server written."
+
+# ---------- 5) runner (server + tunnel + publish url to Firebase) ----------
+echo ">> [5/6] Writing runner + boot autostart..."
+cat > "$RUN" <<'RUNEOF'
+#!/data/data/com.termux/files/usr/bin/bash
+# keep awake, start server, open tunnel, push tunnel url to Firebase, keep alive.
+CAM_DIR="$HOME/cam"
+CONF="$CAM_DIR/camsrv.conf"
+LOG="$CAM_DIR/run.log"
+exec >>"$LOG" 2>&1
+echo "=== boot $(date) ==="
+
+termux-wake-lock || true
+
+# load conf
+set -a; . "$CONF"; set +a
+PORT=${PORT:-8787}
+
+# start the python server
+pkill -f camsrv.py 2>/dev/null || true
+python "$CAM_DIR/camsrv.py" &
+sleep 3
+
+get_token() {
+  python - <<PY
+import json,urllib.request
+d=json.dumps({"email":"$FB_EMAIL","password":"$FB_PASS","returnSecureToken":True}).encode()
+u="https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$FB_APIKEY"
+try:
+  r=urllib.request.urlopen(urllib.request.Request(u,d,{"Content-Type":"application/json"}),timeout=20)
+  print(json.load(r)["idToken"])
+except Exception as e:
+  print("")
+PY
+}
+
+publish_url() {
+  local URL="$1"
+  local TOK; TOK=$(get_token)
+  [ -z "$TOK" ] && { echo "no firebase token"; return; }
+  python - "$URL" "$TOK" <<PY
+import sys,json,urllib.request
+url,tok=sys.argv[1],sys.argv[2]
+body=json.dumps({"url":url,"code":"$CAM_CODE","ts":__import__("time").time()}).encode()
+u="$FB_URL/data/cameraBridge.json?auth="+tok
+try:
+  req=urllib.request.Request(u,body,{"Content-Type":"application/json"},method="PUT")
+  urllib.request.urlopen(req,timeout=20); print("published:",url)
+except Exception as e:
+  print("publish failed:",e)
+PY
+}
+
+# tunnel loop: if cloudflared dies or url changes, re-publish
+while true; do
+  # start a quick tunnel; capture its url from logs
+  TUNLOG="$CAM_DIR/cf.log"; : > "$TUNLOG"
+  cloudflared tunnel --no-autoupdate --url "http://127.0.0.1:$PORT" >"$TUNLOG" 2>&1 &
+  CFPID=$!
+  URL=""
+  for i in $(seq 1 30); do
+    URL=$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$TUNLOG" | head -n1)
+    [ -n "$URL" ] && break
+    sleep 2
+  done
+  if [ -n "$URL" ]; then publish_url "$URL"; else echo "no tunnel url"; fi
+  # wait until cloudflared exits, then loop to get a fresh url
+  wait $CFPID
+  echo "tunnel died $(date), restarting in 5s"
+  sleep 5
+done
+RUNEOF
+chmod +x "$RUN"
+
+# boot entry (runs at device boot via Termux:Boot)
+cat > "$BOOT_DIR/10-camsrv.sh" <<BOOTEOF
+#!/data/data/com.termux/files/usr/bin/bash
+sleep 10
+bash "$HOME/cam/run.sh"
+BOOTEOF
+chmod +x "$BOOT_DIR/10-camsrv.sh"
+echo "   runner + boot entry written."
+
+# ---------- 6) start now ----------
+echo ">> [6/6] Starting now..."
+pkill -f "cloudflared tunnel" 2>/dev/null || true
+pkill -f camsrv.py 2>/dev/null || true
+nohup bash "$RUN" >/dev/null 2>&1 &
+echo
+echo "==================================================="
+echo "   Done. The bridge is starting."
+echo "   In ~30s the tunnel URL is written to Firebase at:"
+echo "      data/cameraBridge"
+echo "   Watch log:   tail -f ~/cam/run.log"
+echo "==================================================="
