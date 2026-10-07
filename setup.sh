@@ -253,10 +253,10 @@ python "$CAM_DIR/camsrv.py" &
 sleep 3
 
 get_token() {
-  python - <<PY
-import json,urllib.request
-d=json.dumps({"email":"$FB_EMAIL","password":"$FB_PASS","returnSecureToken":True}).encode()
-u="https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$FB_APIKEY"
+  FB_EMAIL="$FB_EMAIL" FB_PASS="$FB_PASS" FB_APIKEY="$FB_APIKEY" python - <<'PY'
+import os,json,urllib.request
+d=json.dumps({"email":os.environ["FB_EMAIL"],"password":os.environ["FB_PASS"],"returnSecureToken":True}).encode()
+u="https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key="+os.environ["FB_APIKEY"]
 try:
   r=urllib.request.urlopen(urllib.request.Request(u,d,{"Content-Type":"application/json"}),timeout=20)
   print(json.load(r)["idToken"])
@@ -269,11 +269,11 @@ publish_url() {
   local URL="$1"
   local TOK; TOK=$(get_token)
   [ -z "$TOK" ] && { echo "no firebase token"; return; }
-  python - "$URL" "$TOK" <<PY
-import sys,json,urllib.request
+  FB_URL="$FB_URL" CAM_CODE="$CAM_CODE" python - "$URL" "$TOK" <<'PY'
+import os,sys,json,time,urllib.request
 url,tok=sys.argv[1],sys.argv[2]
-body=json.dumps({"url":url,"code":"$CAM_CODE","ts":__import__("time").time()}).encode()
-u="$FB_URL/data/cameraBridge.json?auth="+tok
+body=json.dumps({"url":url,"code":os.environ["CAM_CODE"],"ts":time.time()}).encode()
+u=os.environ["FB_URL"]+"/data/cameraBridge.json?auth="+tok
 try:
   req=urllib.request.Request(u,body,{"Content-Type":"application/json"},method="PUT")
   urllib.request.urlopen(req,timeout=20); print("published:",url)
