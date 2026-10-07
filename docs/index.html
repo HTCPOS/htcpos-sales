@@ -1554,6 +1554,22 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="commissionModal" onclick="if(event.target===this)closeModal('commissionModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('commissionModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>عمولة الفني</h3>
+    <div id="commBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="commSettingsModal" onclick="if(event.target===this)closeModal('commSettingsModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('commSettingsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>إعدادات العمولة</h3>
+    <div id="commSetBody"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="itemSalesModal" onclick="if(event.target===this)closeModal('itemSalesModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('itemSalesModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1701,6 +1717,10 @@ setTimeout(() => window.hideSplash(), 4000);
       <button onclick="closeModal('mainMenuModal');openUserAccountInfo();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);">حساب المستخدم</span>
+      </button>
+      <button onclick="closeModal('mainMenuModal');openCommission();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);">عمولة الفني</span>
       </button>
       <button onclick="closeModal('mainMenuModal');openAttendanceLog();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg>
@@ -1970,6 +1990,13 @@ setTimeout(() => window.hideSplash(), 4000);
       <video id="receiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
       <div id="receiptOcrGuide" style="position:absolute;top:38%;left:20%;right:20%;height:16%;border:3px solid #22C55E;border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none;"></div>
       <div style="position:absolute;top:calc(38% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">ضع رقم الإيصال داخل الإطار الأخضر فقط</div>
+    </div>
+    <div id="commCamBar" style="display:none;margin:-4px 0 10px;">
+      <div id="commCamFlash" style="opacity:0;transition:opacity .25s;color:#fff;font-weight:800;font-size:14px;text-align:center;border-radius:12px;padding:8px;margin-bottom:8px;direction:rtl;">.</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;min-width:0;"><div id="commCamCount" style="font-size:15px;font-weight:800;color:#16A34A;text-align:center;"></div><div id="commCamStatus" style="font-size:12px;color:var(--textMuted);text-align:center;min-height:16px;"></div></div>
+        <button type="button" onclick="closeReceiptOcrCamera()" style="height:44px;padding:0 18px;border:none;border-radius:12px;background:#16A34A;color:#fff;font-size:14.5px;font-weight:800;cursor:pointer;">✓ خلّصت</button>
+      </div>
     </div>
     <div id="receiptOcrStatus" style="font-size:13px;color:#2563EB;font-weight:700;text-align:center;margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> جاري البحث عن الرقم... حرّك الكاميرا قليلًا حتى يصبح واضحًا</div>
     <button onclick="closeReceiptOcrCamera();document.getElementById('receiptOcrFileInput').click()" style="width:100%;background:none;color:#2563EB;border:none;padding:8px;font-weight:700;font-size:13px;cursor:pointer;">اختيار صورة من المعرض بدلًا من الكاميرا</button>
@@ -4109,6 +4136,324 @@ function invHasReturn(inv) {
   return !!inv.hasReturn;
 }
 
+/* =====================================================================
+   عمولة الفني (4.5.0)
+   - شهر + فني + عمولة لكل قطعة (محفوظة مع الشهر نفسه - تغييرها بعدين ما يأثرش على الشهور القديمة)
+   - تصوير متواصل: الإيصال السليم (صنف واحد) يتحسب ويكمل لحاله، وأي حاجة تانية الكاميرا توقف وتعرض
+   - فحوصات: شهر تاني / مكرر في نفس الشهر / محسوب في شهر تاني / مرتجع كامل أو جزئي / أكثر من صنف
+   - تخزين: data/commission/settings ، data/commission/sessions/{tech_YYYY-MM} ، data/commission/index/{رقم}
+   ===================================================================== */
+let commSettings = { techs: {}, defaultRate: 20, exclude: '' };
+let commSession = null, commSid = null, commTechId = '', commMonth = '';
+const commMonthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+const commDigits = n => String(n || '').replace(/[^0-9]/g, '');
+const commMonthLabel = m => { if (!m) return ''; const [y, mo] = m.split('-').map(Number); return commMonthNames[mo - 1] + ' ' + y; };
+const commMonthOf = d => { const x = new Date(d); return isNaN(x.getTime()) ? '' : x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'); };
+function commExcluded(name) {
+  const words = String(commSettings.exclude || '').split(/[,،\n]/).map(w => normalizeArabicName(w).toLowerCase().trim()).filter(Boolean);
+  const n = normalizeArabicName(String(name || '')).toLowerCase();
+  return words.some(w => n.includes(w));
+}
+
+async function openCommission() {
+  try { const sn = await db.ref('data/commission/settings').once('value'); commSettings = Object.assign({ techs: {}, defaultRate: 20, exclude: '' }, sn.val() || {}); } catch (e) {}
+  if (!commTechId || !commSettings.techs[commTechId]) commTechId = Object.keys(commSettings.techs)[0] || '';
+  if (!commMonth) commMonth = commMonthOf(Date.now());
+  openModal('commissionModal');
+  await commLoadSession();
+}
+async function commLoadSession() {
+  const el = document.getElementById('commBody');
+  if (!commTechId) { commSession = null; commSid = null; renderCommission(); return; }
+  el.innerHTML = skeletonHtml(4);
+  commSid = commTechId + '_' + commMonth;
+  let v = null;
+  try { v = (await db.ref('data/commission/sessions/' + commSid).once('value')).val(); } catch (e) {}
+  const t = commSettings.techs[commTechId] || {};
+  commSession = v || { techId: commTechId, techName: t.name || '', month: commMonth, rate: Number(t.rate || commSettings.defaultRate || 20), lines: {}, paid: false };
+  if (!commSession.lines) commSession.lines = {};
+  renderCommission();
+}
+function commTotals() {
+  const lines = Object.values((commSession && commSession.lines) || {});
+  let pieces = 0, amount = 0, ret = 0;
+  lines.forEach(l => (l.items || []).forEach(it => { if (it.counted) { pieces += Number(it.qty || 0); amount += Number(it.qty || 0) * Number(it.rate || 0); } ret += Number(it.retQty || 0); }));
+  return { receipts: lines.length, pieces, amount: r3(amount), ret };
+}
+async function commSave() {
+  if (!commSession || !commSid) return;
+  await db.ref('data/commission/sessions/' + commSid).set(commSession);
+}
+
+function renderCommission() {
+  const el = document.getElementById('commBody'); if (!el) return;
+  const techs = Object.entries(commSettings.techs || {});
+  if (!techs.length) {
+    el.innerHTML = `<div class="emptyMsg">أضف الفني أولًا من الإعدادات</div>
+      <button type="button" onclick="openCommSettings()" style="width:100%;height:50px;border:none;border-radius:16px;background:#16A34A;color:#fff;font-size:15px;font-weight:800;cursor:pointer;">إعدادات العمولة</button>`;
+    return;
+  }
+  const s = commSession, T = commTotals(), locked = !!(s && s.paid);
+  const sel = `<select onchange="commTechId=this.value;commLoadSession()" style="flex:1;min-width:0;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:14.5px;font-weight:700;padding:0 8px;">${techs.map(([id, t]) => `<option value="${id}" ${id === commTechId ? 'selected' : ''}>${escapeHtml(t.name || '')}</option>`).join('')}</select>`;
+  const card = (l, v, c) => `<div style="flex:1;min-width:0;background:var(--surface);border-radius:14px;padding:10px 4px;text-align:center;"><div style="font-size:11.5px;color:var(--textMuted);font-weight:600;">${l}</div><div style="font-size:16px;font-weight:800;margin-top:3px;color:${c || 'var(--text)'};">${v}</div></div>`;
+  let h = `<div style="display:flex;gap:8px;align-items:center;">${sel}
+      <input type="month" value="${commMonth}" lang="en" onchange="if(this.value){commMonth=this.value;commLoadSession();}" style="width:150px;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:14px;padding:0 6px;">
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 4px;">
+      <span style="font-size:13.5px;font-weight:700;">${escapeHtml(s.techName)} · ${commMonthLabel(commMonth)} · <span style="color:#16A34A;">${fmtMoney(s.rate)} د.ل/قطعة</span></span>
+      ${locked ? '<span style="font-size:12px;font-weight:800;color:#16A34A;">🔒 تم الدفع</span>' : `<button type="button" onclick="commChangeRate()" style="border:none;background:none;color:#2563EB;font-size:13px;font-weight:800;cursor:pointer;">تغيير</button>`}
+    </div>
+    <div style="display:flex;gap:6px;">${card('الإيصالات', T.receipts)}${card('القطع', T.pieces)}${card('مرتجع', T.ret, T.ret ? '#DC2626' : '')}${card('المستحق', fmtMoney(T.amount), '#16A34A')}</div>`;
+  if (!locked) h += `
+    <button type="button" onclick="commStartCamera()" style="width:100%;margin-top:12px;height:56px;border:none;border-radius:18px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16.5px;font-weight:800;cursor:pointer;box-shadow:0 12px 24px -12px rgba(21,128,61,.55);">📷 تصوير الإيصالات (متواصل)</button>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <input id="commNumInput" type="text" placeholder="أو اكتب رقم الإيصال: P2832" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();commAddManual();}" style="flex:1;min-width:0;height:46px;border:1.5px solid var(--border);border-radius:13px;padding:0 12px;background:var(--surface);color:var(--text);font-size:15px;">
+      <button type="button" onclick="commAddManual()" style="height:46px;padding:0 16px;border:none;border-radius:13px;background:var(--surface2);color:var(--text);font-size:14px;font-weight:800;cursor:pointer;">إضافة</button>
+    </div>`;
+  const lines = Object.entries(s.lines || {}).sort((a, b) => String(b[1].addedAt || '').localeCompare(String(a[1].addedAt || '')));
+  h += `<div style="margin-top:14px;">` + (lines.length ? lines.map(([k, l]) => {
+    const counted = (l.items || []).filter(it => it.counted), pcs = counted.reduce((a, it) => a + Number(it.qty || 0), 0), amt = counted.reduce((a, it) => a + Number(it.qty || 0) * Number(it.rate || 0), 0);
+    const chips = [];
+    if (l.otherMonth) chips.push(`<span style="background:#FEF3C7;color:#92400E;border-radius:7px;padding:1px 7px;">من ${commMonthLabel(l.otherMonth)}</span>`);
+    if ((l.items || []).some(it => it.retQty)) chips.push(`<span style="background:#FEE2E2;color:#991B1B;border-radius:7px;padding:1px 7px;">مرتجع جزئي</span>`);
+    return `<div class="searchResultRow" style="display:block;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span style="font-weight:800;direction:ltr;">${escapeHtml(l.number || ('P' + k))}</span>
+          <span style="display:flex;align-items:center;gap:10px;"><b style="color:#16A34A;direction:ltr;">${fmtMoney(amt)}</b>${locked ? '' : `<button type="button" onclick="commRemove('${k}')" aria-label="حذف" style="border:none;background:var(--surface2);color:#DC2626;width:30px;height:30px;border-radius:9px;font-size:15px;cursor:pointer;">✕</button>`}</span>
+        </div>
+        <div style="font-size:12px;color:var(--textMuted);margin-top:3px;">${l.date ? new Date(l.date).toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''} · ${pcs} ${pcs === 1 ? 'قطعة' : 'قطع'}</div>
+        <div style="font-size:12px;margin-top:4px;line-height:1.7;">${(l.items || []).map(it => `<span style="${it.counted ? '' : 'text-decoration:line-through;color:var(--textMuted);'}">${escapeHtml(it.name)} × ${fmtQty(it.qty)}${it.counted && Number(it.rate) !== Number(s.rate) ? ' (' + fmtMoney(it.rate) + ')' : ''}</span>`).join(' · ')}</div>
+        ${chips.length ? `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;font-size:11px;font-weight:700;">${chips.join('')}</div>` : ''}
+      </div>`;
+  }).join('') : '<div class="emptyMsg">ما في إيصالات بعد - ابدأ التصوير</div>') + `</div>`;
+  h += `<div style="display:flex;gap:8px;margin-top:12px;">
+      ${lines.length ? `<button type="button" id="commPdfBtn" onclick="commPdf()" style="flex:1;height:48px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:14px;font-weight:800;cursor:pointer;">📄 كشف PDF</button>` : ''}
+      ${locked ? `<button type="button" onclick="commUnlock()" style="flex:1;height:48px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:#DC2626;font-size:14px;font-weight:800;cursor:pointer;">إلغاء القفل</button>`
+             : (lines.length ? `<button type="button" onclick="commMarkPaid()" style="flex:1;height:48px;border:none;border-radius:14px;background:#16A34A;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">🔒 تم الدفع</button>` : '')}
+    </div>
+    <button type="button" onclick="openCommSettings()" style="display:block;margin:14px auto 0;border:none;background:none;color:#16A34A;font-size:13.5px;font-weight:800;cursor:pointer;">إعدادات العمولة (الفنيين، المبلغ، الأصناف المستثناة)</button>`;
+  el.innerHTML = h;
+}
+
+async function commChangeRate() {
+  if (!commSession || commSession.paid) return;
+  const v = await uiPrompt('العمولة لكل قطعة لشهر ' + commMonthLabel(commMonth) + ' (د.ل):', String(commSession.rate), { numeric: true });
+  if (v === null || v === false) return;
+  const n = r3(String(v).replace(',', '.'));
+  if (!(n >= 0)) return;
+  const old = Number(commSession.rate);
+  Object.values(commSession.lines || {}).forEach(l => (l.items || []).forEach(it => { if (Number(it.rate) === old) it.rate = n; }));
+  commSession.rate = n;
+  await commSave(); renderCommission();
+}
+async function commRemove(k) {
+  if (!commSession || commSession.paid) return;
+  const l = commSession.lines[k]; if (!l) return;
+  if (!(await uiConfirm('شيل الإيصال ' + (l.number || k) + ' من حسبة ' + commMonthLabel(commMonth) + '؟', { kind: 'danger', okText: 'شيل' }))) return;
+  delete commSession.lines[k];
+  await commSave();
+  try { await db.ref('data/commission/index/' + k).remove(); } catch (e) {}
+  renderCommission();
+}
+async function commMarkPaid() {
+  const T = commTotals();
+  if (!(await uiConfirm('تم دفع عمولة ' + commSession.techName + ' عن ' + commMonthLabel(commMonth) + '؟\n' + T.pieces + ' قطعة = ' + fmtMoney(T.amount) + ' د.ل\n\nالشهر يتقفل وما يتعدل بالغلط.', { okText: 'تم الدفع' }))) return;
+  commSession.paid = true; commSession.paidAt = new Date().toISOString(); commSession.paidAmount = T.amount;
+  await commSave();
+  logActivity('دفع عمولة فني', commSession.techName + ' - ' + commMonthLabel(commMonth) + ' - ' + T.pieces + ' قطعة = ' + fmtMoney(T.amount) + ' د.ل');
+  renderCommission();
+}
+async function commUnlock() {
+  if (!(await uiConfirm('إلغاء قفل شهر ' + commMonthLabel(commMonth) + '؟', { kind: 'danger', okText: 'إلغاء القفل' }))) return;
+  commSession.paid = false; delete commSession.paidAt;
+  await commSave(); logActivity('إلغاء قفل عمولة', commSession.techName + ' - ' + commMonthLabel(commMonth)); renderCommission();
+}
+
+// ===== إضافة إيصال (يدوي أو من الكاميرا) - بترجع true لو الكاميرا تكمل =====
+function commAddManual() {
+  const inp = document.getElementById('commNumInput');
+  const d = commDigits(inp && inp.value);
+  if (!d) { uiAlert('اكتب رقم الإيصال'); return; }
+  inp.value = ''; inp.blur();
+  commProcess('P' + d, false);
+}
+async function commProcess(num, fromCamera) {
+  if (!commSession || commSession.paid) { if (commSession && commSession.paid) await uiAlert('الشهر مقفل (تم الدفع)'); return false; }
+  const k = commDigits(num);
+  const beepBad = () => { try { playTonePreset('double', 100); } catch (e) {} try { navigator.vibrate && navigator.vibrate([60, 60, 60]); } catch (e) {} };
+  const flash = (txt, ok) => { const f = document.getElementById('commCamFlash'); if (f) { f.textContent = txt; f.style.background = ok ? 'rgba(22,163,74,.92)' : 'rgba(220,38,38,.92)'; f.style.opacity = '1'; clearTimeout(window.__commFlashT); window.__commFlashT = setTimeout(() => { f.style.opacity = '0'; }, 1600); } };
+  if (commSession.lines[k]) { if (!fromCamera) await uiAlert('الإيصال ' + num + ' مضاف قبل في هذا الشهر'); else { beepBad(); await uiAlert('🔴 الإيصال ' + num + ' مضاف قبل - ما ينحسب مرتين'); } return true; }
+  let idx = null;
+  try { idx = (await db.ref('data/commission/index/' + k).once('value')).val(); } catch (e) {}
+  if (idx && idx.sid !== commSid) { beepBad(); await uiAlert('🔴 الإيصال ' + num + ' محسوب قبل في عمولة ' + (idx.techName || '') + ' - ' + commMonthLabel(idx.month) + '\nما ينحسب مرتين.'); return true; }
+  const st = document.getElementById('commCamStatus'); if (st) st.textContent = 'جاري جلب ' + num + '...';
+  const found = await findInvoiceByNumber(num).catch(() => ({ inv: null }));
+  if (st) st.textContent = '';
+  const inv = found && found.inv;
+  if (!inv) { beepBad(); await uiAlert('ما لقيت الإيصال ' + num + (found && found.source === 'offline' ? '\n(مش في الأرشيف والكاشير غير متصل)' : '')); return true; }
+  // الأصناف + المرتجع
+  const retList = invReturnedList(inv) || [];
+  const retLeft = {};
+  retList.forEach(r => { const n = normalizeArabicName(String(r.name || '')).toLowerCase(); retLeft[n] = (retLeft[n] || 0) + Number(r.qty || 0); });
+  const items = (Array.isArray(inv.items) ? inv.items : Object.values(inv.items || {})).filter(Boolean).map(it => {
+    const n = normalizeArabicName(String(it.name || '')).toLowerCase();
+    const q = Number(it.qty || 1), r = Math.min(retLeft[n] || 0, q);
+    if (r) retLeft[n] -= r;
+    return { name: String(it.name || ''), qty: q - r, retQty: r, price: Number(it.price || 0), rate: Number(commSession.rate), counted: (q - r) > 0 && !commExcluded(it.name) };
+  });
+  const anyRet = items.some(it => it.retQty), allRet = items.length && items.every(it => it.qty <= 0);
+  if (allRet || (invHasReturn(inv) && !retList.length && items.length === 1)) {
+    beepBad(); await uiAlert('🔴 الإيصال ' + num + ' مرتجع' + (allRet ? ' بالكامل' : '') + ' - ما ينحسب'); return true;
+  }
+  // الشهر
+  const m = commMonthOf(inv.date);
+  let otherMonth = null;
+  if (m && m !== commMonth) {
+    beepBad();
+    const c = await uiChoose('🟠 الإيصال من شهر تاني', num + ' بتاريخ ' + commMonthLabel(m) + '، وأنت بتحسب ' + commMonthLabel(commMonth) + '.', [
+      { label: 'تجاهل وكمّل', value: 'skip', color: '#64748B' }, { label: 'احسبه رغم ذلك', value: 'count', color: '#D97706' }]);
+    if (c !== 'count') return true;
+    otherMonth = m;
+  }
+  // أكثر من صنف أو مرتجع جزئي أو صنف مستثنى -> نعرض للاختيار
+  const needReview = items.length > 1 || anyRet || items.some(it => !it.counted && it.qty > 0);
+  let finalItems = items;
+  if (needReview) {
+    if (fromCamera) { try { playTonePreset('classic', 70); } catch (e) {} }
+    finalItems = await commReviewItems(num, inv, items, !!otherMonth || anyRet);
+    if (!finalItems) return true;
+  }
+  const pcs = finalItems.filter(it => it.counted).reduce((a, it) => a + Number(it.qty || 0), 0);
+  if (!pcs) { if (!fromCamera) await uiAlert('ما في قطع محسوبة في هذا الإيصال'); return true; }
+  const line = { number: String(inv.number || num), date: inv.date || '', items: finalItems, addedAt: new Date().toISOString() };
+  if (otherMonth) line.otherMonth = otherMonth;
+  commSession.lines[k] = line;
+  await commSave();
+  try { await db.ref('data/commission/index/' + k).set({ sid: commSid, month: commMonth, techName: commSession.techName }); } catch (e) {}
+  const amt = finalItems.filter(it => it.counted).reduce((a, it) => a + Number(it.qty || 0) * Number(it.rate || 0), 0);
+  if (fromCamera) { try { playFeedback('invoice'); } catch (e) {} flash((inv.number || num) + ' ✓ ' + pcs + (pcs === 1 ? ' قطعة' : ' قطع') + ' · +' + fmtMoney(amt), true); commUpdateCamBar(); }
+  renderCommission();
+  return true;
+}
+
+// نافذة اختيار الأصناف (فاتورة فيها أكثر من صنف / مرتجع جزئي / صنف مستثنى)
+function commReviewItems(num, inv, items, note) {
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.className = 'uiDlgBg';
+    const rows = items.map((it, i) => `<label style="display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--border2);${it.qty <= 0 ? 'opacity:.5;' : ''}">
+        <input type="checkbox" data-i="${i}" ${it.counted ? 'checked' : ''} ${it.qty <= 0 ? 'disabled' : ''} style="width:22px;height:22px;accent-color:#16A34A;flex-shrink:0;">
+        <span style="flex:1;min-width:0;font-size:13.5px;font-weight:700;text-align:right;">${escapeHtml(it.name)} × ${fmtQty(it.qty)}${it.retQty ? `<span style="display:block;font-size:11px;color:#DC2626;">مرتجع ${fmtQty(it.retQty)}</span>` : ''}${commExcluded(it.name) ? '<span style="display:block;font-size:11px;color:var(--textMuted);">مستثنى</span>' : ''}</span>
+        <input type="text" inputmode="decimal" lang="en" data-r="${i}" value="${it.rate}" ${it.qty <= 0 ? 'disabled' : ''} style="width:58px;height:36px;text-align:center;border:1.5px solid var(--border);border-radius:9px;background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;">
+      </label>`).join('');
+    wrap.innerHTML = `<div class="uiDlg" role="dialog" aria-modal="true" style="text-align:right;">
+        <div class="uiDlgT" style="text-align:center;">📋 ${escapeHtml(String(inv.number || num))}</div>
+        <div class="uiDlgM" style="text-align:center;">${inv.date ? new Date(inv.date).toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''} · ${items.length} ${items.length === 1 ? 'صنف' : 'أصناف'}<br><span style="font-size:12px;">اختار الأصناف اللي تنحسب للفني (والمبلغ لكل قطعة على اليسار)</span></div>
+        <div style="max-height:46vh;overflow:auto;margin:6px 0 10px;">${rows}</div>
+        <div id="commRevSum" style="text-align:center;font-weight:800;font-size:15px;margin-bottom:10px;"></div>
+        <div class="uiDlgBtns"><button type="button" class="uiDlgB" data-a="ok" style="background:#16A34A;color:#fff;">✓ تأكيد وكمّل</button><button type="button" class="uiDlgB" data-a="skip" style="background:var(--surface2);color:var(--text);">تجاهل الفاتورة</button></div>
+      </div>`;
+    document.body.appendChild(wrap);
+    const read = () => items.map((it, i) => Object.assign({}, it, {
+      counted: !!(wrap.querySelector(`[data-i="${i}"]`) || {}).checked && it.qty > 0,
+      rate: r3(String((wrap.querySelector(`[data-r="${i}"]`) || {}).value || it.rate).replace(',', '.')) || 0 }));
+    const sum = () => { const x = read().filter(i => i.counted); const p = x.reduce((a, i) => a + i.qty, 0), a2 = x.reduce((a, i) => a + i.qty * i.rate, 0); wrap.querySelector('#commRevSum').textContent = 'المحسوب: ' + p + (p === 1 ? ' قطعة' : ' قطع') + ' = ' + fmtMoney(a2) + ' د.ل'; };
+    wrap.addEventListener('input', sum); wrap.addEventListener('change', sum); sum();
+    requestAnimationFrame(() => wrap.classList.add('show'));
+    const done = v => { wrap.classList.remove('show'); setTimeout(() => wrap.remove(), 250); resolve(v); };
+    wrap.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; done(b.dataset.a === 'ok' ? read() : null); });
+  });
+}
+
+// ===== الكاميرا المتواصلة =====
+function commStartCamera() {
+  if (!commSession || commSession.paid) return;
+  window.__receiptOcrTarget = 'commission';
+  window.__commLast = { num: '', at: 0 };
+  document.getElementById('commCamBar').style.display = 'block';
+  commUpdateCamBar();
+  openReceiptOcrCamera();
+}
+function commUpdateCamBar() {
+  const b = document.getElementById('commCamCount'); if (!b) return;
+  const T = commTotals();
+  b.textContent = T.receipts + ' إيصال · ' + T.pieces + (T.pieces === 1 ? ' قطعة' : ' قطع') + ' · ' + fmtMoney(T.amount) + ' د.ل';
+}
+async function commOnCameraNumber(num) {
+  const now = Date.now();
+  // نفس الإيصال لسه قدام الكاميرا: نتجاهله بهدوء
+  if (window.__commLast && window.__commLast.num === num && now - window.__commLast.at < 6000) { window.__commLast.at = now; return true; }
+  window.__commLast = { num, at: now };
+  const r = await commProcess(num, true);
+  window.__commLast.at = Date.now();
+  return r;
+}
+
+// ===== الإعدادات =====
+function openCommSettings() {
+  const techs = Object.entries(commSettings.techs || {});
+  document.getElementById('commSetBody').innerHTML = `
+    <div class="setSec">الفنيين</div>
+    <div id="commTechList">${techs.map(([id, t]) => commTechRow(id, t)).join('')}</div>
+    <button type="button" onclick="commAddTechRow()" style="width:100%;height:44px;border:1.5px dashed var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:14px;font-weight:800;cursor:pointer;">+ إضافة فني</button>
+    <div class="setSec">العمولة الافتراضية لكل قطعة (د.ل)</div>
+    <input id="commDefRate" type="text" inputmode="decimal" lang="en" value="${commSettings.defaultRate || 20}" style="width:100%;height:46px;border:1.5px solid var(--border);border-radius:13px;padding:0 12px;background:var(--surface);color:var(--text);font-size:16px;font-weight:700;box-sizing:border-box;">
+    <div class="setSec">أصناف ما تنحسب للفني</div>
+    <textarea id="commExclude" rows="3" placeholder="مثال: كفر، شاحن، لاصقة، سماعة" style="width:100%;border:1.5px solid var(--border);border-radius:13px;padding:10px 12px;background:var(--surface);color:var(--text);font-size:14.5px;box-sizing:border-box;">${escapeHtml(commSettings.exclude || '')}</textarea>
+    <div style="font-size:12px;color:var(--textMuted);margin:6px 4px 0;">أي صنف فيه كلمة من هذي الكلمات يجي بدون علامة (تقدر تعلّمه يدويًا)</div>
+    <button type="button" onclick="commSaveSettings()" style="width:100%;margin-top:14px;height:52px;border:none;border-radius:16px;background:#16A34A;color:#fff;font-size:16px;font-weight:800;cursor:pointer;">حفظ</button>`;
+  openModal('commSettingsModal');
+}
+function commTechRow(id, t) {
+  return `<div class="commTechRow" data-id="${id}" style="display:flex;gap:8px;align-items:center;background:var(--surface);border-radius:14px;padding:8px;margin-bottom:8px;">
+      <input type="text" class="ctName" value="${escapeHtml((t && t.name) || '')}" placeholder="اسم الفني" style="flex:1;min-width:0;height:42px;border:1.5px solid var(--border);border-radius:11px;padding:0 10px;background:var(--surface2);color:var(--text);font-size:14.5px;">
+      <input type="text" class="ctRate" inputmode="decimal" lang="en" value="${(t && t.rate) || ''}" placeholder="العمولة" style="width:80px;height:42px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14.5px;">
+      <button type="button" onclick="this.parentNode.remove()" style="border:none;background:none;color:#DC2626;font-size:18px;cursor:pointer;">✕</button></div>`;
+}
+function commAddTechRow() { document.getElementById('commTechList').insertAdjacentHTML('beforeend', commTechRow('t' + Date.now(), { name: '', rate: '' })); }
+async function commSaveSettings() {
+  const techs = {};
+  document.querySelectorAll('#commTechList .commTechRow').forEach(r => {
+    const name = r.querySelector('.ctName').value.trim(); if (!name) return;
+    techs[r.dataset.id] = { name, rate: r3(String(r.querySelector('.ctRate').value || '').replace(',', '.')) || 0 };
+  });
+  const defRate = r3(String(document.getElementById('commDefRate').value || '20').replace(',', '.')) || 20;
+  Object.values(techs).forEach(t => { if (!t.rate) t.rate = defRate; });
+  commSettings = { techs, defaultRate: defRate, exclude: document.getElementById('commExclude').value.trim() };
+  try { await db.ref('data/commission/settings').set(commSettings); } catch (e) { uiAlert('تعذّر الحفظ'); return; }
+  closeModal('commSettingsModal');
+  if (!commSettings.techs[commTechId]) commTechId = Object.keys(techs)[0] || '';
+  showQuickToast('تم حفظ إعدادات العمولة', true);
+  commLoadSession();
+}
+
+// ===== كشف PDF =====
+let commPdfFile = null;
+function commPdfHtml() {
+  const s = commSession, T = commTotals();
+  const lines = Object.values(s.lines || {}).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  return `<div style="font-family:inherit;color:#0F172A;">
+    <h2 style="margin:0 0 4px;">كشف عمولة الفني</h2>
+    <div style="font-size:15px;margin-bottom:12px;">${escapeHtml(s.techName)} · ${commMonthLabel(s.month)} · ${fmtMoney(s.rate)} د.ل للقطعة${s.paid ? ' · 🔒 تم الدفع' : ''}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tr style="background:#F1F5F9;"><th style="padding:6px;border:1px solid #E2E8F0;">الإيصال</th><th style="padding:6px;border:1px solid #E2E8F0;">التاريخ</th><th style="padding:6px;border:1px solid #E2E8F0;">الأصناف المحسوبة</th><th style="padding:6px;border:1px solid #E2E8F0;">القطع</th><th style="padding:6px;border:1px solid #E2E8F0;">المبلغ</th></tr>
+      ${lines.map(l => { const c = (l.items || []).filter(i => i.counted); const p = c.reduce((a, i) => a + i.qty, 0), a2 = c.reduce((a, i) => a + i.qty * i.rate, 0);
+        return `<tr><td style="padding:6px;border:1px solid #E2E8F0;direction:ltr;text-align:center;">${escapeHtml(l.number)}</td><td style="padding:6px;border:1px solid #E2E8F0;">${l.date ? new Date(l.date).toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</td><td style="padding:6px;border:1px solid #E2E8F0;">${c.map(i => escapeHtml(i.name) + ' × ' + fmtQty(i.qty)).join('، ')}</td><td style="padding:6px;border:1px solid #E2E8F0;text-align:center;">${p}</td><td style="padding:6px;border:1px solid #E2E8F0;text-align:center;">${fmtMoney(a2)}</td></tr>`; }).join('')}
+      <tr style="background:#ECFDF3;font-weight:800;"><td colspan="3" style="padding:8px;border:1px solid #E2E8F0;">الإجمالي (${T.receipts} إيصال)</td><td style="padding:8px;border:1px solid #E2E8F0;text-align:center;">${T.pieces}</td><td style="padding:8px;border:1px solid #E2E8F0;text-align:center;">${fmtMoney(T.amount)} د.ل</td></tr>
+    </table></div>`;
+}
+function commPdf() {
+  const btn = document.getElementById('commPdfBtn');
+  const title = 'عمولة ' + commSession.techName + ' - ' + commMonthLabel(commSession.month);
+  const libErr = pdfLibsError(); if (libErr) { uiAlert(libErr); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'جاري التجهيز...'; }
+  buildPdfFileFromHtml(commPdfHtml(), title).then(res => {
+    if (btn) { btn.disabled = false; btn.textContent = '📄 كشف PDF'; }
+    if (navigator.canShare && navigator.canShare({ files: [res.file] })) navigator.share({ files: [res.file], title }).catch(() => {});
+    else if (res.pdf && typeof res.pdf.save === 'function') res.pdf.save(res.file.name);
+  }).catch(err => { if (btn) { btn.disabled = false; btn.textContent = '📄 كشف PDF'; } uiAlert('تعذّر تجهيز الـ PDF: ' + (err && err.message ? err.message : err)); });
+}
+
 /* ================= مبيعات صنف: اكتب اسم الصنف -> كل فواتير بيعه =================
    من أرشيف التطبيق (آخر 3 شهور) - يشتغل حتى والكاشير مطفي. المطابقة بالاسم (اختيار من الاقتراحات = مطابقة تامة،
    كتابة حرة = يحتوي على). المرتجعات تطلع بالأحمر وتنخصم من الصافي. */
@@ -5385,6 +5730,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'عمولة الفني', kw: 'عمولة فني صيانة نسبة الفني حساب الفني قطع تركيب', run: "openCommission()" },
   { name: 'مبيعات صنف (كل فواتير الصنف)', kw: 'مبيعات صنف فواتير الصنف كم بعت بيع منتج حركة الصنف', run: "openItemSales()" },
   { name: 'ربط الكاميرات عن بعد (Tailscale)', kw: 'كاميرا عن بعد tailscale تيلسكيل vpn برا المحل من البيت', run: "openTailscaleSetup()" },
   { name: 'إعدادات الكاميرا', kw: 'كاميرا كاميرات مراقبة هيك hik connect تسجيل', run: "openCamSettings()" },
@@ -5601,9 +5947,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.4.3';
+const APP_VERSION = '4.5.0';
 const APP_BUILD_DATE = '2026-10-01';
 const APP_RELEASES = [
+  { v: '4.5.0', date: '2026-10-07', items: [
+    'عمولة الفني: شهر + فني + عمولة لكل قطعة، وتصوير متواصل للإيصالات (السليم يتحسب ويكمل لحاله)',
+    'فحوصات تلقائية: إيصال من شهر تاني، مكرر، محسوب في شهر تاني، مرتجع كامل أو جزئي، وفاتورة فيها أكثر من صنف تنعرض للاختيار',
+    'العمولة تتغير (عامة، لكل فني، لكل صنف) ومحفوظة مع كل شهر، و"تم الدفع" يقفل الشهر، وكشف PDF',
+    'أصناف مستثناة (مثل كفر، شاحن) ما تنحسب للفني تلقائيًا'
+  ] },
   { v: '4.4.3', date: '2026-10-06', items: [
     'إصلاح: كلمة "مرتجع" كانت تظهر على كل الفواتير بالغلط - صار التطبيق يتأكد من الأصناف المرتجعة فعلًا (ومعاه السكريبت 3.7.1)'
   ] },
@@ -6877,7 +7229,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة اللي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) زي أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -7526,6 +7878,7 @@ function openReceiptOcrCamera() {
 function closeReceiptOcrCamera() {
   receiptOcrScanning = false;
   window.__receiptOcrTarget = null;
+  const cb = document.getElementById('commCamBar'); if (cb) cb.style.display = 'none';
   if (receiptOcrScanTimer) { clearTimeout(receiptOcrScanTimer); receiptOcrScanTimer = null; }
   if (receiptOcrStream) {
     receiptOcrStream.getTracks().forEach(t => t.stop());
@@ -7595,6 +7948,14 @@ function attemptReceiptOcrScan() {
       const text = (result && result.text) || '';
       const matches = Array.from(text.matchAll(/P\s?-?\s?(\d{3,4})(?!\d)/gi));
       const best = matches.find(m => m[1].length === 4) || matches[0];
+      if (best && window.__receiptOcrTarget === 'commission') {
+        // عمولة الفني: الكاميرا تفضل مفتوحة - نوقف القراءة لحد ما الإيصال يخلص وبعدين نكمل
+        receiptOcrScanning = false;
+        commOnCameraNumber('P' + best[1]).then(cont => {
+          if (cont && receiptOcrStream && window.__receiptOcrTarget === 'commission') { receiptOcrScanning = true; scheduleReceiptOcrScan(); }
+        }).catch(() => { if (receiptOcrStream) { receiptOcrScanning = true; scheduleReceiptOcrScan(); } });
+        return;
+      }
       if (best) {
         receiptOcrScanning = false;
         playFeedback('invoice'); // قراءة ناجحة
