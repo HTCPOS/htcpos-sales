@@ -1084,6 +1084,17 @@ setTimeout(() => window.hideSplash(), 4000);
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:.9;flex-shrink:0;"><path d="m15 6-6 6 6 6"/></svg>
   </button>
 
+  <button type="button" id="camerasBtn" onclick="openCameraLive()" style="display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:0 16px 14px;padding:14px 16px;border:none;border-radius:16px;background:linear-gradient(135deg,#1D4ED8,#1E3A8A);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(29,78,216,.22);text-align:right;font-family:inherit;">
+    <span style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.18);flex-shrink:0;">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg>
+    </span>
+    <span style="flex:1;min-width:0;">
+      <span style="display:block;font-size:15.5px;font-weight:800;line-height:1.3;">الكاميرات</span>
+      <span style="display:block;font-size:11.5px;opacity:.85;font-weight:600;margin-top:2px;">شاهد أي وقت وتنقّل في التسجيل</span>
+    </span>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:.9;flex-shrink:0;"><path d="m15 6-6 6 6 6"/></svg>
+  </button>
+
   <div class="statsGrid">
     <div class="statCard" onclick="openModal('lowStockModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#DC2626"/></svg></div>
@@ -4733,60 +4744,103 @@ function camLocalStamp(d) {
   const p = n => String(n).padStart(2, '0');
   return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
 }
-let camLivePoll = null;
+// الحالة الحالية للمشاهدة: اللحظة + الكاميرا. أزرار القفز واختيار الوقت تعدّلها وتعيد التحميل.
+let camCurrent = null;
+function camLocalInput(d) { // صيغة datetime-local المحلية YYYY-MM-DDTHH:MM
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
 function closeCamLive() {
-  if (camLivePoll) { clearInterval(camLivePoll); camLivePoll = null; }
   const v = document.getElementById('camLiveVideo');
   if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} }
   closeModal('camLiveModal');
 }
-async function camOpenLive() {
+// فتح من الفاتورة: يحسب وقت الفاتورة (نفس VLC) ويبدأ المشاهدة
+function camOpenLive() {
   const st = camSettings();
   const base = new Date(camLastDate);
   if (isNaN(base.getTime())) { uiAlert('وقت الفاتورة غير معروف'); return; }
   const d = new Date(base.getTime() - st.preSec * 1000 + st.offsetSec * 1000);
-  const cam = Math.max(1, Number(st.cam) || 1);
+  camOpenLiveAt(d, st.cam);
+}
+// فتح مستقل (أيقونة الكاميرا في الرئيسية): يبدأ من آخر دقيقة
+function openCameraLive() {
+  const st = camSettings();
+  camOpenLiveAt(new Date(Date.now() - 60 * 1000), st.cam);
+}
+// نقطة الدخول الموحّدة: لحظة + كاميرا
+function camOpenLiveAt(dateObj, cam) {
+  const d = new Date(dateObj);
+  if (isNaN(d.getTime())) { uiAlert('الوقت غير صحيح'); return; }
+  camCurrent = { date: d, cam: Math.max(1, Number(cam) || 1) };
+  openModal('camLiveModal');
+  camRenderLive();
+}
+// القفز بالثواني (موجب للأمام، سالب للخلف) مع إعادة التحميل
+function camStep(sec) { if (camCurrent) camOpenLiveAt(new Date(camCurrent.date.getTime() + sec * 1000), camCurrent.cam); }
+function camPickCamLive(i) { if (camCurrent) camOpenLiveAt(camCurrent.date, i); }
+function camJumpTo(val) {
+  if (!val) return;
+  // datetime-local يرجع وقت محلي بدون منطقة؛ new Date(val) يفسّره محلي - وهو المطلوب
+  const d = new Date(val);
+  if (isNaN(d.getTime())) { uiAlert('اختر وقتًا صحيحًا'); return; }
+  camOpenLiveAt(d, camCurrent ? camCurrent.cam : camSettings().cam);
+}
+function camNavHtml(d, cam) {
+  const camCount = Math.max(1, Math.min(16, Number(camSettings().camCount) || 4));
+  let chips = '';
+  for (let i = 1; i <= camCount; i++) chips += `<button type="button" class="lsChip${cam === i ? ' on' : ''}" onclick="camPickCamLive(${i})">كاميرا ${i}</button>`;
+  const stepBtn = (label, sec, primary) => `<button type="button" onclick="camStep(${sec})" style="flex:1;min-width:0;height:42px;border:1.5px solid var(--border);border-radius:11px;background:${primary ? 'var(--surface2)' : 'var(--surface)'};color:var(--text);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;">${label}</button>`;
+  return `
+    <div class="lsChips" style="justify-content:center;margin:2px 0 10px;">${chips}</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      ${stepBtn('− ساعة', -3600)}${stepBtn('− 10د', -600)}${stepBtn('− دقيقة', -60)}
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      ${stepBtn('+ دقيقة', 60)}${stepBtn('+ 10د', 600)}${stepBtn('+ ساعة', 3600)}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:8px 12px;margin-bottom:10px;">
+      <span style="font-size:13px;font-weight:700;color:var(--textMuted);white-space:nowrap;">اذهب لوقت</span>
+      <input type="datetime-local" id="camJumpInput" value="${camLocalInput(d)}" onchange="camJumpTo(this.value)" style="flex:1;min-width:0;height:40px;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;padding:0 8px;">
+    </div>`;
+}
+async function camRenderLive() {
+  if (!camCurrent) return;
+  const d = camCurrent.date, cam = camCurrent.cam;
   const stamp = camLocalStamp(d);
   const body = document.getElementById('camLiveBody');
-  document.getElementById('camLiveTitle').textContent = 'كاميرا ' + cam + ' · ' + camPad(d.getHours()) + ':' + camPad(d.getMinutes());
-  body.innerHTML = '<div style="text-align:center;padding:30px 10px;color:var(--textMuted);font-weight:700;">جارٍ الاتصال بالكاميرا...</div>';
-  openModal('camLiveModal');
+  const dateTxt = CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()];
+  document.getElementById('camLiveTitle').textContent = dateTxt + ' · ' + camPad(d.getHours()) + ':' + camPad(d.getMinutes());
+  body.innerHTML = camNavHtml(d, cam) +
+    '<div id="camLiveVideoWrap"><div style="text-align:center;padding:30px 10px;color:var(--textMuted);font-weight:700;">جارٍ الاتصال بالكاميرا...</div></div>';
+  const wrap = document.getElementById('camLiveVideoWrap');
   try {
-    // 1) رابط الجسر من Firebase
     const snap = await db.ref('data/cameraBridge').once('value');
     const br = snap.val();
-    if (!br || !br.url || !br.code) {
-      body.innerHTML = camLiveError('الجسر غير متصل. تأكد أن مكينة الكاميرات شغّالة وعلى الإنترنت.');
-      return;
-    }
+    if (!br || !br.url || !br.code) { wrap.innerHTML = camLiveError('الجسر غير متصل. تأكد أن مكينة الكاميرات شغّالة وعلى الإنترنت.'); return; }
     const api = String(br.url).replace(/\/+$/, '');
-    // 2) اطلب دقيقة الفاتورة
     const r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp, { cache: 'no-store' });
-    if (!r.ok) { body.innerHTML = camLiveError('تعذّر طلب الفيديو (رمز ' + r.status + ').'); return; }
+    if (!r.ok) { wrap.innerHTML = camLiveError('تعذّر طلب الفيديو (رمز ' + r.status + ').'); return; }
     const j = await r.json();
     const hls = api + (j.hls || '/hls/index.m3u8');
-    // 3) شغّل الفيديو (iOS يشغّل HLS تلقائيًا)
-    body.innerHTML = `
-      <div style="background:#000;border-radius:16px;overflow:hidden;margin-top:6px;">
-        <video id="camLiveVideo" controls autoplay playsinline muted style="width:100%;max-height:60vh;display:block;background:#000;"></video>
+    wrap.innerHTML = `
+      <div style="background:#000;border-radius:16px;overflow:hidden;">
+        <video id="camLiveVideo" controls autoplay playsinline muted style="width:100%;max-height:52vh;display:block;background:#000;"></video>
       </div>
-      <div id="camLiveMsg" style="text-align:center;font-size:12.5px;color:var(--textMuted);font-weight:600;margin-top:8px;">قد يأخذ الفيديو بضع ثوانٍ ليبدأ...</div>
-      <button type="button" onclick="camOpenLive()" style="width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:14px;height:46px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">↻ إعادة التحميل</button>`;
+      <div id="camLiveMsg" style="text-align:center;font-size:12.5px;color:var(--textMuted);font-weight:600;margin-top:8px;">قد يأخذ الفيديو بضع ثوانٍ ليبدأ... (كل مقطع ٣ دقائق)</div>`;
     const v = document.getElementById('camLiveVideo');
-    // المقطع VOD كامل؛ الآيفون/سفاري يشغّل HLS أصلًا. نحطه مباشرة ونخليه للمشغّل - بدون
-    // أي إعادة تحميل تلقائية (كانت تقطع التشغيل وتخليه يعلّق على أول صورة).
     v.src = hls;
     v.addEventListener('playing', () => { const m = document.getElementById('camLiveMsg'); if (m) m.style.display = 'none'; });
     v.addEventListener('waiting', () => { const m = document.getElementById('camLiveMsg'); if (m) { m.style.display = 'block'; m.textContent = 'جارٍ التحميل...'; } });
-    v.addEventListener('error', () => { const m = document.getElementById('camLiveMsg'); if (m) { m.style.display = 'block'; m.textContent = 'تعذّر تشغيل الفيديو — اضغط إعادة التحميل، أو استخدم VLC.'; } });
+    v.addEventListener('error', () => { const m = document.getElementById('camLiveMsg'); if (m) { m.style.display = 'block'; m.textContent = 'تعذّر تشغيل الفيديو — جرّب إعادة أو وقت آخر.'; } });
     try { v.play().catch(() => {}); } catch (e) {}
   } catch (e) {
-    body.innerHTML = camLiveError('خطأ في الاتصال: ' + (e && e.message ? e.message : e));
+    wrap.innerHTML = camLiveError('خطأ في الاتصال: ' + (e && e.message ? e.message : e));
   }
 }
 function camLiveError(msg) {
   return `<div style="background:#FEF2F2;color:#B91C1C;border-radius:14px;padding:14px;font-size:13.5px;font-weight:700;line-height:1.8;margin-top:6px;">${escapeHtml(msg)}</div>
-    <button type="button" onclick="camOpenLive()" style="width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:14px;height:46px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">↻ إعادة المحاولة</button>`;
+    <button type="button" onclick="camRenderLive()" style="width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:14px;height:46px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">↻ إعادة المحاولة</button>`;
 }
 
 /* ================= مشاهدة الفاتورة في الكاميرا (Hik-Connect) =================
@@ -4867,7 +4921,51 @@ function camOpenHik(timeTxt) {
   }, 1600);
 }
 
-function openCamSettings() { renderCamSettings(); openModal('camSettingsModal'); }
+function openCamSettings() { renderCamSettings(); openModal('camSettingsModal'); bridgeStatusWatch(); }
+
+/* ===== تحديث الجسر عن بُعد (عبر Firebase: commands/bridgeUpdate) ===== */
+async function bridgeStatusWatch() {
+  const line = document.getElementById('bridgeStatusLine');
+  if (!line) return;
+  line.textContent = 'جارٍ فحص حالة الجسر...';
+  try {
+    const br = (await db.ref('data/cameraBridge').once('value')).val();
+    if (!br || !br.url) { line.innerHTML = '<span style="color:#DC2626;">● الجسر غير مُسجّل بعد</span>'; return; }
+    const api = String(br.url).replace(/\/+$/, '');
+    let online = false;
+    try {
+      const c = new AbortController(); const to = setTimeout(() => c.abort(), 6000);
+      const r = await fetch(api + '/health', { cache: 'no-store', signal: c.signal });
+      clearTimeout(to); online = r.ok;
+    } catch (e) {}
+    let extra = '';
+    try {
+      const bs = (await db.ref('data/bridgeStatus').once('value')).val();
+      if (bs && bs.state) {
+        const m = { working: '⏳ يجري التنفيذ...', done: '✓ آخر عملية تمت بنجاح', error: '⚠ آخر عملية فشلت' };
+        extra = '<div style="font-size:12px;margin-top:6px;color:var(--textMuted);">' + (m[bs.state] || '') + (bs.msg ? ' - ' + escapeHtml(String(bs.msg)) : '') + '</div>';
+      }
+    } catch (e) {}
+    line.innerHTML = (online
+      ? '<span style="color:#16A34A;">● الجسر متصل ويعمل</span>'
+      : '<span style="color:#DC2626;">● الجسر لا يستجيب (تأكد أن المكينة شغّالة وعلى الإنترنت)</span>') + extra;
+  } catch (e) { line.innerHTML = '<span style="color:#DC2626;">تعذّر فحص الحالة</span>'; }
+}
+async function bridgeSendCommand(action) {
+  try {
+    await db.ref('commands/bridgeUpdate').set({ id: 'b' + Date.now(), action: action, at: firebase.database.ServerValue.TIMESTAMP });
+    try { showQuickToast(action === 'update' ? 'تم إرسال أمر التحديث - انتظر دقيقة' : 'تم إرسال أمر إعادة التشغيل', true); } catch (e) {}
+    const line = document.getElementById('bridgeStatusLine');
+    if (line) line.innerHTML = '⏳ تم إرسال الأمر... المكينة تنفّذه خلال ثوانٍ';
+    setTimeout(bridgeStatusWatch, 25000);
+  } catch (e) { uiAlert('تعذّر إرسال الأمر: ' + (e && e.message ? e.message : e)); }
+}
+function bridgeRestartRemote() {
+  uiConfirm('إعادة تشغيل الجسر على المكينة؟').then(ok => { if (ok) bridgeSendCommand('restart'); });
+}
+function bridgeUpdateRemote() {
+  uiConfirm('تحديث الجسر: المكينة تحمّل آخر نسخة من GitHub وتعيد تشغيل نفسها. متأكد؟', { okText: 'تحديث' }).then(ok => { if (ok) bridgeSendCommand('update'); });
+}
 
 function renderCamSettings() {
   const st = camSettings();
@@ -4876,6 +4974,15 @@ function renderCamSettings() {
       ${hint ? `<div style="font-size:12px;color:var(--textMuted);margin-top:6px;line-height:1.7;">${hint}</div>` : ''}</div>`;
   const num = (id, val, w) => `<input id="${id}" type="number" inputmode="numeric" lang="en" value="${val}" style="width:${w || 80}px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:15px;">`;
   document.getElementById('camSettingsBody').innerHTML = `
+    <div class="setSec">مكينة الكاميرات (الجسر)</div>
+    <div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
+      <div id="bridgeStatusLine" style="font-size:13px;font-weight:700;color:var(--textMuted);margin-bottom:10px;">جارٍ فحص حالة الجسر...</div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" onclick="bridgeRestartRemote()" style="flex:1;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:700;cursor:pointer;">↻ إعادة تشغيل</button>
+        <button type="button" onclick="bridgeUpdateRemote()" style="flex:1;height:44px;border:none;border-radius:12px;background:#1D4ED8;color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">⬇ تحديث الجسر</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--textMuted);margin-top:8px;line-height:1.7;">تحديث الجسر: المكينة تحمّل آخر نسخة وتعيد تشغيل نفسها تلقائيًا (بدون ما تروح المحل). يشتغل من أي مكان.</div>
+    </div>
     <div class="setSec">الكاميرات</div>
     ${row('كاميرا الكاشير', num('camSetCam', st.cam), 'رقم الكاميرا اللي تصوّر الكاشير في Hik-Connect')}
     ${row('عدد الكاميرات', num('camSetCount', st.camCount))}
@@ -6115,9 +6222,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.8.1';
+const APP_VERSION = '4.9.0';
 const APP_BUILD_DATE = '2026-10-08';
 const APP_RELEASES = [
+  { v: '4.9.0', date: '2026-10-08', items: [
+    'زر "الكاميرات" في الرئيسية: افتح الكاميرا في أي وقت بدون فاتورة',
+    'تنقّل كامل في التسجيل: أزرار قفز (±دقيقة/±10د/±ساعة) + اختيار تاريخ ووقت + تبديل كاميرا - من الفاتورة ومن زر الكاميرات',
+    'تحديث الجسر عن بُعد: من إعدادات الكاميرا تقدر تحدّث أو تعيد تشغيل مكينة الكاميرات من أي مكان بدون الذهاب للمحل'
+  ] },
   { v: '4.8.1', date: '2026-10-08', items: [
     'شاهد داخل التطبيق: إصلاح تعليق الفيديو على صورة واحدة - صار يشغّل مقطع كامل بسلاسة مع شريط تقديم/تأخير'
   ] },
