@@ -185,11 +185,11 @@ class H(BaseHTTPRequestHandler):
                 cam = q.get("cam",["2"])[0]; ch = channel(cam)
                 t = q.get("t",[""])[0]
                 if len(t) != 14: raise ValueError("t=YYYYMMDDHHMMSS")
-                # local -> utc (subtract offset hours), keep it simple via epoch
+                # نرسل الوقت المحلي زي ما هو + Z - نفس طريقة VLC اللي اتأكد إنها تشتغل 100%
+                # على هذا الـ DVR (يتعامل مع وقت tracks كـ محلي، مش UTC). ما نطرح أي ساعات.
                 import datetime
-                lt = datetime.datetime.strptime(t, "%Y%m%d%H%M%S")
-                ut = lt - datetime.timedelta(hours=TZ)
-                start_utc = ut.strftime("%Y%m%dT%H%M%SZ")
+                datetime.datetime.strptime(t, "%Y%m%d%H%M%S")   # تحقق من الصيغة فقط
+                start_utc = t[0:8] + "T" + t[8:14] + "Z"
                 key = "%s-%s" % (ch, start_utc)
             except Exception as e:
                 self.send_response(400); self._cors(); self.end_headers()
