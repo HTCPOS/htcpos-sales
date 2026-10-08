@@ -1073,6 +1073,17 @@ setTimeout(() => window.hideSplash(), 4000);
     <div class="heroPill"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> اليوم</div>
   </div>
 
+  <button type="button" id="dayReportBtn" onclick="openDayReport()" style="display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:0 16px 14px;padding:14px 16px;border:none;border-radius:16px;background:linear-gradient(135deg,#0F766E,#15803D);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(16,122,110,.22);text-align:right;font-family:inherit;">
+    <span style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.18);flex-shrink:0;">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V9M12 17v-4M15 17v-6"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    </span>
+    <span style="flex:1;min-width:0;">
+      <span style="display:block;font-size:15.5px;font-weight:800;line-height:1.3;">تقرير اليوم</span>
+      <span style="display:block;font-size:11.5px;opacity:.85;font-weight:600;margin-top:2px;">كل حركات اليوم في مكان واحد</span>
+    </span>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:.9;flex-shrink:0;"><path d="m15 6-6 6 6 6"/></svg>
+  </button>
+
   <div class="statsGrid">
     <div class="statCard" onclick="openModal('lowStockModal')" style="cursor:pointer">
       <div class="statIcon" style="background:#FEE2E2;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#DC2626"/></svg></div>
@@ -1524,6 +1535,19 @@ setTimeout(() => window.hideSplash(), 4000);
     <h3>الديون</h3>
     <div class="searchBox" style="margin:2px 0 12px;"><input id="dhSearch" type="text" placeholder="ابحث بالاسم أو الهاتف..." oninput="renderDebtsHub()" autocomplete="off" style="min-width:0;"></div>
     <div id="dhBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="dayReportModal" onclick="if(event.target===this)closeModal('dayReportModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('dayReportModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>تقرير اليوم</h3>
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:8px 12px;margin-bottom:12px;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span id="drDayLabel" style="font-size:13.5px;font-weight:700;flex:1;">اليوم</span>
+      <input id="drDate" type="date" lang="en" onchange="if(this.value)openDayReport(this.value)" style="height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 8px;background:var(--surface2);color:var(--text);font-size:14px;">
+    </div>
+    <div id="drBody"></div>
   </div>
 </div>
 
@@ -3642,6 +3666,74 @@ async function reopenDay() {
     logActivity('إعادة فتح يوم', c.key + ' - كان: المفروض ' + fmtMoney(c.closed.expected) + '، المعدود ' + fmtMoney(c.closed.counted));
     loadDayClose();
   } catch (e) { uiAlert('تعذّرت إعادة الفتح'); }
+}
+
+/* ================= تقرير اليوم: كل حركات اليوم في شاشة واحدة =================
+   بيعيد استخدام نفس حسبة إقفال اليوم (loadDayClose + dayCloseCalc) بالظبط -
+   صفر حسابات جديدة، صفر لمس للبيانات. بس عرض أنظف + زر في الرئيسية. */
+let dayReportKey = null;
+function openDayReport(key) {
+  dayReportKey = key || acctDayKey();
+  dayCloseKey = dayReportKey;            // نفس مفتاح اليوم اللي تعتمد عليه loadDayClose
+  const inp = document.getElementById('drDate'); if (inp) inp.value = dayReportKey;
+  const lbl = document.getElementById('drDayLabel'); if (lbl) lbl.textContent = dhDayLabel(dayReportKey);
+  document.getElementById('drBody').innerHTML = skeletonHtml(6);
+  openModal('dayReportModal');
+  loadDayClose().then(() => { if (dayCloseKey === dayReportKey) renderDayReport(); });
+}
+function renderDayReport() {
+  const c = dayCloseCalc;
+  const body = document.getElementById('drBody');
+  if (!c || !body) return;
+  const cl = c.closed;
+  const cardSales = cl ? Number(cl.cardSales || 0) : 0;
+  const netSales = r3(c.sales - c.returns);                 // صافي المبيعات بعد المرتجعات
+  const cashExpected = dcExpected(c, cardSales);            // المفروض في الدرج (نفس حسبة الإقفال)
+
+  const row = (label, val, sign, hint) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border2);">
+      <span style="font-size:14px;font-weight:600;">${label}${hint ? `<span style="display:block;font-size:11.5px;color:var(--textMuted);font-weight:500;margin-top:2px;">${hint}</span>` : ''}</span>
+      <span style="font-size:15px;font-weight:800;direction:ltr;white-space:nowrap;color:${sign === '-' ? '#DC2626' : sign === '+' ? '#16A34A' : 'var(--text)'};">${sign === '-' ? '−' : sign === '+' ? '+' : ''}${fmtMoney(val)}</span></div>`;
+
+  // بطاقة علوية: صافي مبيعات اليوم
+  let h = `<div style="background:linear-gradient(135deg,#0F766E,#15803D);border-radius:18px;padding:16px 18px;color:#fff;box-shadow:0 4px 14px rgba(16,122,110,.22);">
+      <div style="font-size:12.5px;opacity:.9;font-weight:600;">صافي مبيعات اليوم (بعد المرتجعات)</div>
+      <div style="font-size:28px;font-weight:800;direction:ltr;margin-top:4px;">${fmtMoney(netSales)} <span style="font-size:15px;font-weight:700;opacity:.85;">د.ل</span></div>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;margin-top:10px;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        ${c.invCount} فاتورة
+      </div>
+    </div>`;
+
+  // بطاقة الحركات
+  h += `<div style="background:var(--surface);border-radius:18px;padding:4px 16px;margin-top:12px;box-shadow:0 1px 2px rgba(15,23,42,.05);">
+      ${row('مبيعات الكاشير', c.sales, '', c.invCount + ' فاتورة من الأرشيف')}
+      ${row('المرتجعات', c.returns, '-')}
+      ${row('بيع على الحساب (ديون اليوم)', c.credit, '-', 'ما دخلت الدرج')}
+      ${row('تحصيل ديون نقدي', c.cashIn, '+')}
+      ${row('تسديد مشتريات نقدي', c.cashOut, '-')}
+      ${cl ? row('مبيعات بالبطاقة في الكاشير', cardSales, '-', 'ما تدخل الدرج') : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 12px;">
+        <span style="font-size:15.5px;font-weight:800;">${cl ? 'المفروض في الدرج' : 'صافي الكاش (قبل البطاقة)'}</span>
+        <span style="font-size:21px;font-weight:800;direction:ltr;color:#15803D;">${fmtMoney(cashExpected)}</span></div>
+    </div>`;
+
+  if (c.cardIn > 0.005)
+    h += `<div style="font-size:12.5px;color:var(--textMuted);margin:10px 6px 0;">تحصيل بالبطاقة اليوم: ${fmtMoney(c.cardIn)} د.ل (في البنك، مش في الدرج)</div>`;
+
+  // حالة الإقفال
+  if (cl) {
+    const diff = r3(cl.counted - cl.expected);
+    const dColor = Math.abs(diff) < 0.005 ? '#16A34A' : diff > 0 ? '#2563EB' : '#DC2626';
+    const dText = Math.abs(diff) < 0.005 ? 'مطابق ✓' : (diff > 0 ? 'زيادة +' : 'عجز −') + fmtMoney(Math.abs(diff)) + ' د.ل';
+    h += `<div style="background:var(--surface);border-radius:18px;padding:14px 16px;margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">المعدود فعلًا</span><b style="direction:ltr;">${fmtMoney(cl.counted)}</b></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;"><span style="font-weight:700;">الفرق</span><b style="direction:ltr;color:${dColor};">${dText}</b></div>
+        <div style="font-size:12px;color:#16A34A;font-weight:800;margin-top:10px;">🔒 اليوم مقفول</div>
+      </div>`;
+  } else {
+    h += `<button type="button" onclick="closeModal('dayReportModal');openDayClose(dayReportKey);" style="width:100%;margin-top:14px;border:none;border-radius:18px;height:54px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16px;font-weight:700;cursor:pointer;">🔒 إقفال اليوم وحساب الدرج</button>`;
+  }
+  body.innerHTML = h;
 }
 
 // ===== فحص سلامة الحسابات =====
@@ -5948,9 +6040,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.6.0';
+const APP_VERSION = '4.7.0';
 const APP_BUILD_DATE = '2026-10-08';
 const APP_RELEASES = [
+  { v: '4.7.0', date: '2026-10-08', items: [
+    'زر "تقرير اليوم" في الصفحة الرئيسية: كل حركات اليوم في شاشة واحدة (مبيعات، مرتجعات، ديون اليوم، تحصيل، تسديد مشتريات، صافي الكاش) مع إمكانية إقفال اليوم من نفسها'
+  ] },
   { v: '4.6.0', date: '2026-10-08', items: [
     'النواقص: أضفنا تصنيف "أدوات الصيانة" جنب "محلي" و"الصين" - يشتغل بالكامل (تبويب، فلترة، شراء الكل، نسخ/إرسال)'
   ] },
@@ -7233,7 +7328,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة اللي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) زي أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -11905,7 +12000,7 @@ let selectedShortageSource = '';
 function setShortageFormSource(value) {
   selectedShortageSource = (selectedShortageSource === value) ? '' : value;
   // بنلوّن أي زر مصدر (محلي / الصين / أدوات الصيانة / أي مصدر مستقبلي) حسب خاصية data-source
-  // بتاعته - كله بحلقة واحدة بدل ما نكتب كل زر بإيده، عشان إضافة أي مصدر جديد متحتاجش أي تعديل هنا
+  // كله بحلقة واحدة، عشان إضافة أي مصدر جديد متحتاجش أي تعديل هنا
   document.querySelectorAll('#shortageSourceBtns .shortageSourceBtn').forEach(btn => {
     const on = btn.getAttribute('data-source') === selectedShortageSource;
     btn.style.background = on ? '#16A34A' : 'var(--surface2)';
