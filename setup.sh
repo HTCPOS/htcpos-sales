@@ -141,13 +141,16 @@ def start_ffmpeg(ch, start_utc, key):
     # نسجّل مقطع محدود (CLIP_SECONDS) من الأرشيف كـ VOD HLS كامل (ما يحذف مقاطع) -> الآيفون
     # يحمّله ويشغّله بسلاسة مع شريط تقديم، وما يعلّق حتى لو النفق أبطأ من الشبكة المحلية.
     # نسخ مباشر (copy) لـ HEVC بدون تحويل - المعالج الضعيف ما يتعب.
-    # use_wallclock_as_timestamps=1: أرشيف Hikvision يرسل طوابع زمنية فاسدة (أصفار/غير متتابعة)
-    # تخلّي الآيفون يعلّق على شاشة سوداء؛ نعيد توليد الطوابع من ساعة الوصول فتصير سليمة ومتتابعة.
+    # أرشيف Hikvision يرسل طوابع زمنية فاسدة (أصفار/غير متتابعة) تخلّي مشغّل الآيفون يعلّق/يفشل.
+    # genpts+igndts: نعيد توليد الطوابع نظيفة. avoid_negative_ts make_zero: تبدأ من صفر.
+    # هذا يعطي مقاطع بطوابع صغيرة ومتتابعة وبدون discontinuity -> يقبلها سفاري ومشغّل التطبيق.
     cmd = [
         "ffmpeg", "-nostdin", "-loglevel", "error",
-        "-rtsp_transport", "tcp", "-use_wallclock_as_timestamps", "1", "-i", url,
+        "-fflags", "+genpts+igndts",
+        "-rtsp_transport", "tcp", "-i", url,
         "-t", str(CLIP_SECONDS),
         "-c", "copy", "-an",
+        "-avoid_negative_ts", "make_zero",
         "-f", "hls", "-hls_time", "4", "-hls_list_size", "0",
         "-hls_playlist_type", "event",
         "-hls_flags", "append_list+independent_segments",
