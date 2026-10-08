@@ -1182,9 +1182,10 @@ setTimeout(() => window.hideSplash(), 4000);
       </div>
       <input type="number" inputmode="numeric" lang="en" id="shortageFormQty" placeholder="الكمية المطلوبة (اختياري)" style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;">
       <div style="font-size:12px;color:#94A3B8;font-weight:700;margin-top:4px;">من أين ستحضره؟ (اختياري)</div>
-      <div style="display:flex;gap:8px;">
-        <button type="button" id="shortageSourceLocalBtn" onclick="setShortageFormSource('محلي')" style="flex:1;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">محلي</button>
-        <button type="button" id="shortageSourceChinaBtn" onclick="setShortageFormSource('الصين')" style="flex:1;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">الصين</button>
+      <div id="shortageSourceBtns" style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button type="button" class="shortageSourceBtn" data-source="محلي" onclick="setShortageFormSource('محلي')" style="flex:1 1 30%;min-width:90px;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px 8px;font-weight:700;font-size:14px;cursor:pointer;">محلي</button>
+        <button type="button" class="shortageSourceBtn" data-source="الصين" onclick="setShortageFormSource('الصين')" style="flex:1 1 30%;min-width:90px;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px 8px;font-weight:700;font-size:14px;cursor:pointer;">الصين</button>
+        <button type="button" class="shortageSourceBtn" data-source="أدوات الصيانة" onclick="setShortageFormSource('أدوات الصيانة')" style="flex:1 1 30%;min-width:90px;background:var(--surface2);color:var(--text);border:none;border-radius:12px;padding:12px 8px;font-weight:700;font-size:14px;cursor:pointer;">أدوات الصيانة</button>
       </div>
       <button onclick="saveShortageForm()" style="background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;margin-top:6px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> حفظ</button>
     </div>
@@ -5947,9 +5948,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.5.0';
-const APP_BUILD_DATE = '2026-10-01';
+const APP_VERSION = '4.6.0';
+const APP_BUILD_DATE = '2026-10-08';
 const APP_RELEASES = [
+  { v: '4.6.0', date: '2026-10-08', items: [
+    'النواقص: أضفنا تصنيف "أدوات الصيانة" جنب "محلي" و"الصين" - يشتغل بالكامل (تبويب، فلترة، شراء الكل، نسخ/إرسال)'
+  ] },
   { v: '4.5.0', date: '2026-10-07', items: [
     'عمولة الفني: شهر + فني + عمولة لكل قطعة، وتصوير متواصل للإيصالات (السليم يتحسب ويكمل لحاله)',
     'فحوصات تلقائية: إيصال من شهر تاني، مكرر، محسوب في شهر تاني، مرتجع كامل أو جزئي، وفاتورة فيها أكثر من صنف تنعرض للاختيار',
@@ -11900,12 +11904,13 @@ let selectedShortageSource = '';
 
 function setShortageFormSource(value) {
   selectedShortageSource = (selectedShortageSource === value) ? '' : value;
-  const localBtn = document.getElementById('shortageSourceLocalBtn');
-  const chinaBtn = document.getElementById('shortageSourceChinaBtn');
-  localBtn.style.background = selectedShortageSource === 'محلي' ? '#16A34A' : 'var(--surface2)';
-  localBtn.style.color = selectedShortageSource === 'محلي' ? '#fff' : 'var(--text)';
-  chinaBtn.style.background = selectedShortageSource === 'الصين' ? '#16A34A' : 'var(--surface2)';
-  chinaBtn.style.color = selectedShortageSource === 'الصين' ? '#fff' : 'var(--text)';
+  // بنلوّن أي زر مصدر (محلي / الصين / أدوات الصيانة / أي مصدر مستقبلي) حسب خاصية data-source
+  // بتاعته - كله بحلقة واحدة بدل ما نكتب كل زر بإيده، عشان إضافة أي مصدر جديد متحتاجش أي تعديل هنا
+  document.querySelectorAll('#shortageSourceBtns .shortageSourceBtn').forEach(btn => {
+    const on = btn.getAttribute('data-source') === selectedShortageSource;
+    btn.style.background = on ? '#16A34A' : 'var(--surface2)';
+    btn.style.color = on ? '#fff' : 'var(--text)';
+  });
 }
 
 function openAddShortageForm(existingId) {
