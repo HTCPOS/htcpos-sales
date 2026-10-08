@@ -4773,17 +4773,13 @@ async function camOpenLive() {
       <div id="camLiveMsg" style="text-align:center;font-size:12.5px;color:var(--textMuted);font-weight:600;margin-top:8px;">قد يأخذ الفيديو بضع ثوانٍ ليبدأ...</div>
       <button type="button" onclick="camOpenLive()" style="width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:14px;height:46px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">↻ إعادة التحميل</button>`;
     const v = document.getElementById('camLiveVideo');
-    // المتصفح يدعم HLS أصلًا (آيفون/سفاري): نحطه مباشرة
+    // المقطع VOD كامل؛ الآيفون/سفاري يشغّل HLS أصلًا. نحطه مباشرة ونخليه للمشغّل - بدون
+    // أي إعادة تحميل تلقائية (كانت تقطع التشغيل وتخليه يعلّق على أول صورة).
     v.src = hls;
     v.addEventListener('playing', () => { const m = document.getElementById('camLiveMsg'); if (m) m.style.display = 'none'; });
-    v.addEventListener('error', () => { const m = document.getElementById('camLiveMsg'); if (m) m.textContent = 'تعذّر تشغيل الفيديو — اضغط إعادة التحميل، أو استخدم VLC.'; });
-    // المقطع يتجهّز تدريجيًا؛ نعيد محاولة التشغيل مرتين بصمت لو لسه ما جهز
-    let tries = 0;
-    camLivePoll = setInterval(() => {
-      tries++;
-      if (v.readyState >= 2 || tries > 6) { clearInterval(camLivePoll); camLivePoll = null; return; }
-      try { v.load(); v.play().catch(() => {}); } catch (e) {}
-    }, 2500);
+    v.addEventListener('waiting', () => { const m = document.getElementById('camLiveMsg'); if (m) { m.style.display = 'block'; m.textContent = 'جارٍ التحميل...'; } });
+    v.addEventListener('error', () => { const m = document.getElementById('camLiveMsg'); if (m) { m.style.display = 'block'; m.textContent = 'تعذّر تشغيل الفيديو — اضغط إعادة التحميل، أو استخدم VLC.'; } });
+    try { v.play().catch(() => {}); } catch (e) {}
   } catch (e) {
     body.innerHTML = camLiveError('خطأ في الاتصال: ' + (e && e.message ? e.message : e));
   }
@@ -6119,9 +6115,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.8.0';
+const APP_VERSION = '4.8.1';
 const APP_BUILD_DATE = '2026-10-08';
 const APP_RELEASES = [
+  { v: '4.8.1', date: '2026-10-08', items: [
+    'شاهد داخل التطبيق: إصلاح تعليق الفيديو على صورة واحدة - صار يشغّل مقطع كامل بسلاسة مع شريط تقديم/تأخير'
+  ] },
   { v: '4.8.0', date: '2026-10-08', items: [
     'شاهد الفاتورة داخل التطبيق مباشرة: زر "شاهد داخل التطبيق" في شاشة الكاميرا يشغّل الفيديو من دقيقة الفاتورة بدون VLC ولا Hik-Connect (عبر مكينة الكاميرات)'
   ] },
