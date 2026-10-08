@@ -308,20 +308,101 @@ done
 RUNEOF
 chmod +x "$RUN"
 
-# boot entry (runs at device boot via Termux:Boot)
+# --- remote-control watcher: يراقب أوامر التطبيق في Firebase وينفّذ تحديث/إعادة تشغيل عن بُعد ---
+cat > "$CAM_DIR/bridgectl.py" <<'CTLEOF'
+#!/data/data/com.termux/files/usr/bin/python
+# يراقب commands/bridgeUpdate كل 15 ثانية. action=restart يعيد تشغيل الجسر،
+# action=update يحمّل آخر setup.sh ويشغّله (مع فحص سلامة). يكتب الحالة في data/bridgeStatus.
+import os, time, json, subprocess, urllib.request
+HOME = os.path.expanduser("~"); CAMDIR = os.path.join(HOME, "cam")
+CONF = os.path.join(CAMDIR, "camsrv.conf")
+SETUP_URL = "https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh"
+def conf():
+    c = {}
+    for line in open(CONF):
+        line = line.strip()
+        if "=" in line and not line.startswith("#"):
+            k, v = line.split("=", 1); c[k] = v
+    return c
+CF = conf()
+def token():
+    try:
+        d = json.dumps({"email": CF["FB_EMAIL"], "password": CF["FB_PASS"], "returnSecureToken": True}).encode()
+        u = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + CF["FB_APIKEY"]
+        r = urllib.request.urlopen(urllib.request.Request(u, d, {"Content-Type": "application/json"}), timeout=20)
+        return json.load(r)["idToken"]
+    except Exception:
+        return ""
+def fb_get(path, tok):
+    try: return json.load(urllib.request.urlopen(CF["FB_URL"] + "/" + path + ".json?auth=" + tok, timeout=20))
+    except Exception: return None
+def fb_put(path, obj, tok):
+    try:
+        body = json.dumps(obj).encode()
+        req = urllib.request.Request(CF["FB_URL"] + "/" + path + ".json?auth=" + tok, body, {"Content-Type": "application/json"}, method="PUT")
+        urllib.request.urlopen(req, timeout=20)
+    except Exception: pass
+def fb_del(path, tok):
+    try:
+        req = urllib.request.Request(CF["FB_URL"] + "/" + path + ".json?auth=" + tok, method="DELETE")
+        urllib.request.urlopen(req, timeout=20)
+    except Exception: pass
+def status(tok, state, msg=""):
+    fb_put("data/bridgeStatus", {"state": state, "msg": msg, "at": time.time()}, tok)
+def do_restart(tok):
+    status(tok, "working", "restart")
+    subprocess.call("pkill -f 'cloudflared tunnel'; pkill -f camsrv.py; pkill -f cam/run.sh", shell=True)
+    time.sleep(2)
+    subprocess.Popen("setsid bash " + os.path.join(CAMDIR, "run.sh") + " >/dev/null 2>&1", shell=True)
+    time.sleep(1); status(tok, "done", "restart")
+def do_update(tok):
+    status(tok, "working", "update")
+    setup = os.path.join(HOME, "setup.sh")
+    rc = subprocess.call("curl -sL " + SETUP_URL + " -o " + setup, shell=True)
+    if rc != 0 or not os.path.exists(setup) or os.path.getsize(setup) < 500:
+        status(tok, "error", "download failed"); return
+    if subprocess.call("bash -n " + setup, shell=True) != 0:
+        status(tok, "error", "bad script"); return
+    status(tok, "done", "update started")
+    # setsid عشان يكمل setup.sh حتى لو انقتل هذا المراقب أثناء إعادة التشغيل
+    subprocess.Popen("setsid bash " + setup + " >/dev/null 2>&1", shell=True)
+def main():
+    seen = None
+    while True:
+        try:
+            tok = token()
+            if tok:
+                cmd = fb_get("commands/bridgeUpdate", tok)
+                if isinstance(cmd, dict) and cmd.get("id") and cmd.get("id") != seen:
+                    seen = cmd.get("id"); action = cmd.get("action", "")
+                    fb_del("commands/bridgeUpdate", tok)
+                    if action == "restart": do_restart(tok)
+                    elif action == "update": do_update(tok)
+        except Exception: pass
+        time.sleep(15)
+if __name__ == "__main__":
+    main()
+CTLEOF
+
+# boot entry (runs at device boot via Termux:Boot) - runner + watcher
 cat > "$BOOT_DIR/10-camsrv.sh" <<BOOTEOF
 #!/data/data/com.termux/files/usr/bin/bash
 sleep 10
-bash "$HOME/cam/run.sh"
+bash "\$HOME/cam/run.sh" >/dev/null 2>&1 &
+python "\$HOME/cam/bridgectl.py" >/dev/null 2>&1 &
 BOOTEOF
 chmod +x "$BOOT_DIR/10-camsrv.sh"
-echo "   runner + boot entry written."
+echo "   runner + watcher + boot entry written."
 
 # ---------- 6) start now ----------
 echo ">> [6/6] Starting now..."
 pkill -f "cloudflared tunnel" 2>/dev/null || true
 pkill -f camsrv.py 2>/dev/null || true
+pkill -f bridgectl.py 2>/dev/null || true
+pkill -f "cam/run.sh" 2>/dev/null || true
+sleep 1
 nohup bash "$RUN" >/dev/null 2>&1 &
+nohup python "$CAM_DIR/bridgectl.py" >/dev/null 2>&1 &
 echo
 echo "==================================================="
 echo "   Done. The bridge is starting."
