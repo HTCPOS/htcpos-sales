@@ -1648,6 +1648,20 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="bridgeShellModal" onclick="if(event.target===this)closeModal('bridgeShellModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('bridgeShellModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>أوامر المكينة عن بُعد</h3>
+    <div id="bridgeShellStatus" style="font-size:12.5px;font-weight:700;color:var(--textMuted);margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input id="bridgeShellInput" type="text" dir="ltr" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="اكتب أمرًا... مثل: ls ~/cam" onkeydown="if(event.key==='Enter')bridgeShellSend()" style="flex:1;min-width:0;height:46px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;padding:0 12px;font-family:monospace;">
+      <button type="button" id="bridgeShellSendBtn" onclick="bridgeShellSend()" style="height:46px;padding:0 18px;border:none;border-radius:12px;background:#16A34A;color:#fff;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;">إرسال</button>
+    </div>
+    <div id="bridgeShellOut" style="background:#0B1020;color:#D1FAE5;border-radius:12px;padding:12px;font-family:monospace;font-size:12.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;min-height:120px;max-height:50vh;overflow:auto;">— اكتب أمرًا واضغط إرسال —</div>
+    <div style="font-size:11px;color:var(--textMuted);margin-top:8px;line-height:1.7;">الأمر يُنفّذ على المكينة خلال ثوانٍ وترجع النتيجة هنا. لإعادة تشغيل/تحديث الجسر استخدم أزرار الإعدادات (أأمن).</div>
+  </div>
+</div>
+
 <div class="modalBg" id="fontModal" onclick="if(event.target===this)closeModal('fontModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('fontModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -5004,6 +5018,61 @@ function bridgeUpdateRemote() {
   uiConfirm('تحديث الجسر: المكينة تحمّل آخر نسخة من GitHub وتعيد تشغيل نفسها. متأكد؟', { okText: 'تحديث' }).then(ok => { if (ok) bridgeSendCommand('update'); });
 }
 
+/* ===== طرفية المكينة عن بُعد (commands/bridgeShell -> data/bridgeShellResult) ===== */
+let bridgeShellPoll = null;
+function openBridgeShell() {
+  openModal('bridgeShellModal');
+  const st = document.getElementById('bridgeShellStatus');
+  if (st) st.textContent = 'اكتب أمرًا وسيُنفَّذ على المكينة.';
+  setTimeout(() => { const i = document.getElementById('bridgeShellInput'); if (i) i.focus(); }, 200);
+}
+function bridgeShellStop() { if (bridgeShellPoll) { clearInterval(bridgeShellPoll); bridgeShellPoll = null; } }
+async function bridgeShellSend() {
+  const input = document.getElementById('bridgeShellInput');
+  const outEl = document.getElementById('bridgeShellOut');
+  const stEl = document.getElementById('bridgeShellStatus');
+  const btn = document.getElementById('bridgeShellSendBtn');
+  if (!input || !outEl) return;
+  const cmd = input.value.trim();
+  if (!cmd) return;
+  const id = 's' + Date.now();
+  bridgeShellStop();
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+  if (stEl) stEl.textContent = 'أُرسل الأمر... بانتظار المكينة';
+  outEl.textContent = '$ ' + cmd + '\n\n⏳ جارٍ التنفيذ على المكينة...';
+  try {
+    await db.ref('commands/bridgeShell').set({ id: id, cmd: cmd, at: firebase.database.ServerValue.TIMESTAMP });
+  } catch (e) {
+    outEl.textContent = 'تعذّر إرسال الأمر: ' + (e && e.message ? e.message : e);
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    return;
+  }
+  // ننتظر النتيجة بنفس المعرّف (المكينة تقرأ كل ~5 ثواني)
+  let waited = 0;
+  bridgeShellPoll = setInterval(async () => {
+    waited += 2;
+    try {
+      const res = (await db.ref('data/bridgeShellResult').once('value')).val();
+      if (res && res.id === id) {
+        bridgeShellStop();
+        const out = (res.output != null ? String(res.output) : '');
+        outEl.textContent = '$ ' + cmd + '\n\n' + (out || '(لا مخرجات)') + '\n\n[رمز الخروج: ' + (res.code != null ? res.code : '?') + ']';
+        outEl.scrollTop = outEl.scrollHeight;
+        if (stEl) stEl.textContent = 'تمّ ✓';
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+        input.value = '';
+        return;
+      }
+    } catch (e) {}
+    if (waited >= 70) {
+      bridgeShellStop();
+      outEl.textContent = '$ ' + cmd + '\n\n⚠ ما وصلت نتيجة خلال 70 ثانية. تأكد أن المكينة شغّالة وعلى الإنترنت، أو الأمر طويل.';
+      if (stEl) stEl.textContent = 'انتهت المهلة';
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    } else if (stEl) { stEl.textContent = 'بانتظار المكينة... (' + waited + 'ث)'; }
+  }, 2000);
+}
+
 function renderCamSettings() {
   const st = camSettings();
   const row = (label, inner, hint) => `<div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
@@ -5019,6 +5088,7 @@ function renderCamSettings() {
         <button type="button" onclick="bridgeUpdateRemote()" style="flex:1;height:44px;border:none;border-radius:12px;background:#1D4ED8;color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">⬇ تحديث الجسر</button>
       </div>
       <div style="font-size:11.5px;color:var(--textMuted);margin-top:8px;line-height:1.7;">تحديث الجسر: المكينة تحمّل آخر نسخة وتعيد تشغيل نفسها تلقائيًا (بدون ما تروح المحل). يشتغل من أي مكان.</div>
+      <button type="button" onclick="openBridgeShell()" style="width:100%;margin-top:10px;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:700;cursor:pointer;">⌨ أوامر المكينة عن بُعد (طرفية)</button>
     </div>
     <div class="setSec">الكاميرات</div>
     ${row('كاميرا الكاشير', num('camSetCam', st.cam), 'رقم الكاميرا اللي تصوّر الكاشير في Hik-Connect')}
@@ -6259,9 +6329,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.2';
+const APP_VERSION = '4.9.3';
 const APP_BUILD_DATE = '2026-10-08';
 const APP_RELEASES = [
+  { v: '4.9.3', date: '2026-10-09', items: [
+    'طرفية المكينة عن بُعد: من إعدادات الكاميرا تقدر تكتب أوامر تيرمكس وتنفّذها على المكينة وترجع النتيجة - كأنك ماسك المكينة، من أي مكان'
+  ] },
   { v: '4.9.2', date: '2026-10-09', items: [
     'الكاميرا: زر التشغيل صار يفتح الفيديو في VLC مباشرة (أقوى وأثبت من مشغّل التطبيق، ويشتغل من أي مكان) مع إبقاء التنقّل بالشريط والوقت',
     'التحكم بمكينة الكاميرات عن بُعد من إعدادات الكاميرا (تحديث/إعادة تشغيل)'
