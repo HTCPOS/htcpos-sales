@@ -371,20 +371,54 @@ def do_update(tok):
     status(tok, "done", "update started")
     # setsid عشان يكمل setup.sh حتى لو انقتل هذا المراقب أثناء إعادة التشغيل
     subprocess.Popen("setsid bash " + setup + " >/dev/null 2>&1", shell=True)
+def do_shell(tok, cmd_id, cmdline):
+    # ينفّذ أمر تيرمكس عن بُعد ويرجّع المخرجات. مهلة 60 ثانية، والمخرجات تتقصّر لآخر ~12 كيلوبايت.
+    out = ""
+    code = -1
+    try:
+        p = subprocess.run(["bash", "-lc", cmdline], stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, timeout=60)
+        out = p.stdout.decode("utf-8", "replace"); code = p.returncode
+    except subprocess.TimeoutExpired:
+        out = "[انتهت المهلة بعد 60 ثانية]"; code = 124
+    except Exception as e:
+        out = "[خطأ: %s]" % e; code = 1
+    if len(out) > 12000:
+        out = "...(تم قص البداية)...\n" + out[-12000:]
+    fb_put("data/bridgeShellResult", {"id": cmd_id, "output": out, "code": code, "at": time.time()}, tok)
+
+# توكن مخزّن: نجدّده كل ~50 دقيقة بدل تسجيل دخول كل دورة (أخف على البطارية والنت)
+_tok = {"v": "", "at": 0}
+def get_cached_token():
+    now = time.time()
+    if _tok["v"] and (now - _tok["at"] < 3000):
+        return _tok["v"]
+    t = token()
+    if t: _tok["v"] = t; _tok["at"] = now
+    return t
+
 def main():
-    seen = None
+    seen_upd = None
+    seen_sh = None
     while True:
         try:
-            tok = token()
+            tok = get_cached_token()
             if tok:
+                # 1) أوامر التحديث/إعادة التشغيل
                 cmd = fb_get("commands/bridgeUpdate", tok)
-                if isinstance(cmd, dict) and cmd.get("id") and cmd.get("id") != seen:
-                    seen = cmd.get("id"); action = cmd.get("action", "")
+                if isinstance(cmd, dict) and cmd.get("id") and cmd.get("id") != seen_upd:
+                    seen_upd = cmd.get("id"); action = cmd.get("action", "")
                     fb_del("commands/bridgeUpdate", tok)
                     if action == "restart": do_restart(tok)
                     elif action == "update": do_update(tok)
+                # 2) أوامر الطرفية عن بُعد
+                sh = fb_get("commands/bridgeShell", tok)
+                if isinstance(sh, dict) and sh.get("id") and sh.get("id") != seen_sh:
+                    seen_sh = sh.get("id"); line = sh.get("cmd", "")
+                    fb_del("commands/bridgeShell", tok)
+                    if line.strip(): do_shell(tok, sh.get("id"), line)
         except Exception: pass
-        time.sleep(15)
+        time.sleep(5)
 if __name__ == "__main__":
     main()
 CTLEOF
