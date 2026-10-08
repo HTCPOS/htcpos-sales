@@ -105,6 +105,7 @@ def load_conf():
 CF = load_conf()
 PORT = int(CF.get("PORT", "8787"))
 TZ = int(CF.get("TZ_OFFSET", "2"))
+CLIP_SECONDS = int(CF.get("CLIP_SECONDS", "180"))   # طول المقطع المسجّل لكل مشاهدة (ثانية)
 CODE = CF.get("CAM_CODE", "")
 DVR_IP = CF["DVR_IP"]; DVR_USER = CF["DVR_USER"]; DVR_PASS = CF["DVR_PASS"]
 
@@ -137,13 +138,17 @@ def start_ffmpeg(ch, start_utc, key):
     if os.path.isdir(HLS): shutil.rmtree(HLS, ignore_errors=True)
     os.makedirs(HLS, exist_ok=True)
     url = rtsp_url(ch, start_utc)
-    # copy video (hevc) into fMP4 HLS -> iPhone plays H.265 natively, no transcode
+    # نسجّل مقطع محدود (CLIP_SECONDS) من الأرشيف كـ VOD HLS كامل (ما يحذف مقاطع) -> الآيفون
+    # يحمّله ويشغّله بسلاسة مع شريط تقديم، وما يعلّق حتى لو النفق أبطأ من الشبكة المحلية.
+    # نسخ مباشر (copy) لـ HEVC بدون تحويل - المعالج الضعيف ما يتعب.
     cmd = [
         "ffmpeg", "-nostdin", "-loglevel", "error",
         "-rtsp_transport", "tcp", "-i", url,
+        "-t", str(CLIP_SECONDS),
         "-c", "copy", "-an",
-        "-f", "hls", "-hls_time", "2", "-hls_list_size", "10",
-        "-hls_flags", "delete_segments+append_list+omit_endlist",
+        "-f", "hls", "-hls_time", "4", "-hls_list_size", "0",
+        "-hls_playlist_type", "event",
+        "-hls_flags", "append_list+independent_segments",
         "-hls_segment_type", "fmp4",
         "-hls_segment_filename", os.path.join(HLS, "seg%d.m4s"),
         os.path.join(HLS, "index.m3u8"),
