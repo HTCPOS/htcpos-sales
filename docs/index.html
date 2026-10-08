@@ -4773,10 +4773,9 @@ function camOpenLiveAt(dateObj, cam) {
   const d = new Date(dateObj);
   if (isNaN(d.getTime())) { uiAlert('الوقت غير صحيح'); return; }
   camCurrent = { date: d, cam: Math.max(1, Number(cam) || 1) };
-  openModal('camLiveModal');
+  if (!isModalOpen('camLiveModal')) openModal('camLiveModal');   // لا نعيد فتحها فوق نفسها (يمنع ظهور صفحة ثانية)
   camRenderLive();
 }
-// القفز بالثواني (موجب للأمام، سالب للخلف) مع إعادة التحميل
 function camStep(sec) { if (camCurrent) camOpenLiveAt(new Date(camCurrent.date.getTime() + sec * 1000), camCurrent.cam); }
 function camPickCamLive(i) { if (camCurrent) camOpenLiveAt(camCurrent.date, i); }
 function camJumpTo(val) {
@@ -4786,21 +4785,36 @@ function camJumpTo(val) {
   if (isNaN(d.getTime())) { uiAlert('اختر وقتًا صحيحًا'); return; }
   camOpenLiveAt(d, camCurrent ? camCurrent.cam : camSettings().cam);
 }
+// شريط التمرير اليدوي: يمثّل يوم كامل (00:00–23:59). السحب يحرّك الوقت المعروض فقط،
+// وعند الإفلات يحمّل المقطع من اللحظة المختارة. (الفيديو نفسه فيه شريط للتمرير داخل المقطع)
+function camSlideInput(sec) {
+  const lbl = document.getElementById('camSlideLabel');
+  if (lbl) { const s = Number(sec); lbl.textContent = camPad(Math.floor(s / 3600)) + ':' + camPad(Math.floor((s % 3600) / 60)); }
+}
+function camSlideCommit(sec) {
+  if (!camCurrent) return;
+  const s = Number(sec);
+  const t = new Date(camCurrent.date);
+  t.setHours(Math.floor(s / 3600), Math.floor((s % 3600) / 60), 0, 0);
+  camOpenLiveAt(t, camCurrent.cam);
+}
 function camNavHtml(d, cam) {
   const camCount = Math.max(1, Math.min(16, Number(camSettings().camCount) || 4));
   let chips = '';
   for (let i = 1; i <= camCount; i++) chips += `<button type="button" class="lsChip${cam === i ? ' on' : ''}" onclick="camPickCamLive(${i})">كاميرا ${i}</button>`;
-  const stepBtn = (label, sec, primary) => `<button type="button" onclick="camStep(${sec})" style="flex:1;min-width:0;height:42px;border:1.5px solid var(--border);border-radius:11px;background:${primary ? 'var(--surface2)' : 'var(--surface)'};color:var(--text);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;">${label}</button>`;
+  const secOfDay = d.getHours() * 3600 + d.getMinutes() * 60;
   return `
     <div class="lsChips" style="justify-content:center;margin:2px 0 10px;">${chips}</div>
-    <div style="display:flex;gap:6px;margin-bottom:8px;">
-      ${stepBtn('− ساعة', -3600)}${stepBtn('− 10د', -600)}${stepBtn('− دقيقة', -60)}
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:10px;">
-      ${stepBtn('+ دقيقة', 60)}${stepBtn('+ 10د', 600)}${stepBtn('+ ساعة', 3600)}
+    <div style="background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:12px;color:var(--textMuted);font-weight:700;">مرّر الشريط لأي وقت في اليوم</span>
+        <span id="camSlideLabel" style="font-size:17px;font-weight:800;direction:ltr;">${camPad(d.getHours())}:${camPad(d.getMinutes())}</span>
+      </div>
+      <input type="range" min="0" max="86340" step="60" value="${secOfDay}" oninput="camSlideInput(this.value)" onchange="camSlideCommit(this.value)" style="width:100%;height:28px;accent-color:#2563EB;cursor:pointer;">
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--textMuted);margin-top:-2px;"><span>12 ص</span><span>12 م</span><span>11:59 م</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:8px 12px;margin-bottom:10px;">
-      <span style="font-size:13px;font-weight:700;color:var(--textMuted);white-space:nowrap;">اذهب لوقت</span>
+      <span style="font-size:13px;font-weight:700;color:var(--textMuted);white-space:nowrap;">يوم/وقت آخر</span>
       <input type="datetime-local" id="camJumpInput" value="${camLocalInput(d)}" onchange="camJumpTo(this.value)" style="flex:1;min-width:0;height:40px;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;padding:0 8px;">
     </div>`;
 }
@@ -6222,9 +6236,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.0';
+const APP_VERSION = '4.9.1';
 const APP_BUILD_DATE = '2026-10-08';
 const APP_RELEASES = [
+  { v: '4.9.1', date: '2026-10-08', items: [
+    'الكاميرا: شريط تمرير يدوي تسحبه لأي وقت في اليوم بدل أزرار الدقائق، وإصلاح فتح صفحة مكررة عند التنقّل'
+  ] },
   { v: '4.9.0', date: '2026-10-08', items: [
     'زر "الكاميرات" في الرئيسية: افتح الكاميرا في أي وقت بدون فاتورة',
     'تنقّل كامل في التسجيل: أزرار قفز (±دقيقة/±10د/±ساعة) + اختيار تاريخ ووقت + تبديل كاميرا - من الفاتورة ومن زر الكاميرات',
