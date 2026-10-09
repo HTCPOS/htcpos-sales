@@ -4870,11 +4870,12 @@ function camFsTogglePlay() {
   if (v.paused) { try { v.play().catch(() => {}); } catch (e) {} } else { try { v.pause(); } catch (e) {} }
   camFsSync();
 }
+// ±5 ثواني: لأن الفيديو يتحوّل لحظيًا، نطلب المقطع من جديد على الوقت ±5 ثواني بالضبط (دقيق ومضمون)
 function camFsSkip(sec) {
-  const v = document.getElementById('camFsVideo');
-  if (!v) return;
-  let d = v.duration; if (!isFinite(d) || d <= 0) d = 1e9;
-  try { v.currentTime = Math.max(0, Math.min(d - 0.1, (v.currentTime || 0) + sec)); } catch (e) {}
+  if (!camCurrent) return;
+  camCurrent.date = new Date(camCurrent.date.getTime() + sec * 1000);
+  camFsRender();
+  camFsLoad();
 }
 
 /* ===== تكبير بإصبعين (pinch) + سحب + نقر للتشغيل ===== */
@@ -5018,7 +5019,7 @@ function camFsRender() {
   const d = camCurrent.date, cam = camCurrent.cam;
   const dateTxt = CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()];
   const title = document.getElementById('camFsTitle'); if (title) title.textContent = dateTxt + ' · ' + camPad(d.getHours()) + ':' + camPad(d.getMinutes());
-  const lbl = document.getElementById('camFsTimeLbl'); if (lbl) lbl.textContent = camPad(d.getHours()) + ':' + camPad(d.getMinutes());
+  const lbl = document.getElementById('camFsTimeLbl'); if (lbl) lbl.textContent = camPad(d.getHours()) + ':' + camPad(d.getMinutes()) + ':' + camPad(d.getSeconds());
   const sl = document.getElementById('camFsSlider'); if (sl) sl.value = d.getHours() * 3600 + d.getMinutes() * 60;
   const camCount = Math.max(1, Math.min(16, Number(camSettings().camCount) || 4));
   let chips = '';
@@ -7062,9 +7063,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.15';
+const APP_VERSION = '4.9.16';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.16', date: '2026-10-09', items: [
+    'تقديم/ترجيع 5 ثواني صار دقيقًا ومضمونًا: يطلب اللحظة ±5 ثواني بالضبط من الكاميرا (مع عرض الثواني في الوقت)'
+  ] },
   { v: '4.9.15', date: '2026-10-09', items: [
     'مشغّل الكاميرا صار احترافي أكثر: تكبير بإصبعين (pinch) مع سحب الصورة، وزر رجوع "1:1"',
     'أزرار تقديم وترجيع 5 ثواني + زر تشغيل/إيقاف، ونقرة على الفيديو توقف/تشغّل (نقرتان = تكبير)',
