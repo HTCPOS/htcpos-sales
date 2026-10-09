@@ -1,14 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  HTC POS - Camera bridge setup (Android machine / Termux)
-#  BRIDGE_VERSION 2.3
+#  BRIDGE_VERSION 2.4
 #  Run once with:
 #    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
 #  Safe to re-run: it overwrites the server + boot files cleanly.
 #  v2.0: يقتل العمليات برقمها (PID) بدل الاسم -> لا تكرار عمليات أبدًا.
 # ============================================================
 set -e
-BRIDGE_VERSION="2.3"
+BRIDGE_VERSION="2.4"
 
 CAM_DIR="$HOME/cam"
 BOOT_DIR="$HOME/.termux/boot"
@@ -91,7 +91,7 @@ cat > "$PY" <<'PYEOF'
 import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BRIDGE_VERSION = "2.3"
+BRIDGE_VERSION = "2.4"
 HOME = os.path.expanduser("~")
 CAMDIR = os.path.join(HOME, "cam")
 CONF = os.path.join(CAMDIR, "camsrv.conf")
@@ -146,16 +146,21 @@ def start_ffmpeg(ch, start_utc, key):
     # الحل: نحوّل لـ H.264 + مقاطع MPEG-TS (أكثر صيغة مدعومة) -> يشتغل في أي مشغّل.
     # للتخفيف على المعالج: مقاس 640 و15 إطار/ثانية (اختُبرت السرعة = فوق 1x مع هامش).
     # ultrafast: أسرع ضغط. yuv420p: نطاق ألوان قياسي. genpts/make_zero: طوابع نظيفة.
+    # إعدادات أسرع بداية ممكنة:
+    # nobuffer+low_delay+probesize/analyzeduration قليلة -> يبدأ تحليل البث بسرعة.
+    # tune zerolatency -> المُرمّز يخرج أول إطار فورًا (بدون تأخير B-frames).
+    # hls_time=1 + إطار مفتاحي كل ثانية -> أول قطعة جاهزة بعد ~ثانية بدل 4.
     cmd = [
         "ffmpeg", "-nostdin", "-loglevel", "error",
-        "-fflags", "+genpts+igndts",
+        "-fflags", "+genpts+igndts+nobuffer", "-flags", "low_delay",
+        "-probesize", "500000", "-analyzeduration", "500000",
         "-rtsp_transport", "tcp", "-i", url,
         "-t", str(CLIP_SECONDS),
         "-an",
-        "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
-        "-vf", "scale=640:-2", "-r", "15", "-g", "30",
+        "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency", "-pix_fmt", "yuv420p",
+        "-vf", "scale=640:-2", "-r", "15", "-g", "15", "-keyint_min", "15", "-sc_threshold", "0",
         "-avoid_negative_ts", "make_zero",
-        "-f", "hls", "-hls_time", "4", "-hls_list_size", "0",
+        "-f", "hls", "-hls_time", "1", "-hls_list_size", "0",
         "-hls_playlist_type", "event",
         "-hls_flags", "append_list+independent_segments",
         "-hls_segment_type", "mpegts",
