@@ -4841,10 +4841,85 @@ function closeCamFs() {
   const m = document.getElementById('camFsModal');
   if (m) m.style.display = 'none';
 }
-function camFsPlaying() { const m = document.getElementById('camFsMsg'); if (m) m.style.display = 'none'; }
+function camFsPlaying() { const m = document.getElementById('camFsMsg'); if (m) { m.style.display = 'none'; m.style.pointerEvents = 'none'; } }
+let camFsDbg = {};
+const MEDIA_ERR_AR = { 1: 'أُلغي التشغيل', 2: 'خطأ شبكة (ما وصل الفيديو من الجسر)', 3: 'فشل فك الترميز (كوديك/طوابع زمنية)', 4: 'الصيغة غير مدعومة / المصدر غير صالح' };
 function camFsError() {
+  const v = document.getElementById('camFsVideo');
+  let code = '-', meaning = 'غير معروف';
+  if (v && v.error) { code = v.error.code; meaning = MEDIA_ERR_AR[code] || ('رمز ' + code); }
+  camFsShowError('playback', 'خطأ الفيديو: ' + code + ' (' + meaning + ')');
+}
+// صندوق تشخيص فيه كود الخطأ بالتفصيل + زر نسخ (بدون تخمين)
+function camFsShowError(phase, line) {
   const m = document.getElementById('camFsMsg');
-  if (m) { m.style.display = 'flex'; m.innerHTML = 'تعذّر التشغيل. <a href="#" onclick="event.preventDefault();camFsLoad()" style="color:#60A5FA;font-weight:800;margin-right:6px;">إعادة المحاولة</a>'; }
+  if (!m) return;
+  const d = camCurrent ? camCurrent.date : null;
+  const timeTxt = d ? (camPad(d.getHours()) + ':' + camPad(d.getMinutes())) : '-';
+  const report = [
+    'HTC-ERR / كاميرا',
+    'المرحلة: ' + phase,
+    line || '',
+    'الوقت المطلوب: ' + timeTxt + '  كاميرا: ' + (camCurrent ? camCurrent.cam : '-'),
+    'الجسر: ' + (camFsDbg.bridgeUrl || '—'),
+    'طلب /play: ' + (camFsDbg.playStatus != null ? camFsDbg.playStatus : '—'),
+    'رابط الفيديو: ' + (camFsDbg.hlsUrl || '—'),
+    'إصدار التطبيق: ' + APP_VERSION,
+    'التوقيت: ' + new Date().toLocaleString('ar-EG-u-nu-latn')
+  ].filter(Boolean).join('\n');
+  const safe = report.replace(/</g, '&lt;');
+  m.style.display = 'flex';
+  m.style.pointerEvents = 'auto';
+  m.innerHTML = `<div style="max-width:420px;width:100%;background:rgba(15,23,42,.92);border:1.5px solid #DC2626;border-radius:16px;padding:16px;text-align:right;">
+      <div style="color:#FCA5A5;font-size:14px;font-weight:800;margin-bottom:8px;">⚠ تعذّر تشغيل الكاميرا</div>
+      <pre id="camErrText" style="color:#E2E8F0;font-size:11.5px;line-height:1.7;white-space:pre-wrap;word-break:break-word;direction:rtl;font-family:inherit;margin:0 0 12px;">${safe}</pre>
+      <div style="display:flex;gap:8px;">
+        <button type="button" onclick="camCopyErr()" style="flex:1;height:42px;border:none;border-radius:11px;background:#2563EB;color:#fff;font-size:13px;font-weight:800;cursor:pointer;">نسخ الكود</button>
+        <button type="button" onclick="camFsLoad()" style="flex:1;height:42px;border:1.5px solid rgba(255,255,255,.25);border-radius:11px;background:transparent;color:#fff;font-size:13px;font-weight:800;cursor:pointer;">إعادة المحاولة</button>
+      </div>
+    </div>`;
+  camFsDbg.lastReport = report;
+  logAppError('camera', report);
+}
+function camCopyErr() {
+  const txt = camFsDbg.lastReport || '';
+  try { if (navigator.clipboard) navigator.clipboard.writeText(txt); } catch (e) {}
+  try { showQuickToast('تم نسخ الكود - أرسله للمطوّر', true); } catch (e) {}
+}
+
+/* ===== سجل أخطاء التطبيق: أي فشل في أي مكان يتسجّل بكود - ينسخه المستخدم ويرسله ===== */
+let appErrorLog = [];
+try { appErrorLog = JSON.parse(localStorage.getItem('appErrorLog') || '[]'); } catch (e) { appErrorLog = []; }
+function logAppError(src, msg) {
+  try {
+    appErrorLog.push({ t: Date.now(), src: src, msg: String(msg).slice(0, 800) });
+    if (appErrorLog.length > 40) appErrorLog = appErrorLog.slice(-40);
+    localStorage.setItem('appErrorLog', JSON.stringify(appErrorLog));
+  } catch (e) {}
+  try { const b = document.getElementById('devErrBadge'); if (b) { b.style.display = 'inline-flex'; b.textContent = appErrorLog.length; } } catch (e) {}
+}
+window.addEventListener('error', function (e) {
+  const where = e && e.filename ? (' @' + String(e.filename).split('/').pop() + ':' + (e.lineno || '?')) : '';
+  logAppError('js', (e && e.message ? e.message : 'خطأ غير معروف') + where);
+});
+window.addEventListener('unhandledrejection', function (e) {
+  const r = e && e.reason;
+  logAppError('promise', (r && r.message) ? r.message : String(r));
+});
+function errReport() {
+  if (!appErrorLog.length) return 'لا توجد أخطاء مسجّلة ✅';
+  return 'HTC-ERR LOG · v' + APP_VERSION + '\n\n' + appErrorLog.slice().reverse().map(function (x) {
+    return new Date(x.t).toLocaleString('ar-EG-u-nu-latn') + ' [' + x.src + ']\n' + x.msg;
+  }).join('\n\n');
+}
+function openErrorLog() {
+  const txt = errReport();
+  uiDialog({ title: 'سجل الأخطاء', msg: '', prompt: true, multiline: true, def: txt, readonly: true, okText: 'نسخ الكل', cancel: true, cancelText: 'إغلاق' }).then(function (v) {
+    if (v !== null) { try { if (navigator.clipboard) navigator.clipboard.writeText(txt); showQuickToast('تم نسخ السجل - أرسله للمطوّر', true); } catch (e) {} }
+  });
+}
+function clearErrorLog() {
+  uiConfirm('مسح سجل الأخطاء؟').then(function (ok) { if (ok) { appErrorLog = []; try { localStorage.removeItem('appErrorLog'); } catch (e) {} try { showQuickToast('تم مسح السجل', true); } catch (e) {} } });
 }
 function camFsRender() {
   if (!camCurrent) return;
@@ -4881,23 +4956,29 @@ async function camFsLoad() {
   const d = camCurrent.date, cam = camCurrent.cam, stamp = camLocalStamp(d);
   const v = document.getElementById('camFsVideo');
   const msg = document.getElementById('camFsMsg');
-  if (msg) { msg.style.display = 'flex'; msg.textContent = 'جارٍ الاتصال بالكاميرا...'; }
+  camFsDbg = { t: stamp, cam: cam, bridgeUrl: null, playStatus: null, hlsUrl: null };
+  if (msg) { msg.style.display = 'flex'; msg.style.pointerEvents = 'none'; msg.textContent = 'جارٍ الاتصال بالكاميرا...'; }
   try {
     const br = (await db.ref('data/cameraBridge').once('value')).val();
-    if (!br || !br.url || !br.code) { if (msg) msg.textContent = 'الجسر غير متصل — تأكد أن المكينة شغّالة وعلى الإنترنت'; return; }
+    if (!br || !br.url || !br.code) { camFsShowError('الجسر', 'الجسر غير متصل — المكينة مطفية/مش على النت أو ما نشرت رابطًا'); return; }
     const api = String(br.url).replace(/\/+$/, '');
-    const r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp, { cache: 'no-store' });
-    if (!r.ok) { if (msg) msg.textContent = 'تعذّر طلب الفيديو (' + r.status + ')'; return; }
+    camFsDbg.bridgeUrl = api;
+    let r;
+    try { r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp, { cache: 'no-store' }); }
+    catch (e) { camFsShowError('طلب /play', 'فشل الاتصال بالجسر: ' + (e && e.message ? e.message : e)); return; }
+    camFsDbg.playStatus = r.status;
+    if (!r.ok) { camFsShowError('طلب /play', 'الجسر رفض الطلب (رمز ' + r.status + ')' + (r.status === 403 ? ' — رمز الوصول غير مطابق' : '')); return; }
     const j = await r.json();
     // كسر الكاش: رابط فريد كل مرة يجبر الآيفون يحمّل الوقت الجديد بدل ما يعلّق على القديم
     const hls = api + (j.hls || '/hls/index.m3u8') + '?v=' + stamp + '_' + Date.now();
+    camFsDbg.hlsUrl = hls;
     if (v) {
       try { v.pause(); } catch (e) {}
       v.src = hls;
       try { v.load(); } catch (e) {}
       try { v.play().catch(() => {}); } catch (e) {}
     }
-  } catch (e) { if (msg) msg.textContent = 'خطأ: ' + (e && e.message ? e.message : e); }
+  } catch (e) { camFsShowError('عام', 'خطأ غير متوقع: ' + (e && e.message ? e.message : e)); }
 }
 // نقطة الدخول الموحّدة: لحظة + كاميرا
 function camOpenLiveAt(dateObj, cam) {
@@ -5622,7 +5703,8 @@ function renderDevTools() {
     restart: svg('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/>'),
     terminal: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/>'),
     key:     svg('<circle cx="7.5" cy="15.5" r="4"/><path d="m10.5 12.5 8-8M16 7l2 2M18.5 4.5 21 7"/>'),
-    shield:  svg('<path d="M12 3 5 6v5c0 4.2 2.9 7.8 7 9 4.1-1.2 7-4.8 7-9V6z"/><path d="m9 12 2 2 4-4"/>')
+    shield:  svg('<path d="M12 3 5 6v5c0 4.2 2.9 7.8 7 9 4.1-1.2 7-4.8 7-9V6z"/><path d="m9 12 2 2 4-4"/>'),
+    log:     svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>')
   };
   const item = (icon, color, title, desc, onclick) => `
     <button type="button" onclick="${onclick}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);cursor:pointer;text-align:right;margin-bottom:10px;">
@@ -5643,6 +5725,8 @@ function renderDevTools() {
     ${item(IC.bridge, '#1D4ED8', 'تحديث مكينة الكاميرات (الجسر)', 'المكينة تنزّل آخر نسخة وتشغّل نفسها', "bridgeUpdateRemote();")}
     ${item(IC.restart, '#D97706', 'إعادة تشغيل الجسر', 'إعادة تشغيل نظيفة لمكينة الكاميرات', "bridgeRestartRemote();")}
     ${item(IC.terminal, '#334155', 'أوامر المكينة (الطرفية)', 'تنفيذ أوامر على المكينة عن بُعد', "closeModal('devToolsModal');openBridgeShell();")}
+    <div class="setSec" style="margin-top:6px;">التشخيص</div>
+    ${item(IC.log, '#0EA5E9', 'سجل الأخطاء', 'كل فشل يتسجّل بكود - انسخه وأرسله للمطوّر', "closeModal('devToolsModal');openErrorLog();")}
     <div class="setSec" style="margin-top:6px;">الأمان</div>
     ${item(IC.key, '#DC2626', 'تغيير الرمز السري', 'غيّر رمز فتح هذا القسم', "changeDevPin();")}`;
 }
@@ -6885,9 +6969,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.9';
+const APP_VERSION = '4.9.10';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.10', date: '2026-10-09', items: [
+    'تشخيص الأخطاء: أي فشل في الكاميرا يعرض صندوقًا فيه كود الخطأ بالتفصيل (رقم الخطأ + حالة الطلب + الرابط) مع زر نسخ ترسله للمطوّر',
+    'سجل أخطاء عام لكل التطبيق في أدوات المطوّر ← التشخيص: أي خطأ يُسجّل بكود قابل للنسخ',
+    'بدون تخمين: كل مشكلة صار لها كود واضح'
+  ] },
   { v: '4.9.9', date: '2026-10-09', items: [
     'مشغّل كاميرا احترافي بملء الشاشة: الفيديو يملأ الجوال، وشريط الـ24 ساعة صار جوّا المشغّل فوق الصورة (مثل Hik-Connect)',
     'إصلاح تجمّد الفيديو عند التمرير لوقت آخر: صار يحمّل الوقت الجديد فورًا بدون تعليق (يتطلب تحديث الجسر أيضًا)',
