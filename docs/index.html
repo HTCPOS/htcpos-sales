@@ -1624,14 +1624,6 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
-<div class="modalBg" id="camPlayModal" onclick="if(event.target===this)closeModal('camPlayModal')">
-  <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('camPlayModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <h3>مشاهدة في الكاميرا</h3>
-    <div id="camPlayBody"></div>
-  </div>
-</div>
-
 <div class="modalBg" id="camLiveModal" onclick="if(event.target===this)closeCamLive()">
   <div class="modalSheet">
     <button class="closeM" onclick="closeCamLive()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1772,7 +1764,7 @@ setTimeout(() => window.hideSplash(), 4000);
         <button onclick="openDevTools();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
         <span class="setIc" style="--ic:#0F766E;color:#0F766E;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">أدوات المطوّر</span>
-        <span style="font-size:11px;color:var(--textMuted);font-weight:700;">🔒 محمي</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--textMuted);font-weight:700;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>محمي</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       </div>
@@ -4869,13 +4861,20 @@ function camRenderLive() {
   const body = document.getElementById('camLiveBody');
   const dateTxt = CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()];
   document.getElementById('camLiveTitle').textContent = dateTxt + ' · ' + camPad(d.getHours()) + ':' + camPad(d.getMinutes());
-  body.innerHTML = camNavHtml(d, cam) + `
-    <button type="button" onclick="camPlayVlc()" style="width:100%;margin-top:4px;border:none;border-radius:18px;height:58px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg,#F97316,#EA580C);color:#fff;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 12px 24px -12px rgba(234,88,12,.5);">
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-      تشغيل في VLC</button>
-    <div id="camVlcMsg" style="text-align:center;font-size:12.5px;color:var(--textMuted);font-weight:600;margin-top:10px;min-height:16px;"></div>
-    <button type="button" onclick="camRenderLiveInApp()" style="width:100%;margin-top:4px;border:1.5px solid var(--border);border-radius:14px;height:44px;background:var(--surface);color:var(--textMuted);font-size:13px;font-weight:700;cursor:pointer;">أو شغّل داخل التطبيق</button>
-    <div id="camLiveVideoWrap" style="margin-top:10px;"></div>`;
+  // الفيديو أولًا (كبير)، وتحته شريط اليوم كامل - السحب يعيد الطلب من الكاميرا (مثل Hik-Connect)
+  body.innerHTML = `
+    <div id="camLiveVideoWrap" style="margin-top:2px;"></div>
+    <div style="margin-top:12px;">${camNavHtml(d, cam)}</div>`;
+  camLoadVideo();
+}
+function camFullscreen() {
+  const v = document.getElementById('camLiveVideo');
+  if (!v) return;
+  try {
+    if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();   // مشغّل الآيفون الكبير (نفس سفاري)
+    else if (v.requestFullscreen) v.requestFullscreen();
+    else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+  } catch (e) {}
 }
 // الزر الرئيسي: يحضّر المقطع من الجسر ثم يفتحه في VLC (يشتغل من أي مكان عبر النفق)
 async function camPlayVlc() {
@@ -4897,32 +4896,40 @@ async function camPlayVlc() {
     setTimeout(() => { if (msg) msg.innerHTML = 'ما فتح VLC؟ تأكد أنه مثبّت — أو <a href="#" onclick="event.preventDefault();camRenderLiveInApp()" style="color:#2563EB;font-weight:800;">شغّل داخل التطبيق</a>'; }, 2500);
   } catch (e) { if (msg) msg.textContent = 'خطأ: ' + (e && e.message ? e.message : e); }
 }
-// بديل: المشغّل الداخلي - يحمّل عند الطلب فقط
-async function camRenderLiveInApp() {
+// المشغّل الذكي داخل التطبيق: يحمّل الفيديو كبيرًا على اللحظة المختارة (يعاد طلبه عند تحريك الشريط)
+async function camLoadVideo() {
   if (!camCurrent) return;
   const d = camCurrent.date, cam = camCurrent.cam, stamp = camLocalStamp(d);
   const wrap = document.getElementById('camLiveVideoWrap');
   if (!wrap) return;
-  wrap.innerHTML = '<div style="text-align:center;padding:24px 10px;color:var(--textMuted);font-weight:700;">جارٍ الاتصال...</div>';
+  wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:220px;background:#0B1020;border-radius:16px;color:#94A3B8;font-weight:700;font-size:13.5px;">جارٍ الاتصال بالكاميرا...</div>';
   try {
     const br = (await db.ref('data/cameraBridge').once('value')).val();
-    if (!br || !br.url || !br.code) { wrap.innerHTML = camLiveError('الجسر غير متصل.'); return; }
+    if (!br || !br.url || !br.code) { wrap.innerHTML = camLiveError('الجسر غير متصل — تأكد أن المكينة شغّالة وعلى الإنترنت.'); return; }
     const api = String(br.url).replace(/\/+$/, '');
     const r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp, { cache: 'no-store' });
     if (!r.ok) { wrap.innerHTML = camLiveError('تعذّر طلب الفيديو (' + r.status + ').'); return; }
     const j = await r.json();
     const hls = api + (j.hls || '/hls/index.m3u8');
-    wrap.innerHTML = `<div style="background:#000;border-radius:16px;overflow:hidden;"><video id="camLiveVideo" controls autoplay playsinline muted style="width:100%;max-height:52vh;display:block;background:#000;"></video></div><div id="camLiveMsg" style="text-align:center;font-size:12.5px;color:var(--textMuted);font-weight:600;margin-top:8px;">قد يأخذ الفيديو بضع ثوانٍ...</div>`;
+    wrap.innerHTML = `
+      <div style="background:#000;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px -12px rgba(0,0,0,.4);">
+        <video id="camLiveVideo" controls autoplay playsinline muted webkit-playsinline style="width:100%;max-height:70vh;min-height:230px;display:block;background:#000;"></video>
+      </div>
+      <button type="button" onclick="camFullscreen()" style="width:100%;margin-top:10px;border:none;border-radius:14px;height:48px;display:flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(180deg,#1E293B,#0F172A);color:#fff;font-size:14.5px;font-weight:800;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        ملء الشاشة
+      </button>
+      <div id="camLiveMsg" style="text-align:center;font-size:12.5px;color:var(--textMuted);font-weight:600;margin-top:8px;min-height:16px;">قد يأخذ الفيديو بضع ثوانٍ ليبدأ...</div>`;
     const v = document.getElementById('camLiveVideo');
     v.src = hls;
     v.addEventListener('playing', () => { const m = document.getElementById('camLiveMsg'); if (m) m.style.display = 'none'; });
-    v.addEventListener('error', () => { const m = document.getElementById('camLiveMsg'); if (m) { m.style.display = 'block'; m.textContent = 'تعذّر داخل التطبيق — استخدم زر VLC.'; } });
+    v.addEventListener('error', () => { const m = document.getElementById('camLiveMsg'); if (m) { m.style.display = 'block'; m.innerHTML = 'تعذّر التشغيل — <a href="#" onclick="event.preventDefault();camLoadVideo()" style="color:#2563EB;font-weight:800;">إعادة المحاولة</a>'; } });
     try { v.play().catch(() => {}); } catch (e) {}
   } catch (e) { wrap.innerHTML = camLiveError('خطأ: ' + (e && e.message ? e.message : e)); }
 }
 function camLiveError(msg) {
-  return `<div style="background:#FEF2F2;color:#B91C1C;border-radius:14px;padding:14px;font-size:13.5px;font-weight:700;line-height:1.8;margin-top:6px;">${escapeHtml(msg)}</div>
-    <button type="button" onclick="camRenderLive()" style="width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:14px;height:46px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">↻ إعادة المحاولة</button>`;
+  return `<div style="background:#FEF2F2;color:#B91C1C;border-radius:14px;padding:14px;font-size:13.5px;font-weight:700;line-height:1.8;">${escapeHtml(msg)}</div>
+    <button type="button" onclick="camLoadVideo()" style="width:100%;margin-top:12px;border:1.5px solid var(--border);border-radius:14px;height:46px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">↻ إعادة المحاولة</button>`;
 }
 
 /* ================= مشاهدة الفاتورة في الكاميرا (Hik-Connect) =================
@@ -4940,10 +4947,10 @@ const CAM_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأر�
 const CAM_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 function camPad(n) { return String(n).padStart(2, '0'); }
 
+// زر "شاهد الفاتورة في الكاميرا" → يفتح الشاشة الموحّدة مباشرة على وقت الفاتورة
 function openCamPlayback(dateVal) {
   camLastDate = dateVal;
-  renderCamPlayback();
-  openModal('camPlayModal');
+  camOpenLive();
 }
 
 function renderCamPlayback() {
@@ -5239,7 +5246,7 @@ async function runCamDiag() {
 
     // 3c) إعدادات camsrv.conf (أين الخانة اللي فيها غلط)
     if (d.CONF !== 'yes') {
-      rows.push(diagRow('bad', 'ملف الإعدادات مفقود', 'camsrv.conf غير موجود على المكينة. لازم تعيد تركيب الجسر (تحديث الجسر).', 'bridgeUpdate', '⬇ تحديث/تركيب الجسر'));
+      rows.push(diagRow('bad', 'ملف الإعدادات مفقود', 'camsrv.conf غير موجود على المكينة. لازم تعيد تركيب الجسر (تحديث الجسر).', 'bridgeUpdate', 'تحديث/تركيب الجسر'));
     } else {
       const confProblems = [];
       if (!d.DVR_IP) confProblems.push('خانة DVR_IP (عنوان جهاز التسجيل) فاضية');
@@ -5263,9 +5270,9 @@ async function runCamDiag() {
 
     // 3e) نسخة الجسر
     if (bridgeVer && bridgeVer !== BRIDGE_EXPECTED_VERSION) {
-      rows.push(diagRow('warn', 'الجسر يشغّل نسخة قديمة', 'النسخة على المكينة ' + escapeHtml(bridgeVer) + ' والمتوقّع ' + BRIDGE_EXPECTED_VERSION + '. حدّث الجسر للاستفادة من منع التكرار.', 'bridgeUpdate', '⬇ تحديث الجسر'));
+      rows.push(diagRow('warn', 'الجسر يشغّل نسخة قديمة', 'النسخة على المكينة ' + escapeHtml(bridgeVer) + ' والمتوقّع ' + BRIDGE_EXPECTED_VERSION + '. حدّث الجسر للاستفادة من منع التكرار.', 'bridgeUpdate', 'تحديث الجسر'));
     } else if (!bridgeVer && publicOk) {
-      rows.push(diagRow('warn', 'الجسر يشغّل نسخة قديمة', 'النسخة القديمة ما تعرض رقم إصدار. يُنصح بتحديث الجسر لنسخة ' + BRIDGE_EXPECTED_VERSION + ' (تمنع تكرار العمليات).', 'bridgeUpdate', '⬇ تحديث الجسر'));
+      rows.push(diagRow('warn', 'الجسر يشغّل نسخة قديمة', 'النسخة القديمة ما تعرض رقم إصدار. يُنصح بتحديث الجسر لنسخة ' + BRIDGE_EXPECTED_VERSION + ' (تمنع تكرار العمليات).', 'bridgeUpdate', 'تحديث الجسر'));
     }
   }
 
@@ -5297,7 +5304,7 @@ const GH_BRANCH = 'main';
 // وجهة كل ملف داخل المستودع حسب اسمه (بدون تخمين - من بنية المستودع الفعلية)
 const GH_TARGETS = {
   'index.html':    { path: 'docs/index.html',                 label: 'التطبيق (الواجهة الحية)', after: 'انتظر ~دقيقة (GitHub Pages) ثم أعد فتح التطبيق - يتحدّث لحاله.' },
-  'setup.sh':      { path: 'setup.sh',                         label: 'سكريبت الجسر',            after: 'افتح إعدادات الكاميرا واضغط "⬇ تحديث الجسر".' },
+  'setup.sh':      { path: 'setup.sh',                         label: 'سكريبت الجسر',            after: 'افتح إعدادات الكاميرا واضغط "تحديث الجسر".' },
   'build-ios.yml': { path: '.github/workflows/build-ios.yml',  label: 'إعداد بناء IPA',          after: 'تم - يسري على عمليات البناء القادمة.' }
 };
 
@@ -5512,9 +5519,20 @@ function renderDevTools() {
   const body = document.getElementById('devToolsBody');
   if (!body) return;
   const bioHint = (isNativeApp()) ? 'يُفتح ببصمة الوجه، وإذا فشلت بالرمز السري.' : 'يُفتح بالرمز السري.';
+  const svg = p => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  // أيقونات خطّية أنيقة بنفس طابع التطبيق
+  const IC = {
+    publish: svg('<path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>'),
+    script:  svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>'),
+    bridge:  svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M7 20h10M9 16v4M15 16v4"/><path d="M8 8h.01M12 8h.01"/>'),
+    restart: svg('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/>'),
+    terminal: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/>'),
+    key:     svg('<circle cx="7.5" cy="15.5" r="4"/><path d="m10.5 12.5 8-8M16 7l2 2M18.5 4.5 21 7"/>'),
+    shield:  svg('<path d="M12 3 5 6v5c0 4.2 2.9 7.8 7 9 4.1-1.2 7-4.8 7-9V6z"/><path d="m9 12 2 2 4-4"/>')
+  };
   const item = (icon, color, title, desc, onclick) => `
     <button type="button" onclick="${onclick}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);cursor:pointer;text-align:right;margin-bottom:10px;">
-      <span style="flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:${color}1A;font-size:19px;">${icon}</span>
+      <span style="flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:${color}1A;color:${color};">${icon}</span>
       <span style="flex:1;min-width:0;">
         <span style="display:block;font-size:14.5px;font-weight:800;color:var(--text);">${title}</span>
         <span style="display:block;font-size:11.5px;color:var(--textMuted);margin-top:2px;line-height:1.6;">${desc}</span>
@@ -5522,14 +5540,17 @@ function renderDevTools() {
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
     </button>`;
   body.innerHTML = `
-    <div style="background:#0F766E14;border:1.5px solid #0F766E33;border-radius:14px;padding:11px 13px;margin-bottom:14px;font-size:12px;color:#0F766E;font-weight:700;line-height:1.7;">🔒 هذه أدوات حسّاسة - ${bioHint} لا تعطِها لأي شخص.</div>
-    ${item('🚀', '#0F766E', 'نشر تحديث (GitHub)', 'ارفع index.html أو setup.sh للمستودع', "closeModal('devToolsModal');openGhPublish();")}
-    ${item('⬇', '#1D4ED8', 'تحديث السكريبت على الكاشير', 'ركّب نسخة جديدة من سكريبت الكاشير', "closeModal('devToolsModal');openScriptUpdate();")}
-    ${item('🔄', '#1D4ED8', 'تحديث مكينة الكاميرات (الجسر)', 'المكينة تنزّل آخر نسخة وتشغّل نفسها', "bridgeUpdateRemote();")}
-    ${item('↻', '#D97706', 'إعادة تشغيل الجسر', 'إعادة تشغيل نظيفة لمكينة الكاميرات', "bridgeRestartRemote();")}
-    ${item('⌨', '#334155', 'أوامر المكينة (الطرفية)', 'تنفيذ أوامر على المكينة عن بُعد', "closeModal('devToolsModal');openBridgeShell();")}
+    <div style="display:flex;align-items:center;gap:10px;background:#0F766E14;border:1.5px solid #0F766E33;border-radius:14px;padding:12px 13px;margin-bottom:14px;color:#0F766E;">
+      <span style="flex:0 0 auto;">${IC.shield}</span>
+      <span style="font-size:12px;font-weight:700;line-height:1.7;">أدوات حسّاسة — ${bioHint} لا تعطِها لأي شخص.</span>
+    </div>
+    ${item(IC.publish, '#0F766E', 'نشر تحديث (GitHub)', 'ارفع index.html أو setup.sh للمستودع', "closeModal('devToolsModal');openGhPublish();")}
+    ${item(IC.script, '#2563EB', 'تحديث السكريبت على الكاشير', 'ركّب نسخة جديدة من سكريبت الكاشير', "closeModal('devToolsModal');openScriptUpdate();")}
+    ${item(IC.bridge, '#1D4ED8', 'تحديث مكينة الكاميرات (الجسر)', 'المكينة تنزّل آخر نسخة وتشغّل نفسها', "bridgeUpdateRemote();")}
+    ${item(IC.restart, '#D97706', 'إعادة تشغيل الجسر', 'إعادة تشغيل نظيفة لمكينة الكاميرات', "bridgeRestartRemote();")}
+    ${item(IC.terminal, '#334155', 'أوامر المكينة (الطرفية)', 'تنفيذ أوامر على المكينة عن بُعد', "closeModal('devToolsModal');openBridgeShell();")}
     <div class="setSec" style="margin-top:6px;">الأمان</div>
-    ${item('🔑', '#DC2626', 'تغيير الرمز السري', 'غيّر رمز فتح هذا القسم', "changeDevPin();")}`;
+    ${item(IC.key, '#DC2626', 'تغيير الرمز السري', 'غيّر رمز فتح هذا القسم', "changeDevPin();")}`;
 }
 
 function renderCamSettings() {
@@ -5538,36 +5559,22 @@ function renderCamSettings() {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;"><span style="font-size:14px;font-weight:700;">${label}</span>${inner}</div>
       ${hint ? `<div style="font-size:12px;color:var(--textMuted);margin-top:6px;line-height:1.7;">${hint}</div>` : ''}</div>`;
   const num = (id, val, w) => `<input id="${id}" type="number" inputmode="numeric" lang="en" value="${val}" style="width:${w || 80}px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:15px;">`;
+  const camIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-left:5px;"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg>';
   document.getElementById('camSettingsBody').innerHTML = `
     <div class="setSec">مكينة الكاميرات (الجسر)</div>
     <div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
       <div id="bridgeStatusLine" style="font-size:13px;font-weight:700;color:var(--textMuted);margin-bottom:10px;">جارٍ فحص حالة الجسر...</div>
-      <button type="button" onclick="openCamDiag()" style="width:100%;height:46px;border:none;border-radius:12px;background:#0F766E;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">🔍 فحص الكاميرات (يكشف العطل ويعطيك الحل)</button>
-      <div style="font-size:11.5px;color:var(--textMuted);margin-top:10px;line-height:1.7;">التحكّم بالجسر (تحديث / إعادة تشغيل / طرفية) انتقل إلى: الإعدادات ← <b>أدوات المطوّر</b> 🔒</div>
+      <button type="button" onclick="openCamDiag()" style="width:100%;height:46px;border:none;border-radius:12px;background:#0F766E;color:#fff;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>فحص الكاميرات</button>
+      <div style="font-size:11.5px;color:var(--textMuted);margin-top:10px;line-height:1.7;">التحكّم بالجسر (تحديث / إعادة تشغيل / طرفية) انتقل إلى: الإعدادات ← <b>أدوات المطوّر</b></div>
     </div>
     <div class="setSec">الكاميرات</div>
-    ${row('كاميرا الكاشير', num('camSetCam', st.cam), 'رقم الكاميرا اللي تصوّر الكاشير في Hik-Connect')}
+    ${row('كاميرا الكاشير', num('camSetCam', st.cam), 'رقم الكاميرا اللي تصوّر الكاشير')}
     ${row('عدد الكاميرات', num('camSetCount', st.camCount))}
     <div class="setSec">التوقيت</div>
     ${row('ابدأ قبل الفاتورة (ثانية)', num('camSetPre', st.preSec), 'عشان تشوف الزبون وهو يجي للكاشير')}
     ${row('فرق ساعة جهاز التسجيل (ثانية)', num('camSetOffset', st.offsetSec), 'لو ساعة الكاميرات مقدّمة عن الكاشير اكتب رقم موجب، ولو مأخرة اكتب سالب')}
-    <div class="setSec">الفتح على الدقيقة بالظبط (VLC)</div>
-    ${row('عنوان جهاز الكاميرات', `<input id="camSetHost" type="text" dir="ltr" value="${escapeHtml(st.dvrHost)}" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`)}
-    ${row('اسم المستخدم', `<input id="camSetUser" type="text" dir="ltr" autocapitalize="off" value="${escapeHtml(st.dvrUser)}" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`)}
-    ${row('كلمة المرور', `<input id="camSetPass" type="password" dir="ltr" autocomplete="off" value="${escapeHtml(st.dvrPass)}" placeholder="••••••" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`, 'تنحفظ في جوالك بس - ما تنرفع لأي مكان. ومن برا المحل لازم Tailscale يكون شغال في جوالك.')}
-    <button type="button" onclick="camSaveSettings(false);openTailscaleSetup();" style="width:100%;margin:0 0 10px;height:46px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">ربط الكاميرات عن بعد (Tailscale) ←</button>
-    <div class="setSec">طريقة فتح Hik-Connect</div>
-    <div class="lsChips" style="margin-bottom:10px;">
-      <button type="button" class="lsChip${st.mode !== 'shortcut' ? ' on' : ''}" onclick="camSetMode('scheme')">رابط مباشر</button>
-      <button type="button" class="lsChip${st.mode === 'shortcut' ? ' on' : ''}" onclick="camSetMode('shortcut')">اختصار Shortcuts</button>
-    </div>
-    ${st.mode === 'shortcut'
-      ? row('اسم الاختصار', `<input id="camSetShortcut" type="text" value="${escapeHtml(st.shortcut)}" style="width:130px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:15px;">`,
-        'مرة وحدة: افتح تطبيق <b>الاختصارات</b> ← <b>+</b> ← إضافة إجراء ← <b>فتح التطبيق</b> ← اختر <b>Hik-Connect</b> ← سمّ الاختصار نفس الاسم هنا ← تم.')
-      : row('الرابط', `<input id="camSetScheme" type="text" value="${escapeHtml(st.scheme)}" dir="ltr" style="width:150px;height:40px;text-align:center;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--text);font-size:14px;">`,
-        'لو ما فتح التطبيق، جرّب <b dir="ltr">hikconnect://</b> أو استخدم طريقة الاختصار (مضمونة)')}
-    <button type="button" onclick="camSaveSettings(true)" style="width:100%;margin-top:6px;border:1.5px solid var(--border);border-radius:16px;height:48px;background:var(--surface);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;">جرّب فتح Hik-Connect</button>
-    <button type="button" onclick="camSaveSettings(false)" style="width:100%;margin-top:10px;border:none;border-radius:16px;height:52px;background:#16A34A;color:#fff;font-size:16px;font-weight:700;cursor:pointer;">حفظ</button>`;
+    <div style="background:#0EA5E914;border:1.5px solid #0EA5E933;border-radius:14px;padding:11px 13px;margin-bottom:10px;font-size:12px;color:#0369A1;font-weight:600;line-height:1.7;">${camIcon}المشاهدة صارت داخل التطبيق مباشرة: افتح أي فاتورة ← <b>شاهد الفاتورة في الكاميرا</b> ← الفيديو يفتح على وقت الفاتورة مع شريط اليوم كامل.</div>
+    <button type="button" onclick="camSaveSettings(false)" style="width:100%;margin-top:4px;border:none;border-radius:16px;height:52px;background:#16A34A;color:#fff;font-size:16px;font-weight:700;cursor:pointer;">حفظ</button>`;
 }
 
 function camReadForm() {
@@ -5586,13 +5593,12 @@ function camReadForm() {
   return st;
 }
 function camSetMode(m) { const st = camReadForm(); st.mode = m; saveCamSettings(st); renderCamSettings(); }
-function camSaveSettings(test) {
+function camSaveSettings() {
   const st = camReadForm();
   saveCamSettings(st);
-  if (test) { camOpenHik(''); return; }
   try { showQuickToast('تم حفظ إعدادات الكاميرا', true); } catch (e) {}
   closeModal('camSettingsModal');
-  if (isModalOpen('camPlayModal')) renderCamPlayback();
+  if (isModalOpen('camLiveModal') && camCurrent) camRenderLive();
 }
 
 /* ================= اختيار خط التطبيق ================= */
@@ -6784,9 +6790,16 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.7';
+const APP_VERSION = '4.9.8';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.8', date: '2026-10-09', items: [
+    'شاشة كاميرا واحدة نظيفة: زر "شاهد الفاتورة في الكاميرا" يفتح الفيديو مباشرة على وقت الفاتورة - بدون شاشات مكررة ولا أزرار زائدة',
+    'مشغّل ذكي داخل التطبيق مثل Hik-Connect: يفتح على دقيقة الفاتورة، وشريط اليوم كامل تسحبه لأي وقت (يعيد الطلب من الكاميرا)',
+    'الفيديو يفتح كبيرًا مع زر "ملء الشاشة" (نفس مشغّل الآيفون) بدل المربع الصغير',
+    'إزالة Hik-Connect و"نسخ الوقت" و VLC من المشاهدة، وتبسيط إعدادات الكاميرا',
+    'أيقونات أنيقة لأدوات المطوّر بدل الرموز القديمة'
+  ] },
   { v: '4.9.7', date: '2026-10-09', items: [
     'تنظيم احترافي للإعدادات: 6 أقسام واضحة (عام، طباعة، كاميرات، النظام، المطوّر، عن التطبيق)',
     'قسم "أدوات المطوّر" محمي ببصمة الوجه + رمز سري احتياطي: يضم النشر والطرفية وتحديث الجسر وتحديث السكريبت - عشان الموظف ما يلمسهاش بالغلط',
