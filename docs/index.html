@@ -1643,6 +1643,7 @@ setTimeout(() => window.hideSplash(), 4000);
       <button id="camFsPlayBtn" onclick="camFsTogglePlay()" style="width:62px;height:62px;border:none;border-radius:50%;background:#fff;color:#0F172A;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
       <button onclick="camFsSkip(5)" style="position:relative;width:52px;height:52px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 4 7 6-7 6"/><path d="M20 10h-9a7 7 0 1 0 0 14h2"/></svg><span style="position:absolute;font-size:9px;font-weight:800;margin-top:1px;">5</span></button>
     </div>
+    <div id="camFsSpeed" style="display:flex;gap:7px;justify-content:center;align-items:center;margin-bottom:12px;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
       <span style="color:#CBD5E1;font-size:12px;font-weight:700;">مرّر لأي وقت في اليوم</span>
       <span id="camFsTimeLbl" style="color:#fff;font-size:19px;font-weight:800;direction:ltr;text-shadow:0 1px 3px rgba(0,0,0,.7);">--:--</span>
@@ -4839,6 +4840,7 @@ function camShowFs(dateObj, cam) {
   const d = new Date(dateObj);
   if (isNaN(d.getTime())) { uiAlert('الوقت غير صحيح'); return; }
   camCurrent = { date: d, cam: Math.max(1, Number(cam) || 1) };
+  camSpeed = 1;
   const m = document.getElementById('camFsModal');
   if (m) m.style.display = 'block';
   camFsInitGestures();
@@ -4853,7 +4855,7 @@ function closeCamFs() {
   const m = document.getElementById('camFsModal');
   if (m) m.style.display = 'none';
 }
-function camFsPlaying() { camFsRetry = 0; camFsSync(); const m = document.getElementById('camFsMsg'); if (m) { m.style.display = 'none'; m.style.pointerEvents = 'none'; } }
+function camFsPlaying() { camFsRetry = 0; camFsSync(); camFsApplySpeed(); const m = document.getElementById('camFsMsg'); if (m) { m.style.display = 'none'; m.style.pointerEvents = 'none'; } }
 
 /* ===== تشغيل/إيقاف + تقديم/ترجيع 5 ثواني ===== */
 const _CAM_ICON_PLAY = '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
@@ -4876,6 +4878,19 @@ function camFsSkip(sec) {
   camCurrent.date = new Date(camCurrent.date.getTime() + sec * 1000);
   camFsRender();
   camFsLoad();
+}
+
+/* ===== سرعة التشغيل 1×/2×/4×/8× ===== */
+let camSpeed = 1;
+const CAM_SPEEDS = [1, 2, 4, 8];
+function camFsApplySpeed() { const v = document.getElementById('camFsVideo'); if (v) { try { v.playbackRate = 1; } catch (e) {} } } // المكينة تسوّي السرعة، المشغّل يعرض 1x
+function camFsSetSpeed(r) { if (camSpeed === r) return; camSpeed = r; camFsRenderSpeed(); camFsLoad(); }  // إعادة الطلب بالسرعة الجديدة من المكينة
+function camFsRenderSpeed() {
+  const c = document.getElementById('camFsSpeed'); if (!c) return;
+  c.innerHTML = CAM_SPEEDS.map(function (r) {
+    const on = camSpeed === r;
+    return '<button type="button" onclick="camFsSetSpeed(' + r + ')" style="min-width:40px;height:30px;padding:0 10px;border-radius:999px;border:1.5px solid ' + (on ? '#fff' : 'rgba(255,255,255,.3)') + ';background:' + (on ? '#fff' : 'rgba(255,255,255,.08)') + ';color:' + (on ? '#0F172A' : '#fff') + ';font-size:12.5px;font-weight:800;cursor:pointer;direction:ltr;">' + r + '×</button>';
+  }).join('');
 }
 
 /* ===== تكبير بإصبعين (pinch) + سحب + نقر للتشغيل ===== */
@@ -5028,6 +5043,7 @@ function camFsRender() {
     chips += `<button type="button" onclick="camFsPickCam(${i})" style="padding:7px 15px;border-radius:999px;border:1.5px solid ${on ? '#fff' : 'rgba(255,255,255,.3)'};background:${on ? '#fff' : 'rgba(255,255,255,.08)'};color:${on ? '#0F172A' : '#fff'};font-size:13px;font-weight:800;cursor:pointer;">كاميرا ${i}</button>`;
   }
   const c = document.getElementById('camFsChips'); if (c) c.innerHTML = chips;
+  camFsRenderSpeed();
 }
 function camFsPickCam(i) { if (!camCurrent) return; camCurrent.cam = i; camFsRender(); camFsLoad(); }
 function camFsSlideInput(sec) {
@@ -5058,7 +5074,7 @@ async function camFsLoad(isRetry) {
     const api = String(br.url).replace(/\/+$/, '');
     camFsDbg.bridgeUrl = api;
     let r;
-    try { r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp, { cache: 'no-store' }); }
+    try { r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp + '&speed=' + camSpeed, { cache: 'no-store' }); }
     catch (e) { camFsShowError('طلب /play', 'فشل الاتصال بالجسر: ' + (e && e.message ? e.message : e)); return; }
     camFsDbg.playStatus = r.status;
     if (!r.ok) { camFsShowError('طلب /play', 'الجسر رفض الطلب (رمز ' + r.status + ')' + (r.status === 403 ? ' — رمز الوصول غير مطابق' : '')); return; }
@@ -5070,6 +5086,7 @@ async function camFsLoad(isRetry) {
       try { v.pause(); } catch (e) {}
       v.src = hls;
       try { v.load(); } catch (e) {}
+      camFsApplySpeed();
       try { v.play().catch(() => {}); } catch (e) {}
     }
   } catch (e) { camFsShowError('عام', 'خطأ غير متوقع: ' + (e && e.message ? e.message : e)); }
@@ -5381,7 +5398,7 @@ async function bridgeShellSend() {
 }
 
 /* ===== أداة فحص الكاميرات (تشخيص) ===== */
-const BRIDGE_EXPECTED_VERSION = '2.4';   // النسخة المتوقّعة للجسر على المكينة (setup.sh)
+const BRIDGE_EXPECTED_VERSION = '2.5';   // النسخة المتوقّعة للجسر على المكينة (setup.sh)
 
 // ينفّذ أمرًا على المكينة ويرجّع {output,code} (وعد). يُستعمل داخل الفحص.
 function bridgeExec(cmd, timeoutSec) {
@@ -7063,9 +7080,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.16';
+const APP_VERSION = '4.9.18';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.18', date: '2026-10-09', items: [
+    'سرعة التشغيل 1×/2×/4×/8× تُنفَّذ على المكينة (الجسر v2.5) فتوصل سلسة بدون تقطيع: المكينة ترسل فيديو مسرّع جاهز، والسرعات العالية تقرأ الإطارات المفتاحية (مسح سريع خفيف على المعالج)'
+  ] },
   { v: '4.9.16', date: '2026-10-09', items: [
     'تقديم/ترجيع 5 ثواني صار دقيقًا ومضمونًا: يطلب اللحظة ±5 ثواني بالضبط من الكاميرا (مع عرض الثواني في الوقت)'
   ] },
