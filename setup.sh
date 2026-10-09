@@ -1,14 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  HTC POS - Camera bridge setup (Android machine / Termux)
-#  BRIDGE_VERSION 2.1
+#  BRIDGE_VERSION 2.2
 #  Run once with:
 #    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
 #  Safe to re-run: it overwrites the server + boot files cleanly.
 #  v2.0: يقتل العمليات برقمها (PID) بدل الاسم -> لا تكرار عمليات أبدًا.
 # ============================================================
 set -e
-BRIDGE_VERSION="2.1"
+BRIDGE_VERSION="2.2"
 
 CAM_DIR="$HOME/cam"
 BOOT_DIR="$HOME/.termux/boot"
@@ -91,7 +91,7 @@ cat > "$PY" <<'PYEOF'
 import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BRIDGE_VERSION = "2.1"
+BRIDGE_VERSION = "2.2"
 HOME = os.path.expanduser("~")
 CAMDIR = os.path.join(HOME, "cam")
 CONF = os.path.join(CAMDIR, "camsrv.conf")
@@ -148,17 +148,21 @@ def start_ffmpeg(ch, start_utc, key):
     # أرشيف Hikvision يرسل طوابع زمنية فاسدة (أصفار/غير متتابعة) تخلّي مشغّل الآيفون يعلّق/يفشل.
     # genpts+igndts: نعيد توليد الطوابع نظيفة. avoid_negative_ts make_zero: تبدأ من صفر.
     # هذا يعطي مقاطع بطوابع صغيرة ومتتابعة وبدون discontinuity -> يقبلها سفاري ومشغّل التطبيق.
+    # -tag:v hvc1 + ملف master يحمل تعريف الكوديك -> مشغّل WKWebView (التطبيق) يعرف إنها HEVC
+    # ويشغّل الفكّاك الصحيح (كان يطلع إطار أول ثم يفشل بخطأ فك ترميز لأن التعريف ناقص).
     cmd = [
         "ffmpeg", "-nostdin", "-loglevel", "error",
         "-fflags", "+genpts+igndts",
         "-rtsp_transport", "tcp", "-i", url,
         "-t", str(CLIP_SECONDS),
         "-c", "copy", "-an",
+        "-tag:v", "hvc1",
         "-avoid_negative_ts", "make_zero",
         "-f", "hls", "-hls_time", "4", "-hls_list_size", "0",
         "-hls_playlist_type", "event",
         "-hls_flags", "append_list+independent_segments",
         "-hls_segment_type", "fmp4",
+        "-master_pl_name", "master.m3u8",
         "-hls_segment_filename", os.path.join(HLS, "seg%d.m4s"),
         os.path.join(HLS, "index.m3u8"),
     ]
@@ -216,7 +220,8 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Content-Type","application/json")
             self.send_header("Cache-Control","no-store, no-cache, must-revalidate, max-age=0")
             self.end_headers()
-            self.wfile.write(b'{"hls":"/hls/index.m3u8"}'); return
+            # نرجّع ملف الماستر (فيه تعريف الكوديك) عشان مشغّل التطبيق يفكّ H.265 صح
+            self.wfile.write(b'{"hls":"/hls/master.m3u8"}'); return
 
         # serve HLS files
         if path.startswith("/hls/"):
