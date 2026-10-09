@@ -1021,7 +1021,7 @@ setTimeout(() => window.hideSplash(), 4000);
         <button class="iconBtn" id="appThemeToggleBtn" onclick="toggleAppTheme()">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21.64 13a9 9 0 1 1-10.63-10.6 1 1 0 0 1 1.11 1.4A7 7 0 0 0 20.24 12a7.1 7.1 0 0 0-.24-1.8 1 1 0 0 1 1.4-1.1 9 9 0 0 1 .24 3.9Z"/></svg>
         </button>
-        <button class="iconBtn" onclick="openModal('mainMenuModal')">
+        <button class="iconBtn" onclick="openMainMenu()">
           <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>
@@ -1820,33 +1820,73 @@ setTimeout(() => window.hideSplash(), 4000);
 </div>
 
 <div class="modalBg" id="mainMenuModal" onclick="if(event.target===this)closeModal('mainMenuModal')">
-  <div class="modalSheet">
-    <button class="closeM" onclick="closeModal('mainMenuModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <h3>القائمة</h3>
-    <div style="margin-top:14px;">
-      <button onclick="closeModal('mainMenuModal');openUserAccountInfo();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
-        <span style="font-size:14.5px;font-weight:700;color:var(--text);">حساب المستخدم</span>
+  <div id="mainMenuPanel">
+    <div class="mmTop">
+      <span class="mmBrand">القائمة</span>
+      <button class="mmX" onclick="closeModal('mainMenuModal')" aria-label="إغلاق"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <button class="mmProfile" onclick="closeModal('mainMenuModal');openUserAccountInfo();">
+      <span class="mmAvatar" id="mmAvatar">ح</span>
+      <span class="mmProfTxt"><b id="mmUserName">الحساب</b><small>عرض معلومات الحساب</small></span>
+      <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <div class="mmItems">
+      <button class="mmItem" onclick="closeModal('mainMenuModal');openCommission();">
+        <span class="mmIco" style="--c:#16A34A;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></span>
+        <span class="mmLbl">عمولة الفني</span>
+        <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
-      <button onclick="closeModal('mainMenuModal');openCommission();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
-        <span style="font-size:14.5px;font-weight:700;color:var(--text);">عمولة الفني</span>
+      <button class="mmItem" onclick="closeModal('mainMenuModal');openAttendanceLog();">
+        <span class="mmIco" style="--c:#0EA5E9;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg></span>
+        <span class="mmLbl">سجلّ فتح وإغلاق المنظومة</span>
+        <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
-      <button onclick="closeModal('mainMenuModal');openAttendanceLog();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg>
-        <span style="font-size:14.5px;font-weight:700;color:var(--text);">متابعة فتح وإغلاق المنظومة</span>
-      </button>
-      <button onclick="closeModal('mainMenuModal');openGeneralSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span style="font-size:14.5px;font-weight:700;color:var(--text);">الإعدادات</span>
-      </button>
-      <button onclick="closeModal('mainMenuModal');doLogout();" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px 6px;border:none;background:none;cursor:pointer;text-align:right;">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
-        <span style="font-size:14.5px;font-weight:700;color:#DC2626;">تسجيل خروج</span>
+      <button class="mmItem" onclick="closeModal('mainMenuModal');openGeneralSettings();">
+        <span class="mmIco" style="--c:#64748B;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        <span class="mmLbl">الإعدادات</span>
+        <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
+    <div class="mmSpacer"></div>
+    <button class="mmLogout" onclick="closeModal('mainMenuModal');doLogout();">
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      تسجيل الخروج
+    </button>
+    <div class="mmVer" id="mmVer">HTC POS</div>
   </div>
 </div>
+<style>
+  /* قائمة جانبية كاملة الارتفاع (مثل التطبيقات الاحترافية) */
+  #mainMenuModal { align-items:stretch; justify-content:flex-start; bottom:0 !important; padding:0 !important; }
+  #mainMenuPanel {
+    position:absolute; top:0; right:0; height:100%;
+    width:87%; max-width:410px;
+    background:var(--surface); color:var(--text);
+    display:flex; flex-direction:column;
+    box-shadow:-14px 0 50px rgba(0,0,0,.28);
+    padding:calc(env(safe-area-inset-top, 0px) + 10px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+    overflow-y:auto;
+    animation:mmSlideIn .28s cubic-bezier(.22,.9,.32,1);
+  }
+  @keyframes mmSlideIn { from { transform:translateX(100%); } to { transform:none; } }
+  .mmTop { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .mmBrand { font-size:22px; font-weight:800; color:var(--text); }
+  .mmX { width:38px; height:38px; border:none; border-radius:50%; background:var(--surface2); color:var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .mmProfile { display:flex; align-items:center; gap:12px; width:100%; text-align:right; border:none; background:var(--surface2); border-radius:16px; padding:12px 14px; margin:8px 0 14px; cursor:pointer; }
+  .mmAvatar { flex:0 0 auto; width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:#fff; font-size:19px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .mmProfTxt { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .mmProfTxt b { font-size:15.5px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mmProfTxt small { font-size:12px; color:var(--textMuted); font-weight:600; }
+  .mmChev { color:var(--textMuted2); flex:0 0 auto; }
+  .mmItems { display:flex; flex-direction:column; gap:4px; }
+  .mmItem { display:flex; align-items:center; gap:13px; width:100%; text-align:right; border:none; background:none; border-radius:14px; padding:13px 10px; cursor:pointer; transition:background .15s; }
+  .mmItem:active { background:var(--surface2); }
+  .mmIco { flex:0 0 auto; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:var(--surface2); color:var(--c); }
+  .mmLbl { flex:1; font-size:15px; font-weight:700; color:var(--text); }
+  .mmSpacer { flex:1; min-height:18px; }
+  .mmLogout { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; border:1.5px solid rgba(220,38,38,.3); background:rgba(220,38,38,.08); color:#DC2626; border-radius:14px; height:50px; font-size:15px; font-weight:800; cursor:pointer; }
+  .mmVer { text-align:center; font-size:12px; color:var(--textMuted2); font-weight:600; margin-top:14px; }
+</style>
 
 <div class="modalBg" id="userAccountModal" onclick="if(event.target===this)closeModal('userAccountModal')">
   <div class="modalSheet">
@@ -2547,6 +2587,18 @@ async function doLogout() {
 // لنمط الاهتزاز، وفي الآخر مفتاح "اهتزاز بس من غير صوت"
 function openGeneralSettings() {
   openModal('generalSettingsModal');
+}
+
+// القائمة الجانبية (☰): تعبّئ اسم المستخدم والإصدار ثم تفتح
+function openMainMenu() {
+  try {
+    const u = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser : null;
+    const name = (u && (u.displayName || u.email)) ? (u.displayName || u.email) : 'الحساب';
+    const nm = document.getElementById('mmUserName'); if (nm) nm.textContent = name;
+    const av = document.getElementById('mmAvatar'); if (av) { const ch = String(name).trim().charAt(0); av.textContent = ch ? ch.toUpperCase() : 'ح'; }
+  } catch (e) {}
+  try { const vr = document.getElementById('mmVer'); if (vr) vr.textContent = 'HTC POS · الإصدار ' + APP_VERSION; } catch (e) {}
+  openModal('mainMenuModal');
 }
 
 let pendingSoundSettings = {}; // تغييرات مؤقتة لحد ما يتم الضغط على "حفظ" - لو قفلتي الشاشة من غيره، التغييرات بتتلغي
@@ -7080,9 +7132,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.18';
+const APP_VERSION = '4.9.19';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.19', date: '2026-10-09', items: [
+    'قائمة جانبية احترافية: زر القائمة (☰) صار يفتح لوحة كاملة الارتفاع من الجانب - مع بطاقة الحساب والإعدادات وتسجيل الخروج، بتصميم أنيق مثل التطبيقات الكبيرة'
+  ] },
   { v: '4.9.18', date: '2026-10-09', items: [
     'سرعة التشغيل 1×/2×/4×/8× تُنفَّذ على المكينة (الجسر v2.5) فتوصل سلسة بدون تقطيع: المكينة ترسل فيديو مسرّع جاهز، والسرعات العالية تقرأ الإطارات المفتاحية (مسح سريع خفيف على المعالج)'
   ] },
