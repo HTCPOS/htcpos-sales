@@ -4841,14 +4841,24 @@ function closeCamFs() {
   const m = document.getElementById('camFsModal');
   if (m) m.style.display = 'none';
 }
-function camFsPlaying() { const m = document.getElementById('camFsMsg'); if (m) { m.style.display = 'none'; m.style.pointerEvents = 'none'; } }
+function camFsPlaying() { camFsRetry = 0; const m = document.getElementById('camFsMsg'); if (m) { m.style.display = 'none'; m.style.pointerEvents = 'none'; } }
 let camFsDbg = {};
+let camFsRetry = 0;
+const CAM_FS_MAXRETRY = 7;
 const MEDIA_ERR_AR = { 1: 'أُلغي التشغيل', 2: 'خطأ شبكة (ما وصل الفيديو من الجسر)', 3: 'فشل فك الترميز (كوديك/طوابع زمنية)', 4: 'الصيغة غير مدعومة / المصدر غير صالح' };
 function camFsError() {
   const v = document.getElementById('camFsVideo');
   let code = '-', meaning = 'غير معروف';
   if (v && v.error) { code = v.error.code; meaning = MEDIA_ERR_AR[code] || ('رمز ' + code); }
-  camFsShowError('playback', 'خطأ الفيديو: ' + code + ' (' + meaning + ')');
+  // المقطع المحوّل (H.264) يحتاج ثوانٍ ليجهّز أول جزء -> نعيد المحاولة تلقائيًا بدل ما يضغط المستخدم
+  if (camFsRetry < CAM_FS_MAXRETRY) {
+    camFsRetry++;
+    const m = document.getElementById('camFsMsg');
+    if (m) { m.style.display = 'flex'; m.style.pointerEvents = 'none'; m.textContent = 'جارٍ تجهيز الفيديو... (' + camFsRetry + ')'; }
+    setTimeout(function () { camFsLoad(true); }, 1700);
+    return;
+  }
+  camFsShowError('playback', 'خطأ الفيديو: ' + code + ' (' + meaning + ') — بعد ' + camFsRetry + ' محاولات');
 }
 // صندوق تشخيص فيه كود الخطأ بالتفصيل + زر نسخ (بدون تخمين)
 function camFsShowError(phase, line) {
@@ -4951,8 +4961,9 @@ function camFsSlideCommit(sec) {
   camFsRender();
   camFsLoad();
 }
-async function camFsLoad() {
+async function camFsLoad(isRetry) {
   if (!camCurrent) return;
+  if (!isRetry) camFsRetry = 0;   // محاولة جديدة بطلب المستخدم -> صفّر العدّاد
   const d = camCurrent.date, cam = camCurrent.cam, stamp = camLocalStamp(d);
   const v = document.getElementById('camFsVideo');
   const msg = document.getElementById('camFsMsg');
@@ -6969,9 +6980,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.12';
+const APP_VERSION = '4.9.13';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.13', date: '2026-10-09', items: [
+    'الكاميرا تعيد المحاولة تلقائيًا أثناء تجهيز الفيديو: لأن التحويل يحتاج ثوانٍ لأول جزء، التطبيق ينتظر ويحاول لحاله (رسالة "جارٍ تجهيز الفيديو") بدل ما تضغط إعادة المحاولة - يشمل التمرير وإعادة الفتح'
+  ] },
   { v: '4.9.12', date: '2026-10-09', items: [
     'حل نهائي لتشغيل الكاميرا: الجسر v2.3 يحوّل بث H.265 إلى H.264 (يفكّه أي مشغّل) بإعدادات خفيفة على المعالج (مقاس 640 · 15 إطار/ثانية) - الفيديو يشتغل داخل التطبيق والتمرير بدون تجمّد'
   ] },
