@@ -1,11 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  HTC POS - Camera bridge setup (Android machine / Termux)
+#  BRIDGE_VERSION 2.0
 #  Run once with:
 #    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
 #  Safe to re-run: it overwrites the server + boot files cleanly.
+#  v2.0: يقتل العمليات برقمها (PID) بدل الاسم -> لا تكرار عمليات أبدًا.
 # ============================================================
 set -e
+BRIDGE_VERSION="2.0"
 
 CAM_DIR="$HOME/cam"
 BOOT_DIR="$HOME/.termux/boot"
@@ -88,6 +91,7 @@ cat > "$PY" <<'PYEOF'
 import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+BRIDGE_VERSION = "2.0"
 HOME = os.path.expanduser("~")
 CAMDIR = os.path.join(HOME, "cam")
 CONF = os.path.join(CAMDIR, "camsrv.conf")
@@ -184,7 +188,7 @@ class H(BaseHTTPRequestHandler):
         if path == "/health":
             self.send_response(200); self._cors()
             self.send_header("Content-Type","application/json"); self.end_headers()
-            self.wfile.write(b'{"ok":true}'); return
+            self.wfile.write(('{"ok":true,"v":"%s"}' % BRIDGE_VERSION).encode()); return
 
         # /play?code=..&cam=2&t=YYYYMMDDHHMMSS  (t = LOCAL time of the invoice)
         if path == "/play":
@@ -233,9 +237,13 @@ class H(BaseHTTPRequestHandler):
         self.send_response(404); self._cors(); self.end_headers()
 
 if __name__ == "__main__":
+    # اكتب رقم العملية عشان نقدر نقتلها بالرقم (PID) بدل الاسم -> ما يصير تكرار
+    try:
+        with open(os.path.join(CAMDIR, "camsrv.pid"), "w") as f: f.write(str(os.getpid()))
+    except Exception: pass
     threading.Thread(target=watchdog, daemon=True).start()
     srv = ThreadingHTTPServer(("127.0.0.1", PORT), H)
-    print("camsrv on 127.0.0.1:%d" % PORT, flush=True)
+    print("camsrv v%s on 127.0.0.1:%d" % (BRIDGE_VERSION, PORT), flush=True)
     srv.serve_forever()
 PYEOF
 echo "   server written."
@@ -253,13 +261,17 @@ echo "=== boot $(date) ==="
 
 termux-wake-lock || true
 
+# سجّل رقم هذه العملية (run.sh) عشان نقدر نوقّفها بالرقم لاحقًا بدل الاسم
+echo $$ > "$CAM_DIR/run.pid"
+
 # load conf
 set -a; . "$CONF"; set +a
 PORT=${PORT:-8787}
 
-# start the python server
-pkill -f camsrv.py 2>/dev/null || true
+# أوقف أي camsrv قديم برقمه (مش بالاسم) ثم شغّل واحدًا جديدًا
+if [ -f "$CAM_DIR/camsrv.pid" ]; then kill "$(cat "$CAM_DIR/camsrv.pid")" 2>/dev/null || true; fi
 python "$CAM_DIR/camsrv.py" &
+echo $! > "$CAM_DIR/camsrv.pid"
 sleep 3
 
 get_token() {
@@ -298,6 +310,7 @@ while true; do
   TUNLOG="$CAM_DIR/cf.log"; : > "$TUNLOG"
   cloudflared tunnel --no-autoupdate --url "http://127.0.0.1:$PORT" >"$TUNLOG" 2>&1 &
   CFPID=$!
+  echo $CFPID > "$CAM_DIR/cf.pid"
   URL=""
   for i in $(seq 1 30); do
     URL=$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$TUNLOG" | head -n1)
@@ -312,6 +325,31 @@ while true; do
 done
 RUNEOF
 chmod +x "$RUN"
+
+# --- stop.sh: يوقف الجسر (camsrv + cloudflared + run.sh) بالـ PID ثم ينظّف أي بقايا ---
+# يقتل بالرقم أولًا (مضمون وما يخطئ)، وبعدها pkill بنمط فيه قوس على أول حرف
+# عشان أمر الإيقاف نفسه ما يطابق نفسه (كان هذا سبب تكرار العمليات في النسخة القديمة).
+# ملاحظة: ما يلمس bridgectl (مراقب الأوامر) عشان ما يقتل نفسه وهو ينفّذ إعادة التشغيل.
+cat > "$CAM_DIR/stop.sh" <<'STOPEOF'
+#!/data/data/com.termux/files/usr/bin/bash
+CAM_DIR="$HOME/cam"
+for name in camsrv cf run; do
+  f="$CAM_DIR/$name.pid"
+  if [ -f "$f" ]; then
+    pid="$(cat "$f" 2>/dev/null)"
+    [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+    sleep 0.3
+    [ -n "$pid" ] && kill -9 "$pid" 2>/dev/null || true
+    rm -f "$f"
+  fi
+done
+sleep 1
+# احتياط: اقتل أي بقايا شاردة (القوس على أول حرف يمنع مطابقة أمر الإيقاف لنفسه)
+pkill -9 -f '[c]amsrv.py' 2>/dev/null || true
+pkill -9 -f '[c]loudflared tunnel' 2>/dev/null || true
+pkill -9 -f 'cam/[r]un.sh' 2>/dev/null || true
+STOPEOF
+chmod +x "$CAM_DIR/stop.sh"
 
 # --- remote-control watcher: يراقب أوامر التطبيق في Firebase وينفّذ تحديث/إعادة تشغيل عن بُعد ---
 cat > "$CAM_DIR/bridgectl.py" <<'CTLEOF'
@@ -356,7 +394,8 @@ def status(tok, state, msg=""):
     fb_put("data/bridgeStatus", {"state": state, "msg": msg, "at": time.time()}, tok)
 def do_restart(tok):
     status(tok, "working", "restart")
-    subprocess.call("pkill -f 'cloudflared tunnel'; pkill -f camsrv.py; pkill -f cam/run.sh", shell=True)
+    # v2.0: نوقّف بالـ PID عبر stop.sh (ما يطابق نفسه) ثم نشغّل من جديد -> لا تكرار
+    subprocess.call("bash " + os.path.join(CAMDIR, "stop.sh"), shell=True)
     time.sleep(2)
     subprocess.Popen("setsid bash " + os.path.join(CAMDIR, "run.sh") + " >/dev/null 2>&1", shell=True)
     time.sleep(1); status(tok, "done", "restart")
@@ -398,6 +437,9 @@ def get_cached_token():
     return t
 
 def main():
+    try:
+        with open(os.path.join(CAMDIR, "ctl.pid"), "w") as f: f.write(str(os.getpid()))
+    except Exception: pass
     seen_upd = None
     seen_sh = None
     while True:
@@ -434,12 +476,13 @@ chmod +x "$BOOT_DIR/10-camsrv.sh"
 echo "   runner + watcher + boot entry written."
 
 # ---------- 6) start now ----------
-echo ">> [6/6] Starting now..."
-pkill -f "cloudflared tunnel" 2>/dev/null || true
-pkill -f camsrv.py 2>/dev/null || true
-pkill -f bridgectl.py 2>/dev/null || true
-pkill -f "cam/run.sh" 2>/dev/null || true
-sleep 1
+echo ">> [6/6] Starting now (v$BRIDGE_VERSION)..."
+# أوقف الجسر بالـ PID (camsrv + cloudflared + run.sh) عبر stop.sh
+bash "$CAM_DIR/stop.sh" 2>/dev/null || true
+# أوقف المراقب القديم بالرقم ثم احتياطًا بنمط فيه قوس (ما يطابق أمر الإيقاف نفسه)
+if [ -f "$CAM_DIR/ctl.pid" ]; then kill -9 "$(cat "$CAM_DIR/ctl.pid")" 2>/dev/null || true; rm -f "$CAM_DIR/ctl.pid"; fi
+pkill -9 -f '[b]ridgectl.py' 2>/dev/null || true
+sleep 2
 nohup bash "$RUN" >/dev/null 2>&1 &
 nohup python "$CAM_DIR/bridgectl.py" >/dev/null 2>&1 &
 echo
