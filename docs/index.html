@@ -1700,6 +1700,14 @@ setTimeout(() => window.hideSplash(), 4000);
 </div>
 <style>@keyframes suSpin { to { transform: rotate(360deg); } }</style>
 
+<div class="modalBg" id="devToolsModal" onclick="if(event.target===this)closeModal('devToolsModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('devToolsModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>أدوات المطوّر</h3>
+    <div id="devToolsBody" style="margin-top:12px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="ghPublishModal" onclick="if(event.target===this)closeModal('ghPublishModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('ghPublishModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1744,7 +1752,7 @@ setTimeout(() => window.hideSplash(), 4000);
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       </div>
-      <div class="setSec">الكاشير والنظام</div>
+      <div class="setSec">النظام</div>
       <div class="setGroup">
         <button onclick="openModal('errorsModal');" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
         <span class="setIc" style="--ic:#DC2626;color:#DC2626;"><svg style="width:22px;height:22px;" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg></span>
@@ -1758,14 +1766,13 @@ setTimeout(() => window.hideSplash(), 4000);
         <span id="usageSettingsTag" style="font-size:12px;font-weight:800;"></span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
-        <button onclick="openScriptUpdate();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
-        <span class="setIc" style="--ic:#2563EB;color:#2563EB;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:22px;height:22px;color:#2563EB;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/><path d="M12 8v5l3 2"/></svg></span>
-        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">تحديث السكريبت على الكاشير</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
-        <button onclick="openGhPublish();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
-        <span class="setIc" style="--ic:#0F766E;color:#0F766E;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/><path d="M5 21h14"/></svg></span>
-        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">نشر تحديث (GitHub)</span>
+      </div>
+      <div class="setSec">المطوّر</div>
+      <div class="setGroup">
+        <button onclick="openDevTools();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
+        <span class="setIc" style="--ic:#0F766E;color:#0F766E;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">أدوات المطوّر</span>
+        <span style="font-size:11px;color:var(--textMuted);font-weight:700;">🔒 محمي</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       </div>
@@ -5428,6 +5435,103 @@ async function ghDoPublish() {
   }
 }
 
+/* ===== قفل أدوات المطوّر (بصمة الوجه + رمز سري احتياطي) ===== */
+async function sha256hex(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function devPinSet() { try { return !!localStorage.getItem('devPinHash'); } catch (e) { return false; } }
+let devUnlockedUntil = 0; // فتح مؤقت عشان ما يطلب القفل كل ضغطة داخل الجلسة
+function devUnlocked() { return Date.now() < devUnlockedUntil; }
+
+async function devVerifyBiometric() {
+  try {
+    const plugin = isNativeApp() && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativeBiometric;
+    if (!plugin) return false;
+    const av = await plugin.isAvailable();
+    if (!av || !av.isAvailable) return false;
+    await plugin.verifyIdentity({ reason: 'فتح أدوات المطوّر', title: 'أدوات المطوّر', subtitle: 'HTC POS', description: 'أكّد هويتك لفتح الأدوات الحسّاسة' });
+    return true; // نجحت البصمة
+  } catch (e) { return false; } // فشلت أو أُلغيت -> نرجع للرمز
+}
+
+async function devPinPrompt() {
+  if (!devPinSet()) {
+    const p1 = await uiPrompt('أنشئ رمزًا سريًا للقسم المحمي (4 أرقام على الأقل):', '', { numeric: true, okText: 'التالي' });
+    if (p1 == null) return false;
+    if (String(p1).length < 4) { await uiAlert('الرمز قصير - لازم 4 أرقام على الأقل'); return false; }
+    const p2 = await uiPrompt('أعد كتابة الرمز للتأكيد:', '', { numeric: true, okText: 'حفظ' });
+    if (p2 == null) return false;
+    if (p2 !== p1) { await uiAlert('الرمز غير متطابق - حاول من جديد'); return false; }
+    try { localStorage.setItem('devPinHash', await sha256hex(String(p1))); } catch (e) {}
+    try { showQuickToast('تم تعيين الرمز السري', true); } catch (e) {}
+    return true;
+  }
+  const p = await uiPrompt('اكتب الرمز السري لفتح أدوات المطوّر:', '', { numeric: true, okText: 'فتح' });
+  if (p == null) return false;
+  const h = await sha256hex(String(p));
+  let stored = ''; try { stored = localStorage.getItem('devPinHash') || ''; } catch (e) {}
+  if (h === stored) return true;
+  await uiAlert('الرمز غير صحيح'); return false;
+}
+
+// البوابة: بصمة أولاً، وإذا غير متاحة/فشلت -> الرمز السري. ترجع true عند النجاح.
+async function ownerGate() {
+  if (devUnlocked()) return true;
+  let ok = await devVerifyBiometric();
+  if (!ok) ok = await devPinPrompt();
+  if (ok) devUnlockedUntil = Date.now() + 5 * 60 * 1000; // مفتوح 5 دقائق
+  return ok;
+}
+
+async function changeDevPin() {
+  if (devPinSet()) {
+    const cur = await uiPrompt('اكتب الرمز الحالي:', '', { numeric: true, okText: 'تحقّق' });
+    if (cur == null) return;
+    let stored = ''; try { stored = localStorage.getItem('devPinHash') || ''; } catch (e) {}
+    if (await sha256hex(String(cur)) !== stored) { await uiAlert('الرمز الحالي غير صحيح'); return; }
+  }
+  const n1 = await uiPrompt('الرمز الجديد (4 أرقام على الأقل):', '', { numeric: true, okText: 'التالي' });
+  if (n1 == null) return;
+  if (String(n1).length < 4) { await uiAlert('الرمز قصير - 4 أرقام على الأقل'); return; }
+  const n2 = await uiPrompt('أعد كتابة الرمز الجديد:', '', { numeric: true, okText: 'حفظ' });
+  if (n2 == null) return;
+  if (n2 !== n1) { await uiAlert('الرمز غير متطابق'); return; }
+  try { localStorage.setItem('devPinHash', await sha256hex(String(n1))); } catch (e) {}
+  try { showQuickToast('تم تغيير الرمز السري', true); } catch (e) {}
+}
+
+async function openDevTools() {
+  const ok = await ownerGate();
+  if (!ok) return;
+  renderDevTools();
+  openModal('devToolsModal');
+}
+
+function renderDevTools() {
+  const body = document.getElementById('devToolsBody');
+  if (!body) return;
+  const bioHint = (isNativeApp()) ? 'يُفتح ببصمة الوجه، وإذا فشلت بالرمز السري.' : 'يُفتح بالرمز السري.';
+  const item = (icon, color, title, desc, onclick) => `
+    <button type="button" onclick="${onclick}" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);cursor:pointer;text-align:right;margin-bottom:10px;">
+      <span style="flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:${color}1A;font-size:19px;">${icon}</span>
+      <span style="flex:1;min-width:0;">
+        <span style="display:block;font-size:14.5px;font-weight:800;color:var(--text);">${title}</span>
+        <span style="display:block;font-size:11.5px;color:var(--textMuted);margin-top:2px;line-height:1.6;">${desc}</span>
+      </span>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>`;
+  body.innerHTML = `
+    <div style="background:#0F766E14;border:1.5px solid #0F766E33;border-radius:14px;padding:11px 13px;margin-bottom:14px;font-size:12px;color:#0F766E;font-weight:700;line-height:1.7;">🔒 هذه أدوات حسّاسة - ${bioHint} لا تعطِها لأي شخص.</div>
+    ${item('🚀', '#0F766E', 'نشر تحديث (GitHub)', 'ارفع index.html أو setup.sh للمستودع', "closeModal('devToolsModal');openGhPublish();")}
+    ${item('⬇', '#1D4ED8', 'تحديث السكريبت على الكاشير', 'ركّب نسخة جديدة من سكريبت الكاشير', "closeModal('devToolsModal');openScriptUpdate();")}
+    ${item('🔄', '#1D4ED8', 'تحديث مكينة الكاميرات (الجسر)', 'المكينة تنزّل آخر نسخة وتشغّل نفسها', "bridgeUpdateRemote();")}
+    ${item('↻', '#D97706', 'إعادة تشغيل الجسر', 'إعادة تشغيل نظيفة لمكينة الكاميرات', "bridgeRestartRemote();")}
+    ${item('⌨', '#334155', 'أوامر المكينة (الطرفية)', 'تنفيذ أوامر على المكينة عن بُعد', "closeModal('devToolsModal');openBridgeShell();")}
+    <div class="setSec" style="margin-top:6px;">الأمان</div>
+    ${item('🔑', '#DC2626', 'تغيير الرمز السري', 'غيّر رمز فتح هذا القسم', "changeDevPin();")}`;
+}
+
 function renderCamSettings() {
   const st = camSettings();
   const row = (label, inner, hint) => `<div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
@@ -5438,13 +5542,8 @@ function renderCamSettings() {
     <div class="setSec">مكينة الكاميرات (الجسر)</div>
     <div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
       <div id="bridgeStatusLine" style="font-size:13px;font-weight:700;color:var(--textMuted);margin-bottom:10px;">جارٍ فحص حالة الجسر...</div>
-      <div style="display:flex;gap:8px;">
-        <button type="button" onclick="bridgeRestartRemote()" style="flex:1;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:700;cursor:pointer;">↻ إعادة تشغيل</button>
-        <button type="button" onclick="bridgeUpdateRemote()" style="flex:1;height:44px;border:none;border-radius:12px;background:#1D4ED8;color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">⬇ تحديث الجسر</button>
-      </div>
-      <div style="font-size:11.5px;color:var(--textMuted);margin-top:8px;line-height:1.7;">تحديث الجسر: المكينة تحمّل آخر نسخة وتعيد تشغيل نفسها تلقائيًا (بدون ما تروح المحل). يشتغل من أي مكان.</div>
-      <button type="button" onclick="openCamDiag()" style="width:100%;margin-top:10px;height:46px;border:none;border-radius:12px;background:#0F766E;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">🔍 فحص الكاميرات (يكشف العطل ويعطيك الحل)</button>
-      <button type="button" onclick="openBridgeShell()" style="width:100%;margin-top:8px;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:700;cursor:pointer;">⌨ أوامر المكينة عن بُعد (طرفية)</button>
+      <button type="button" onclick="openCamDiag()" style="width:100%;height:46px;border:none;border-radius:12px;background:#0F766E;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">🔍 فحص الكاميرات (يكشف العطل ويعطيك الحل)</button>
+      <div style="font-size:11.5px;color:var(--textMuted);margin-top:10px;line-height:1.7;">التحكّم بالجسر (تحديث / إعادة تشغيل / طرفية) انتقل إلى: الإعدادات ← <b>أدوات المطوّر</b> 🔒</div>
     </div>
     <div class="setSec">الكاميرات</div>
     ${row('كاميرا الكاشير', num('camSetCam', st.cam), 'رقم الكاميرا اللي تصوّر الكاشير في Hik-Connect')}
@@ -6685,9 +6784,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.6';
+const APP_VERSION = '4.9.7';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.7', date: '2026-10-09', items: [
+    'تنظيم احترافي للإعدادات: 6 أقسام واضحة (عام، طباعة، كاميرات، النظام، المطوّر، عن التطبيق)',
+    'قسم "أدوات المطوّر" محمي ببصمة الوجه + رمز سري احتياطي: يضم النشر والطرفية وتحديث الجسر وتحديث السكريبت - عشان الموظف ما يلمسهاش بالغلط',
+    'إعدادات الكاميرا صارت أنظف: الحالة + فحص فقط، والتحكم الخطير انتقل للمطوّر'
+  ] },
   { v: '4.9.6', date: '2026-10-09', items: [
     'نشر التحديث: إصلاح اختيار الملفات - صار يقدر يختار setup.sh (كان آيفون يضلّله بسبب الامتداد)'
   ] },
