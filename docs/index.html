@@ -1624,6 +1624,25 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<!-- مشغّل الكاميرا بملء الشاشة (الشريط جوّا المشغّل) -->
+<div id="camFsModal" style="position:fixed;inset:0;z-index:9999;background:#000;display:none;">
+  <video id="camFsVideo" playsinline webkit-playsinline autoplay muted onplaying="camFsPlaying()" onerror="camFsError()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>
+  <div id="camFsMsg" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#CBD5E1;font-size:14px;font-weight:700;text-align:center;padding:24px;pointer-events:none;"></div>
+  <div style="position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px 30px;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none;">
+    <button onclick="closeCamFs()" style="pointer-events:auto;width:42px;height:42px;border:none;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div id="camFsTitle" style="color:#fff;font-size:14px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.7);"></div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:44px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);background:linear-gradient(0deg,rgba(0,0,0,.8),transparent);">
+    <div id="camFsChips" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:14px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <span style="color:#CBD5E1;font-size:12px;font-weight:700;">مرّر لأي وقت في اليوم</span>
+      <span id="camFsTimeLbl" style="color:#fff;font-size:19px;font-weight:800;direction:ltr;text-shadow:0 1px 3px rgba(0,0,0,.7);">--:--</span>
+    </div>
+    <input id="camFsSlider" type="range" min="0" max="86340" step="60" value="0" oninput="camFsSlideInput(this.value)" onchange="camFsSlideCommit(this.value)" style="width:100%;height:30px;accent-color:#fff;cursor:pointer;">
+    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#94A3B8;margin-top:-2px;"><span>12 ص</span><span>12 م</span><span>11:59 م</span></div>
+  </div>
+</div>
+
 <div class="modalBg" id="camLiveModal" onclick="if(event.target===this)closeCamLive()">
   <div class="modalSheet">
     <button class="closeM" onclick="closeCamLive()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -4792,18 +4811,93 @@ function closeCamLive() {
   if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} }
   closeModal('camLiveModal');
 }
-// فتح من الفاتورة: يحسب وقت الفاتورة (نفس VLC) ويبدأ المشاهدة
+// فتح من الفاتورة: يحسب وقت الفاتورة ويفتح المشغّل الكبير
 function camOpenLive() {
   const st = camSettings();
   const base = new Date(camLastDate);
   if (isNaN(base.getTime())) { uiAlert('وقت الفاتورة غير معروف'); return; }
   const d = new Date(base.getTime() - st.preSec * 1000 + st.offsetSec * 1000);
-  camOpenLiveAt(d, st.cam);
+  camShowFs(d, st.cam);
 }
 // فتح مستقل (أيقونة الكاميرا في الرئيسية): يبدأ من آخر دقيقة
 function openCameraLive() {
   const st = camSettings();
-  camOpenLiveAt(new Date(Date.now() - 60 * 1000), st.cam);
+  camShowFs(new Date(Date.now() - 60 * 1000), st.cam);
+}
+
+/* ===== المشغّل الكبير بملء الشاشة (الشريط جوّاه) ===== */
+function camShowFs(dateObj, cam) {
+  const d = new Date(dateObj);
+  if (isNaN(d.getTime())) { uiAlert('الوقت غير صحيح'); return; }
+  camCurrent = { date: d, cam: Math.max(1, Number(cam) || 1) };
+  const m = document.getElementById('camFsModal');
+  if (m) m.style.display = 'block';
+  camFsRender();
+  camFsLoad();
+}
+function closeCamFs() {
+  const v = document.getElementById('camFsVideo');
+  if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} }
+  const m = document.getElementById('camFsModal');
+  if (m) m.style.display = 'none';
+}
+function camFsPlaying() { const m = document.getElementById('camFsMsg'); if (m) m.style.display = 'none'; }
+function camFsError() {
+  const m = document.getElementById('camFsMsg');
+  if (m) { m.style.display = 'flex'; m.innerHTML = 'تعذّر التشغيل. <a href="#" onclick="event.preventDefault();camFsLoad()" style="color:#60A5FA;font-weight:800;margin-right:6px;">إعادة المحاولة</a>'; }
+}
+function camFsRender() {
+  if (!camCurrent) return;
+  const d = camCurrent.date, cam = camCurrent.cam;
+  const dateTxt = CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()];
+  const title = document.getElementById('camFsTitle'); if (title) title.textContent = dateTxt + ' · ' + camPad(d.getHours()) + ':' + camPad(d.getMinutes());
+  const lbl = document.getElementById('camFsTimeLbl'); if (lbl) lbl.textContent = camPad(d.getHours()) + ':' + camPad(d.getMinutes());
+  const sl = document.getElementById('camFsSlider'); if (sl) sl.value = d.getHours() * 3600 + d.getMinutes() * 60;
+  const camCount = Math.max(1, Math.min(16, Number(camSettings().camCount) || 4));
+  let chips = '';
+  for (let i = 1; i <= camCount; i++) {
+    const on = cam === i;
+    chips += `<button type="button" onclick="camFsPickCam(${i})" style="padding:7px 15px;border-radius:999px;border:1.5px solid ${on ? '#fff' : 'rgba(255,255,255,.3)'};background:${on ? '#fff' : 'rgba(255,255,255,.08)'};color:${on ? '#0F172A' : '#fff'};font-size:13px;font-weight:800;cursor:pointer;">كاميرا ${i}</button>`;
+  }
+  const c = document.getElementById('camFsChips'); if (c) c.innerHTML = chips;
+}
+function camFsPickCam(i) { if (!camCurrent) return; camCurrent.cam = i; camFsRender(); camFsLoad(); }
+function camFsSlideInput(sec) {
+  const s = Number(sec);
+  const lbl = document.getElementById('camFsTimeLbl');
+  if (lbl) lbl.textContent = camPad(Math.floor(s / 3600)) + ':' + camPad(Math.floor((s % 3600) / 60));
+}
+function camFsSlideCommit(sec) {
+  if (!camCurrent) return;
+  const s = Number(sec);
+  const t = new Date(camCurrent.date);
+  t.setHours(Math.floor(s / 3600), Math.floor((s % 3600) / 60), 0, 0);
+  camCurrent.date = t;
+  camFsRender();
+  camFsLoad();
+}
+async function camFsLoad() {
+  if (!camCurrent) return;
+  const d = camCurrent.date, cam = camCurrent.cam, stamp = camLocalStamp(d);
+  const v = document.getElementById('camFsVideo');
+  const msg = document.getElementById('camFsMsg');
+  if (msg) { msg.style.display = 'flex'; msg.textContent = 'جارٍ الاتصال بالكاميرا...'; }
+  try {
+    const br = (await db.ref('data/cameraBridge').once('value')).val();
+    if (!br || !br.url || !br.code) { if (msg) msg.textContent = 'الجسر غير متصل — تأكد أن المكينة شغّالة وعلى الإنترنت'; return; }
+    const api = String(br.url).replace(/\/+$/, '');
+    const r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp, { cache: 'no-store' });
+    if (!r.ok) { if (msg) msg.textContent = 'تعذّر طلب الفيديو (' + r.status + ')'; return; }
+    const j = await r.json();
+    // كسر الكاش: رابط فريد كل مرة يجبر الآيفون يحمّل الوقت الجديد بدل ما يعلّق على القديم
+    const hls = api + (j.hls || '/hls/index.m3u8') + '?v=' + stamp + '_' + Date.now();
+    if (v) {
+      try { v.pause(); } catch (e) {}
+      v.src = hls;
+      try { v.load(); } catch (e) {}
+      try { v.play().catch(() => {}); } catch (e) {}
+    }
+  } catch (e) { if (msg) msg.textContent = 'خطأ: ' + (e && e.message ? e.message : e); }
 }
 // نقطة الدخول الموحّدة: لحظة + كاميرا
 function camOpenLiveAt(dateObj, cam) {
@@ -5112,7 +5206,7 @@ async function bridgeShellSend() {
 }
 
 /* ===== أداة فحص الكاميرات (تشخيص) ===== */
-const BRIDGE_EXPECTED_VERSION = '2.0';   // النسخة المتوقّعة للجسر على المكينة (setup.sh)
+const BRIDGE_EXPECTED_VERSION = '2.1';   // النسخة المتوقّعة للجسر على المكينة (setup.sh)
 
 // ينفّذ أمرًا على المكينة ويرجّع {output,code} (وعد). يُستعمل داخل الفحص.
 function bridgeExec(cmd, timeoutSec) {
@@ -5598,7 +5692,8 @@ function camSaveSettings() {
   saveCamSettings(st);
   try { showQuickToast('تم حفظ إعدادات الكاميرا', true); } catch (e) {}
   closeModal('camSettingsModal');
-  if (isModalOpen('camLiveModal') && camCurrent) camRenderLive();
+  const fs = document.getElementById('camFsModal');
+  if (fs && fs.style.display === 'block' && camCurrent) { camFsRender(); camFsLoad(); }
 }
 
 /* ================= اختيار خط التطبيق ================= */
@@ -6790,9 +6885,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.8';
+const APP_VERSION = '4.9.9';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.9', date: '2026-10-09', items: [
+    'مشغّل كاميرا احترافي بملء الشاشة: الفيديو يملأ الجوال، وشريط الـ24 ساعة صار جوّا المشغّل فوق الصورة (مثل Hik-Connect)',
+    'إصلاح تجمّد الفيديو عند التمرير لوقت آخر: صار يحمّل الوقت الجديد فورًا بدون تعليق (يتطلب تحديث الجسر أيضًا)',
+    'فتح الفاتورة يوديك مباشرة للمشغّل الكبير على وقت الفاتورة، وتسحب لأي لحظة في اليوم'
+  ] },
   { v: '4.9.8', date: '2026-10-09', items: [
     'شاشة كاميرا واحدة نظيفة: زر "شاهد الفاتورة في الكاميرا" يفتح الفيديو مباشرة على وقت الفاتورة - بدون شاشات مكررة ولا أزرار زائدة',
     'مشغّل ذكي داخل التطبيق مثل Hik-Connect: يفتح على دقيقة الفاتورة، وشريط اليوم كامل تسحبه لأي وقت (يعيد الطلب من الكاميرا)',
