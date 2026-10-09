@@ -1662,6 +1662,16 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="camDiagModal" onclick="if(event.target===this)closeModal('camDiagModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('camDiagModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>فحص الكاميرات</h3>
+    <div style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin-top:6px;line-height:1.7;">يفحص كل حلقة في سلسلة الكاميرات ويبيّن لك مكان العطل بالضبط والحل الجاهز.</div>
+    <div id="camDiagBody" style="margin-top:12px;"></div>
+    <button type="button" id="camDiagRunBtn" onclick="runCamDiag()" style="width:100%;margin-top:12px;border:none;border-radius:14px;height:50px;background:#0F766E;color:#fff;font-size:15px;font-weight:800;cursor:pointer;">↻ إعادة الفحص</button>
+  </div>
+</div>
+
 <div class="modalBg" id="fontModal" onclick="if(event.target===this)closeModal('fontModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('fontModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1689,6 +1699,15 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 <style>@keyframes suSpin { to { transform: rotate(360deg); } }</style>
+
+<div class="modalBg" id="ghPublishModal" onclick="if(event.target===this)closeModal('ghPublishModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('ghPublishModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>نشر تحديث</h3>
+    <div style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin-top:6px;line-height:1.7;">ارفع ملف التحديث لـ GitHub مباشرة من جوالك. التطبيق يعرف وجهة كل ملف تلقائيًا.</div>
+    <div id="ghPublishBody" style="margin-top:12px;"></div>
+  </div>
+</div>
 
 <div class="modalBg" id="generalSettingsModal" onclick="if(event.target===this)closeModal('generalSettingsModal')">
   <div class="modalSheet">
@@ -1742,6 +1761,11 @@ setTimeout(() => window.hideSplash(), 4000);
         <button onclick="openScriptUpdate();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
         <span class="setIc" style="--ic:#2563EB;color:#2563EB;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:22px;height:22px;color:#2563EB;"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/><path d="M12 8v5l3 2"/></svg></span>
         <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">تحديث السكريبت على الكاشير</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+        <button onclick="openGhPublish();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
+        <span class="setIc" style="--ic:#0F766E;color:#0F766E;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/><path d="M5 21h14"/></svg></span>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">نشر تحديث (GitHub)</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       </div>
@@ -5073,6 +5097,337 @@ async function bridgeShellSend() {
   }, 2000);
 }
 
+/* ===== أداة فحص الكاميرات (تشخيص) ===== */
+const BRIDGE_EXPECTED_VERSION = '2.0';   // النسخة المتوقّعة للجسر على المكينة (setup.sh)
+
+// ينفّذ أمرًا على المكينة ويرجّع {output,code} (وعد). يُستعمل داخل الفحص.
+function bridgeExec(cmd, timeoutSec) {
+  timeoutSec = timeoutSec || 40;
+  return new Promise((resolve, reject) => {
+    const id = 'd' + Date.now();
+    let waited = 0, poll = null;
+    db.ref('commands/bridgeShell').set({ id: id, cmd: cmd, at: firebase.database.ServerValue.TIMESTAMP })
+      .then(() => {
+        poll = setInterval(async () => {
+          waited += 2;
+          try {
+            const res = (await db.ref('data/bridgeShellResult').once('value')).val();
+            if (res && res.id === id) { clearInterval(poll); resolve({ output: String(res.output != null ? res.output : ''), code: res.code }); return; }
+          } catch (e) {}
+          if (waited >= timeoutSec) { clearInterval(poll); reject(new Error('timeout')); }
+        }, 2000);
+      }).catch(reject);
+  });
+}
+
+// أمر فحص واحد يجمع كل شيء من المكينة (أقواس على أول حرف تمنع الأمر من عدّ نفسه)
+const CAM_DIAG_CMD = [
+  'echo "LOCAL:$(curl -s -o /dev/null -w %{http_code} --max-time 6 http://127.0.0.1:8787/health 2>/dev/null)"',
+  'echo "URL:$(grep -Eo \'https://[a-z0-9-]+\\.trycloudflare\\.com\' ~/cam/run.log 2>/dev/null | tail -n1)"',
+  'echo "CAMSRV:$(pgrep -f \'[c]amsrv.py\' 2>/dev/null | wc -l | tr -d \' \')"',
+  'echo "CF:$(pgrep -f \'[c]loudflared tunnel\' 2>/dev/null | wc -l | tr -d \' \')"',
+  'echo "RUN:$(pgrep -f \'cam/[r]un.sh\' 2>/dev/null | wc -l | tr -d \' \')"',
+  'echo "CTL:$(pgrep -f \'[b]ridgectl.py\' 2>/dev/null | wc -l | tr -d \' \')"',
+  'echo "CONF:$([ -f ~/cam/camsrv.conf ] && echo yes || echo no)"',
+  'echo "DVR_IP:$(grep \'^DVR_IP=\' ~/cam/camsrv.conf 2>/dev/null | cut -d= -f2)"',
+  'echo "DVR_USER:$(grep \'^DVR_USER=\' ~/cam/camsrv.conf 2>/dev/null | cut -d= -f2)"',
+  'echo "CAM_CODE:$(grep \'^CAM_CODE=\' ~/cam/camsrv.conf 2>/dev/null | cut -d= -f2)"',
+  'echo "DVR_PASS:$(grep -c \'^DVR_PASS=.\' ~/cam/camsrv.conf 2>/dev/null)"',
+  'echo "FB_EMAIL:$(grep \'^FB_EMAIL=\' ~/cam/camsrv.conf 2>/dev/null | cut -d= -f2)"',
+  'echo "DVRPING:$(IP=$(grep \'^DVR_IP=\' ~/cam/camsrv.conf 2>/dev/null | cut -d= -f2); curl -s -o /dev/null -w %{http_code} --max-time 5 http://$IP/ 2>/dev/null)"'
+].join('; ');
+
+function parseDiag(txt) {
+  const m = {};
+  String(txt || '').split('\n').forEach(line => {
+    const i = line.indexOf(':');
+    if (i > 0) m[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+  });
+  return m;
+}
+
+function openCamDiag() { openModal('camDiagModal'); runCamDiag(); }
+
+const _diagIc = { ok: '<span style="color:#16A34A;font-size:17px;">✅</span>', bad: '<span style="color:#DC2626;font-size:17px;">❌</span>', warn: '<span style="color:#D97706;font-size:17px;">⚠️</span>', info: '<span style="color:#2563EB;font-size:17px;">ℹ️</span>' };
+
+function diagRow(state, title, detail, fixCmd, fixLabel) {
+  const bdr = state === 'ok' ? '#DCFCE7' : state === 'bad' ? '#FEE2E2' : state === 'warn' ? '#FEF3C7' : '#DBEAFE';
+  let fix = '';
+  if (fixCmd) {
+    const safe = escapeHtml(fixCmd).replace(/'/g, '&#39;');
+    fix = `<div style="margin-top:8px;background:#0B1020;color:#D1FAE5;border-radius:10px;padding:9px 11px;font-family:monospace;font-size:12px;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;">${escapeHtml(fixCmd)}</div>
+      <button type="button" onclick="fixInTerminal('${safe}')" style="margin-top:8px;width:100%;height:42px;border:none;border-radius:10px;background:#1D4ED8;color:#fff;font-size:13px;font-weight:800;cursor:pointer;">${fixLabel || '🛠 أصلح في الطرفية'}</button>`;
+  }
+  return `<div style="background:var(--surface);border:1.5px solid ${bdr};border-radius:14px;padding:12px 13px;margin-bottom:9px;">
+    <div style="display:flex;align-items:flex-start;gap:9px;">
+      <div style="flex:0 0 auto;line-height:1.4;">${_diagIc[state]}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:800;color:var(--text);">${title}</div>
+        ${detail ? `<div style="font-size:12.5px;color:var(--textMuted);margin-top:3px;line-height:1.7;">${detail}</div>` : ''}
+        ${fix}
+      </div>
+    </div></div>`;
+}
+
+async function runCamDiag() {
+  const body = document.getElementById('camDiagBody');
+  const btn = document.getElementById('camDiagRunBtn');
+  if (!body) return;
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = '⏳ جارٍ الفحص...'; }
+  body.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--textMuted);font-weight:700;font-size:13.5px;">⏳ جارٍ فحص الكاميرات...<br><span style="font-size:11.5px;font-weight:600;">(الفحص يسأل المكينة - خذ له لحظة)</span></div>';
+  const rows = [];
+
+  // 1) العنوان المسجّل في Firebase
+  let bridge = null;
+  try { bridge = (await db.ref('data/cameraBridge').once('value')).val(); } catch (e) {}
+  const url = bridge && bridge.url ? String(bridge.url).replace(/\/+$/, '') : '';
+  if (!url) {
+    rows.push(diagRow('bad', 'عنوان الجسر غير مُسجّل', 'المكينة ما نشرت رابطًا بعد. غالبًا الجسر واقف أو ما اشتغل بعد الإقلاع.', 'bash ~/cam/run.sh &', '🛠 شغّل الجسر من الطرفية'));
+  } else {
+    let age = '';
+    if (bridge.ts) { const mins = Math.round((Date.now() / 1000 - bridge.ts) / 60); age = mins < 1 ? 'تحدّث الآن' : mins < 60 ? ('آخر تحديث قبل ' + mins + ' دقيقة') : ('آخر تحديث قبل ' + Math.round(mins / 60) + ' ساعة'); }
+    rows.push(diagRow('ok', 'عنوان الجسر مُسجّل', escapeHtml(url) + (age ? '<br>' + age : '')));
+  }
+
+  // 2) الوصول للجسر من برّه (health عبر الرابط العام)
+  let publicOk = false, bridgeVer = '';
+  if (url) {
+    try {
+      const c = new AbortController(); const to = setTimeout(() => c.abort(), 7000);
+      const r = await fetch(url + '/health', { cache: 'no-store', signal: c.signal });
+      clearTimeout(to);
+      publicOk = r.ok;
+      try { const j = await r.json(); if (j && j.v) bridgeVer = String(j.v); } catch (e) {}
+    } catch (e) {}
+    rows.push(publicOk
+      ? diagRow('ok', 'الوصول من أي مكان يعمل', 'الجسر يستجيب عبر الإنترنت' + (bridgeVer ? ' · إصدار الجسر ' + escapeHtml(bridgeVer) : ''))
+      : diagRow('bad', 'الجسر لا يستجيب من برّه', 'الرابط العام ما رجّع ردًا. يعني إمّا المكينة مطفية/مش على النت، أو النفق (cloudflared) واقف.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
+  }
+
+  // 3) فحص المكينة من الداخل (عبر الطرفية)
+  let d = null, machineReachable = false;
+  try { const res = await bridgeExec(CAM_DIAG_CMD, 50); d = parseDiag(res.output); machineReachable = true; }
+  catch (e) { machineReachable = false; }
+
+  if (!machineReachable) {
+    rows.push(diagRow('bad', 'المكينة لا تردّ على الطرفية', 'ما قدرنا ننفّذ فحصًا داخل المكينة خلال المهلة. تأكد أن المكينة شغّالة وموصّلة بالنت وأن مراقب الأوامر (bridgectl) يعمل.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
+  } else {
+    // 3a) الخادم المحلي
+    rows.push(d.LOCAL === '200'
+      ? diagRow('ok', 'خادم الكاميرات (camsrv) يعمل', 'يستجيب محليًا على المكينة (منفذ 8787).')
+      : diagRow('bad', 'خادم الكاميرات (camsrv) لا يعمل', 'المنفذ المحلي 8787 ما ردّ (الرمز: ' + escapeHtml(d.LOCAL || '—') + '). هذا سبب الشاشة السوداء غالبًا.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
+
+    // 3b) عدد العمليات (تكرار؟)
+    const nCam = parseInt(d.CAMSRV || '0', 10), nCf = parseInt(d.CF || '0', 10), nRun = parseInt(d.RUN || '0', 10), nCtl = parseInt(d.CTL || '0', 10);
+    const dupMsg = [];
+    if (nCam > 1) dupMsg.push('camsrv × ' + nCam); if (nCf > 1) dupMsg.push('cloudflared × ' + nCf); if (nRun > 1) dupMsg.push('run.sh × ' + nRun);
+    const anyZero = (nCam === 0 || nRun === 0);
+    if (dupMsg.length) {
+      rows.push(diagRow('warn', 'في عمليات مكرّرة على المكينة', 'تكرار العمليات يسبّب 502 وتهنيج: ' + dupMsg.join(' · ') + '.<br>الحل: حدّث الجسر لنسخة 2.0 (تمنع التكرار نهائيًا) ثم أعد التشغيل.', 'bridgeRestart', '↻ إعادة تشغيل نظيف'));
+    } else if (anyZero) {
+      rows.push(diagRow('bad', 'عملية أساسية متوقفة', 'العمليات: camsrv=' + nCam + ' · cloudflared=' + nCf + ' · run=' + nRun + '. لازم كل واحدة = 1.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
+    } else {
+      rows.push(diagRow('ok', 'العمليات سليمة', 'camsrv=' + nCam + ' · cloudflared=' + nCf + ' · run=' + nRun + ' · مراقب=' + nCtl + ' (كلها مفردة).'));
+    }
+
+    // 3c) إعدادات camsrv.conf (أين الخانة اللي فيها غلط)
+    if (d.CONF !== 'yes') {
+      rows.push(diagRow('bad', 'ملف الإعدادات مفقود', 'camsrv.conf غير موجود على المكينة. لازم تعيد تركيب الجسر (تحديث الجسر).', 'bridgeUpdate', '⬇ تحديث/تركيب الجسر'));
+    } else {
+      const confProblems = [];
+      if (!d.DVR_IP) confProblems.push('خانة DVR_IP (عنوان جهاز التسجيل) فاضية');
+      if (!d.DVR_USER) confProblems.push('خانة DVR_USER (اسم المستخدم) فاضية');
+      if (d.DVR_PASS !== '1') confProblems.push('خانة DVR_PASS (كلمة مرور جهاز التسجيل) فاضية');
+      if (!d.CAM_CODE) confProblems.push('خانة CAM_CODE (رمز الوصول) فاضية');
+      if (!d.FB_EMAIL) confProblems.push('خانة FB_EMAIL (بريد Firebase) فاضية');
+      if (confProblems.length) {
+        rows.push(diagRow('bad', 'في خانة إعدادات ناقصة', 'الخانات اللي فيها مشكلة:<br>• ' + confProblems.join('<br>• ') + '<br>تنعدّل من الطرفية أو بإعادة تركيب الجسر.', 'nano ~/cam/camsrv.conf', '✏️ افتح الإعدادات في الطرفية'));
+      } else {
+        rows.push(diagRow('ok', 'إعدادات الجسر مكتملة', 'IP=' + escapeHtml(d.DVR_IP) + ' · مستخدم=' + escapeHtml(d.DVR_USER) + ' · الرمز مضبوط · كلمة المرور محفوظة.'));
+      }
+    }
+
+    // 3d) الوصول لجهاز التسجيل (DVR) على الشبكة المحلية
+    if (d.DVRPING && d.DVRPING !== '000' && d.DVRPING !== '') {
+      rows.push(diagRow('ok', 'جهاز التسجيل (DVR) متصل', 'المكينة توصل لجهاز التسجيل على ' + escapeHtml(d.DVR_IP || '') + ' (رد: ' + escapeHtml(d.DVRPING) + ').'));
+    } else {
+      rows.push(diagRow('bad', 'المكينة ما توصل لجهاز التسجيل', 'جهاز التسجيل على ' + escapeHtml(d.DVR_IP || '؟') + ' ما ردّ. تأكد أن الـ DVR شغّال وعلى نفس الشبكة، وأن خانة DVR_IP صحيحة.', 'ping -c 3 ' + (d.DVR_IP || '192.168.0.100'), '📡 اختبر الاتصال بالـ DVR'));
+    }
+
+    // 3e) نسخة الجسر
+    if (bridgeVer && bridgeVer !== BRIDGE_EXPECTED_VERSION) {
+      rows.push(diagRow('warn', 'الجسر يشغّل نسخة قديمة', 'النسخة على المكينة ' + escapeHtml(bridgeVer) + ' والمتوقّع ' + BRIDGE_EXPECTED_VERSION + '. حدّث الجسر للاستفادة من منع التكرار.', 'bridgeUpdate', '⬇ تحديث الجسر'));
+    } else if (!bridgeVer && publicOk) {
+      rows.push(diagRow('warn', 'الجسر يشغّل نسخة قديمة', 'النسخة القديمة ما تعرض رقم إصدار. يُنصح بتحديث الجسر لنسخة ' + BRIDGE_EXPECTED_VERSION + ' (تمنع تكرار العمليات).', 'bridgeUpdate', '⬇ تحديث الجسر'));
+    }
+  }
+
+  // خلاصة
+  const bads = rows.filter(r => r.indexOf('#FEE2E2') > -1).length;
+  const warns = rows.filter(r => r.indexOf('#FEF3C7') > -1).length;
+  let head;
+  if (bads) head = `<div style="background:#FEE2E2;color:#991B1B;border-radius:12px;padding:11px 13px;margin-bottom:12px;font-size:13.5px;font-weight:800;line-height:1.7;">❌ في ${bads} مشكلة توقف الكاميرات. اتبع الحل تحت كل مشكلة بالترتيب.</div>`;
+  else if (warns) head = `<div style="background:#FEF3C7;color:#92400E;border-radius:12px;padding:11px 13px;margin-bottom:12px;font-size:13.5px;font-weight:800;line-height:1.7;">⚠️ الكاميرات تشتغل، بس في ${warns} تنبيه يُفضّل تعالجه.</div>`;
+  else head = `<div style="background:#DCFCE7;color:#166534;border-radius:12px;padding:11px 13px;margin-bottom:12px;font-size:13.5px;font-weight:800;line-height:1.7;">✅ كل شيء سليم - الكاميرات تعمل بدون مشاكل.</div>`;
+
+  body.innerHTML = head + rows.join('');
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '↻ إعادة الفحص'; }
+}
+
+// أزرار الإصلاح المختصرة داخل الفحص (restart/update عبر Firebase)
+function fixInTerminal(cmd) {
+  if (cmd === 'bridgeRestart') { closeModal('camDiagModal'); bridgeRestartRemote(); return; }
+  if (cmd === 'bridgeUpdate') { closeModal('camDiagModal'); bridgeUpdateRemote(); return; }
+  closeModal('camDiagModal');
+  openBridgeShell();
+  setTimeout(() => { const i = document.getElementById('bridgeShellInput'); if (i) { i.value = cmd; i.focus(); } }, 250);
+}
+
+/* ===== نشر تحديث لـ GitHub (من داخل التطبيق) ===== */
+const GH_OWNER = 'HTCPOS';
+const GH_REPO = 'htcpos-sales';
+const GH_BRANCH = 'main';
+// وجهة كل ملف داخل المستودع حسب اسمه (بدون تخمين - من بنية المستودع الفعلية)
+const GH_TARGETS = {
+  'index.html':    { path: 'docs/index.html',                 label: 'التطبيق (الواجهة الحية)', after: 'انتظر ~دقيقة (GitHub Pages) ثم أعد فتح التطبيق - يتحدّث لحاله.' },
+  'setup.sh':      { path: 'setup.sh',                         label: 'سكريبت الجسر',            after: 'افتح إعدادات الكاميرا واضغط "⬇ تحديث الجسر".' },
+  'build-ios.yml': { path: '.github/workflows/build-ios.yml',  label: 'إعداد بناء IPA',          after: 'تم - يسري على عمليات البناء القادمة.' }
+};
+
+function ghToken() { try { return localStorage.getItem('ghToken') || ''; } catch (e) { return ''; } }
+function ghSaveToken(t) { try { if (t) localStorage.setItem('ghToken', t); else localStorage.removeItem('ghToken'); } catch (e) {} }
+
+// UTF-8 -> base64 (يدعم العربية والرموز)
+function b64utf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+let ghPicked = null; // {name, path, label, content, after}
+
+function openGhPublish() { ghPicked = null; renderGhPublish(); openModal('ghPublishModal'); }
+
+function renderGhPublish() {
+  const tok = ghToken();
+  const hasTok = !!tok;
+  const masked = hasTok ? ('••••••••' + tok.slice(-4)) : '';
+  const body = document.getElementById('ghPublishBody');
+  if (!body) return;
+  body.innerHTML = `
+    <div class="setSec">توكن GitHub</div>
+    <div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:12px;">
+      ${hasTok
+      ? `<div style="font-size:13px;font-weight:700;color:#16A34A;">✓ التوكن محفوظ (${escapeHtml(masked)})</div>
+           <button type="button" onclick="ghClearToken()" style="margin-top:10px;height:40px;width:100%;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:#DC2626;font-size:13px;font-weight:700;cursor:pointer;">حذف التوكن من الجهاز</button>`
+      : `<input id="ghTokenInput" type="password" dir="ltr" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="github_pat_..." style="width:100%;height:46px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;padding:0 12px;font-family:monospace;">
+           <button type="button" onclick="ghSaveTokenFromInput()" style="margin-top:10px;height:44px;width:100%;border:none;border-radius:12px;background:#16A34A;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">حفظ التوكن (في جوالك فقط)</button>
+           <div style="font-size:11.5px;color:var(--textMuted);margin-top:8px;line-height:1.7;">التوكن يُحفظ في جوالك فقط - ما يُرفع لأي مكان.</div>`}
+    </div>
+    ${hasTok ? `
+    <div class="setSec">الملف</div>
+    <div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:12px;">
+      <input id="ghFileInput" type="file" accept=".html,.sh,.yml,.yaml,text/*" onchange="ghOnPick(this)" style="display:none;">
+      <button type="button" onclick="document.getElementById('ghFileInput').click()" style="width:100%;height:48px;border:1.5px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">📂 اختر ملف التحديث</button>
+      <div id="ghPickInfo" style="margin-top:10px;font-size:12.5px;color:var(--textMuted);line-height:1.8;"></div>
+    </div>
+    <button type="button" id="ghPublishBtn" onclick="ghDoPublish()" disabled style="width:100%;border:none;border-radius:14px;height:52px;background:#9CA3AF;color:#fff;font-size:16px;font-weight:800;cursor:not-allowed;">رفع ونشر</button>
+    <div id="ghPublishLog" style="margin-top:12px;"></div>
+    <div style="font-size:11.5px;color:var(--textMuted);margin-top:12px;line-height:1.7;">الملفات المعروفة: <b dir="ltr">index.html</b> ← الواجهة · <b dir="ltr">setup.sh</b> ← الجسر.</div>
+    ` : ''}`;
+}
+
+function ghSaveTokenFromInput() {
+  const i = document.getElementById('ghTokenInput');
+  const t = i ? i.value.trim() : '';
+  if (!t) { uiAlert('اكتب التوكن أولًا'); return; }
+  if (t.indexOf('github_pat_') !== 0 && t.indexOf('ghp_') !== 0) {
+    uiConfirm('التوكن ما يبدأ بالصيغة المتوقّعة (github_pat_). متأكد تحفظه؟').then(ok => { if (ok) { ghSaveToken(t); renderGhPublish(); } });
+    return;
+  }
+  ghSaveToken(t); renderGhPublish();
+  try { showQuickToast('تم حفظ التوكن', true); } catch (e) {}
+}
+function ghClearToken() {
+  uiConfirm('حذف التوكن من هذا الجهاز؟').then(ok => { if (ok) { ghSaveToken(''); ghPicked = null; renderGhPublish(); } });
+}
+
+function ghOnPick(input) {
+  const f = input.files && input.files[0];
+  const info = document.getElementById('ghPickInfo');
+  const btn = document.getElementById('ghPublishBtn');
+  if (!f) return;
+  const name = f.name;
+  const target = GH_TARGETS[name];
+  if (!target) {
+    ghPicked = null;
+    if (info) info.innerHTML = '<span style="color:#DC2626;font-weight:700;">⚠ اسم الملف غير معروف: ' + escapeHtml(name) + '<br>لازم يكون index.html أو setup.sh.</span>';
+    if (btn) { btn.disabled = true; btn.style.background = '#9CA3AF'; btn.style.cursor = 'not-allowed'; }
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    ghPicked = { name: name, path: target.path, label: target.label, content: String(reader.result), after: target.after };
+    const kb = Math.round(ghPicked.content.length / 1024);
+    if (info) info.innerHTML = '✓ <b>' + escapeHtml(name) + '</b> (' + kb + ' ك.ب)<br>الوجهة: <span dir="ltr">' + escapeHtml(target.path) + '</span> · ' + escapeHtml(target.label);
+    if (btn) { btn.disabled = false; btn.style.background = '#0F766E'; btn.style.cursor = 'pointer'; }
+  };
+  reader.onerror = () => { if (info) info.innerHTML = '<span style="color:#DC2626;">تعذّر قراءة الملف</span>'; };
+  reader.readAsText(f, 'UTF-8');
+}
+
+async function ghApi(method, apiPath, body) {
+  const r = await fetch('https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/' + apiPath, {
+    method: method,
+    headers: { 'Authorization': 'Bearer ' + ghToken(), 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let j = null; try { j = await r.json(); } catch (e) {}
+  return { ok: r.ok, status: r.status, data: j };
+}
+
+function ghErr(html) { return '<div style="background:#FEE2E2;color:#991B1B;border-radius:12px;padding:12px 13px;font-size:13px;font-weight:700;line-height:1.8;">❌ ' + html + '</div>'; }
+function ghResetBtn() { const btn = document.getElementById('ghPublishBtn'); if (btn && ghPicked) { btn.disabled = false; btn.style.background = '#0F766E'; btn.style.cursor = 'pointer'; btn.textContent = 'رفع ونشر'; } }
+
+async function ghDoPublish() {
+  if (!ghPicked) return;
+  const btn = document.getElementById('ghPublishBtn');
+  const log = document.getElementById('ghPublishLog');
+  const setLog = (html) => { if (log) log.innerHTML = html; };
+  const ok = await uiConfirm('رفع ' + ghPicked.name + ' إلى GitHub؟\nالوجهة: ' + ghPicked.path, { okText: 'رفع' });
+  if (!ok) return;
+  if (btn) { btn.disabled = true; btn.style.background = '#9CA3AF'; btn.style.cursor = 'not-allowed'; btn.textContent = '⏳ جارٍ الرفع...'; }
+  setLog('<div style="font-size:13px;color:var(--textMuted);font-weight:700;">⏳ جارٍ جلب النسخة الحالية...</div>');
+  try {
+    let sha = null;
+    const cur = await ghApi('GET', 'contents/' + ghPicked.path + '?ref=' + GH_BRANCH);
+    if (cur.ok && cur.data && cur.data.sha) sha = cur.data.sha;
+    else if (cur.status === 401) { setLog(ghErr('التوكن غير صالح أو منتهي (401). احذفه وأعد إدخاله.')); ghResetBtn(); return; }
+    else if (cur.status === 403) { setLog(ghErr('التوكن ما عنده صلاحية (403). تأكد أن صلاحية Contents = Read and write على مستودع htcpos-sales.')); ghResetBtn(); return; }
+    // 404 = ملف جديد (ما يحتاج sha) - عادي
+    setLog('<div style="font-size:13px;color:var(--textMuted);font-weight:700;">⏳ جارٍ الرفع والنشر...</div>');
+    const put = await ghApi('PUT', 'contents/' + ghPicked.path, {
+      message: 'تحديث ' + ghPicked.path + ' من التطبيق (v' + APP_VERSION + ')',
+      content: b64utf8(ghPicked.content),
+      branch: GH_BRANCH,
+      sha: sha || undefined
+    });
+    if (put.ok) {
+      setLog('<div style="background:#DCFCE7;color:#166534;border-radius:12px;padding:12px 13px;font-size:13.5px;font-weight:800;line-height:1.8;">✅ تم النشر بنجاح!<br><span style="font-weight:600;">' + escapeHtml(ghPicked.after || '') + '</span></div>');
+      ghPicked = null;
+      const info = document.getElementById('ghPickInfo'); if (info) info.innerHTML = '';
+      if (btn) { btn.textContent = '✓ تم النشر'; }
+      try { showQuickToast('تم النشر على GitHub', true); } catch (e) {}
+    } else {
+      const msg = put.data && put.data.message ? put.data.message : ('رمز ' + put.status);
+      setLog(ghErr('فشل الرفع: ' + escapeHtml(String(msg)))); ghResetBtn();
+    }
+  } catch (e) {
+    setLog(ghErr('خطأ في الاتصال: ' + escapeHtml(String(e && e.message ? e.message : e)) + '<br>تأكد من الإنترنت.')); ghResetBtn();
+  }
+}
+
 function renderCamSettings() {
   const st = camSettings();
   const row = (label, inner, hint) => `<div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:10px;">
@@ -5088,7 +5443,8 @@ function renderCamSettings() {
         <button type="button" onclick="bridgeUpdateRemote()" style="flex:1;height:44px;border:none;border-radius:12px;background:#1D4ED8;color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">⬇ تحديث الجسر</button>
       </div>
       <div style="font-size:11.5px;color:var(--textMuted);margin-top:8px;line-height:1.7;">تحديث الجسر: المكينة تحمّل آخر نسخة وتعيد تشغيل نفسها تلقائيًا (بدون ما تروح المحل). يشتغل من أي مكان.</div>
-      <button type="button" onclick="openBridgeShell()" style="width:100%;margin-top:10px;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:700;cursor:pointer;">⌨ أوامر المكينة عن بُعد (طرفية)</button>
+      <button type="button" onclick="openCamDiag()" style="width:100%;margin-top:10px;height:46px;border:none;border-radius:12px;background:#0F766E;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">🔍 فحص الكاميرات (يكشف العطل ويعطيك الحل)</button>
+      <button type="button" onclick="openBridgeShell()" style="width:100%;margin-top:8px;height:44px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:13.5px;font-weight:700;cursor:pointer;">⌨ أوامر المكينة عن بُعد (طرفية)</button>
     </div>
     <div class="setSec">الكاميرات</div>
     ${row('كاميرا الكاشير', num('camSetCam', st.cam), 'رقم الكاميرا اللي تصوّر الكاشير في Hik-Connect')}
@@ -6329,9 +6685,18 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.3';
-const APP_BUILD_DATE = '2026-10-08';
+const APP_VERSION = '4.9.5';
+const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.5', date: '2026-10-09', items: [
+    'نشر التحديثات من داخل التطبيق: شاشة "نشر تحديث" في الإعدادات ترفع index.html أو setup.sh لـ GitHub مباشرة من جوالك - بدون أي أداة خارجية',
+    'التوكن يُحفظ في جوالك فقط (ما يُرفع لأي مكان)، وبناء IPA ما عاد يشتغل عند رفع المحتوى (توفير)'
+  ] },
+  { v: '4.9.4', date: '2026-10-09', items: [
+    'أداة فحص الكاميرات: زر "فحص الكاميرات" في إعدادات الكاميرا يكشف سبب أي عطل بالضبط (الرابط، الاتصال، العمليات، الإعدادات، جهاز التسجيل) ويعطيك الحل الجاهز وزر يصلّح من الطرفية مباشرة',
+    'تقوية مكينة الكاميرات (الجسر v2.0): إعادة التشغيل والتحديث صارت تقتل العمليات برقمها (PID) بدل الاسم - انتهت مشكلة تكرار العمليات نهائيًا',
+    'الجسر صار يعرض رقم إصداره، والتطبيق ينبّهك لو المكينة تشغّل نسخة قديمة تحتاج تحديث'
+  ] },
   { v: '4.9.3', date: '2026-10-09', items: [
     'طرفية المكينة عن بُعد: من إعدادات الكاميرا تقدر تكتب أوامر تيرمكس وتنفّذها على المكينة وترجع النتيجة - كأنك ماسك المكينة، من أي مكان'
   ] },
