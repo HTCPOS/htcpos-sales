@@ -1,14 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  HTC POS - Camera bridge setup (Android machine / Termux)
-#  BRIDGE_VERSION 2.4
+#  BRIDGE_VERSION 2.5
 #  Run once with:
 #    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
 #  Safe to re-run: it overwrites the server + boot files cleanly.
 #  v2.0: يقتل العمليات برقمها (PID) بدل الاسم -> لا تكرار عمليات أبدًا.
 # ============================================================
 set -e
-BRIDGE_VERSION="2.4"
+BRIDGE_VERSION="2.5"
 
 CAM_DIR="$HOME/cam"
 BOOT_DIR="$HOME/.termux/boot"
@@ -91,7 +91,7 @@ cat > "$PY" <<'PYEOF'
 import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BRIDGE_VERSION = "2.4"
+BRIDGE_VERSION = "2.5"
 HOME = os.path.expanduser("~")
 CAMDIR = os.path.join(HOME, "cam")
 CONF = os.path.join(CAMDIR, "camsrv.conf")
@@ -137,28 +137,31 @@ def stop_ffmpeg():
             except Exception: pass
     _proc["p"] = None; _proc["key"] = None
 
-def start_ffmpeg(ch, start_utc, key):
+def start_ffmpeg(ch, start_utc, key, speed=1):
     stop_ffmpeg()
     if os.path.isdir(HLS): shutil.rmtree(HLS, ignore_errors=True)
     os.makedirs(HLS, exist_ok=True)
     url = rtsp_url(ch, start_utc)
     # كاميرات المحل تسجّل H.265 (HEVC) اللي مشغّل التطبيق (WKWebView) ما يفكّه حتى مع التعريف.
     # الحل: نحوّل لـ H.264 + مقاطع MPEG-TS (أكثر صيغة مدعومة) -> يشتغل في أي مشغّل.
-    # للتخفيف على المعالج: مقاس 640 و15 إطار/ثانية (اختُبرت السرعة = فوق 1x مع هامش).
-    # ultrafast: أسرع ضغط. yuv420p: نطاق ألوان قياسي. genpts/make_zero: طوابع نظيفة.
-    # إعدادات أسرع بداية ممكنة:
-    # nobuffer+low_delay+probesize/analyzeduration قليلة -> يبدأ تحليل البث بسرعة.
-    # tune zerolatency -> المُرمّز يخرج أول إطار فورًا (بدون تأخير B-frames).
-    # hls_time=1 + إطار مفتاحي كل ثانية -> أول قطعة جاهزة بعد ~ثانية بدل 4.
+    # السرعة تُنفَّذ هنا على المكينة (setpts) فيوصل للمشغّل فيديو مسرّع جاهز يعرضه 1x بسلاسة.
+    # للسرعات >1 نقرأ الإطارات المفتاحية فقط (skip_frame nokey) -> خفيف جدًا على المعالج الضعيف
+    # فما يتقطّع (مسح سريع). 1x = حركة كاملة.
+    pre = []
+    vf = "scale=640:-2"
+    if speed and speed > 1:
+        pre = ["-skip_frame", "nokey"]
+        vf = "scale=640:-2,setpts=PTS/%d" % int(speed)
     cmd = [
         "ffmpeg", "-nostdin", "-loglevel", "error",
         "-fflags", "+genpts+igndts+nobuffer", "-flags", "low_delay",
         "-probesize", "500000", "-analyzeduration", "500000",
+    ] + pre + [
         "-rtsp_transport", "tcp", "-i", url,
         "-t", str(CLIP_SECONDS),
         "-an",
         "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency", "-pix_fmt", "yuv420p",
-        "-vf", "scale=640:-2", "-r", "15", "-g", "15", "-keyint_min", "15", "-sc_threshold", "0",
+        "-vf", vf, "-r", "15", "-g", "15", "-keyint_min", "15", "-sc_threshold", "0",
         "-avoid_negative_ts", "make_zero",
         "-f", "hls", "-hls_time", "1", "-hls_list_size", "0",
         "-hls_playlist_type", "event",
@@ -209,13 +212,16 @@ class H(BaseHTTPRequestHandler):
                 import datetime
                 datetime.datetime.strptime(t, "%Y%m%d%H%M%S")   # تحقق من الصيغة فقط
                 start_utc = t[0:8] + "T" + t[8:14] + "Z"
-                key = "%s-%s" % (ch, start_utc)
+                try: speed = int(q.get("speed", ["1"])[0])
+                except Exception: speed = 1
+                if speed not in (1, 2, 4, 8): speed = 1
+                key = "%s-%s-%d" % (ch, start_utc, speed)
             except Exception as e:
                 self.send_response(400); self._cors(); self.end_headers()
                 self.wfile.write(str(e).encode()); return
             with _lock:
                 if _proc["key"] != key or not _proc["p"] or _proc["p"].poll() is not None:
-                    start_ffmpeg(ch, start_utc, key)
+                    start_ffmpeg(ch, start_utc, key, speed)
             _last_touch["t"] = time.time()
             self.send_response(200); self._cors()
             self.send_header("Content-Type","application/json")
