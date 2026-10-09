@@ -5328,7 +5328,7 @@ function renderGhPublish() {
     ${hasTok ? `
     <div class="setSec">الملف</div>
     <div style="background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:12px;">
-      <input id="ghFileInput" type="file" accept=".html,.sh,.yml,.yaml,text/*" onchange="ghOnPick(this)" style="display:none;">
+      <input id="ghFileInput" type="file" onchange="ghOnPick(this)" style="display:none;">
       <button type="button" onclick="document.getElementById('ghFileInput').click()" style="width:100%;height:48px;border:1.5px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">📂 اختر ملف التحديث</button>
       <div id="ghPickInfo" style="margin-top:10px;font-size:12.5px;color:var(--textMuted);line-height:1.8;"></div>
     </div>
@@ -6685,9 +6685,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.5';
+const APP_VERSION = '4.9.6';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.6', date: '2026-10-09', items: [
+    'نشر التحديث: إصلاح اختيار الملفات - صار يقدر يختار setup.sh (كان آيفون يضلّله بسبب الامتداد)'
+  ] },
   { v: '4.9.5', date: '2026-10-09', items: [
     'نشر التحديثات من داخل التطبيق: شاشة "نشر تحديث" في الإعدادات ترفع index.html أو setup.sh لـ GitHub مباشرة من جوالك - بدون أي أداة خارجية',
     'التوكن يُحفظ في جوالك فقط (ما يُرفع لأي مكان)، وبناء IPA ما عاد يشتغل عند رفع المحتوى (توفير)'
