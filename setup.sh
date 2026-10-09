@@ -1,14 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  HTC POS - Camera bridge setup (Android machine / Termux)
-#  BRIDGE_VERSION 2.2
+#  BRIDGE_VERSION 2.3
 #  Run once with:
 #    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
 #  Safe to re-run: it overwrites the server + boot files cleanly.
 #  v2.0: يقتل العمليات برقمها (PID) بدل الاسم -> لا تكرار عمليات أبدًا.
 # ============================================================
 set -e
-BRIDGE_VERSION="2.2"
+BRIDGE_VERSION="2.3"
 
 CAM_DIR="$HOME/cam"
 BOOT_DIR="$HOME/.termux/boot"
@@ -91,7 +91,7 @@ cat > "$PY" <<'PYEOF'
 import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BRIDGE_VERSION = "2.2"
+BRIDGE_VERSION = "2.3"
 HOME = os.path.expanduser("~")
 CAMDIR = os.path.join(HOME, "cam")
 CONF = os.path.join(CAMDIR, "camsrv.conf")
@@ -142,28 +142,24 @@ def start_ffmpeg(ch, start_utc, key):
     if os.path.isdir(HLS): shutil.rmtree(HLS, ignore_errors=True)
     os.makedirs(HLS, exist_ok=True)
     url = rtsp_url(ch, start_utc)
-    # نسجّل مقطع محدود (CLIP_SECONDS) من الأرشيف كـ VOD HLS كامل (ما يحذف مقاطع) -> الآيفون
-    # يحمّله ويشغّله بسلاسة مع شريط تقديم، وما يعلّق حتى لو النفق أبطأ من الشبكة المحلية.
-    # نسخ مباشر (copy) لـ HEVC بدون تحويل - المعالج الضعيف ما يتعب.
-    # أرشيف Hikvision يرسل طوابع زمنية فاسدة (أصفار/غير متتابعة) تخلّي مشغّل الآيفون يعلّق/يفشل.
-    # genpts+igndts: نعيد توليد الطوابع نظيفة. avoid_negative_ts make_zero: تبدأ من صفر.
-    # هذا يعطي مقاطع بطوابع صغيرة ومتتابعة وبدون discontinuity -> يقبلها سفاري ومشغّل التطبيق.
-    # -tag:v hvc1 + ملف master يحمل تعريف الكوديك -> مشغّل WKWebView (التطبيق) يعرف إنها HEVC
-    # ويشغّل الفكّاك الصحيح (كان يطلع إطار أول ثم يفشل بخطأ فك ترميز لأن التعريف ناقص).
+    # كاميرات المحل تسجّل H.265 (HEVC) اللي مشغّل التطبيق (WKWebView) ما يفكّه حتى مع التعريف.
+    # الحل: نحوّل لـ H.264 + مقاطع MPEG-TS (أكثر صيغة مدعومة) -> يشتغل في أي مشغّل.
+    # للتخفيف على المعالج: مقاس 640 و15 إطار/ثانية (اختُبرت السرعة = فوق 1x مع هامش).
+    # ultrafast: أسرع ضغط. yuv420p: نطاق ألوان قياسي. genpts/make_zero: طوابع نظيفة.
     cmd = [
         "ffmpeg", "-nostdin", "-loglevel", "error",
         "-fflags", "+genpts+igndts",
         "-rtsp_transport", "tcp", "-i", url,
         "-t", str(CLIP_SECONDS),
-        "-c", "copy", "-an",
-        "-tag:v", "hvc1",
+        "-an",
+        "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+        "-vf", "scale=640:-2", "-r", "15", "-g", "30",
         "-avoid_negative_ts", "make_zero",
         "-f", "hls", "-hls_time", "4", "-hls_list_size", "0",
         "-hls_playlist_type", "event",
         "-hls_flags", "append_list+independent_segments",
-        "-hls_segment_type", "fmp4",
-        "-master_pl_name", "master.m3u8",
-        "-hls_segment_filename", os.path.join(HLS, "seg%d.m4s"),
+        "-hls_segment_type", "mpegts",
+        "-hls_segment_filename", os.path.join(HLS, "seg%d.ts"),
         os.path.join(HLS, "index.m3u8"),
     ]
     p = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -220,8 +216,7 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Content-Type","application/json")
             self.send_header("Cache-Control","no-store, no-cache, must-revalidate, max-age=0")
             self.end_headers()
-            # نرجّع ملف الماستر (فيه تعريف الكوديك) عشان مشغّل التطبيق يفكّ H.265 صح
-            self.wfile.write(b'{"hls":"/hls/master.m3u8"}'); return
+            self.wfile.write(b'{"hls":"/hls/index.m3u8"}'); return
 
         # serve HLS files
         if path.startswith("/hls/"):
@@ -234,7 +229,9 @@ class H(BaseHTTPRequestHandler):
                     time.sleep(0.2)
             if not os.path.isfile(fn):
                 self.send_response(404); self._cors(); self.end_headers(); return
-            ct = "application/vnd.apple.mpegurl" if fn.endswith(".m3u8") else "video/mp4"
+            if fn.endswith(".m3u8"): ct = "application/vnd.apple.mpegurl"
+            elif fn.endswith(".ts"): ct = "video/mp2t"
+            else: ct = "video/mp4"
             data = open(fn,"rb").read()
             self.send_response(200); self._cors()
             self.send_header("Content-Type",ct)
