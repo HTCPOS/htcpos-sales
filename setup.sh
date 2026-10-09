@@ -1,14 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  HTC POS - Camera bridge setup (Android machine / Termux)
-#  BRIDGE_VERSION 2.0
+#  BRIDGE_VERSION 2.1
 #  Run once with:
 #    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
 #  Safe to re-run: it overwrites the server + boot files cleanly.
 #  v2.0: يقتل العمليات برقمها (PID) بدل الاسم -> لا تكرار عمليات أبدًا.
 # ============================================================
 set -e
-BRIDGE_VERSION="2.0"
+BRIDGE_VERSION="2.1"
 
 CAM_DIR="$HOME/cam"
 BOOT_DIR="$HOME/.termux/boot"
@@ -91,7 +91,7 @@ cat > "$PY" <<'PYEOF'
 import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BRIDGE_VERSION = "2.0"
+BRIDGE_VERSION = "2.1"
 HOME = os.path.expanduser("~")
 CAMDIR = os.path.join(HOME, "cam")
 CONF = os.path.join(CAMDIR, "camsrv.conf")
@@ -213,7 +213,9 @@ class H(BaseHTTPRequestHandler):
                     start_ffmpeg(ch, start_utc, key)
             _last_touch["t"] = time.time()
             self.send_response(200); self._cors()
-            self.send_header("Content-Type","application/json"); self.end_headers()
+            self.send_header("Content-Type","application/json")
+            self.send_header("Cache-Control","no-store, no-cache, must-revalidate, max-age=0")
+            self.end_headers()
             self.wfile.write(b'{"hls":"/hls/index.m3u8"}'); return
 
         # serve HLS files
@@ -231,6 +233,10 @@ class H(BaseHTTPRequestHandler):
             data = open(fn,"rb").read()
             self.send_response(200); self._cors()
             self.send_header("Content-Type",ct)
+            # لا تخزين كاش: عند التمرير لوقت آخر يتغيّر محتوى نفس الملفات، فلازم المشغّل
+            # يجيب الجديد دايمًا بدل ما يعلّق على المقطع القديم (كان سبب تجمّد الفيديو).
+            self.send_header("Cache-Control","no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Pragma","no-cache")
             self.send_header("Content-Length",str(len(data))); self.end_headers()
             self.wfile.write(data); return
 
