@@ -1626,20 +1626,29 @@ setTimeout(() => window.hideSplash(), 4000);
 
 <!-- مشغّل الكاميرا بملء الشاشة (الشريط جوّا المشغّل) -->
 <div id="camFsModal" style="position:fixed;inset:0;z-index:9999;background:#000;display:none;">
-  <video id="camFsVideo" playsinline webkit-playsinline autoplay muted onplaying="camFsPlaying()" onerror="camFsError()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>
+  <div id="camFsStage" style="position:absolute;inset:0;overflow:hidden;touch-action:none;">
+    <video id="camFsVideo" playsinline webkit-playsinline autoplay muted onplaying="camFsPlaying()" onplay="camFsSync()" onpause="camFsSync()" onerror="camFsError()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;transform-origin:center center;will-change:transform;"></video>
+    <div id="camFsCenter" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;"><div style="width:76px;height:76px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="38" height="38" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></div></div>
+  </div>
   <div id="camFsMsg" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#CBD5E1;font-size:14px;font-weight:700;text-align:center;padding:24px;pointer-events:none;"></div>
   <div style="position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px 30px;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none;">
     <button onclick="closeCamFs()" style="pointer-events:auto;width:42px;height:42px;border:none;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <div id="camFsTitle" style="color:#fff;font-size:14px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.7);"></div>
+    <div id="camFsTitle" style="color:#fff;font-size:14px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.7);flex:1;text-align:center;"></div>
+    <button id="camFsZoomReset" onclick="camFsResetZoom()" style="display:none;pointer-events:auto;height:34px;padding:0 12px;border:1.5px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(0,0,0,.45);color:#fff;font-size:12px;font-weight:800;cursor:pointer;flex:0 0 auto;">1:1</button>
   </div>
-  <div style="position:absolute;bottom:0;left:0;right:0;padding:44px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);background:linear-gradient(0deg,rgba(0,0,0,.8),transparent);">
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:44px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);background:linear-gradient(0deg,rgba(0,0,0,.82),transparent);">
     <div id="camFsChips" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:14px;"></div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:22px;margin-bottom:14px;">
+      <button onclick="camFsSkip(-5)" style="position:relative;width:52px;height:52px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4 4 10l7 6"/><path d="M4 10h9a7 7 0 1 1 0 14h-2"/></svg><span style="position:absolute;font-size:9px;font-weight:800;margin-top:1px;">5</span></button>
+      <button id="camFsPlayBtn" onclick="camFsTogglePlay()" style="width:62px;height:62px;border:none;border-radius:50%;background:#fff;color:#0F172A;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+      <button onclick="camFsSkip(5)" style="position:relative;width:52px;height:52px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 4 7 6-7 6"/><path d="M20 10h-9a7 7 0 1 0 0 14h2"/></svg><span style="position:absolute;font-size:9px;font-weight:800;margin-top:1px;">5</span></button>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
       <span style="color:#CBD5E1;font-size:12px;font-weight:700;">مرّر لأي وقت في اليوم</span>
       <span id="camFsTimeLbl" style="color:#fff;font-size:19px;font-weight:800;direction:ltr;text-shadow:0 1px 3px rgba(0,0,0,.7);">--:--</span>
     </div>
-    <input id="camFsSlider" type="range" min="0" max="86340" step="60" value="0" oninput="camFsSlideInput(this.value)" onchange="camFsSlideCommit(this.value)" style="width:100%;height:30px;accent-color:#fff;cursor:pointer;">
-    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#94A3B8;margin-top:-2px;"><span>12 ص</span><span>12 م</span><span>11:59 م</span></div>
+    <input id="camFsSlider" type="range" min="0" max="86340" step="60" value="0" oninput="camFsSlideInput(this.value)" onchange="camFsSlideCommit(this.value)" style="width:100%;height:30px;accent-color:#fff;cursor:pointer;direction:ltr;">
+    <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#94A3B8;margin-top:-2px;direction:ltr;"><span>12 ص</span><span>12 م</span><span>11:59 م</span></div>
   </div>
 </div>
 
@@ -4832,16 +4841,89 @@ function camShowFs(dateObj, cam) {
   camCurrent = { date: d, cam: Math.max(1, Number(cam) || 1) };
   const m = document.getElementById('camFsModal');
   if (m) m.style.display = 'block';
+  camFsInitGestures();
+  camFsResetZoom();
   camFsRender();
   camFsLoad();
 }
 function closeCamFs() {
   const v = document.getElementById('camFsVideo');
   if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} }
+  camFsResetZoom();
   const m = document.getElementById('camFsModal');
   if (m) m.style.display = 'none';
 }
-function camFsPlaying() { camFsRetry = 0; const m = document.getElementById('camFsMsg'); if (m) { m.style.display = 'none'; m.style.pointerEvents = 'none'; } }
+function camFsPlaying() { camFsRetry = 0; camFsSync(); const m = document.getElementById('camFsMsg'); if (m) { m.style.display = 'none'; m.style.pointerEvents = 'none'; } }
+
+/* ===== تشغيل/إيقاف + تقديم/ترجيع 5 ثواني ===== */
+const _CAM_ICON_PLAY = '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const _CAM_ICON_PAUSE = '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+function camFsSync() {
+  const v = document.getElementById('camFsVideo');
+  const paused = !v || v.paused;
+  const c = document.getElementById('camFsCenter'); if (c) c.style.display = paused ? 'flex' : 'none';
+  const b = document.getElementById('camFsPlayBtn'); if (b) b.innerHTML = paused ? _CAM_ICON_PLAY : _CAM_ICON_PAUSE;
+}
+function camFsTogglePlay() {
+  const v = document.getElementById('camFsVideo');
+  if (!v) return;
+  if (v.paused) { try { v.play().catch(() => {}); } catch (e) {} } else { try { v.pause(); } catch (e) {} }
+  camFsSync();
+}
+function camFsSkip(sec) {
+  const v = document.getElementById('camFsVideo');
+  if (!v) return;
+  let d = v.duration; if (!isFinite(d) || d <= 0) d = 1e9;
+  try { v.currentTime = Math.max(0, Math.min(d - 0.1, (v.currentTime || 0) + sec)); } catch (e) {}
+}
+
+/* ===== تكبير بإصبعين (pinch) + سحب + نقر للتشغيل ===== */
+let camZ = { scale: 1, tx: 0, ty: 0 };
+function camFsApplyTransform() {
+  const v = document.getElementById('camFsVideo');
+  if (v) v.style.transform = 'translate(' + camZ.tx + 'px,' + camZ.ty + 'px) scale(' + camZ.scale + ')';
+  const zr = document.getElementById('camFsZoomReset'); if (zr) zr.style.display = camZ.scale > 1.01 ? 'flex' : 'none';
+}
+function camFsClampPan() {
+  const v = document.getElementById('camFsVideo'); if (!v) return;
+  const mx = (camZ.scale - 1) * v.clientWidth / 2, my = (camZ.scale - 1) * v.clientHeight / 2;
+  camZ.tx = Math.max(-mx, Math.min(mx, camZ.tx));
+  camZ.ty = Math.max(-my, Math.min(my, camZ.ty));
+}
+function camFsResetZoom() { camZ = { scale: 1, tx: 0, ty: 0 }; camFsApplyTransform(); }
+let _camTapT = 0;
+function camFsInitGestures() {
+  const st = document.getElementById('camFsStage');
+  if (!st || st._ginit) return; st._ginit = true;
+  let startDist = 0, startScale = 1, sTx = 0, sTy = 0, sX = 0, sY = 0, moved = 0, mode = '';
+  const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  st.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) { mode = 'pinch'; startDist = dist(e.touches) || 1; startScale = camZ.scale; sTx = camZ.tx; sTy = camZ.ty; moved = 0; e.preventDefault(); }
+    else if (e.touches.length === 1) { mode = camZ.scale > 1 ? 'pan' : 'tap'; sX = e.touches[0].clientX; sY = e.touches[0].clientY; sTx = camZ.tx; sTy = camZ.ty; moved = 0; }
+  }, { passive: false });
+  st.addEventListener('touchmove', e => {
+    if (mode === 'pinch' && e.touches.length === 2) {
+      camZ.scale = Math.max(1, Math.min(4, startScale * (dist(e.touches) / startDist)));
+      camFsClampPan(); camFsApplyTransform(); moved = 1; e.preventDefault();
+    } else if (mode === 'pan' && e.touches.length === 1) {
+      camZ.tx = sTx + (e.touches[0].clientX - sX); camZ.ty = sTy + (e.touches[0].clientY - sY);
+      camFsClampPan(); camFsApplyTransform(); moved = 1; e.preventDefault();
+    } else if (mode === 'tap' && e.touches.length === 1) {
+      if (Math.hypot(e.touches[0].clientX - sX, e.touches[0].clientY - sY) > 10) moved = 1;
+    }
+  }, { passive: false });
+  st.addEventListener('touchend', () => {
+    if (mode === 'pinch') { if (camZ.scale <= 1.03) camFsResetZoom(); }
+    else if (mode === 'tap' && !moved) {
+      const now = Date.now();
+      if (now - _camTapT < 300) { // نقرتان: تكبير/إرجاع
+        if (camZ.scale > 1) camFsResetZoom(); else { camZ.scale = 2; camFsApplyTransform(); }
+        _camTapT = 0;
+      } else { _camTapT = now; setTimeout(() => { if (_camTapT && Date.now() - _camTapT >= 300) { camFsTogglePlay(); _camTapT = 0; } }, 310); }
+    }
+    mode = '';
+  });
+}
 let camFsDbg = {};
 let camFsRetry = 0;
 const CAM_FS_MAXRETRY = 7;
@@ -4963,7 +5045,7 @@ function camFsSlideCommit(sec) {
 }
 async function camFsLoad(isRetry) {
   if (!camCurrent) return;
-  if (!isRetry) camFsRetry = 0;   // محاولة جديدة بطلب المستخدم -> صفّر العدّاد
+  if (!isRetry) { camFsRetry = 0; camFsResetZoom(); }   // محاولة جديدة بطلب المستخدم -> صفّر العدّاد والتكبير
   const d = camCurrent.date, cam = camCurrent.cam, stamp = camLocalStamp(d);
   const v = document.getElementById('camFsVideo');
   const msg = document.getElementById('camFsMsg');
@@ -6980,9 +7062,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.14';
+const APP_VERSION = '4.9.15';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.15', date: '2026-10-09', items: [
+    'مشغّل الكاميرا صار احترافي أكثر: تكبير بإصبعين (pinch) مع سحب الصورة، وزر رجوع "1:1"',
+    'أزرار تقديم وترجيع 5 ثواني + زر تشغيل/إيقاف، ونقرة على الفيديو توقف/تشغّل (نقرتان = تكبير)',
+    'شريط الوقت صار من اليسار (12 ص) لليمين (11:59 م) بترتيب طبيعي'
+  ] },
   { v: '4.9.14', date: '2026-10-09', items: [
     'الكاميرا تفتح أسرع: الجسر v2.4 يبدأ البث بأول قطعة قصيرة (ثانية) مع بدء فوري للتحويل - الفيديو يفتح خلال ~2-3 ثواني بدل 5-6'
   ] },
