@@ -1604,6 +1604,14 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="empReportModal" onclick="if(event.target===this)closeModal('empReportModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('empReportModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>مبيعات الموظفين</h3>
+    <div id="empReportBody" style="margin-top:8px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="itemSalesModal" onclick="if(event.target===this)closeModal('itemSalesModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('itemSalesModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -1822,6 +1830,11 @@ setTimeout(() => window.hideSplash(), 4000);
       <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <div class="mmItems">
+      <button class="mmItem" onclick="closeMainMenu();openEmpReport();">
+        <span class="mmIco" style="--c:#2563EB;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M17 11l2 2 4-4"/></svg></span>
+        <span class="mmLbl">مبيعات الموظفين</span>
+        <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
       <button class="mmItem" onclick="closeMainMenu();openCommission();">
         <span class="mmIco" style="--c:#16A34A;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></span>
         <span class="mmLbl">عمولة الفني</span>
@@ -6724,6 +6737,7 @@ function productsHubRfid() {
 const GS_RECENT_KEY = 'gsRecent';
 const GS_SCREENS = [
   { name: 'التقارير', kw: 'تقرير تقارير مبيعات', run: "openModal('reportsModal')" },
+  { name: 'مبيعات الموظفين', kw: 'موظف موظفين مبيعات اداء كاشير رضوان عثمان كل موظف من باع حركات الموظف', run: "openEmpReport()" },
   { name: 'عمولة الفني', kw: 'عمولة فني صيانة نسبة الفني حساب الفني قطع تركيب', run: "openCommission()" },
   { name: 'مبيعات صنف (كل فواتير الصنف)', kw: 'مبيعات صنف فواتير الصنف كم بعت بيع منتج حركة الصنف', run: "openItemSales()" },
   { name: 'ربط الكاميرات عن بعد (Tailscale)', kw: 'كاميرا عن بعد tailscale تيلسكيل vpn برا المحل من البيت', run: "openTailscaleSetup()" },
@@ -6941,9 +6955,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.23';
-const APP_BUILD_DATE = '2026-10-09';
+const APP_VERSION = '4.10.0';
+const APP_BUILD_DATE = '2026-10-17';
 const APP_RELEASES = [
+  { v: '4.10.0', date: '2026-10-17', items: [
+    'فصل حسابات الموظفين: كل فاتورة وحركة صارت تُنسب لاسم الموظف الذي أنشأها، مع شاشة "مبيعات الموظفين" التي تعرض أداء كل موظف (عدد الفواتير والمبيعات والمرتجعات والصافي) خلال فترة تختارها'
+  ] },
   { v: '4.9.23', date: '2026-10-10', items: [
     'مشغّل الكاميرا: الوقت صار يتحرك حيًّا مع تشغيل الفيديو (يتبع ساعة الكاميرا)، وتحسين شكل أزرار التقديم/الترجيع 5 ثوانٍ وإزالة التشوّه، ولمسات تصميم أنظف'
   ] },
@@ -8129,6 +8146,9 @@ function showInvoiceDetail(inv) {
   if (inv.payment) {
     html += `<div class="searchResultRow"><div class="n">طريقة الدفع</div><div class="p">${escapeHtml(inv.payment)}</div></div>`;
   }
+  if (inv.empName) {
+    html += `<div class="searchResultRow"><div class="n">الموظف</div><div class="p" style="color:#2563EB;font-weight:800;">${escapeHtml(String(inv.empName))}</div></div>`;
+  }
   html += `<div class="searchResultRow"><div class="n">التاريخ</div><div class="p">${new Date(inv.date).toLocaleString('ar-EG-u-nu-latn')}</div></div>`;
   html += `<button type="button" onclick="openCamPlayback('${String(inv.date).replace(/'/g, '')}')" style="width:100%;margin:2px 0 10px;border:none;border-radius:16px;height:50px;display:flex;align-items:center;justify-content:center;gap:10px;background:#ECFDF3;color:#15803D;font-size:15px;font-weight:700;cursor:pointer;border:1.5px solid #BBF7D0;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5"/></svg>شاهد الفاتورة في الكاميرا</button>`;
   html += `<div class="searchResultRow"><div class="n">الاجمالي</div><div class="p">${fmtMoney(inv.amount)} د.ل</div></div>`;
@@ -8188,6 +8208,70 @@ function renderInvIcon(idx, isReturn, number) {
   </div>`;
 }
 
+/* ================= مبيعات الموظفين (تقرير أداء كل موظف) ================= */
+let empReportMode = 'today';
+let empReportEntries = [];
+function empReportRange(mode) {
+  const fmt = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const now = new Date();
+  if (mode === 'yesterday') { const y = new Date(now); y.setDate(y.getDate()-1); const s = fmt(y); return { from: s, to: s }; }
+  if (mode === 'week') { const f = new Date(now); f.setDate(f.getDate()-6); return { from: fmt(f), to: fmt(now) }; }
+  if (mode === 'month') { const f = new Date(now.getFullYear(), now.getMonth(), 1); return { from: fmt(f), to: fmt(now) }; }
+  const s = fmt(now); return { from: s, to: s };
+}
+function openEmpReport() { empReportMode = 'today'; openModal('empReportModal'); renderEmpReport(); }
+function empReportSetPeriod(mode) { empReportMode = mode; renderEmpReport(); }
+function empReportEmpName(e) { return (e && e.empName && String(e.empName).trim()) ? String(e.empName).trim() : 'غير محدد'; }
+function renderEmpReport() {
+  const body = document.getElementById('empReportBody');
+  if (!body) return;
+  const periods = [['today','اليوم'],['yesterday','أمس'],['week','آخر ٧ أيام'],['month','هذا الشهر']];
+  const chips = periods.map(p => `<button onclick="empReportSetPeriod('${p[0]}')" style="flex:1;border:1.5px solid ${empReportMode===p[0]?'#2563EB':'var(--border)'};background:${empReportMode===p[0]?'#2563EB':'var(--surface2)'};color:${empReportMode===p[0]?'#fff':'var(--text)'};border-radius:12px;padding:9px 4px;font-size:12.5px;font-weight:700;cursor:pointer;">${p[1]}</button>`).join('');
+  const head = `<div style="display:flex;gap:6px;margin-bottom:12px;">${chips}</div>`;
+  body.innerHTML = head + '<div class="emptyMsg">جاري التحميل...</div>';
+  const range = empReportRange(empReportMode);
+  fetchArchiveRange(range.from, range.to).then(entries => {
+    empReportEntries = entries || [];
+    const g = {};
+    (entries || []).forEach(e => {
+      const name = empReportEmpName(e);
+      if (!g[name]) g[name] = { name: name, sc: 0, ss: 0, rc: 0, rs: 0 };
+      if (e.type === 'return') { g[name].rc++; g[name].rs += Number(e.amount) || 0; }
+      else { g[name].sc++; g[name].ss += Number(e.amount) || 0; }
+    });
+    const rows = Object.values(g).sort((a,b) => b.ss - a.ss);
+    if (!rows.length) { body.innerHTML = head + '<div class="emptyMsg">لا توجد حركات في هذه الفترة</div>'; return; }
+    const totSales = rows.reduce((s,r) => s + r.ss, 0);
+    const totCount = rows.reduce((s,r) => s + r.sc, 0);
+    let html = head;
+    html += `<div style="background:var(--surface2);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;font-weight:800;"><span>إجمالي المبيعات</span><span style="color:#16A34A;">${fmtMoney(totSales)} د.ل · ${totCount} فاتورة</span></div>`;
+    html += rows.map(r => {
+      const net = r.ss - r.rs;
+      const safe = String(r.name).replace(/'/g,"\\'");
+      return `<div onclick="empReportPickEmp('${safe}')" style="cursor:pointer;border:1.5px solid var(--border);border-radius:16px;padding:13px 14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;"><span style="width:34px;height:34px;border-radius:50%;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>${escapeHtml(r.name)}</div>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:11px;">
+          <div style="flex:1;background:#F0FDF4;border-radius:11px;padding:8px;text-align:center;"><div style="font-size:11px;color:#15803D;">مبيعات</div><div style="font-weight:800;font-size:14px;color:#15803D;">${fmtMoney(r.ss)}</div><div style="font-size:10.5px;color:#15803D;">${r.sc} فاتورة</div></div>
+          <div style="flex:1;background:#FEF2F2;border-radius:11px;padding:8px;text-align:center;"><div style="font-size:11px;color:#DC2626;">مرتجعات</div><div style="font-weight:800;font-size:14px;color:#DC2626;">${fmtMoney(r.rs)}</div><div style="font-size:10.5px;color:#DC2626;">${r.rc} مرتجع</div></div>
+          <div style="flex:1;background:var(--surface2);border-radius:11px;padding:8px;text-align:center;"><div style="font-size:11px;color:var(--textMuted);">الصافي</div><div style="font-weight:800;font-size:14px;">${fmtMoney(net)}</div><div style="font-size:10.5px;color:var(--textMuted);">د.ل</div></div>
+        </div>
+      </div>`;
+    }).join('');
+    html += `<div style="font-size:11.5px;color:var(--textMuted);text-align:center;margin-top:6px;line-height:1.7;">الحركات الأقدم من تفعيل الميزة قد تظهر باسم «غير محدد»</div>`;
+    body.innerHTML = html;
+  }).catch(() => { body.innerHTML = head + '<div class="emptyMsg">تعذّر تحميل البيانات - تأكد من الاتصال</div>'; });
+}
+function empReportPickEmp(name) {
+  const body = document.getElementById('empReportBody');
+  if (!body) return;
+  const list = (empReportEntries || []).filter(e => empReportEmpName(e) === name);
+  const back = `<button onclick="renderEmpReport()" style="display:flex;align-items:center;gap:7px;border:none;background:var(--surface2);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>رجوع · ${escapeHtml(name)}</button>`;
+  body.innerHTML = back + renderInvoiceResultsList(list);
+}
+
 function renderInvoices() {
   const list = document.getElementById('invoiceList');
   if (!latestInvoices.length) {
@@ -8212,6 +8296,7 @@ function renderInvoices() {
         <div class="num">${receiptLabel}${inv.number}${returnBadge}</div>
         ${itemNames ? `<div style="font-size:12px;color:var(--text);font-weight:700;margin-top:2px;">${itemNames}</div>` : ''}
         <div class="date">${new Date(inv.date).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        ${inv.empName ? `<div style="font-size:11px;color:#2563EB;font-weight:700;margin-top:2px;display:flex;align-items:center;gap:4px;"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>${escapeHtml(String(inv.empName))}</div>` : ''}
         ${paymentLine}
       </div>
       <div class="invRight">
@@ -8897,6 +8982,7 @@ function renderInvoiceResultsList(results) {
         <div class="num">${receiptLabel}${inv.number}${returnBadge}</div>
         ${itemNames ? `<div style="font-size:12px;color:var(--text);font-weight:700;margin-top:2px;">${itemNames}</div>` : ''}
         <div class="date">${new Date(inv.date).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+        ${inv.empName ? `<div style="font-size:11px;color:#2563EB;font-weight:700;margin-top:2px;display:flex;align-items:center;gap:4px;"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>${escapeHtml(String(inv.empName))}</div>` : ''}
       </div>
       <div class="invRight"><div class="invAmount">${fmtMoney(inv.amount)} د.ل</div></div>
     </div>`;
