@@ -1625,7 +1625,7 @@ setTimeout(() => window.hideSplash(), 4000);
 <!-- مشغّل الكاميرا بملء الشاشة (الشريط جوّا المشغّل) -->
 <div id="camFsModal" style="position:fixed;inset:0;z-index:9999;background:#000;display:none;">
   <div id="camFsStage" style="position:absolute;inset:0;overflow:hidden;touch-action:none;">
-    <video id="camFsVideo" playsinline webkit-playsinline autoplay muted onplaying="camFsPlaying()" onplay="camFsSync()" onpause="camFsSync()" onerror="camFsError()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;transform-origin:center center;will-change:transform;"></video>
+    <video id="camFsVideo" playsinline webkit-playsinline autoplay muted onplaying="camFsPlaying()" onplay="camFsSync()" onpause="camFsSync()" ontimeupdate="camFsTick()" onerror="camFsError()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;transform-origin:center center;will-change:transform;"></video>
     <div id="camFsCenter" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;"><div style="width:76px;height:76px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="38" height="38" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></div></div>
   </div>
   <div id="camFsMsg" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#CBD5E1;font-size:14px;font-weight:700;text-align:center;padding:24px;pointer-events:none;"></div>
@@ -1637,9 +1637,9 @@ setTimeout(() => window.hideSplash(), 4000);
   <div style="position:absolute;bottom:0;left:0;right:0;padding:44px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);background:linear-gradient(0deg,rgba(0,0,0,.82),transparent);">
     <div id="camFsChips" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:14px;"></div>
     <div style="display:flex;align-items:center;justify-content:center;gap:22px;margin-bottom:14px;">
-      <button onclick="camFsSkip(-5)" style="position:relative;width:52px;height:52px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4 4 10l7 6"/><path d="M4 10h9a7 7 0 1 1 0 14h-2"/></svg><span style="position:absolute;font-size:9px;font-weight:800;margin-top:1px;">5</span></button>
-      <button id="camFsPlayBtn" onclick="camFsTogglePlay()" style="width:62px;height:62px;border:none;border-radius:50%;background:#fff;color:#0F172A;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
-      <button onclick="camFsSkip(5)" style="position:relative;width:52px;height:52px;border:1.5px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 4 7 6-7 6"/><path d="M20 10h-9a7 7 0 1 0 0 14h2"/></svg><span style="position:absolute;font-size:9px;font-weight:800;margin-top:1px;">5</span></button>
+      <button onclick="camFsSkip(-5)" aria-label="ترجيع 5 ثوانٍ" style="position:relative;width:52px;height:52px;border:1.5px solid rgba(255,255,255,.22);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v6h6"/><path d="M21 12A9 9 0 1 1 6 5.3L3 8"/></svg><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10.5px;font-weight:800;line-height:1;">5</span></button>
+      <button id="camFsPlayBtn" onclick="camFsTogglePlay()" style="width:62px;height:62px;border:none;border-radius:50%;background:#fff;color:#0F172A;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.35);"><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+      <button onclick="camFsSkip(5)" aria-label="تقديم 5 ثوانٍ" style="position:relative;width:52px;height:52px;border:1.5px solid rgba(255,255,255,.22);border-radius:50%;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 1 15-6.7L21 8"/></svg><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10.5px;font-weight:800;line-height:1;">5</span></button>
     </div>
     <div id="camFsSpeed" style="display:flex;gap:7px;justify-content:center;align-items:center;margin-bottom:12px;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
@@ -4897,6 +4897,19 @@ function camFsSync() {
   const c = document.getElementById('camFsCenter'); if (c) c.style.display = paused ? 'flex' : 'none';
   const b = document.getElementById('camFsPlayBtn'); if (b) b.innerHTML = paused ? _CAM_ICON_PLAY : _CAM_ICON_PAUSE;
 }
+let camSeeking = false;
+// تحديث الوقت الحي مع تشغيل الفيديو: وقت اللقطة = بداية المقطع + زمن التشغيل × السرعة
+function camFsTick() {
+  if (!camCurrent || camSeeking) return;
+  const v = document.getElementById('camFsVideo');
+  if (!v) return;
+  const elapsed = (v.currentTime || 0) * (camSpeed || 1);
+  const d = new Date(camCurrent.date.getTime() + elapsed * 1000);
+  const lbl = document.getElementById('camFsTimeLbl');
+  if (lbl) lbl.textContent = camPad(d.getHours()) + ':' + camPad(d.getMinutes()) + ':' + camPad(d.getSeconds());
+  const sl = document.getElementById('camFsSlider');
+  if (sl && document.activeElement !== sl) sl.value = d.getHours() * 3600 + d.getMinutes() * 60;
+}
 function camFsTogglePlay() {
   const v = document.getElementById('camFsVideo');
   if (!v) return;
@@ -5075,11 +5088,13 @@ function camFsRender() {
 }
 function camFsPickCam(i) { if (!camCurrent) return; camCurrent.cam = i; camFsRender(); camFsLoad(); }
 function camFsSlideInput(sec) {
+  camSeeking = true;   // أثناء السحب نوقف تحديث الوقت التلقائي
   const s = Number(sec);
   const lbl = document.getElementById('camFsTimeLbl');
-  if (lbl) lbl.textContent = camPad(Math.floor(s / 3600)) + ':' + camPad(Math.floor((s % 3600) / 60));
+  if (lbl) lbl.textContent = camPad(Math.floor(s / 3600)) + ':' + camPad(Math.floor((s % 3600) / 60)) + ':00';
 }
 function camFsSlideCommit(sec) {
+  camSeeking = false;
   if (!camCurrent) return;
   const s = Number(sec);
   const t = new Date(camCurrent.date);
@@ -5090,6 +5105,7 @@ function camFsSlideCommit(sec) {
 }
 async function camFsLoad(isRetry) {
   if (!camCurrent) return;
+  camSeeking = false;
   if (!isRetry) { camFsRetry = 0; camFsResetZoom(); }   // محاولة جديدة بطلب المستخدم -> صفّر العدّاد والتكبير
   const d = camCurrent.date, cam = camCurrent.cam, stamp = camLocalStamp(d);
   const v = document.getElementById('camFsVideo');
@@ -6925,9 +6941,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.9.22';
+const APP_VERSION = '4.9.23';
 const APP_BUILD_DATE = '2026-10-09';
 const APP_RELEASES = [
+  { v: '4.9.23', date: '2026-10-10', items: [
+    'مشغّل الكاميرا: الوقت صار يتحرك حيًّا مع تشغيل الفيديو (يتبع ساعة الكاميرا)، وتحسين شكل أزرار التقديم/الترجيع 5 ثوانٍ وإزالة التشوّه، ولمسات تصميم أنظف'
+  ] },
   { v: '4.9.22', date: '2026-10-09', items: [
     'القائمة الجانبية: تفتح من اليسار وتدفع الشاشة الرئيسية للحافة (تأثير احترافي)، مع ترتيب أنظف للعناصر وفاصل واضح فوق زر تسجيل الخروج'
   ] },
