@@ -1071,6 +1071,7 @@ setTimeout(() => window.hideSplash(), 4000);
       <button type="button" class="heroEye" id="heroEyeBtn" onclick="toggleHeroAmount()" aria-label="إظهار المبلغ"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div>
     <div class="amount heroHidden" id="heroTotal" onclick="toggleHeroAmount()"><span class="heroDots" aria-label="المبلغ مخفي">••••••</span></div>
     <div class="heroPill"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> اليوم</div>
+    <div id="empSalesStrip" class="heroEmps" style="display:none;"></div>
   </div>
 
   <button type="button" id="dayReportBtn" onclick="openDayReport()" style="display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:0 16px 14px;padding:14px 16px;border:none;border-radius:16px;background:linear-gradient(135deg,#0F766E,#15803D);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(16,122,110,.22);text-align:right;font-family:inherit;">
@@ -1136,7 +1137,6 @@ setTimeout(() => window.hideSplash(), 4000);
       <button onclick="searchInvoiceByNumber()" style="background:#2563EB;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">بحث</button>
     </div>
   </div>
-  <div id="empSalesStrip" style="margin:0 16px 10px;display:none;"></div>
   <div class="invoiceList" id="invoiceList">
     <div class="emptyMsg">لا توجد بيانات بعد</div>
   </div>
@@ -6956,9 +6956,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.10.1';
+const APP_VERSION = '4.10.3';
 const APP_BUILD_DATE = '2026-10-17';
 const APP_RELEASES = [
+  { v: '4.10.3', date: '2026-10-17', items: [
+    'مبيعات الموظفين صارت مربعات صغيرة داخل بطاقة صافي المبيعات الخضراء نفسها (كل موظف بصافي مبيعاته اليوم)'
+  ] },
+  { v: '4.10.2', date: '2026-10-17', items: [
+    'نقل شريط صافي مبيعات الموظفين إلى أعلى الشاشة الرئيسية مباشرة تحت بطاقة صافي المبيعات ليكون أبرز'
+  ] },
   { v: '4.10.1', date: '2026-10-17', items: [
     'الشاشة الرئيسية: شريط مربعات صغيرة فوق قائمة الفواتير يعرض صافي مبيعات كل موظف لليوم (مبيعات − مرتجعات)، وبالضغط عليه يفتح تقرير مبيعات الموظفين'
   ] },
@@ -8292,13 +8298,13 @@ function renderEmpSalesStrip() {
     const rows = Object.values(g).filter(r => r.sc > 0 || r.net !== 0).sort((a,b) => b.net - a.net);
     if (!rows.length) { el.innerHTML = ''; el.style.display = 'none'; return; }
     el.style.display = 'block';
-    const boxes = rows.map(r => `<div onclick="openEmpReport()" style="flex:0 0 auto;min-width:112px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:10px 12px;cursor:pointer;">
-        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;"><span style="width:22px;height:22px;border-radius:50%;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;">${escapeHtml(r.name)}</span></div>
-        <div style="font-size:16px;font-weight:800;color:#16A34A;">${fmtMoney(r.net)} <span style="font-size:10px;color:var(--textMuted);font-weight:600;">د.ل</span></div>
-        <div style="font-size:10px;color:var(--textMuted);margin-top:1px;">${r.sc} فاتورة اليوم</div>
+    const boxes = rows.map(r => `<div onclick="openEmpReport()" style="flex:0 0 auto;min-width:104px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:13px;padding:9px 11px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#fff;margin-bottom:5px;opacity:.95;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:66px;">${escapeHtml(r.name)}</span></div>
+        <div style="font-size:15px;font-weight:800;color:#fff;">${fmtMoney(r.net)} <span style="font-size:9.5px;opacity:.8;font-weight:600;">د.ل</span></div>
+        <div style="font-size:9.5px;color:#fff;opacity:.75;margin-top:1px;">${r.sc} فاتورة</div>
       </div>`).join('');
-    el.innerHTML = `<div style="font-size:11.5px;font-weight:700;color:var(--textMuted);margin:0 2px 7px;">صافي مبيعات اليوم لكل موظف</div>
-      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">${boxes}</div>`;
+    el.innerHTML = `<div style="font-size:10.5px;font-weight:700;color:#fff;opacity:.8;margin:14px 2px 8px;position:relative;z-index:1;">صافي مبيعات اليوم لكل موظف</div>
+      <div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;position:relative;z-index:1;">${boxes}</div>`;
   }).catch(() => { el.innerHTML = ''; el.style.display = 'none'; });
 }
 
