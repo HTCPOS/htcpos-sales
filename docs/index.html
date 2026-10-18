@@ -6957,9 +6957,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.10.5';
+const APP_VERSION = '4.11.0';
 const APP_BUILD_DATE = '2026-10-18';
 const APP_RELEASES = [
+  { v: '4.11.0', date: '2026-10-18', items: [
+    'عند فتح فاتورة فيها أكثر من صنف: الصنف المُرجَع يظهر بشريط أحمر ووسم «مُرجَع» على سطره بالتحديد (مع الكمية إن كان الإرجاع جزئيًا)، ليتضح أي صنف رجع وأي صنف لا'
+  ] },
   { v: '4.10.5', date: '2026-10-18', items: [
     'شريط مبيعات الموظفين صار يعرض آخر يوم فيه حركات (نفس بطاقة صافي المبيعات) بدل يوم الجهاز، فما يختفي في الصباح الباكر قبل أول بيعة'
   ] },
@@ -8173,14 +8176,22 @@ function showInvoiceDetail(inv) {
     html += '<div class="emptyMsg">لا توجد تفاصيل أصناف</div>';
   } else {
     html += '<div style="margin-top:10px;font-weight:800;font-size:13px;">الأصناف:</div>';
-    html += items.map((it, idx) => `
-      <div class="searchResultRow">
-        <div class="n">${escapeHtml(it.name)}</div>
+    const __ret = {};
+    (invReturnedList(inv) || []).forEach(r => { const nm = String(r.name || '').trim(); if (nm) __ret[nm] = (__ret[nm] || 0) + (Number(r.qty) || 0); });
+    html += items.map((it, idx) => {
+      const rq = __ret[String(it.name || '').trim()] || 0;
+      const isRet = rq > 0;
+      const partial = isRet && rq < (Number(it.qty) || 0);
+      const retBadge = isRet ? `<span style="background:#DC2626;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px;white-space:nowrap;margin-left:6px;">${partial ? ('مُرجَع ' + fmtQty(rq)) : 'مُرجَع'}</span>` : '';
+      return `
+      <div class="searchResultRow" style="${isRet ? 'border-right:4px solid #DC2626;background:#FEF2F2;border-radius:10px;padding-right:8px;' : ''}">
+        <div class="n" style="${isRet ? 'color:#991B1B;font-weight:800;' : ''}">${escapeHtml(it.name)}${retBadge}</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="p">${it.qty} × ${fmtMoney(it.price)} د.ل</div>
           <button onclick='openCustomerPicker(${escapeHtml(JSON.stringify({name:it.name, qty:it.qty, price:it.price, amount:(it.qty*it.price), invoiceNumber:inv.number, date:inv.date}))})' style="background:#FFF7ED;color:#EA580C;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/></svg> دين</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
   body.innerHTML = html;
   openModal('itemDetailModal');
