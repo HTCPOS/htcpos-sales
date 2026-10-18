@@ -1,14 +1,15 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  HTC POS - Camera bridge setup (Android machine / Termux)
-#  BRIDGE_VERSION 2.5
+#  BRIDGE_VERSION 2.6
 #  Run once with:
 #    curl -sL https://raw.githubusercontent.com/HTCPOS/htcpos-sales/main/setup.sh | bash
 #  Safe to re-run: it overwrites the server + boot files cleanly.
 #  v2.0: يقتل العمليات برقمها (PID) بدل الاسم -> لا تكرار عمليات أبدًا.
+#  v2.6: ذاتي الإصلاح - يراقب camsrv + نبضة كل 60s + حارس JobScheduler يرجّع الجسر حتى لو قتله أندرويد في الخلفية.
 # ============================================================
 set -e
-BRIDGE_VERSION="2.5"
+BRIDGE_VERSION="2.6"
 
 CAM_DIR="$HOME/cam"
 BOOT_DIR="$HOME/.termux/boot"
@@ -25,7 +26,7 @@ mkdir -p "$CAM_DIR" "$BOOT_DIR"
 # ---------- 1) packages ----------
 echo
 echo ">> [1/6] Checking packages (python, ffmpeg, curl)..."
-pkg install -y python ffmpeg curl >/dev/null 2>&1 || true
+pkg install -y python ffmpeg curl termux-api >/dev/null 2>&1 || true
 pip install --quiet requests >/dev/null 2>&1 || pip install requests || true
 
 # ---------- 2) cloudflared ----------
@@ -91,7 +92,7 @@ cat > "$PY" <<'PYEOF'
 import os, sys, time, json, signal, shutil, subprocess, threading, urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-BRIDGE_VERSION = "2.5"
+BRIDGE_VERSION = "2.6"
 HOME = os.path.expanduser("~")
 CAMDIR = os.path.join(HOME, "cam")
 CONF = os.path.join(CAMDIR, "camsrv.conf")
@@ -323,9 +324,44 @@ except Exception as e:
 PY
 }
 
-# tunnel loop: if cloudflared dies or url changes, re-publish
+# ذاكرة التوكن (نجدده كل ~40 دقيقة) عشان النبضة ما تسجل دخول كل دقيقة
+TOK=""; TOK_AT=0
+cached_token() {
+  local now; now=$(date +%s)
+  if [ -n "$TOK" ] && [ $((now - TOK_AT)) -lt 2400 ]; then echo "$TOK"; return; fi
+  TOK=$(get_token); TOK_AT=$now; echo "$TOK"
+}
+
+# نبضة: تكتب الرابط + وقت جديد (ts) عشان التطبيق يعرف الجسر حي فعلاً
+publish_hb() {
+  local HBURL="$1"; local HBTOK="$2"
+  [ -z "$HBTOK" ] && return
+  FB_URL="$FB_URL" CAM_CODE="$CAM_CODE" python - "$HBURL" "$HBTOK" <<'PY'
+import os,sys,json,time,urllib.request
+url,tok=sys.argv[1],sys.argv[2]
+body=json.dumps({"url":url,"code":os.environ["CAM_CODE"],"ts":time.time()}).encode()
+u=os.environ["FB_URL"]+"/data/cameraBridge.json?auth="+tok
+try:
+  req=urllib.request.Request(u,body,{"Content-Type":"application/json"},method="PUT")
+  urllib.request.urlopen(req,timeout=20)
+except Exception as e:
+  print("hb failed:",e)
+PY
+}
+
+# يتأكد camsrv حي، ولو مات يرجّعه فورًا
+ensure_camsrv() {
+  local cp; cp=$(cat "$CAM_DIR/camsrv.pid" 2>/dev/null)
+  if [ -z "$cp" ] || ! kill -0 "$cp" 2>/dev/null; then
+    echo "camsrv down $(date), restarting"
+    python "$CAM_DIR/camsrv.py" &
+    echo $! > "$CAM_DIR/camsrv.pid"
+    sleep 2
+  fi
+}
+
+# الحلقة: نراقب cloudflared، وطول ما حي نراقب camsrv + نبعت نبضة كل 60 ثانية
 while true; do
-  # start a quick tunnel; capture its url from logs
   TUNLOG="$CAM_DIR/cf.log"; : > "$TUNLOG"
   cloudflared tunnel --no-autoupdate --url "http://127.0.0.1:$PORT" >"$TUNLOG" 2>&1 &
   CFPID=$!
@@ -336,9 +372,12 @@ while true; do
     [ -n "$URL" ] && break
     sleep 2
   done
-  if [ -n "$URL" ]; then publish_url "$URL"; else echo "no tunnel url"; fi
-  # wait until cloudflared exits, then loop to get a fresh url
-  wait $CFPID
+  if [ -n "$URL" ]; then publish_url "$URL"; TOK_AT=0; else echo "no tunnel url"; fi
+  while kill -0 "$CFPID" 2>/dev/null; do
+    ensure_camsrv
+    [ -n "$URL" ] && publish_hb "$URL" "$(cached_token)"
+    sleep 60
+  done
   echo "tunnel died $(date), restarting in 5s"
   sleep 5
 done
@@ -492,7 +531,32 @@ bash "\$HOME/cam/run.sh" >/dev/null 2>&1 &
 python "\$HOME/cam/bridgectl.py" >/dev/null 2>&1 &
 BOOTEOF
 chmod +x "$BOOT_DIR/10-camsrv.sh"
-echo "   runner + watcher + boot entry written."
+
+# --- watchdog: حارس عبر نظام أندرويد (JobScheduler) يرجّع الجسر حتى لو قتله أندرويد في الخلفية ---
+cat > "$CAM_DIR/watchdog.sh" <<'WDEOF'
+#!/data/data/com.termux/files/usr/bin/bash
+CAM_DIR="$HOME/cam"
+termux-wake-lock || true
+rp="$(cat "$CAM_DIR/run.pid" 2>/dev/null)"
+if [ -z "$rp" ] || ! kill -0 "$rp" 2>/dev/null; then
+  pkill -9 -f 'cam/[r]un.sh' 2>/dev/null || true
+  setsid bash "$CAM_DIR/run.sh" >/dev/null 2>&1 &
+fi
+cp="$(cat "$CAM_DIR/ctl.pid" 2>/dev/null)"
+if [ -z "$cp" ] || ! kill -0 "$cp" 2>/dev/null; then
+  pkill -9 -f '[b]ridgectl.py' 2>/dev/null || true
+  setsid python "$CAM_DIR/bridgectl.py" >/dev/null 2>&1 &
+fi
+WDEOF
+chmod +x "$CAM_DIR/watchdog.sh"
+
+# سجّل مهمة دورية في نظام أندرويد كل 15 دقيقة (تصحى حتى لو التطبيق مقفول أو اتقتل في الخلفية).
+# تحتاج termux-api (ثبّتناها فوق) + تطبيق Termux:API مثبّت. لو غير متاحة، نتجاهل بدون توقف.
+termux-job-scheduler --job-id 911 --period-ms 900000 --persisted true --network any --script "$CAM_DIR/watchdog.sh" >/dev/null 2>&1 \
+  && echo "   watchdog job (كل 15 دقيقة) مسجّل في نظام أندرويد." \
+  || echo "   (الحارس الدوري يحتاج Termux:API - ثبّته لاحقًا ثم أعد تشغيل الإعداد)."
+
+echo "   runner + watcher + watchdog + boot entry written."
 
 # ---------- 6) start now ----------
 echo ">> [6/6] Starting now (v$BRIDGE_VERSION)..."
