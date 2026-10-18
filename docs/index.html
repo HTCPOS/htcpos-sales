@@ -6957,9 +6957,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.10.4';
-const APP_BUILD_DATE = '2026-10-17';
+const APP_VERSION = '4.10.5';
+const APP_BUILD_DATE = '2026-10-18';
 const APP_RELEASES = [
+  { v: '4.10.5', date: '2026-10-18', items: [
+    'شريط مبيعات الموظفين صار يعرض آخر يوم فيه حركات (نفس بطاقة صافي المبيعات) بدل يوم الجهاز، فما يختفي في الصباح الباكر قبل أول بيعة'
+  ] },
   { v: '4.10.4', date: '2026-10-17', items: [
     'مبيعات الموظفين: صارت مستطيلات رفيعة داخل بطاقة صافي المبيعات (بدون تكبير البطاقة)، ومبالغها تختفي وتظهر مع زر إخفاء/إظهار صافي المبيعات نفسه'
   ] },
@@ -8293,9 +8296,9 @@ function applyEmpAmtVisibility() {
 function renderEmpSalesStrip() {
   const el = document.getElementById('empSalesStrip');
   if (!el) return;
-  const fmt = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  const today = fmt(new Date());
-  fetchArchiveDay(today).then(entries => {
+  loadArchiveCache().then(cache => {
+    const days = Object.keys(cache || {}).filter(d => cache[d] && Object.keys(cache[d]).length).sort();
+    const entries = days.length ? Object.values(cache[days[days.length - 1]] || {}).filter(Boolean) : [];
     const g = {};
     (entries || []).forEach(e => {
       const name = (e.empName && String(e.empName).trim()) ? String(e.empName).trim() : 'غير محدد';
