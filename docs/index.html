@@ -294,10 +294,12 @@ window.applyAppFont = function (id, save) {
   /* رفع النافذة فوق الكيبورد بخاصية translate المستقلة (غير transform): هكذا ما بتتخانقش مع حركة
      فتح النافذة (الذي شغالة على transform)، فالنافذة ما بتهزش لما الكيبورد يفتح وهي لسه بتظهر */
   body.keyboard-open #depositModal .modalSheet,
-  body.keyboard-open #shortageFormModal .modalSheet,
-  body.keyboard-open #editCustomerModal .modalSheet {
+  body.keyboard-open #shortageFormModal .modalSheet {
     translate: 0 calc(var(--kb-h) * -0.32);
   }
+  /* تعديل الزبون: ثبّت النافذة كاملة فوق الكيبورد (الزر ما يختفي تحته) */
+  body.keyboard-open #editCustomerModal { bottom:0; padding-bottom:var(--kb-h); }
+  body.keyboard-open #editCustomerModal .modalSheet { translate:0 !important; max-height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px) !important; overflow-y:auto; }
   #depositModal .modalSheet, #shortageFormModal .modalSheet, #editCustomerModal .modalSheet {
     transition: translate .3s cubic-bezier(.32,.72,0,1);
   }
@@ -6957,9 +6959,18 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.12.0';
+const APP_VERSION = '4.12.4';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.12.4', date: '2026-11-03', items: [
+    'النواقص: التطبيق يراقب كمية الصنف في الكاشير - لو صارت أكبر من صفر (تم تزويده) يختفي من قائمة النواقص في العرض فقط، بدون أي حذف أو تغيير على الكاشير، ولو نفد مستقبلاً يعود للظهور تلقائيًا'
+  ] },
+  { v: '4.12.2', date: '2026-11-03', items: [
+    'نافذة تعديل بيانات الزبون: صارت تُرفع كاملة فوق لوحة المفاتيح، فزر الحفظ لم يعد يختفي خلفها'
+  ] },
+  { v: '4.12.1', date: '2026-11-03', items: [
+    'الضغط على مربع موظف في بطاقة صافي المبيعات يفتح تقريره الكامل مباشرة: ملخّص حركاته (مبيعات/مرتجعات/صافي) وكل فواتيره'
+  ] },
   { v: '4.12.0', date: '2026-11-03', items: [
     'حساب الزبون: زر "دفع للزبون (إرجاع رصيد)" يظهر لمّا يكون للزبون فائض مستحق له - تختار المبلغ والطريقة (بطاقة أو نقدي)، فيرجع رصيده نحو الصفر مع حفظ كامل سجلّ الإيداعات، ويُخصم النقدي من درج اليوم بينما البطاقة لا تمس الدرج'
   ] },
@@ -8298,12 +8309,35 @@ function renderEmpReport() {
     body.innerHTML = html;
   }).catch(() => { body.innerHTML = head + '<div class="emptyMsg">تعذّر تحميل البيانات - تأكد من الاتصال</div>'; });
 }
+function openEmpReportForEmp(name) {
+  openModal('empReportModal');
+  const body = document.getElementById('empReportBody');
+  if (body) body.innerHTML = '<div class="emptyMsg">جاري التحميل...</div>';
+  loadArchiveCache().then(cache => {
+    const days = Object.keys(cache || {}).filter(d => cache[d] && Object.keys(cache[d]).length).sort();
+    empReportEntries = days.length ? Object.values(cache[days[days.length - 1]] || {}).filter(Boolean) : [];
+    empReportMode = 'today';
+    empReportPickEmp(name);
+  }).catch(() => { const b = document.getElementById('empReportBody'); if (b) b.innerHTML = '<div class="emptyMsg">تعذّر تحميل البيانات</div>'; });
+}
 function empReportPickEmp(name) {
   const body = document.getElementById('empReportBody');
   if (!body) return;
   const list = (empReportEntries || []).filter(e => empReportEmpName(e) === name);
+  let ss = 0, rs = 0, sc = 0, rc = 0;
+  list.forEach(e => { if (e.type === 'return') { rs += Number(e.amount) || 0; rc++; } else { ss += Number(e.amount) || 0; sc++; } });
+  const net = ss - rs;
   const back = `<button onclick="renderEmpReport()" style="display:flex;align-items:center;gap:7px;border:none;background:var(--surface2);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>رجوع · ${escapeHtml(name)}</button>`;
-  body.innerHTML = back + renderInvoiceResultsList(list);
+  const head = `<div style="background:var(--surface2);border-radius:16px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;margin-bottom:12px;"><span style="width:34px;height:34px;border-radius:50%;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>${escapeHtml(name)}</div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;background:#F0FDF4;border-radius:11px;padding:9px;text-align:center;"><div style="font-size:11px;color:#15803D;">مبيعات</div><div style="font-weight:800;font-size:14px;color:#15803D;">${fmtMoney(ss)}</div><div style="font-size:10.5px;color:#15803D;">${sc} فاتورة</div></div>
+        <div style="flex:1;background:#FEF2F2;border-radius:11px;padding:9px;text-align:center;"><div style="font-size:11px;color:#DC2626;">مرتجعات</div><div style="font-weight:800;font-size:14px;color:#DC2626;">${fmtMoney(rs)}</div><div style="font-size:10.5px;color:#DC2626;">${rc} مرتجع</div></div>
+        <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:9px;text-align:center;"><div style="font-size:11px;color:var(--textMuted);">الصافي</div><div style="font-weight:800;font-size:14px;">${fmtMoney(net)}</div><div style="font-size:10.5px;color:var(--textMuted);">د.ل</div></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--textMuted);font-weight:700;margin:0 2px 8px;">كل الفواتير والحركات (${list.length})</div>`;
+  body.innerHTML = back + head + renderInvoiceResultsList(list);
 }
 
 function applyEmpAmtVisibility() {
@@ -8326,7 +8360,7 @@ function renderEmpSalesStrip() {
     const rows = Object.values(g).filter(r => r.sc > 0 || r.net !== 0).sort((a,b) => b.net - a.net);
     if (!rows.length) { el.innerHTML = ''; el.style.display = 'none'; return; }
     el.style.display = 'block';
-    const boxes = rows.map(r => `<div onclick="openEmpReport()" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:999px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12.5px;font-weight:700;white-space:nowrap;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span style="max-width:84px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span><span style="opacity:.5;">·</span><span class="empAmt" data-v="${fmtMoney(r.net)}" style="font-weight:800;">${heroShown ? fmtMoney(r.net) : '••••'}</span></div>`).join('');
+    const boxes = rows.map(r => `<div onclick="openEmpReportForEmp('${String(r.name).replace(/'/g,"\\'")}')" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);border-radius:999px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12.5px;font-weight:700;white-space:nowrap;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span style="max-width:84px;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span><span style="opacity:.5;">·</span><span class="empAmt" data-v="${fmtMoney(r.net)}" style="font-weight:800;">${heroShown ? fmtMoney(r.net) : '••••'}</span></div>`).join('');
     el.innerHTML = `<div style="display:flex;gap:7px;overflow-x:auto;margin-top:12px;padding-bottom:2px;-webkit-overflow-scrolling:touch;position:relative;z-index:1;">${boxes}</div>`;
   }).catch(() => { el.innerHTML = ''; el.style.display = 'none'; });
 }
@@ -13082,7 +13116,12 @@ function loadShortages() {
       // زرار "تعديل" يوصل لنفس السجل الذي فعليًا متربط بتصنيفنا المحفوظ
       if (it.source && !existing.source) byName[key] = it;
     });
-    latestShortages = Object.values(byName);
+    // مراقبة الكمية: لو كمية الصنف في الكاشير صارت أكبر من صفر (تم تزويده) نخفيه من النواقص
+    // في العرض فقط - بدون أي حذف أو تعديل على الكاشير. لو نفد مستقبلًا (رجع صفر) يظهر تلقائيًا.
+    latestShortages = Object.values(byName).filter(it => {
+      const prod = (latestItems && latestItems['i' + it.id]) || (latestItems && Object.values(latestItems).find(p => p && normalizeArabicName(p.name) === normalizeArabicName(it.name)));
+      return !(prod && Number(prod.stock || 0) > 0);
+    });
     // فقط أول ما الشاشة تتفتح من الأول بنبدأ بـ"بدون تصنيف" - أي تحميل بعد هكذا (مثل بعد ما تشتري
     // صنف أو تصنّف صنف) لازم يفضل على نفس التبويب الذي إنتي واقفة فيه، غير يرجعك "بدون تصنيف"
     if (currentShortageSourceFilter === undefined) currentShortageSourceFilter = 'unclassified';
