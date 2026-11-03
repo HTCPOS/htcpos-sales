@@ -238,6 +238,23 @@ window.applyAppFont = function (id, save) {
   .icStockStat { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border-radius:14px; padding:13px 14px; margin-top:10px; border:1px solid var(--border2); }
   .icStockStat .lbl { font-size:13px; font-weight:700; color:var(--textMuted); display:flex; align-items:center; gap:7px; }
   .icStockStat .val { font-size:20px; font-weight:800; }
+  /* شاشة تعديل الصنف - تصميم احترافي مرتّب */
+  .icEditHead { display:flex; align-items:center; gap:10px; font-weight:800; font-size:17px; }
+  .icEditHeadIc { width:34px; height:34px; border-radius:11px; background:rgba(124,58,237,.12); color:#7C3AED; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .icEditSec { font-size:12px; font-weight:800; color:var(--textMuted); margin:16px 0 9px; letter-spacing:.3px; }
+  .icEditField { margin-bottom:11px; }
+  .icEditLbl { display:block; color:var(--textMuted); font-size:12px; font-weight:700; margin-bottom:6px; }
+  .icEditInput { width:100%; box-sizing:border-box; border:1.5px solid var(--border); border-radius:12px; padding:11px 13px; font-size:15px; font-weight:700; background:var(--surface); color:var(--text); text-align:right; transition:border-color .15s; }
+  .icEditInput:focus { outline:none; border-color:#16A34A; }
+  .icEditInput.off { opacity:.5; }
+  .icEditNote { font-size:11.5px; color:#B45309; font-weight:700; margin-top:5px; }
+  .icEditPrices { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+  .icPcell { display:flex; flex-direction:column; }
+  .icPcellL { font-size:11px; font-weight:700; color:var(--textMuted); margin-bottom:6px; text-align:center; }
+  .icEditInput.icPcellIn { text-align:center; padding:11px 6px; }
+  .icEditBtns { display:flex; gap:10px; margin-top:18px; }
+  .icEditBtns .save { flex:2; background:#16A34A; color:#fff; border:none; border-radius:13px; padding:13px; font-weight:800; font-size:15px; cursor:pointer; }
+  .icEditBtns .cancel { flex:1; background:var(--surface2); color:var(--textMuted); border:1.5px solid var(--border); border-radius:13px; padding:13px; font-weight:800; font-size:15px; cursor:pointer; }
   .heroLblRow { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
   .heroEye { width:34px; height:34px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; flex-shrink:0;
     background:rgba(255,255,255,.18); color:#fff; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .2s, transform .15s; }
@@ -366,9 +383,8 @@ window.applyAppFont = function (id, save) {
   }
   /* كل المنتجات: القايمة فقط الذي بتسكرول، وبتتحمّل على دفعات */
   #productsModal .modalSheet { display:flex; flex-direction:column; overflow:hidden; }
-  /* بطاقة الصنف: بدون تمرير حر - يتفعّل التمرير فقط عند فتح الكيبورد للوصول للخانات */
-  #itemCardModal .modalSheet { overflow:hidden; }
-  body.keyboard-open #itemCardModal .modalSheet { overflow-y:auto; }
+  /* بطاقة الصنف: تمرير سلس للوصول لكل الخانات (بطاقة التفاصيل المختصرة تسع الشاشة فما تمرّرش) */
+  #itemCardModal .modalSheet { overflow-y:auto; -webkit-overflow-scrolling:touch; }
   #productsList { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
   .plCount { font-size:11.5px; color:var(--textMuted); font-weight:800; padding:2px 2px 8px; }
   /* طباعة الباركود */
@@ -2126,7 +2142,7 @@ setTimeout(() => window.hideSplash(), 4000);
 </div>
 
 <div class="modalBg" id="itemCardModal" onclick="if(event.target===this)closeItemCardModal()">
-  <div class="modalSheet" style="max-height:88vh;">
+  <div class="modalSheet" style="max-height:88vh;overflow-y:auto;">
     <button class="closeM" onclick="closeItemCardModal()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>بطاقة صنف</h3>
     <div class="searchBox" style="margin:12px 0;">
@@ -6984,9 +7000,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.14.2';
+const APP_VERSION = '4.14.3';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.14.3', date: '2026-11-03', items: [
+    'إصلاح: شاشة «تعديل الصنف» ترجع تتمرّر بالكامل للوصول لكل الخانات وزر الحفظ',
+    'إعادة تصميم شاشة تعديل الصنف باحترافية: قسم «البيانات» (الاسم والكمية) وقسم «الأسعار» في ثلاث خانات مرتّبة جنب بعض، مع خانات إدخال أوضح وأزرار أبرز'
+  ] },
   { v: '4.14.2', date: '2026-11-03', items: [
     'إعادة تصميم بطاقة تفاصيل الصنف بترتيب أوضح وتباعد مريح: الاسم وحالة التوفّر في الأعلى، الباركود كسطر خفيف، والأسعار الثلاثة (التكلفة/الجملة/القطاعي) في شبكة مرتّبة، والكمية المتبقية كبطاقة بارزة'
   ] },
@@ -10952,11 +10972,11 @@ function showItemCardDetail(itemId) {
 // والسكريبت على الكمبيوتر بينفذه على قاعدة البيانات ويعيد مزامنة الأصناف فورًا.
 function itemCardEditRow(label, id, value, isText, disabledNote) {
   return `
-    <div style="padding:8px 0;border-bottom:1px solid var(--border);">
-      <label for="${id}" style="display:block;color:var(--textMuted);font-size:12px;font-weight:700;margin-bottom:5px;">${label}</label>
+    <div class="icEditField">
+      <label for="${id}" class="icEditLbl">${label}</label>
       <input id="${id}" ${isText ? 'type="text"' : 'type="number" inputmode="decimal" step="any" min="0"'} value="${isText ? escapeHtml(String(value || '')) : (Number(value) || 0)}" ${disabledNote ? 'disabled' : ''}
-        style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;font-weight:700;background:var(--surface);color:var(--text);text-align:right;${disabledNote ? 'opacity:.5;' : ''}">
-      ${disabledNote ? `<div style="font-size:11px;color:#B45309;font-weight:700;margin-top:4px;">${disabledNote}</div>` : ''}
+        class="icEditInput${disabledNote ? ' off' : ''}">
+      ${disabledNote ? `<div class="icEditNote">${disabledNote}</div>` : ''}
     </div>`;
 }
 
@@ -11007,22 +11027,26 @@ function openItemCardEdit(itemId) {
   if (!it) return;
   const d = document.getElementById('itemCardDetail');
   d.style.display = 'block';
+  const noBc = !it.barcode;
+  const priceCell = (l, id, v, off) => `<div class="icPcell"><label for="${id}" class="icPcellL">${l}</label><input id="${id}" type="number" inputmode="decimal" step="any" min="0" value="${Number(v) || 0}" ${off ? 'disabled' : ''} class="icEditInput icPcellIn${off ? ' off' : ''}"></div>`;
   d.innerHTML = `
-    <div style="background:var(--surface2);border-radius:14px;padding:16px;margin-top:10px;">
-      <div style="font-weight:800;font-size:16px;margin-bottom:8px;">تعديل الصنف</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">
-        <span style="color:var(--textMuted);font-size:13px;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> الباركود (ثابت)</span>
-        <span style="font-weight:700;">${it.barcode ? escapeHtml(String(it.barcode)) : '—'}</span>
-      </div>
+    <div class="icDetail">
+      <div class="icEditHead"><span class="icEditHeadIc"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>تعديل الصنف</div>
+      <div class="icDetBarcode" style="margin-top:12px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>الباركود ثابت: ${it.barcode ? escapeHtml(String(it.barcode)) : '—'}</div>
+      <div class="icEditSec">البيانات</div>
       ${itemCardEditRow('اسم الصنف', 'icEditName', it.name, true)}
       ${itemCardEditRow('الكمية المتبقية', 'icEditQty', it.stock)}
-      ${itemCardEditRow('سعر الشراء (التكلفة) د.ل', 'icEditCost', it.cost)}
-      ${itemCardEditRow('سعر الجملة د.ل', 'icEditWholesale', it.wholesale, false, it.barcode ? '' : 'الصنف ما له باركود فعّال، سعر الجملة ما يتعدل')}
-      ${itemCardEditRow('سعر القطاعي (القطعة) د.ل', 'icEditPrice', it.price)}
-      <div id="itemCardEditError" style="color:#DC2626;font-size:12px;font-weight:700;text-align:center;margin-top:8px;"></div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button onclick="saveItemCardEdit(${it.id})" style="flex:2;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">حفظ التعديل</button>
-        <button onclick="showItemCardDetail(${it.id})" style="flex:1;background:#FEE2E2;color:#DC2626;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">إلغاء</button>
+      <div class="icEditSec">الأسعار (د.ل)</div>
+      <div class="icEditPrices">
+        ${priceCell('سعر الشراء', 'icEditCost', it.cost, false)}
+        ${priceCell('الجملة', 'icEditWholesale', it.wholesale, noBc)}
+        ${priceCell('القطاعي', 'icEditPrice', it.price, false)}
+      </div>
+      ${noBc ? '<div class="icEditNote" style="margin-top:7px;">الصنف ما له باركود فعّال، سعر الجملة ما يتعدل</div>' : ''}
+      <div id="itemCardEditError" style="color:#DC2626;font-size:12.5px;font-weight:700;text-align:center;margin-top:10px;"></div>
+      <div class="icEditBtns">
+        <button onclick="saveItemCardEdit(${it.id})" class="save">حفظ التعديل</button>
+        <button onclick="showItemCardDetail(${it.id})" class="cancel">إلغاء</button>
       </div>
     </div>
   `;
