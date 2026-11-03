@@ -1130,7 +1130,7 @@ setTimeout(() => window.hideSplash(), 4000);
   <div style="margin:0 16px 10px;">
     <div class="searchBox" style="margin:0;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-      <input type="text" id="invoiceSearchInput" placeholder="رقم الإيصال أو الطلب..." onkeydown="if(event.key==='Enter')searchInvoiceByNumber()" style="min-width:0;">
+      <input type="text" id="invoiceSearchInput" placeholder="رقم الإيصال أو الطلب..." oninput="filterHomeInvoices()" onkeydown="if(event.key==='Enter')searchInvoiceByNumber()" style="min-width:0;">
       <button onclick="window.__receiptOcrTarget=null;openReceiptOcrCamera()" style="background:none;border:none;padding:0 4px;cursor:pointer;display:flex;align-items:center;" title="قراءة رقم الإيصال بالكاميرا"><span class="ic ic-qr" style="width:22px;height:22px;"></span></button>
       <label title="تصفح فواتير يوم معيّن" style="position:relative;display:flex;align-items:center;padding:0 4px;cursor:pointer;">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
@@ -6959,9 +6959,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.12.6';
+const APP_VERSION = '4.13.0';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.13.0', date: '2026-11-03', items: [
+    'البحث برقم الإيصال في الصفحة الرئيسية: صار يفلتر قائمة «آخر الفواتير» حيًّا أثناء الكتابة حتى تظهر الفاتورة مباشرة في مكانها، بدل فتح قائمة منفصلة (وزر «بحث» يظل للبحث في كل الفواتير)'
+  ] },
   { v: '4.12.6', date: '2026-11-03', items: [
     'النواقص: يعمل حتى والكاشير غير متصل - لو زوّدت صنفًا بالجرد، يختفي فورًا من النواقص اعتمادًا على أمر الجرد المعلّق، دون انتظار اتصال الكاشير، ويعود إن نفد'
   ] },
@@ -8365,13 +8368,29 @@ function renderEmpSalesStrip() {
   }).catch(() => { el.innerHTML = ''; el.style.display = 'none'; });
 }
 
+let homeInvoiceFilter = '';
+function filterHomeInvoices() {
+  const el = document.getElementById('invoiceSearchInput');
+  homeInvoiceFilter = (el ? el.value : '').replace(/[^0-9]/g, '');
+  renderInvoices();
+}
 function renderInvoices() {
   const list = document.getElementById('invoiceList');
   if (!latestInvoices.length) {
     list.innerHTML = '<div class="emptyMsg">لا توجد بيانات بعد</div>';
+    try { renderEmpSalesStrip(); } catch (e) {}
     return;
   }
-  const sorted = [...latestInvoices].sort((a,b) => new Date(b.date) - new Date(a.date));
+  let __data = latestInvoices;
+  if (homeInvoiceFilter) {
+    __data = latestInvoices.filter(inv => String(inv.number || '').replace(/[^0-9]/g, '').includes(homeInvoiceFilter) || String(inv.orderNo || '').replace(/[^0-9]/g, '').includes(homeInvoiceFilter));
+  }
+  if (!__data.length) {
+    list.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">لا توجد فاتورة بهذا الرقم في آخر الفواتير<br><span style="font-size:12px;">اضغط «بحث» للبحث في كل الفواتير</span></div>';
+    try { renderEmpSalesStrip(); } catch (e) {}
+    return;
+  }
+  const sorted = [...__data].sort((a,b) => new Date(b.date) - new Date(a.date));
   window.__invoicesById = {};
   sorted.forEach(inv => { window.__invoicesById[inv.id] = inv; });
   list.innerHTML = sorted.map((inv, idx) => {
