@@ -6959,11 +6959,11 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.12.4';
+const APP_VERSION = '4.12.6';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
-  { v: '4.12.4', date: '2026-11-03', items: [
-    'النواقص: التطبيق يراقب كمية الصنف في الكاشير - لو صارت أكبر من صفر (تم تزويده) يختفي من قائمة النواقص في العرض فقط، بدون أي حذف أو تغيير على الكاشير، ولو نفد مستقبلاً يعود للظهور تلقائيًا'
+  { v: '4.12.6', date: '2026-11-03', items: [
+    'النواقص: يعمل حتى والكاشير غير متصل - لو زوّدت صنفًا بالجرد، يختفي فورًا من النواقص اعتمادًا على أمر الجرد المعلّق، دون انتظار اتصال الكاشير، ويعود إن نفد'
   ] },
   { v: '4.12.2', date: '2026-11-03', items: [
     'نافذة تعديل بيانات الزبون: صارت تُرفع كاملة فوق لوحة المفاتيح، فزر الحفظ لم يعد يختفي خلفها'
@@ -13081,8 +13081,10 @@ function loadShortages() {
     db.ref('data/shortages').once('value'),
     db.ref('data/shortageClassifications').once('value'),
     db.ref('data/shortagesSuppressed').once('value'),
-    db.ref('data/manualShortages').once('value')
-  ]).then(([snap, classSnap, suppSnap, manualSnap]) => {
+    db.ref('data/manualShortages').once('value'),
+    db.ref('data/items').once('value'),
+    db.ref('commands/updateStock').once('value')
+  ]).then(([snap, classSnap, suppSnap, manualSnap, itemsSnap, updSnap]) => {
     if (myToken !== shortagesLoadToken) return; // تحميل تاني أحدث بدأ وخلص قبل هذا - نتجاهل النتيجة المتأخرة هذه
     const val = snap.val();
     const classifications = classSnap.val() || {};
@@ -13118,9 +13120,25 @@ function loadShortages() {
     });
     // مراقبة الكمية: لو كمية الصنف في الكاشير صارت أكبر من صفر (تم تزويده) نخفيه من النواقص
     // في العرض فقط - بدون أي حذف أو تعديل على الكاشير. لو نفد مستقبلًا (رجع صفر) يظهر تلقائيًا.
+    // نفضّل latestItems (فيه أي تعديل محلي فوري من بطاقة الصنف) وإلا القراءة الطازجة من فايربيس
+    const itemsVal = (latestItems && Object.keys(latestItems).length) ? latestItems : ((itemsSnap && itemsSnap.val()) || {});
+    const stockByName = {};
+    Object.values(itemsVal).forEach(p => { if (p && p.name != null) { const k = normalizeArabicName(String(p.name)); if (stockByName[k] == null) stockByName[k] = Number(p.stock || 0); } });
+    // أوامر الجرد المعلّقة (الكاشير لسه ما طبّقها) - دليل تزويد فوري حتى لو الكاشير غير متصل
+    const pendingStock = (updSnap && updSnap.val()) || {};
+    const pendingQtyFor = id => {
+      const p = pendingStock[id];
+      if (p == null) return null;
+      return (typeof p === 'object') ? Number(p.qty) : Number(p);
+    };
     latestShortages = Object.values(byName).filter(it => {
-      const prod = (latestItems && latestItems['i' + it.id]) || (latestItems && Object.values(latestItems).find(p => p && normalizeArabicName(p.name) === normalizeArabicName(it.name)));
-      return !(prod && Number(prod.stock || 0) > 0);
+      const pq = pendingQtyFor(it.id);
+      if (pq != null && pq > 0) return false; // جرد معلّق بكمية موجبة = تم تزويده
+      let stock = null;
+      const byIdProd = itemsVal['i' + it.id];
+      if (byIdProd) stock = Number(byIdProd.stock || 0);
+      else { const bn = stockByName[normalizeArabicName(String(it.name || ''))]; if (bn != null) stock = bn; }
+      return !(stock != null && stock > 0);
     });
     // فقط أول ما الشاشة تتفتح من الأول بنبدأ بـ"بدون تصنيف" - أي تحميل بعد هكذا (مثل بعد ما تشتري
     // صنف أو تصنّف صنف) لازم يفضل على نفس التبويب الذي إنتي واقفة فيه، غير يرجعك "بدون تصنيف"
