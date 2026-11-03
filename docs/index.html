@@ -6957,9 +6957,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.11.0';
-const APP_BUILD_DATE = '2026-10-18';
+const APP_VERSION = '4.11.1';
+const APP_BUILD_DATE = '2026-10-20';
 const APP_RELEASES = [
+  { v: '4.11.1', date: '2026-10-20', items: [
+    'البحث بالتاريخ: ملخّص اليوم صار يعرض مبيعات كل موظف منفردًا (صافيه وعدد فواتيره) إلى جانب الإجمالي العام'
+  ] },
   { v: '4.11.0', date: '2026-10-18', items: [
     'عند فتح فاتورة فيها أكثر من صنف: الصنف المُرجَع يظهر بشريط أحمر ووسم «مُرجَع» على سطره بالتحديد (مع الكمية إن كان الإرجاع جزئيًا)، ليتضح أي صنف رجع وأي صنف لا'
   ] },
@@ -10297,6 +10300,21 @@ function computeDaySummaryHtml(results) {
     });
   });
   const net = totalSales - totalReturns;
+  const __emp = {};
+  results.forEach(inv => {
+    const nm = (inv.empName && String(inv.empName).trim()) ? String(inv.empName).trim() : 'غير محدد';
+    if (!__emp[nm]) __emp[nm] = { name: nm, ss: 0, rs: 0, sc: 0 };
+    if (inv.type === 'return') __emp[nm].rs += Number(inv.amount || 0);
+    else { __emp[nm].ss += Number(inv.amount || 0); __emp[nm].sc++; }
+  });
+  const __empRows = Object.values(__emp).sort((a, b) => b.ss - a.ss);
+  const empBreakdown = __empRows.length ? `<div style="border-top:1px solid var(--border2);margin-top:10px;padding-top:10px;">
+      <div style="font-size:11px;color:var(--textMuted2);margin-bottom:6px;font-weight:700;">مبيعات كل موظف</div>
+      ${__empRows.map(r => `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;">
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;"><span style="width:26px;height:26px;border-radius:50%;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>${escapeHtml(r.name)}</div>
+        <div style="text-align:left;white-space:nowrap;"><span style="font-weight:800;color:#16A34A;font-size:14px;">${fmtMoney(r.ss - r.rs)} د.ل</span><span style="font-size:10.5px;color:var(--textMuted2);margin-right:6px;">(${r.sc} فاتورة)</span></div>
+      </div>`).join('')}
+    </div>` : '';
   const zeroPriceLine = zeroPriceItems.length
     ? `<div style="font-size:12px;color:#DC2626;margin-top:6px;display:flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#DC2626"/></svg> بسعر صفر: ${zeroPriceItems.join('، ')}</div>`
     : '';
@@ -10306,6 +10324,7 @@ function computeDaySummaryHtml(results) {
       <div><div style="font-size:11px;color:var(--textMuted2);">المرتجعات</div><div style="font-weight:800;font-size:15px;color:#DC2626;">${fmtMoney(totalReturns)} د.ل</div></div>
       <div style="grid-column:span 2;border-top:1px solid var(--border2);padding-top:8px;"><div style="font-size:11px;color:var(--textMuted2);">صافي النقد</div><div style="font-weight:900;font-size:18px;color:var(--text);">${fmtMoney(net)} د.ل</div></div>
     </div>
+    ${empBreakdown}
     ${zeroPriceLine}
   </div>`;
 }
