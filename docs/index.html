@@ -156,6 +156,10 @@ window.applyAppFont = function (id, save) {
   }
   .loginCard button.loginSubmit:active { filter:brightness(.94); }
   #loginError { color:#DC2626; font-size:13px; margin-top:10px; min-height:18px; }
+  #loginScreen .lgRemember { display:flex; align-items:center; gap:9px; margin:0 2px 12px; cursor:pointer; user-select:none; }
+  #loginScreen .lgRemember input { width:18px; height:18px; accent-color:#16A34A; cursor:pointer; flex-shrink:0; }
+  #loginScreen .lgRemember span { font-size:13.5px; font-weight:700; color:#64748B; }
+  body.dark-theme #loginScreen .lgRemember span { color:#7C8DA6; }
   body.dark-theme #loginError { color:#F87171; }
   .faceIdBtn {
     display:none; width:100%; margin-top:12px; padding:14px 16px; border-radius:14px; border:1.5px solid #BBE3CB;
@@ -1035,6 +1039,10 @@ setTimeout(() => window.hideSplash(), 4000);
         <button type="button" id="loginPwdToggle" class="lgEye" aria-label="إظهار كلمة المرور" onclick="event.preventDefault();const i=document.getElementById('loginPassword'); i.type = i.type==='password' ? 'text' : 'password';"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <span class="lgIc"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>
       </label>
+      <label class="lgRemember">
+        <input type="checkbox" id="rememberLoginChk" checked>
+        <span>تذكّر كلمة المرور</span>
+      </label>
       <button class="lgPrimary loginSubmit" onclick="doLogin()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>تسجيل الدخول</span></button>
       <div id="loginError" class="lgErr"></div>
       <div id="faceIdWrap" style="display:none;">
@@ -1800,6 +1808,15 @@ setTimeout(() => window.hideSplash(), 4000);
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
       </div>
+      <div class="setSec">الأمان</div>
+      <div class="setGroup">
+        <button onclick="openBiometricSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
+        <span class="setIc" style="--ic:#16A34A;color:#16A34A;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10.5v.5M15 10.5v.5M9.3 14.5a3.6 3.6 0 0 0 5.4 0"/></svg></span>
+        <span style="font-size:14.5px;font-weight:700;color:var(--text);flex:1;">بصمة الوجه / الدخول السريع</span>
+        <span id="bioSettingsTag" style="font-size:12px;font-weight:700;color:var(--textMuted);"></span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      </div>
       <div class="setSec">الطباعة</div>
       <div class="setGroup">
         <button onclick="openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border:none;background:none;cursor:pointer;text-align:right;">
@@ -1851,6 +1868,14 @@ setTimeout(() => window.hideSplash(), 4000);
       </div>
       <div style="padding:18px 6px 6px;font-size:12px;color:var(--textMuted);text-align:center;">منظومة المبيعات · HTC POS</div>
     </div>
+  </div>
+</div>
+
+<div class="modalBg" id="biometricModal" onclick="if(event.target===this)closeModal('biometricModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('biometricModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>بصمة الوجه / الدخول السريع</h3>
+    <div id="biometricBody" style="margin-top:12px;"></div>
   </div>
 </div>
 
@@ -2589,6 +2614,7 @@ function doLogin() {
   errBox.textContent = '';
   if (!email || !pass) { errBox.textContent = 'اكتب الإيميل وكلمة المرور'; return; }
   auth.signInWithEmailAndPassword(email, pass).then(() => {
+    saveRememberedLogin(email, pass);
     if (faceIdSupported() && !localStorage.getItem('faceIdCred')) {
       setTimeout(async () => {
         if (await uiConfirm('تفعيل تسجيل الدخول ببصمة الوجه في المرة الجاية؟')) {
@@ -2600,6 +2626,33 @@ function doLogin() {
   }).catch(err => {
     errBox.textContent = 'بيانات دخول خاطئة';
   });
+}
+
+// ---------- تذكّر كلمة المرور ----------
+// بتتخزن مشفّرة محليًا (نفس أسلوب تخزين بيانات بصمة الوجه). تُعبّأ تلقائيًا في شاشة الدخول
+// وتبقى مخفية كنقاط، فما تحتاج تكتبها كل مرة.
+function saveRememberedLogin(email, pass) {
+  try {
+    const chk = document.getElementById('rememberLoginChk');
+    if (chk && !chk.checked) { localStorage.removeItem('rememberLogin'); return; }
+    localStorage.setItem('rememberLogin', b64encode(email) + '\n' + b64encode(pass));
+  } catch (e) {}
+}
+function prefillRememberedLogin() {
+  try {
+    const raw = localStorage.getItem('rememberLogin');
+    if (!raw) return;
+    const parts = raw.split('\n');
+    if (parts.length < 2) return;
+    const em = b64decode(parts[0]);
+    const pw = b64decode(parts[1]);
+    const emEl = document.getElementById('loginEmail');
+    const pwEl = document.getElementById('loginPassword');
+    const chk = document.getElementById('rememberLoginChk');
+    if (emEl && !emEl.value) emEl.value = em;
+    if (pwEl && !pwEl.value) pwEl.value = pw;
+    if (chk) chk.checked = true;
+  } catch (e) {}
 }
 
 // بتتابع اتصال "المنظومة الرئيسية" نفسها بالنت (غير دخولك انتي على التطبيق هذا) - عن طريق مراقبة
@@ -2641,6 +2694,86 @@ async function doLogout() {
 // لنمط الاهتزاز، وفي الآخر مفتاح "اهتزاز فقط من غير صوت"
 function openGeneralSettings() {
   openModal('generalSettingsModal');
+}
+
+// ---------- إعدادات الأمان: تفعيل/إيقاف بصمة الوجه من الإعدادات ----------
+function updateBioSettingsTag() {
+  const bt = document.getElementById('bioSettingsTag');
+  if (!bt) return;
+  if (!faceIdSupported()) { bt.textContent = 'غير مدعومة'; bt.style.color = 'var(--textMuted)'; return; }
+  const enabled = !!localStorage.getItem('faceIdCred');
+  bt.textContent = enabled ? 'مفعّلة' : 'غير مفعّلة';
+  bt.style.color = enabled ? '#16A34A' : 'var(--textMuted)';
+}
+
+function openBiometricSettings() {
+  openModal('biometricModal');
+  renderBiometricSettings();
+}
+
+function renderBiometricSettings() {
+  const body = document.getElementById('biometricBody');
+  if (!body) return;
+  const supported = faceIdSupported();
+  const enabled = !!localStorage.getItem('faceIdCred');
+  const u = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser : null;
+  const email = u && u.email ? u.email : '';
+  if (!supported) {
+    body.innerHTML = '<div style="background:var(--surface2);border-radius:14px;padding:18px;text-align:center;color:var(--textMuted);font-weight:700;font-size:14px;line-height:1.9;">بصمة الوجه غير مدعومة على هذا الجهاز أو في هذه النسخة من التطبيق.</div>';
+    return;
+  }
+  const statusChip = enabled
+    ? '<span style="background:rgba(22,163,74,.12);color:#15803D;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:800;">مفعّلة</span>'
+    : '<span style="background:rgba(220,38,38,.10);color:#DC2626;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:800;">غير مفعّلة</span>';
+  let html = ''
+    + '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:14px;padding:14px;margin-bottom:12px;">'
+    + '<span style="font-weight:800;font-size:14.5px;">حالة البصمة</span>' + statusChip + '</div>'
+    + '<div style="font-size:12.5px;color:var(--textMuted);font-weight:600;line-height:1.9;margin-bottom:14px;">فعّل الدخول ببصمة الوجه حتى تدخل بسرعة بدون كتابة الإيميل وكلمة المرور. لو حدث أن التطبيق ما طلبش منك البصمة عند الدخول، فعّلها من هنا.</div>';
+  if (!enabled) {
+    html += ''
+      + '<div id="bioErr" style="color:#DC2626;font-size:12.5px;font-weight:700;text-align:center;margin-bottom:8px;"></div>'
+      + '<label style="display:block;color:var(--textMuted);font-size:12px;font-weight:700;margin-bottom:6px;">كلمة المرور' + (email ? ' (' + escapeHtml(email) + ')' : '') + '</label>'
+      + '<input id="bioPass" type="password" autocomplete="current-password" placeholder="اكتب كلمة المرور للتأكيد" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px 13px;font-size:15px;font-weight:700;background:var(--surface);color:var(--text);text-align:right;margin-bottom:12px;">'
+      + '<button onclick="enableBiometricFromSettings()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:13px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;">تفعيل البصمة</button>';
+  } else {
+    html += '<button onclick="disableBiometricFromSettings()" style="width:100%;background:#FEE2E2;color:#DC2626;border:none;border-radius:13px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;">إيقاف البصمة</button>';
+  }
+  body.innerHTML = html;
+}
+
+async function enableBiometricFromSettings() {
+  const errEl = document.getElementById('bioErr');
+  if (errEl) errEl.textContent = '';
+  const u = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser : null;
+  if (!u || !u.email) { if (errEl) errEl.textContent = 'سجّل دخولك بالإيميل وكلمة المرور أولاً'; return; }
+  const passEl = document.getElementById('bioPass');
+  const pass = passEl ? passEl.value : '';
+  if (!pass) { if (errEl) errEl.textContent = 'اكتب كلمة المرور'; return; }
+  // نتأكد من كلمة المرور قبل الحفظ حتى الدخول السريع ما يفشلش بعدين
+  let ok = false;
+  try {
+    const cred = firebase.auth.EmailAuthProvider.credential(u.email, pass);
+    await u.reauthenticateWithCredential(cred);
+    ok = true;
+  } catch (e) {
+    try { await auth.signInWithEmailAndPassword(u.email, pass); ok = true; }
+    catch (e2) { ok = false; }
+  }
+  if (!ok) { if (errEl) errEl.textContent = 'كلمة المرور غير صحيحة'; return; }
+  await registerFaceId(u.email, pass);
+  renderBiometricSettings();
+  updateBioSettingsTag();
+}
+
+async function disableBiometricFromSettings() {
+  if (!(await uiConfirm('إيقاف الدخول ببصمة الوجه؟'))) return;
+  localStorage.removeItem('faceIdCred');
+  localStorage.removeItem('faceIdEmail');
+  localStorage.removeItem('faceIdPass');
+  localStorage.removeItem('faceIdVerified');
+  try { checkFaceIdAvailable(); } catch (e) {}
+  renderBiometricSettings();
+  updateBioSettingsTag();
 }
 
 // القائمة الجانبية (☰): تعبّئ اسم المستخدم والإصدار ثم تفتح
@@ -7000,9 +7133,19 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.14.3';
+const APP_VERSION = '4.15.1';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.15.1', date: '2026-11-03', items: [
+    'خيار «تذكّر كلمة المرور» في شاشة الدخول: تدخلها مرة وتبقى محفوظة ومعبّأة تلقائيًا (مخفية كنقاط)، فما تعيد كتابتها كل مرة'
+  ] },
+  { v: '4.15.0', date: '2026-11-03', items: [
+    'إضافة قسم «الأمان» في الإعدادات: تقدر تفعّل أو توقف الدخول ببصمة الوجه يدويًا في أي وقت — مفيد لو التطبيق ما طلبش منك البصمة عند الدخول',
+    'تفعيل البصمة من الإعدادات يتأكد من كلمة المرور أولاً حتى الدخول السريع ما يفشلش لاحقًا'
+  ] },
+  { v: '4.14.4', date: '2026-11-03', items: [
+    'عند الضغط على «حفظ التعديل» حتى بدون أي تغيير، يرجع تلقائيًا إلى خانة البحث مثل الحفظ العادي'
+  ] },
   { v: '4.14.3', date: '2026-11-03', items: [
     'إصلاح: شاشة «تعديل الصنف» ترجع تتمرّر بالكامل للوصول لكل الخانات وزر الحفظ',
     'إعادة تصميم شاشة تعديل الصنف باحترافية: قسم «البيانات» (الاسم والكمية) وقسم «الأسعار» في ثلاث خانات مرتّبة جنب بعض، مع خانات إدخال أوضح وأزرار أبرز'
@@ -7821,6 +7964,7 @@ function onAuthDecided(user) {
     if (user && user.email) {
       document.getElementById('loginEmail').value = user.email;
     }
+    prefillRememberedLogin();
   }
 }
 
@@ -8738,7 +8882,7 @@ function openModal(id) {
   if (id === 'customersModal') loadCustomers();
   if (id === 'missingItemsModal') loadMissingItems();
   if (id === 'activityLogModal') loadActivityLog();
-  if (id === 'generalSettingsModal') { const vt = document.getElementById('settingsVersionTag'); if (vt) vt.textContent = 'v' + APP_VERSION; }
+  if (id === 'generalSettingsModal') { const vt = document.getElementById('settingsVersionTag'); if (vt) vt.textContent = 'v' + APP_VERSION; updateBioSettingsTag(); }
   if (id === 'errorsModal') { renderErrorsModal(); markErrorsSeen(); }
   if (id === 'purchaseDebtsModal') loadPurchaseDebts();
   if (id === 'errorsModal') setTimeout(() => { try { runIntegrityCheck(); } catch (e) {} }, 50);
@@ -11080,7 +11224,7 @@ function saveItemCardEdit(itemId) {
   if (it.barcode && nums.wholesale !== Number(it.wholesale || 0)) changes.wholesale = nums.wholesale;
   if (nums.price !== Number(it.price || 0)) changes.price = nums.price;
 
-  if (!Object.keys(changes).length) { showItemCardDetail(itemId); return; }
+  if (!Object.keys(changes).length) { try { showQuickToast('لا يوجد تغييرات على ' + (it.name || '')); } catch (e) {} itemCardReturnToSearch(); return; }
 
   // الكمية بتتبعت كفرق (زيادة/نقص) غير كرقم نهائي، والفرق بيتجمع على السيرفر بـ increment.
   // هكذا إذا الكاشير مقطوع وباع قطع قبل ما التعديل يوصله، مبيعاته ما تضيعش:
