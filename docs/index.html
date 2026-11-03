@@ -2595,6 +2595,7 @@ async function loginWithFaceId() {
     }
     const email = b64decode(localStorage.getItem('faceIdEmail'));
     const pass = b64decode(localStorage.getItem('faceIdPass'));
+    try { localStorage.setItem('rememberLogin', b64encode(email) + '\n' + b64encode(pass)); } catch (e) {}
     if (auth.currentUser && auth.currentUser.email === email) {
       enterApp();
     } else {
@@ -2640,18 +2641,22 @@ function saveRememberedLogin(email, pass) {
 }
 function prefillRememberedLogin() {
   try {
+    let em = '', pw = '', have = false;
     const raw = localStorage.getItem('rememberLogin');
-    if (!raw) return;
-    const parts = raw.split('\n');
-    if (parts.length < 2) return;
-    const em = b64decode(parts[0]);
-    const pw = b64decode(parts[1]);
+    if (raw) {
+      const parts = raw.split('\n');
+      if (parts.length >= 2) { try { em = b64decode(parts[0]); pw = b64decode(parts[1]); have = true; } catch (e) {} }
+    }
+    // احتياطي: لو الدخول ببصمة الوجه مفعّل، الإيميل وكلمة المرور محفوظين أصلاً
+    if ((!em || !pw) && localStorage.getItem('faceIdEmail') && localStorage.getItem('faceIdPass')) {
+      try { if (!em) em = b64decode(localStorage.getItem('faceIdEmail')); if (!pw) pw = b64decode(localStorage.getItem('faceIdPass')); have = true; } catch (e) {}
+    }
     const emEl = document.getElementById('loginEmail');
     const pwEl = document.getElementById('loginPassword');
     const chk = document.getElementById('rememberLoginChk');
-    if (emEl && !emEl.value) emEl.value = em;
-    if (pwEl && !pwEl.value) pwEl.value = pw;
-    if (chk) chk.checked = true;
+    if (emEl && em && !emEl.value) emEl.value = em;
+    if (pwEl && pw && !pwEl.value) pwEl.value = pw;
+    if (chk && have) chk.checked = true;
   } catch (e) {}
 }
 
@@ -7133,9 +7138,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.15.1';
+const APP_VERSION = '4.15.2';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.15.2', date: '2026-11-03', items: [
+    'إصلاح «تذكّر كلمة المرور»: صارت تُحفظ وتُعبّأ تلقائيًا حتى لو دخلت ببصمة الوجه، وتبقى بعد الخروج والدخول مرة أخرى'
+  ] },
   { v: '4.15.1', date: '2026-11-03', items: [
     'خيار «تذكّر كلمة المرور» في شاشة الدخول: تدخلها مرة وتبقى محفوظة ومعبّأة تلقائيًا (مخفية كنقاط)، فما تعيد كتابتها كل مرة'
   ] },
