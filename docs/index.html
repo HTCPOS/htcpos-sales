@@ -2106,14 +2106,14 @@ setTimeout(() => window.hideSplash(), 4000);
 </div>
 
 <div class="modalBg" id="itemCardModal" onclick="if(event.target===this)closeItemCardModal()">
-  <div class="modalSheet" style="height:88vh;">
+  <div class="modalSheet" style="max-height:90vh;overflow-y:auto;">
     <button class="closeM" onclick="closeItemCardModal()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>بطاقة صنف</h3>
     <div class="searchBox" style="margin:12px 0;">
       <span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
       <input type="text" id="itemCardSearchInput" placeholder="اكتب اسم الصنف أو الباركود..." oninput="itemCardManualSearch()">
     </div>
-    <div id="itemCardStartCameraBtn" onclick="startItemCardCameraScan()" style="display:flex; align-items:center; justify-content:center; text-align:center; background:none; border:none; padding:8px 0; cursor:pointer;"><span class="ic ic-qr" style="width:60px;height:60px;"></span></div>
+    <button type="button" id="itemCardStartCameraBtn" onclick="startItemCardCameraScan()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:12px;cursor:pointer;color:var(--text);font-size:14px;font-weight:700;margin-bottom:6px;"><span class="ic ic-qr" style="width:22px;height:22px;"></span> مسح الباركود بالكاميرا</button>
     <div id="itemCardReaderView" style="display:none; width:100%;min-height:1px;border-radius:14px;overflow:hidden;position:relative;z-index:1; background:#000;"></div>
     <div id="itemCardScanStatus" style="text-align:center;font-size:12px;color:var(--textMuted);margin-bottom:6px;"></div>
     <div id="itemCardResults" style="max-height:30vh;overflow:auto;"></div>
@@ -6964,9 +6964,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.13.2';
+const APP_VERSION = '4.14.0';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.14.0', date: '2026-11-03', items: [
+    'بطاقة الصنف صارت أكثر احترافية: النافذة تتكيّف مع المحتوى (لا شاشة فارغة كبيرة) مع تمرير سلس، زر مسح باركود أوضح، وبعد حفظ التعديل يرجّعك تلقائيًا لخانة البحث للصنف التالي. (التعديل يعدّل الكمية وسعر البيع وسعر الجملة والتكلفة دفعة واحدة)'
+  ] },
   { v: '4.13.2', date: '2026-11-03', items: [
     'لمسة جمالية للفلترة الحيّة: ظهور ناعم متتابع لبطاقات الفواتير أثناء البحث، وإبراز الأرقام المطابقة بلون'
   ] },
@@ -10831,6 +10834,19 @@ async function itemCardBackToResults() {
   document.getElementById('itemCardResults').scrollTop = keep;
 }
 
+// بعد حفظ تعديل صنف: نرجّع المستخدم لخانة البحث جاهزة لصنف تاني (بدون ما يرجع بيده)
+function itemCardReturnToSearch() {
+  const sIn = document.getElementById('itemCardSearchInput');
+  const resEl = document.getElementById('itemCardResults');
+  const d = document.getElementById('itemCardDetail');
+  if (d) { d.style.display = 'none'; d.innerHTML = ''; }
+  try { renderItemCardBackBar(false); } catch (e) {}
+  if (resEl) { resEl.style.display = ''; resEl.innerHTML = ''; }
+  const sheet = document.querySelector('#itemCardModal .modalSheet');
+  if (sheet) sheet.scrollTop = 0;
+  if (sIn) { sIn.value = ''; setTimeout(() => { try { sIn.focus(); } catch (e) {} }, 120); }
+}
+
 function openItemCardModal() {
   document.getElementById('itemCardSearchInput').value = '';
   document.getElementById('itemCardResults').innerHTML = '';
@@ -11045,8 +11061,9 @@ function saveItemCardEdit(itemId) {
     recordEditHistory(itemId, oldName, histChanges, reqId, 'app', null);
     if ('price' in changes) itemCardOfferLabel[itemId] = true;
     setItemCardEditStatus(itemId, '… تم إرسال التعديل، في انتظار تأكيد الكاشير', '#2563EB');
-    showItemCardDetail(itemId);
     watchItemCardEditResult(itemId, reqId);
+    try { showQuickToast('تم حفظ تعديل ' + (changes.name || oldName)); } catch (e) {}
+    itemCardReturnToSearch();
   }).catch(err => {
     const m = (err && err.message ? err.message : String(err));
     errEl.textContent = 'فشل إرسال التعديل: ' + m + ' ← ' + clientErrorFix(m);
