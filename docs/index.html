@@ -3899,7 +3899,7 @@ async function runIntegrityCheck() {
   const debts = ent(dS), deps = ent(pS), pdebts = ent(pdS), pdeps = ent(ppS);
   const issues = [];
   const badAmt = (list, field, label) => { const n = list.filter(x => !isFinite(Number(x[field])) || Number(x[field]) <= 0).length; if (n) issues.push({ lvl: 'err', t: n + ' ' + label + ' بمبلغ غير صحيح (صفر أو سالب أو فاضي)' }); };
-  badAmt(debts, 'amount', 'دين'); badAmt(deps, 'amount', 'إيداع'); badAmt(pdebts, 'price', 'صنف مشتريات'); badAmt(pdeps, 'amount', 'تسديد مشتريات');
+  badAmt(debts, 'amount', 'دين'); badAmt(deps.filter(x => !x.payout), 'amount', 'إيداع'); badAmt(pdebts, 'price', 'صنف مشتريات'); badAmt(pdeps, 'amount', 'تسديد مشتريات');
   const noCust = [...debts, ...deps].filter(x => !x.customerId).length;
   if (noCust) issues.push({ lvl: 'warn', t: noCust + ' حركة بدون زبون مرتبط' });
   // زبون محذوف وعنده رصيد مفتوح
@@ -6957,9 +6957,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.11.1';
-const APP_BUILD_DATE = '2026-10-20';
+const APP_VERSION = '4.12.0';
+const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.12.0', date: '2026-11-03', items: [
+    'حساب الزبون: زر "دفع للزبون (إرجاع رصيد)" يظهر لمّا يكون للزبون فائض مستحق له - تختار المبلغ والطريقة (بطاقة أو نقدي)، فيرجع رصيده نحو الصفر مع حفظ كامل سجلّ الإيداعات، ويُخصم النقدي من درج اليوم بينما البطاقة لا تمس الدرج'
+  ] },
   { v: '4.11.1', date: '2026-10-20', items: [
     'البحث بالتاريخ: ملخّص اليوم صار يعرض مبيعات كل موظف منفردًا (صافيه وعدد فواتيره) إلى جانب الإجمالي العام'
   ] },
@@ -11829,6 +11832,46 @@ let pendingDepositCustomer = null;
 let pendingDepositMethod = 'نقدي';
 let pendingDepositKind = 'sales';
 
+let pendingPayoutSurplus = 0;
+function openCustomerPayoutForm(customerId, customerName, surplus) {
+  pendingDepositCustomer = { id: customerId, name: customerName };
+  pendingDepositKind = 'payout';
+  pendingPayoutSurplus = Number(surplus) || 0;
+  document.getElementById('depositModalTitle').textContent = 'دفع للزبون (إرجاع رصيد) - ' + customerName;
+  document.getElementById('depositAmountInput').value = pendingPayoutSurplus ? String(pendingPayoutSurplus) : '';
+  document.getElementById('depositDateInput').value = '';
+  pendingReceiptOcrJson = null;
+  setDepositMethod('بطاقة');
+  openModal('depositModal');
+  setTimeout(() => { document.getElementById('depositAmountInput').focus(); }, 280);
+}
+
+async function submitCustomerPayout() {
+  if (!pendingDepositCustomer) return;
+  const amount = r3(document.getElementById('depositAmountInput').value);
+  if (!amount || amount <= 0) { uiAlert('اكتب مبلغ صحيح'); return; }
+  const method = pendingDepositMethod;
+  const customerId = pendingDepositCustomer.id;
+  const customerName = pendingDepositCustomer.name;
+  let warnMsg = '';
+  if (pendingPayoutSurplus && amount > pendingPayoutSurplus + 0.001) {
+    warnMsg = 'تنبيه: المبلغ أكبر من رصيد الزبون المستحق له (' + fmtMoney(pendingPayoutSurplus) + ' د.ل)\n\n';
+  }
+  if (!await uiConfirm(warnMsg + 'تأكيد دفع ' + fmtMoney(amount) + ' د.ل (' + method + ') للزبون "' + customerName + '" كإرجاع رصيد؟')) return;
+  if (!(await guardClosedDay(Date.now(), 'إرجاع رصيد للزبون'))) return;
+  const now = new Date().toISOString();
+  const rec = { customerId: customerId, customerName: customerName, amount: -Math.abs(amount), method: method, payout: true, at: now, createdAt: now, note: 'إرجاع رصيد للزبون' };
+  try { await db.ref('data/deposits').push().set(rec); }
+  catch (e) { uiAlert('تعذّر الحفظ: ' + (e && e.message ? e.message : e)); return; }
+  logActivity('إرجاع رصيد للزبون', fmtMoney(amount) + ' د.ل (' + method + ') - ' + customerName);
+  pendingDepositCustomer = null;
+  pendingReceiptOcrJson = null;
+  closeDepositModalAnimated();
+  try { if (document.getElementById('debtsHubModal').style.display === 'flex') loadDebtsHub(); } catch (e) {}
+  try { if (document.getElementById('customersModal').style.display === 'flex') loadCustomers(); } catch (e) {}
+  try { if (document.getElementById('customerDebtModal').style.display === 'flex') openCustomerDebt(customerId, customerName); } catch (e) {}
+}
+
 function openDepositForm(customerId, customerName, kind) {
   pendingDepositCustomer = { id: customerId, name: customerName };
   pendingDepositKind = kind === 'purchase' ? 'purchase' : 'sales';
@@ -11858,6 +11901,7 @@ function closeDepositModalAnimated() {
 
 async function submitDeposit() {
   if (!pendingDepositCustomer) return;
+  if (pendingDepositKind === 'payout') { submitCustomerPayout(); return; }
   const amount = r3(document.getElementById('depositAmountInput').value);
   if (!amount || amount <= 0) { uiAlert('اكتب مبلغ صحيح'); return; }
   const method = pendingDepositMethod;
@@ -12122,14 +12166,15 @@ function renderDepositRow(p, customerId, customerName, kind) {
   const dt = new Date(p.at);
   const dateStr = dt.toLocaleDateString('ar-EG-u-nu-latn', { day:'numeric', month:'long', year:'numeric' });
   const timeStr = dt.toLocaleTimeString('ar-EG-u-nu-latn', { hour:'2-digit', minute:'2-digit' });
-  const color = kind === 'purchase' ? '#B45309' : '#16A34A';
+  const isPayout = !!p.payout || Number(p.amount) < 0;
+  const color = isPayout ? '#DC2626' : (kind === 'purchase' ? '#B45309' : '#16A34A');
   return `<div class="searchResultRow" style="cursor:pointer;" onclick="showDepositReceiptDetail('${p.id}')">
     <div>
-      <div class="n" style="display:flex;align-items:center;gap:5px;">${p.method === 'بطاقة' ? '<span class="ic ic-card"></span>' : '<span class="ic ic-wallet"></span>'} ${escapeHtml(p.method || '')}</div>
+      <div class="n" style="display:flex;align-items:center;gap:5px;">${p.method === 'بطاقة' ? '<span class="ic ic-card"></span>' : '<span class="ic ic-wallet"></span>'} ${isPayout ? '<span style="background:#FEE2E2;color:#DC2626;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:800;">إرجاع رصيد</span> ' : ''}${escapeHtml(p.method || '')}</div>
       <div style="font-size:11px;color:#94A3B8;">${timeStr} &middot; ${dateStr}</div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
-      <div class="p" style="font-weight:800;color:${color};">${fmtMoney(p.amount)} د.ل</div>
+      <div class="p" style="font-weight:800;color:${color};">${isPayout ? '−' + fmtMoney(Math.abs(p.amount)) : fmtMoney(p.amount)} د.ل</div>
       <button onclick="event.stopPropagation();cancelDeposit('${p.id}','${customerId}','${customerName.replace(/'/g,"")}','${kind}')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> إلغاء</button>
     </div>
   </div>`;
@@ -12370,6 +12415,9 @@ function openCustomerDebt(customerId, customerName) {
 
     html += `<div style="font-size:12px;color:#94A3B8;font-weight:800;margin:16px 0 6px;"><span class="ic ic-moneybag"></span> حساب المبيعات (ما عليه لك)</div>`;
     html += `<button onclick="openDepositForm('${customerId}','${customerName.replace(/'/g,"")}','sales')" style="width:100%;margin:6px 0 10px;background:#DBEAFE;color:#2563EB;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.2" fill="#2563EB" stroke="none"/><path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h4"/></svg> إيداع مبلغ جديد</button>`;
+    if (combinedNet < -0.005) {
+      html += `<button onclick="openCustomerPayoutForm('${customerId}','${customerName.replace(/'/g,"")}',${r3(Math.abs(combinedNet))})" style="width:100%;margin:0 0 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5h-3"/></svg> دفع للزبون (إرجاع رصيد) · له ${fmtMoney(Math.abs(combinedNet))}</button>`;
+    }
 
     if (mine.length) {
       // الإيداعات بتسدد من الأقدم: الذي فضل منها بعد الأصناف المسددة كاملة بيتخصم من أقدم صنف مفتوح
