@@ -7138,9 +7138,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.15.2';
+const APP_VERSION = '4.15.3';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.15.3', date: '2026-11-03', items: [
+    'إصلاح: عند اختيار «تسجيل الدخول بطريقة أخرى» من شاشة البصمة، تُعبّأ كلمة المرور تلقائيًا في الفورم (كانت تظهر فارغة)'
+  ] },
   { v: '4.15.2', date: '2026-11-03', items: [
     'إصلاح «تذكّر كلمة المرور»: صارت تُحفظ وتُعبّأ تلقائيًا حتى لو دخلت ببصمة الوجه، وتبقى بعد الخروج والدخول مرة أخرى'
   ] },
@@ -7922,6 +7925,7 @@ function showPasswordForm() {
   document.getElementById('faceIdLockCard').style.display = 'none';
   const pf = document.getElementById('passwordFormCard');
   pf.style.display = 'block';
+  prefillRememberedLogin();
   if (!document.getElementById('loginScreen').classList.contains('booting')) loginSwapAnim(pf);
 }
 function showFaceIdLock(email) {
