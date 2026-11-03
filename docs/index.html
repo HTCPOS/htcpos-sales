@@ -278,6 +278,11 @@ window.applyAppFont = function (id, save) {
   body.dark-theme .navItem.active { color:#4ADE80; }
   .navItem .ni { font-size:20px; display:flex; align-items:center; justify-content:center; }
 
+  @keyframes invFilterIn { from { opacity:0; transform:translateY(7px) scale(.99); } to { opacity:1; transform:none; } }
+  .invoiceRow.invHit { animation:invFilterIn .3s cubic-bezier(.2,.8,.2,1) both; }
+  @media (prefers-reduced-motion: reduce) { .invoiceRow.invHit { animation:none; } }
+  mark.numHit { background:#FEF08A; color:#111; border-radius:4px; padding:0 3px; font-weight:900; }
+  body.dark-theme mark.numHit { background:#CA8A04; color:#fff; }
   .modalBg { display:none; position:fixed; inset:0; bottom:var(--navbar-h, 76px); background:rgba(15,23,42,.5); z-index:9998; align-items:flex-end; justify-content:center; animation:modalBgFadeIn .22s ease; }
   @keyframes modalBgFadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes modalSheetSlideIn { from { transform:translateY(36px); opacity:0; } to { transform:translateY(0); opacity:1; } }
@@ -6959,11 +6964,17 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.13.0';
+const APP_VERSION = '4.13.2';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.13.2', date: '2026-11-03', items: [
+    'لمسة جمالية للفلترة الحيّة: ظهور ناعم متتابع لبطاقات الفواتير أثناء البحث، وإبراز الأرقام المطابقة بلون'
+  ] },
+  { v: '4.13.1', date: '2026-11-03', items: [
+    'الفلترة الحيّة برقم الإيصال صارت تشمل كل الفواتير (من الأرشيف المحفوظ) أثناء الكتابة، وليس آخر الفواتير فقط - وزر «بحث» يظل للبحث المباشر في الكاشير للأقدم'
+  ] },
   { v: '4.13.0', date: '2026-11-03', items: [
-    'البحث برقم الإيصال في الصفحة الرئيسية: صار يفلتر قائمة «آخر الفواتير» حيًّا أثناء الكتابة حتى تظهر الفاتورة مباشرة في مكانها، بدل فتح قائمة منفصلة (وزر «بحث» يظل للبحث في كل الفواتير)'
+    'البحث برقم الإيصال في الصفحة الرئيسية: صار يفلتر القائمة حيًّا أثناء الكتابة حتى تظهر الفاتورة مباشرة في مكانها، بدل فتح قائمة منفصلة'
   ] },
   { v: '4.12.6', date: '2026-11-03', items: [
     'النواقص: يعمل حتى والكاشير غير متصل - لو زوّدت صنفًا بالجرد، يختفي فورًا من النواقص اعتمادًا على أمر الجرد المعلّق، دون انتظار اتصال الكاشير، ويعود إن نفد'
@@ -8369,28 +8380,50 @@ function renderEmpSalesStrip() {
 }
 
 let homeInvoiceFilter = '';
+let homeSearchPool = null; // كل الفواتير من الأرشيف المحفوظ (آخر ~3 شهور) للفلترة الحيّة
+function ensureHomeSearchPool() {
+  return fetchFullArchiveFlat().then(flat => { homeSearchPool = flat || []; return homeSearchPool; }).catch(() => { homeSearchPool = []; return homeSearchPool; });
+}
+function hlNum(numStr, f) {
+  const str = String(numStr == null ? '' : numStr);
+  if (!f) return escapeHtml(str);
+  const digitsOnly = str.replace(/[^0-9]/g, '');
+  const pos = digitsOnly.indexOf(f);
+  if (pos < 0) return escapeHtml(str);
+  let di = -1, start = -1, end = -1;
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] >= '0' && str[i] <= '9') { di++; if (di === pos) start = i; if (di === pos + f.length - 1) { end = i + 1; break; } }
+  }
+  if (start < 0 || end < 0) return escapeHtml(str);
+  return escapeHtml(str.slice(0, start)) + '<mark class="numHit">' + escapeHtml(str.slice(start, end)) + '</mark>' + escapeHtml(str.slice(end));
+}
 function filterHomeInvoices() {
   const el = document.getElementById('invoiceSearchInput');
   homeInvoiceFilter = (el ? el.value : '').replace(/[^0-9]/g, '');
+  // أول ما يبدأ البحث نحمّل كل فواتير الأرشيف مرة (بعدها الفلترة فورية)
+  if (homeInvoiceFilter && homeSearchPool === null) { ensureHomeSearchPool().then(renderInvoices); return; }
   renderInvoices();
 }
 function renderInvoices() {
   const list = document.getElementById('invoiceList');
-  if (!latestInvoices.length) {
+  if (!latestInvoices.length && !homeInvoiceFilter) {
     list.innerHTML = '<div class="emptyMsg">لا توجد بيانات بعد</div>';
     try { renderEmpSalesStrip(); } catch (e) {}
     return;
   }
   let __data = latestInvoices;
   if (homeInvoiceFilter) {
-    __data = latestInvoices.filter(inv => String(inv.number || '').replace(/[^0-9]/g, '').includes(homeInvoiceFilter) || String(inv.orderNo || '').replace(/[^0-9]/g, '').includes(homeInvoiceFilter));
+    const byId = {};
+    (homeSearchPool || []).forEach(e => { if (e && e.id) byId[e.id] = e; });
+    (latestInvoices || []).forEach(e => { if (e && e.id) byId[e.id] = e; });
+    __data = Object.values(byId).filter(inv => String(inv.number || '').replace(/[^0-9]/g, '').includes(homeInvoiceFilter) || String(inv.orderNo || '').replace(/[^0-9]/g, '').includes(homeInvoiceFilter));
   }
   if (!__data.length) {
-    list.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">لا توجد فاتورة بهذا الرقم في آخر الفواتير<br><span style="font-size:12px;">اضغط «بحث» للبحث في كل الفواتير</span></div>';
+    list.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">لا توجد فاتورة بهذا الرقم في الأرشيف المحفوظ<br><span style="font-size:12px;">اضغط «بحث» للبحث المباشر في الكاشير</span></div>';
     try { renderEmpSalesStrip(); } catch (e) {}
     return;
   }
-  const sorted = [...__data].sort((a,b) => new Date(b.date) - new Date(a.date));
+  const sorted = [...__data].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, homeInvoiceFilter ? 80 : 100000);
   window.__invoicesById = {};
   sorted.forEach(inv => { window.__invoicesById[inv.id] = inv; });
   list.innerHTML = sorted.map((inv, idx) => {
@@ -8402,10 +8435,10 @@ function renderInvoices() {
     const receiptLabel = isReturn ? 'رقم الإرجاع: ' : 'رقم الإيصال: ';
     const returnBadge = (!isReturn && invHasReturn(inv)) ? ' <span style="background:#FEE2E2;color:#DC2626;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;">مرتجع</span>' : '';
     const paymentLine = inv.payment ? `<div style="font-size:11px;color:#94A3B8;margin-top:1px;">${inv.payment}</div>` : '';
-    return `<div class="invoiceRow" onclick="showInvoiceDetail(window.__invoicesById['${inv.id}'])" style="cursor:pointer">
+    return `<div class="invoiceRow${homeInvoiceFilter ? ' invHit' : ''}" onclick="showInvoiceDetail(window.__invoicesById['${inv.id}'])" style="cursor:pointer${homeInvoiceFilter ? ';animation-delay:' + Math.min(idx * 0.035, 0.45) + 's' : ''}">
       ${renderInvIcon(idx, isReturn, inv.number)}
       <div class="invInfo">
-        <div class="num">${receiptLabel}${inv.number}${returnBadge}</div>
+        <div class="num">${receiptLabel}${homeInvoiceFilter ? hlNum(inv.number, homeInvoiceFilter) : escapeHtml(String(inv.number || ''))}${returnBadge}</div>
         ${itemNames ? `<div style="font-size:12px;color:var(--text);font-weight:700;margin-top:2px;">${itemNames}</div>` : ''}
         <div class="date">${new Date(inv.date).toLocaleString('ar-EG-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
         ${inv.empName ? `<div style="font-size:11px;color:#2563EB;font-weight:700;margin-top:2px;display:flex;align-items:center;gap:4px;"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>${escapeHtml(String(inv.empName))}</div>` : ''}
