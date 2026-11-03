@@ -221,6 +221,23 @@ window.applyAppFont = function (id, save) {
   .icTile:active { transform:scale(.95); }
   .icTileIc { width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center; }
   .icTileL { font-size:11.5px; font-weight:800; color:var(--text); line-height:1.25; text-align:center; }
+  /* بطاقة تفاصيل الصنف - ترتيب مرتّب بتباعد مريح */
+  .icDetail { background:var(--surface); border-radius:20px; padding:18px 16px 16px; margin-top:12px; box-shadow:0 1px 3px rgba(15,23,42,.06); border:1px solid var(--border2); }
+  .icDetHead { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .icDetName { font-weight:800; font-size:18px; line-height:1.45; flex:1; }
+  .icDetChip { flex-shrink:0; border-radius:999px; padding:6px 12px; font-size:12.5px; font-weight:800; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
+  .icDetBarcode { display:flex; align-items:center; gap:7px; color:var(--textMuted); font-size:12.5px; font-weight:600; margin-top:11px; letter-spacing:.3px; }
+  .icPriceGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px; }
+  .icPriceCell { background:var(--surface2); border-radius:14px; padding:12px 6px; text-align:center; border:1px solid var(--border2); }
+  .icPriceCell.main { background:rgba(22,163,74,.10); border-color:rgba(22,163,74,.28); }
+  .icPriceL { font-size:11.5px; font-weight:700; color:var(--textMuted); margin-bottom:6px; }
+  .icPriceCell.main .icPriceL { color:#15803D; }
+  .icPriceV { font-size:17px; font-weight:800; line-height:1.1; }
+  .icPriceCell.main .icPriceV { color:#15803D; }
+  .icPriceU { font-size:10.5px; font-weight:700; color:var(--textMuted); margin-top:3px; }
+  .icStockStat { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border-radius:14px; padding:13px 14px; margin-top:10px; border:1px solid var(--border2); }
+  .icStockStat .lbl { font-size:13px; font-weight:700; color:var(--textMuted); display:flex; align-items:center; gap:7px; }
+  .icStockStat .val { font-size:20px; font-weight:800; }
   .heroLblRow { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
   .heroEye { width:34px; height:34px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; flex-shrink:0;
     background:rgba(255,255,255,.18); color:#fff; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .2s, transform .15s; }
@@ -349,6 +366,9 @@ window.applyAppFont = function (id, save) {
   }
   /* كل المنتجات: القايمة فقط الذي بتسكرول، وبتتحمّل على دفعات */
   #productsModal .modalSheet { display:flex; flex-direction:column; overflow:hidden; }
+  /* بطاقة الصنف: بدون تمرير حر - يتفعّل التمرير فقط عند فتح الكيبورد للوصول للخانات */
+  #itemCardModal .modalSheet { overflow:hidden; }
+  body.keyboard-open #itemCardModal .modalSheet { overflow-y:auto; }
   #productsList { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
   .plCount { font-size:11.5px; color:var(--textMuted); font-weight:800; padding:2px 2px 8px; }
   /* طباعة الباركود */
@@ -2106,7 +2126,7 @@ setTimeout(() => window.hideSplash(), 4000);
 </div>
 
 <div class="modalBg" id="itemCardModal" onclick="if(event.target===this)closeItemCardModal()">
-  <div class="modalSheet" style="max-height:90vh;overflow-y:auto;">
+  <div class="modalSheet" style="max-height:88vh;">
     <button class="closeM" onclick="closeItemCardModal()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>بطاقة صنف</h3>
     <div class="searchBox" style="margin:12px 0;">
@@ -6964,9 +6984,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.14.0';
+const APP_VERSION = '4.14.2';
 const APP_BUILD_DATE = '2026-11-03';
 const APP_RELEASES = [
+  { v: '4.14.2', date: '2026-11-03', items: [
+    'إعادة تصميم بطاقة تفاصيل الصنف بترتيب أوضح وتباعد مريح: الاسم وحالة التوفّر في الأعلى، الباركود كسطر خفيف، والأسعار الثلاثة (التكلفة/الجملة/القطاعي) في شبكة مرتّبة، والكمية المتبقية كبطاقة بارزة'
+  ] },
+  { v: '4.14.1', date: '2026-11-03', items: [
+    'بطاقة الصنف: التمرير صار يعمل عند فتح لوحة المفاتيح فقط (لا تمرير حر مزعج)، والنافذة تبقى ثابتة ومرتبة بخلاف ذلك'
+  ] },
   { v: '4.14.0', date: '2026-11-03', items: [
     'بطاقة الصنف صارت أكثر احترافية: النافذة تتكيّف مع المحتوى (لا شاشة فارغة كبيرة) مع تمرير سلس، زر مسح باركود أوضح، وبعد حفظ التعديل يرجّعك تلقائيًا لخانة البحث للصنف التالي. (التعديل يعدّل الكمية وسعر البيع وسعر الجملة والتكلفة دفعة واحدة)'
   ] },
@@ -10894,12 +10920,18 @@ function showItemCardDetail(itemId) {
   const nameArg = String(it.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   const row = (l, v, strong) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border2);"><span style="color:var(--textMuted);font-size:13px;">${l}</span><span style="font-weight:${strong ? 800 : 700};${strong ? 'font-size:15px;' : ''}">${v}</span></div>`;
   d.innerHTML = `
-    <div style="background:var(--surface);border-radius:18px;padding:16px;margin-top:10px;box-shadow:0 1px 2px rgba(15,23,42,.05);">
-      <div style="font-weight:800;font-size:17px;line-height:1.5;">${escapeHtml(it.name)}</div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <span style="background:${Number(it.stock) > 0 ? 'rgba(22,163,74,.12);color:#15803D' : 'rgba(220,38,38,.12);color:#DC2626'};border-radius:10px;padding:5px 10px;font-size:13px;font-weight:800;">المتبقي: ${it.stock}</span>
-        <span style="background:var(--surface2);border-radius:10px;padding:5px 10px;font-size:13px;font-weight:800;">${fmtMoney(it.price)} د.ل</span>
+    <div class="icDetail">
+      <div class="icDetHead">
+        <div class="icDetName">${escapeHtml(it.name)}</div>
+        <span class="icDetChip" style="${Number(it.stock) > 0 ? 'background:rgba(22,163,74,.12);color:#15803D;' : 'background:rgba(220,38,38,.12);color:#DC2626;'}"><span style="width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;"></span>${Number(it.stock) > 0 ? 'متوفّر' : 'غير متوفّر'}</span>
       </div>
+      ${it.barcode ? `<div class="icDetBarcode"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6v12M7 6v12M11 6v12M14 6v12M18 6v12M21 6v12"/></svg>${escapeHtml(String(it.barcode))}</div>` : ''}
+      <div class="icPriceGrid">
+        <div class="icPriceCell"><div class="icPriceL">التكلفة</div><div class="icPriceV">${fmtMoney(it.cost)}</div><div class="icPriceU">د.ل</div></div>
+        <div class="icPriceCell"><div class="icPriceL">الجملة</div><div class="icPriceV">${fmtMoney(it.wholesale)}</div><div class="icPriceU">د.ل</div></div>
+        <div class="icPriceCell main"><div class="icPriceL">القطاعي</div><div class="icPriceV">${fmtMoney(it.price)}</div><div class="icPriceU">د.ل</div></div>
+      </div>
+      <div class="icStockStat"><span class="lbl"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> الكمية المتبقية</span><span class="val" style="${Number(it.stock)>0?'':'color:#DC2626;'}">${it.stock}</span></div>
       <!-- الإجراءات: 4 أيقونات جنب بعض فوق (من غير ما تنزل تدوّر) -->
       <div class="icTiles">
         <button type="button" onclick="openItemSales('${nameArg}')" class="icTile"><span class="icTileIc" style="background:rgba(22,163,74,.12);"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span><span class="icTileL">فواتير الصنف</span></button>
@@ -10909,13 +10941,6 @@ function showItemCardDetail(itemId) {
       </div>
       <div id="itemCardEditStatus" data-item-id="${it.id}" style="text-align:center;font-size:12px;font-weight:700;margin-top:4px;line-height:1.7;"></div>
       ${itemCardOfferLabel[it.id] ? `<button onclick="openLabelPrint(${it.id})" style="width:100%;margin-top:8px;background:#FEF3C7;color:#B45309;border:1.5px dashed #F59E0B;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;">🏷️ اطبع ملصق بالسعر الجديد</button>` : ''}
-      <div style="margin-top:6px;">
-        ${row('الباركود', it.barcode ? escapeHtml(String(it.barcode)) : '—')}
-        ${row('الكمية المتبقية', it.stock, true)}
-        ${row('سعر الشراء (التكلفة)', fmtMoney(it.cost) + ' د.ل')}
-        ${row('سعر الجملة', fmtMoney(it.wholesale) + ' د.ل')}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 2px;"><span style="color:var(--textMuted);font-size:13px;">سعر القطاعي (القطعة)</span><span style="font-weight:800;font-size:15px;">${fmtMoney(it.price)} د.ل</span></div>
-      </div>
     </div>
   `;
   renderItemCardEditStatus(it.id);
