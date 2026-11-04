@@ -389,6 +389,12 @@ window.applyAppFont = function (id, save) {
   #productsModal .modalSheet { display:flex; flex-direction:column; overflow:hidden; }
   /* بطاقة الصنف: تمرير سلس للوصول لكل الخانات (بطاقة التفاصيل المختصرة تسع الشاشة فما تمرّرش) */
   #itemCardModal .modalSheet { overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  /* كاميرا قراءة رقم الإيصال: إخفاء أي أزرار تشغيل/إيقاف من نظام iOS فوق الفيديو */
+  #receiptOcrVideo::-webkit-media-controls,
+  #receiptOcrVideo::-webkit-media-controls-enclosure,
+  #receiptOcrVideo::-webkit-media-controls-panel,
+  #receiptOcrVideo::-webkit-media-controls-overlay-play-button,
+  #receiptOcrVideo::-webkit-media-controls-start-playback-button { display:none !important; -webkit-appearance:none !important; opacity:0 !important; }
   #productsList { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
   .plCount { font-size:11.5px; color:var(--textMuted); font-weight:800; padding:2px 2px 8px; }
   /* طباعة الباركود */
@@ -2210,13 +2216,13 @@ setTimeout(() => window.hideSplash(), 4000);
 </div>
 
 <div class="modalBg" id="receiptOcrCameraModal" onclick="if(event.target===this)closeReceiptOcrCamera()">
-  <div class="modalSheet" style="height:auto;">
+  <div class="modalSheet" style="height:auto;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <button class="closeM" onclick="closeReceiptOcrCamera()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>قراءة رقم الإيصال</h3>
     <div style="position:relative;background:#000;border-radius:14px;overflow:hidden;margin:12px 0;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;">
-      <video id="receiptOcrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
-      <div id="receiptOcrGuide" style="position:absolute;top:38%;left:20%;right:20%;height:16%;border:3px solid #22C55E;border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none;"></div>
-      <div style="position:absolute;top:calc(38% - 22px);left:8%;right:8%;text-align:center;color:#22C55E;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none;">ضع رقم الإيصال داخل الإطار الأخضر فقط</div>
+      <video id="receiptOcrVideo" autoplay playsinline muted tabindex="-1" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video>
+      <div id="receiptOcrGuide" style="position:absolute;top:38%;left:18%;right:18%;height:17%;border:3px solid #22C55E;border-radius:12px;box-shadow:0 0 0 999px rgba(0,0,0,.6);pointer-events:none;"></div>
+      <div style="position:absolute;top:calc(38% - 30px);left:6%;right:6%;text-align:center;pointer-events:none;"><span style="background:rgba(0,0,0,.6);color:#4ADE80;font-size:12px;font-weight:800;padding:4px 12px;border-radius:999px;">ضع رقم الإيصال داخل الإطار الأخضر فقط</span></div>
     </div>
     <div id="commCamBar" style="display:none;margin:-4px 0 10px;">
       <div id="commCamFlash" style="opacity:0;transition:opacity .25s;color:#fff;font-weight:800;font-size:14px;text-align:center;border-radius:12px;padding:8px;margin-bottom:8px;direction:rtl;">.</div>
@@ -7152,9 +7158,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.16.1';
+const APP_VERSION = '4.16.2';
 const APP_BUILD_DATE = '2026-11-04';
 const APP_RELEASES = [
+  { v: '4.16.2', date: '2026-11-04', items: [
+    'شاشة قراءة رقم الإيصال: إزالة زر الإيقاف الطايف فوق الكاميرا، جعل الصفحة تتمرّر للأسفل، وتحسين ترتيب العناصر. القراءة تبقى داخل الإطار الأخضر فقط'
+  ] },
   { v: '4.16.1', date: '2026-11-04', items: [
     'أداة النشر لـGitHub: تبيّن الآن نسخة الملف الذي اخترته قبل الرفع، ورسالة التحديث تحمل نسخة الملف المرفوع فعلاً (كانت تكتب نسخة التطبيق الشغّال دائمًا فتسبّب التباس)'
   ] },
