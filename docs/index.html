@@ -7231,9 +7231,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.23.0';
+const APP_VERSION = '4.23.2';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.23.2', date: '2026-11-11', items: [
+    'جرد RFID: التطبيق يتعلّم بادئة رمز التاغات تلقائيًا من المربوط عندك (افتراضي E280) ويستعملها في فصل التاغات الملتصقة — فيشتغل مهما كان نوع البطاقات'
+  ] },
+  { v: '4.23.1', date: '2026-11-11', items: [
+    'جرد RFID: لما تلتصق عدة تاغات في قراءة وحدة (رقم طويل)، التطبيق يفصلها عند بداية كل رمز (E280) فيرجّع كل تاغ لحاله — يحل لخبطة قراءة التاغات المتجاورة'
+  ] },
   { v: '4.23.0', date: '2026-11-11', items: [
     'جرد RFID — حل ذكي لنقص حروف الآيفون: القراءة الناقصة = جزء من الرمز الصحيح، فالربط يأخذ الرمز الأطول (الأقرب للصحيح) ويدمج قراءات نفس التاغ تلقائيًا = تاغ واحد',
     'جرد RFID: المطابقة في الجرد صارت بالتشابه (أطول تسلسل مشترك) — القراءة الناقصة تتعرّف على تاغها الصحيح، فيُحسب كل تاغ مرة وحدة حتى لو القراءة فيها نقص',
@@ -13024,15 +13030,46 @@ function rfidEnsureSink() {
   document.body.appendChild(i);
   rfidSinkEl = i; return i;
 }
+// بادئة الرمز تُتعلَّم تلقائيًا من التاغات المربوطة (افتراضي E280)؛ نفصل التاغات الملتصقة عندها
+let rfidLearnedPrefix = 'E280', rfidPrefixListenerOn = false;
+function rfidCommonPrefix(arr) {
+  if (!arr.length) return '';
+  let p = arr[0];
+  for (let i = 1; i < arr.length; i++) { let j = 0; while (j < p.length && j < arr[i].length && p[j] === arr[i][j]) j++; p = p.slice(0, j); if (!p) break; }
+  return p;
+}
+function rfidUpdatePrefix(tags) {
+  const ks = Object.keys(tags || {}); if (!ks.length) return;
+  const p = rfidCommonPrefix(ks);
+  if (p.length >= 4) rfidLearnedPrefix = p.slice(0, 4);   // بادئة عائلة الشريحة (4 حروف)
+}
+function rfidAttachPrefixListener() {
+  if (rfidPrefixListenerOn) return; rfidPrefixListenerOn = true;
+  try { db.ref('data/rfidTags').on('value', function (s) { rfidUpdatePrefix(s.val() || {}); }); } catch (e) {}
+}
+function rfidSplitEpcs(s) {
+  const P = rfidLearnedPrefix || 'E280';
+  let idx = s.indexOf(P);
+  if (idx < 0) return s.length >= RFID_MIN_LEN ? [s] : [];
+  const out = [];
+  while (idx >= 0) {
+    const next = s.indexOf(P, idx + P.length);
+    const seg = next >= 0 ? s.slice(idx, next) : s.slice(idx);
+    if (seg.length >= RFID_MIN_LEN) out.push(seg);
+    idx = next;
+  }
+  return out;
+}
 function startRfidCapture(cb) {
   stopRfidCapture();
   rfidOnTag = cb;
   const sink = rfidEnsureSink();
   sink.value = '';
   const flush = function () {
-    const epc = (sink.value || '').toUpperCase().replace(/[^0-9A-F]/g, '');
+    const raw = (sink.value || '').toUpperCase().replace(/[^0-9A-F]/g, '');
     sink.value = '';
-    if (epc.length >= RFID_MIN_LEN && rfidOnTag) rfidOnTag(epc);
+    if (!raw || !rfidOnTag) return;
+    rfidSplitEpcs(raw).forEach(function (e) { rfidOnTag(e); });  // يفصل التاغات الملتصقة
   };
   rfidSinkKeyH = function (e) {
     if (e.key === 'Enter') { e.preventDefault(); if (rfidSinkIdle) { clearTimeout(rfidSinkIdle); rfidSinkIdle = null; } flush(); }
@@ -13138,6 +13175,7 @@ function rfidSearchBox(inputId, fnName) {
 
 /* ---------- مركز RFID ---------- */
 function openRfidHub() {
+  rfidAttachPrefixListener();
   openModal('rfidHubModal');
   const el = document.getElementById('rfidHubBody');
   el.innerHTML = skeletonHtml();
@@ -13159,7 +13197,7 @@ function openRfidHub() {
 
 /* ---------- ربط التاغات ---------- */
 let rfidLinkItem = null, rfidLinkSession = {}, rfidLinkCounts = {}, rfidLinkCand = {}, rfidLinkCommitTimer = null;
-function openRfidLink() { rfidLinkItem = null; rfidLinkSession = {}; openModal('rfidLinkModal'); renderRfidLinkPick(); }
+function openRfidLink() { rfidAttachPrefixListener(); rfidLinkItem = null; rfidLinkSession = {}; openModal('rfidLinkModal'); renderRfidLinkPick(); }
 function renderRfidLinkPick() {
   stopRfidCapture(); rfidKbHide();
   const el = document.getElementById('rfidLinkBody');
@@ -13260,7 +13298,7 @@ function closeRfidLink() { stopRfidCapture(); rfidKbHide(); closeModal('rfidLink
 /* ---------- الجرد السريع ---------- */
 let rfidScanMode = 'full', rfidScanItem = null, rfidScanFound = {}, rfidScanActive = false, rfidScanTagged = [], rfidScanCounts = {};
 function rfidConfirmedKeys() { return Object.keys(rfidScanFound).filter(function (e) { return rfidScanFound[e] >= RFID_MIN_READS; }); }
-function openRfidScan() { rfidScanMode = 'full'; rfidScanItem = null; rfidScanFound = {}; rfidScanActive = false; openModal('rfidScanModal'); renderRfidScanSetup(); }
+function openRfidScan() { rfidAttachPrefixListener(); rfidScanMode = 'full'; rfidScanItem = null; rfidScanFound = {}; rfidScanActive = false; openModal('rfidScanModal'); renderRfidScanSetup(); }
 function renderRfidScanSetup() {
   stopRfidCapture(); rfidKbHide();
   const el = document.getElementById('rfidScanBody');
