@@ -1993,6 +1993,14 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="rfidFindModal" onclick="if(event.target===this)closeRfidFind()">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeRfidFind()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>ابحث عن تاغ ضايع</h3>
+    <div id="rfidFindBody" style="margin-top:10px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="rfidHubModal" onclick="if(event.target===this)closeModal('rfidHubModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('rfidHubModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -7224,9 +7232,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.25.3';
+const APP_VERSION = '4.26.1';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.26.0', date: '2026-11-11', items: [
+    'جديد: «ابحث عن تاغ ضايع» (رادار RSSI) — ٣ أوضاع: صنف معيّن، أي تاغ قريب (مع تحديد اسمه أو غير مربوط وتثبيت عليه)، ومؤشّر قوة يزيد كل ما تقرب + اهتزاز وصوت يتسارع. من «جرد RFID»'
+  ] },
   { v: '4.25.3', date: '2026-11-11', items: [
     'تنظيف الكود: حذف الدالة الميتة الوحيدة (رسالة «قريبًا» القديمة) بعد فحص شامل — لا دوال غير مستخدمة ولا متغيّرات معلّقة ولا تعريفات مكررة'
   ] },
@@ -8921,7 +8932,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة الذي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'rfidHubModal', 'rfidLinkModal', 'rfidScanModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'rfidHubModal', 'rfidLinkModal', 'rfidScanModal', 'rfidFindModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) مثل أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -13055,11 +13066,12 @@ function bleOnNotify(dv) {
 function bleHandleFrame(f) {
   const cmd = (f[2] << 8) | f[3], st = f[5];
   if (cmd === 0x0001 && st === 0x00) {
+    let rssi = (f[6] << 8) | f[7]; if (rssi >= 0x8000) rssi -= 0x10000; // RSSI موقّع (أعلى = أقوى = أقرب)
     const el = f[10];
     if (el > 0 && 11 + el <= f.length) {
       let epc = ''; for (let i = 11; i < 11 + el; i++) epc += f[i].toString(16).padStart(2, '0');
       epc = epc.toUpperCase();
-      if (epc.length >= 8 && rfidOnTag) rfidOnTag(epc);
+      if (epc.length >= 8 && rfidOnTag) rfidOnTag(epc, rssi);
     }
   }
 }
@@ -13086,7 +13098,8 @@ function renderRfidHub() {
       '</div>' +
       '<button onclick="rfidViewTags()" style="width:100%;margin-bottom:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">📋 عرض التاغات المربوطة</button>' +
       '<button onclick="' + (conn ? 'openRfidLink()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#2563EB' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">ربط التاغات بالأصناف</button>' +
-      '<button onclick="' + (conn ? 'openRfidScan()' : 'rfidNeedConn()') + '" style="width:100%;background:' + (conn ? '#16A34A' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">جرد سريع</button>' +
+      '<button onclick="' + (conn ? 'openRfidScan()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#16A34A' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">جرد سريع</button>' +
+      '<button onclick="' + (conn ? 'openRfidFind()' : 'rfidNeedConn()') + '" style="width:100%;background:' + (conn ? '#0891B2' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">🔎 ابحث عن تاغ ضايع</button>' +
       '<div style="margin-top:12px;font-size:11px;font-weight:800;color:var(--textMuted);">السجل:</div>' +
       '<div id="rfidLog" style="margin-top:6px;background:#0f172a;border-radius:10px;padding:8px;font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;min-height:36px;max-height:140px;overflow:auto;line-height:1.6;"></div>';
   }).catch(function () { el.innerHTML = '<div class="emptyMsg">تعذّر التحميل</div>'; });
@@ -13248,6 +13261,106 @@ async function finishRfidScan() {
     el.innerHTML = h;
   });
 }
+/* ---------- البحث عن تاغ ضايع (رادار RSSI) ---------- */
+let finderState = null, finderAllTags = {}, finderAudio = null;
+function finderBeep(freq) { try { if (!finderAudio) finderAudio = new (window.AudioContext || window.webkitAudioContext)(); const o = finderAudio.createOscillator(), g = finderAudio.createGain(); o.frequency.value = freq; o.connect(g); g.connect(finderAudio.destination); const t = finderAudio.currentTime; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08); o.start(t); o.stop(t + 0.09); } catch (e) {} }
+function openRfidFind() { if (!bleState.connected) { rfidNeedConn(); return; } openModal('rfidFindModal'); const el = document.getElementById('rfidFindBody'); el.innerHTML = skeletonHtml(); liveOnce('data/rfidTags').then(function (s) { finderAllTags = s.val() || {}; renderRfidFindSetup(); }); }
+function renderRfidFindSetup() {
+  const el = document.getElementById('rfidFindBody');
+  el.innerHTML = '<div style="font-size:13px;color:var(--textMuted);font-weight:700;margin-bottom:12px;">شنو تدوّر عليه؟</div>' +
+    '<button onclick="rfidFindItemPick()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">🔎 صنف معيّن ضايع</button>' +
+    '<button onclick="rfidFindAny()" style="width:100%;background:#0891B2;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">📡 أي تاغ قريب (وقع مني شي)</button>' +
+    '<div style="font-size:11.5px;color:var(--textMuted);margin-top:14px;line-height:1.8;">المؤشّر يزيد كل ما تقرب من التاغ، والاهتزاز/الصوت يتسارع. امشِ ناحية الإشارة الأقوى.</div>';
+}
+function rfidFindItemPick() {
+  const el = document.getElementById('rfidFindBody');
+  el.innerHTML = '<button onclick="renderRfidFindSetup()" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ رجوع</button>' +
+    '<input id="rfidFindSearch" type="text" placeholder="ابحث عن الصنف الضايع..." autocomplete="off" oninput="renderRfidFindResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:16px;font-weight:700;background:var(--surface);color:var(--text);">' +
+    '<div id="rfidFindResults" style="margin-top:8px;"></div>';
+  setTimeout(function () { const i = document.getElementById('rfidFindSearch'); if (i) i.focus(); }, 200);
+}
+function finderItemTags(id) { return Object.keys(finderAllTags).filter(function (e) { return finderAllTags[e] && String(finderAllTags[e].itemId) === String(id); }); }
+function renderRfidFindResults() {
+  const el = document.getElementById('rfidFindResults'); if (!el) return;
+  const raw = ((document.getElementById('rfidFindSearch') || {}).value || '').trim(); if (!raw) { el.innerHTML = ''; return; }
+  const nq = normalizeArabicName(raw);
+  const list = Object.values(latestItems || {}).filter(function (it) { return it && finderItemTags(it.id).length > 0 && (normalizeArabicName(it.name || '').includes(nq) || (it.barcode && String(it.barcode) === raw)); }).slice(0, 40);
+  if (!list.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد صنف مربوط بتاغات بهذا الاسم</div>'; return; }
+  el.innerHTML = list.map(function (it) { return '<div class="searchResultRow" onclick="rfidFindStartItem(' + it.id + ')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(it.name || '') + '</div><div class="p">' + finderItemTags(it.id).length + ' تاغ</div></div><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>'; }).join('');
+}
+function rfidFindStartItem(id) { const it = latestItems['i' + id] || {}; const tset = {}; finderItemTags(id).forEach(function (e) { tset[e] = 1; }); startFinder(tset, it.name || 'الصنف', 'item'); }
+function rfidFindAny() { startFinder(null, 'أي تاغ', 'any'); }
+async function startFinder(targets, label, mode) {
+  finderState = { targets: targets, label: label, mode: mode, lockEpc: null, smooth: null, min: null, max: null, last: 0, nearest: {}, tick: 0, timer: null };
+  const el = document.getElementById('rfidFindBody');
+  el.innerHTML = '<button onclick="finderStop(true)" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ رجوع</button>' +
+    '<div style="text-align:center;margin-bottom:8px;font-weight:800;font-size:15px;" id="finderName">' + escapeHtml(label) + '</div>' +
+    '<div style="background:var(--surface2);border-radius:18px;height:26px;overflow:hidden;margin-bottom:10px;"><div id="finderBar" style="height:100%;width:0%;background:#DC2626;transition:width .15s,background .2s;"></div></div>' +
+    '<div style="text-align:center;"><div id="finderPct" style="font-size:52px;font-weight:800;color:#DC2626;line-height:1;">0</div><div id="finderText" style="font-size:16px;font-weight:800;margin-top:6px;color:var(--textMuted);">ابحث...</div><div id="finderRssi" style="font-size:11px;color:var(--textMuted);margin-top:4px;"></div></div>' +
+    '<div id="finderLock" style="margin-top:12px;"></div>' +
+    '<button onclick="finderStop(false)" style="width:100%;margin-top:14px;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">⏹ إيقاف البحث</button>';
+  try { finderBeep(500); } catch (e) {}
+  try { await bleStartReading(onFinderTag); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} }
+  finderState.timer = setInterval(updateFinderMeter, 110);
+}
+function onFinderTag(epc, rssi) {
+  if (!finderState) return;
+  finderState.nearest[epc] = { rssi: rssi, t: Date.now(), name: (finderAllTags[epc] && finderAllTags[epc].name) || null, itemId: finderAllTags[epc] && finderAllTags[epc].itemId };
+}
+function finderPick() {
+  const now = Date.now(), fs = finderState; let cur = null;
+  const fresh = function (e) { return e && (now - e.t) < 1500; };
+  if (fs.lockEpc) { const e = fs.nearest[fs.lockEpc]; if (fresh(e)) cur = { epc: fs.lockEpc, rssi: e.rssi, name: e.name }; }
+  else if (fs.mode === 'item') { let best = null; Object.keys(fs.targets).forEach(function (epc) { const e = fs.nearest[epc]; if (fresh(e) && (!best || e.rssi > best.rssi)) best = { epc: epc, rssi: e.rssi, name: fs.label }; }); cur = best; }
+  else { let best = null; Object.keys(fs.nearest).forEach(function (epc) { const e = fs.nearest[epc]; if (fresh(e) && (!best || e.rssi > best.rssi)) best = { epc: epc, rssi: e.rssi, name: e.name }; }); cur = best; }
+  return cur;
+}
+function updateFinderMeter() {
+  const fs = finderState; if (!fs) return;
+  const cur = finderPick();
+  const bar = document.getElementById('finderBar'), pctEl = document.getElementById('finderPct'), txt = document.getElementById('finderText'), rssiEl = document.getElementById('finderRssi'), nameEl = document.getElementById('finderName'), lockEl = document.getElementById('finderLock');
+  if (!cur) {
+    if (txt) { txt.textContent = 'ما في إشارة — حرّك القارئ ببطء'; txt.style.color = 'var(--textMuted)'; }
+    if (bar) { bar.style.width = '0%'; }
+    if (pctEl) { pctEl.textContent = '0'; pctEl.style.color = '#9CA3AF'; }
+    if (rssiEl) rssiEl.textContent = '';
+    return;
+  }
+  fs.smooth = (fs.smooth == null) ? cur.rssi : (fs.smooth * 0.55 + cur.rssi * 0.45);
+  // مقياس مطلق: RSSI موقّع /10 = dBm. بعيد ~ -72 dBm، قريب جدًا ~ -38 dBm. يزيد تدريجيًا مع القرب.
+  let FAR = -720, NEAR = -380;
+  if (fs.min != null) FAR = Math.min(FAR, fs.min);   // لو شاف أضعف، وسّع القاع
+  if (fs.max != null) NEAR = Math.max(NEAR, fs.max); // لو شاف أقوى، وسّع القمة
+  fs.min = (fs.min == null) ? fs.smooth : Math.min(fs.min, fs.smooth);
+  fs.max = (fs.max == null) ? fs.smooth : Math.max(fs.max, fs.smooth);
+  let pct = Math.round((fs.smooth - FAR) / (NEAR - FAR) * 100); pct = Math.max(0, Math.min(100, pct));
+  const col = pct >= 70 ? '#16A34A' : (pct >= 35 ? '#D97706' : '#DC2626');
+  if (bar) { bar.style.width = pct + '%'; bar.style.background = col; }
+  if (pctEl) { pctEl.textContent = pct; pctEl.style.color = col; }
+  if (txt) { txt.textContent = pct >= 80 ? 'قريب جدًا 🔥' : (pct >= 50 ? 'اقترب أكثر' : (pct >= 25 ? 'في الاتجاه الصح' : 'بعيد 🔻')); txt.style.color = col; }
+  if (rssiEl) rssiEl.textContent = 'إشارة: ' + (fs.smooth / 10).toFixed(1) + ' dBm';
+  if (nameEl && fs.mode === 'any') nameEl.innerHTML = 'أقرب تاغ: ' + (cur.name ? escapeHtml(cur.name) : '<span style="color:#7C3AED;">غير مربوط</span>');
+  // زر التثبيت في وضع "أي تاغ"
+  if (lockEl && fs.mode === 'any') {
+    lockEl.innerHTML = fs.lockEpc
+      ? '<button onclick="finderUnlock()" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;">إلغاء التثبيت (رجوع لأي تاغ)</button>'
+      : '<button onclick="finderLockCur()" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;">🎯 ثبّت على هذا التاغ وتتبّعه</button>';
+  }
+  // اهتزاز + صوت يتسارع
+  fs.tick++;
+  const thr = Math.max(1, Math.round(9 - pct / 12.5));
+  if (fs.tick >= thr) { fs.tick = 0; try { if (navigator.vibrate) navigator.vibrate(pct >= 70 ? 45 : 25); } catch (e) {} finderBeep(500 + pct * 12); }
+}
+function finderLockCur() { const c = finderPick(); if (c) { finderState.lockEpc = c.epc; finderState.min = null; finderState.max = null; finderState.smooth = null; } }
+function finderUnlock() { if (finderState) { finderState.lockEpc = null; finderState.min = null; finderState.max = null; finderState.smooth = null; } }
+async function finderStop(back) {
+  if (finderState && finderState.timer) clearInterval(finderState.timer);
+  finderState = null;
+  try { await bleStopReading(); } catch (e) {}
+  if (back) renderRfidFindSetup();
+}
+async function closeRfidFind() { await finderStop(false); closeModal('rfidFindModal'); }
+
 async function closeRfidScan() { if (bleState.reading) { try { await bleStopReading(); } catch (e) {} } closeModal('rfidScanModal'); }
 
 
