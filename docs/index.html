@@ -1913,6 +1913,11 @@ setTimeout(() => window.hideSplash(), 4000);
         <span class="mmLbl">اختبار قارئ الباركود / RFID</span>
         <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
+      <button class="mmItem" onclick="closeMainMenu();openRfidHub();">
+        <span class="mmIco" style="--c:#0EA5E9;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7a10 10 0 0 1 14 0M8 10a6 6 0 0 1 8 0M11 13a2 2 0 0 1 2 0"/><rect x="10.5" y="15.5" width="3" height="5" rx="1"/></svg></span>
+        <span class="mmLbl">جرد RFID (التاغات)</span>
+        <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
       <button class="mmItem" onclick="closeMainMenu();openDailyAccountsAudit();">
         <span class="mmIco" style="--c:#0D9488;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg></span>
         <span class="mmLbl">المراجعة اليومية للحسابات</span>
@@ -2013,6 +2018,30 @@ setTimeout(() => window.hideSplash(), 4000);
       <div id="scannerTestLog" style="margin-top:6px;background:#0f172a;color:#4ade80;border-radius:10px;padding:10px;font-family:monospace;font-size:12px;direction:ltr;text-align:left;min-height:120px;max-height:240px;overflow:auto;white-space:pre-wrap;line-height:1.6;">—</div>
       <div id="scannerTestCount" style="margin-top:6px;font-size:11.5px;color:var(--textMuted);font-weight:700;"></div>
     </div>
+  </div>
+</div>
+
+<div class="modalBg" id="rfidHubModal" onclick="if(event.target===this)closeModal('rfidHubModal')">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeModal('rfidHubModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>جرد RFID</h3>
+    <div id="rfidHubBody" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="rfidLinkModal" onclick="if(event.target===this)closeRfidLink()">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeRfidLink()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>ربط التاغات</h3>
+    <div id="rfidLinkBody" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="rfidScanModal" onclick="if(event.target===this)closeRfidScan()">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeRfidScan()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>جرد سريع</h3>
+    <div id="rfidScanBody" style="margin-top:10px;"></div>
   </div>
 </div>
 
@@ -7202,9 +7231,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.19.0';
+const APP_VERSION = '4.20.0';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.20.0', date: '2026-11-11', items: [
+    'جديد: نظام الجرد السريع بـRFID (من القائمة «جرد RFID»): اربط تاغ على كل قطعة مرة وحدة، وبعدها اعمل جرد كامل المحل أو صنف معيّن في دقائق — يقارن الموجود بالمخزون ويطلّع الناقص والزايد والتاغات غير المربوطة تلقائيًا'
+  ] },
   { v: '4.19.0', date: '2026-11-11', items: [
     'إضافة شاشة «اختبار قارئ الباركود/RFID» (من القائمة): تبيّن أي إدخال يرسله القارئ مباشرة مع التوقيت والرموز — لتشخيص توصيل الأجهزة الخارجية'
   ] },
@@ -8843,7 +8875,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة الذي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'scannerTestModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'scannerTestModal', 'rfidHubModal', 'rfidLinkModal', 'rfidScanModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) مثل أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -12929,6 +12961,236 @@ function closeScannerTest() {
   if (scannerTestHandler) { document.removeEventListener('keydown', scannerTestHandler, true); scannerTestHandler = null; }
   closeModal('scannerTestModal');
 }
+
+
+/* ============ نظام RFID: ربط التاغات + الجرد السريع ============ */
+// التقاط قراءات التاغ من قارئ UHF (وضع HID): القارئ يرسل EPC (hex) + Enter.
+// نشط فقط داخل شاشات الربط/الجرد — فما يتعارضش مع باقي التطبيق.
+let rfidKeyHandler = null, rfidBuf = '', rfidIdleTimer = null, rfidOnTag = null;
+function startRfidCapture(cb) {
+  stopRfidCapture();
+  rfidOnTag = cb; rfidBuf = '';
+  const flush = function () {
+    const epc = (rfidBuf || '').trim().toUpperCase();
+    rfidBuf = '';
+    if (epc.length >= 8 && /^[0-9A-F]+$/.test(epc) && rfidOnTag) rfidOnTag(epc);
+  };
+  rfidKeyHandler = function (e) {
+    const k = e.key;
+    if (!k || k === 'Shift' || k === 'Alt' || k === 'Control' || k === 'Meta' || k === 'CapsLock' || k === 'Tab') return;
+    if (k === 'Enter') {
+      e.preventDefault(); e.stopPropagation();
+      if (rfidIdleTimer) { clearTimeout(rfidIdleTimer); rfidIdleTimer = null; }
+      flush();
+      return;
+    }
+    if (k.length === 1) {
+      e.preventDefault(); e.stopPropagation();
+      rfidBuf += k;
+      if (rfidIdleTimer) clearTimeout(rfidIdleTimer);
+      rfidIdleTimer = setTimeout(flush, 140);
+    }
+  };
+  document.addEventListener('keydown', rfidKeyHandler, true);
+}
+function stopRfidCapture() {
+  if (rfidKeyHandler) document.removeEventListener('keydown', rfidKeyHandler, true);
+  rfidKeyHandler = null; rfidOnTag = null; rfidBuf = '';
+  if (rfidIdleTimer) { clearTimeout(rfidIdleTimer); rfidIdleTimer = null; }
+}
+
+function rfidItemSearch(q) {
+  const raw = (q || '').trim();
+  if (!raw) return [];
+  const nq = normalizeArabicName(raw);
+  return Object.values(latestItems || {}).filter(function (it) {
+    return it && (normalizeArabicName(it.name || '').includes(nq) || (it.barcode && String(it.barcode) === raw));
+  }).slice(0, 30);
+}
+
+/* ---------- مركز RFID ---------- */
+function openRfidHub() {
+  openModal('rfidHubModal');
+  const el = document.getElementById('rfidHubBody');
+  el.innerHTML = skeletonHtml();
+  liveOnce('data/rfidTags').then(function (s) {
+    const tags = s.val() || {};
+    const n = Object.keys(tags).length;
+    const byItem = {};
+    Object.values(tags).forEach(function (t) { if (t && t.itemId != null) byItem[t.itemId] = (byItem[t.itemId] || 0) + 1; });
+    el.innerHTML = '' +
+      '<div style="background:var(--surface2);border-radius:14px;padding:16px;margin-bottom:14px;display:flex;justify-content:space-around;text-align:center;">' +
+        '<div><div style="font-size:24px;font-weight:800;color:#2563EB;">' + n + '</div><div style="font-size:11px;color:var(--textMuted);font-weight:700;">تاغ مربوط</div></div>' +
+        '<div><div style="font-size:24px;font-weight:800;color:#16A34A;">' + Object.keys(byItem).length + '</div><div style="font-size:11px;color:var(--textMuted);font-weight:700;">صنف</div></div>' +
+      '</div>' +
+      '<button onclick="openRfidLink()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg> ربط التاغات بالأصناف</button>' +
+      '<button onclick="openRfidScan()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01"/></svg> جرد سريع</button>' +
+      '<div style="font-size:12px;color:var(--textMuted);line-height:1.9;margin-top:16px;">اربط تاغ على كل قطعة مرة وحدة، وبعدها اعمل جرد سريع أي وقت — يقارن الموجود بالمخزون ويطلّع الناقص والزايد تلقائيًا.</div>';
+  }).catch(function () { el.innerHTML = '<div class="emptyMsg">تعذّر التحميل</div>'; });
+}
+
+/* ---------- ربط التاغات ---------- */
+let rfidLinkItem = null, rfidLinkSession = {};
+function openRfidLink() { rfidLinkItem = null; rfidLinkSession = {}; openModal('rfidLinkModal'); renderRfidLinkPick(); }
+function renderRfidLinkPick() {
+  stopRfidCapture();
+  const el = document.getElementById('rfidLinkBody');
+  el.innerHTML = '' +
+    '<div style="font-size:13px;color:var(--textMuted);font-weight:700;margin-bottom:8px;">١) اختر الصنف اللي تبي تربط تاغاته:</div>' +
+    '<input id="rfidLinkSearch" type="text" placeholder="ابحث باسم الصنف أو الباركود..." autocomplete="off" oninput="renderRfidLinkResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:15px;font-weight:700;background:var(--surface);color:var(--text);">' +
+    '<div id="rfidLinkResults" style="margin-top:8px;"></div>';
+  setTimeout(function () { var i = document.getElementById('rfidLinkSearch'); if (i) i.focus(); }, 200);
+}
+function renderRfidLinkResults() {
+  const el = document.getElementById('rfidLinkResults'); if (!el) return;
+  const list = rfidItemSearch((document.getElementById('rfidLinkSearch') || {}).value);
+  if (!(document.getElementById('rfidLinkSearch') || {}).value) { el.innerHTML = ''; return; }
+  if (!list.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد صنف</div>'; return; }
+  el.innerHTML = list.map(function (it) {
+    return '<div class="searchResultRow" onclick="selectRfidLinkItem(' + it.id + ')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(it.name || '') + '</div><div class="p">المخزون ' + Number(it.stock || 0) + (it.barcode ? ' · ' + escapeHtml(String(it.barcode)) : '') + '</div></div><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>';
+  }).join('');
+}
+function selectRfidLinkItem(itemId) { const it = latestItems['i' + itemId]; if (!it) return; rfidLinkItem = it; rfidLinkSession = {}; renderRfidLinkScan(); }
+function renderRfidLinkScan() {
+  const it = rfidLinkItem;
+  const el = document.getElementById('rfidLinkBody');
+  liveOnce('data/rfidTags').then(function (s) {
+    const all = s.val() || {};
+    const existing = Object.keys(all).filter(function (epc) { return all[epc] && String(all[epc].itemId) === String(it.id); });
+    rfidLinkSession = {};
+    existing.forEach(function (epc) { rfidLinkSession[epc] = { epc: epc, existing: true }; });
+    el.innerHTML = '' +
+      '<button onclick="renderRfidLinkPick()" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ تغيير الصنف</button>' +
+      '<div style="background:rgba(37,99,235,.08);border-radius:14px;padding:14px;margin-bottom:12px;"><div style="font-weight:800;font-size:16px;">' + escapeHtml(it.name || '') + '</div><div style="font-size:12px;color:var(--textMuted);margin-top:3px;">المخزون ' + Number(it.stock || 0) + ' · تاغات مربوطة: <b id="rfidLinkCount">' + existing.length + '</b></div></div>' +
+      '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:14px;text-align:center;margin-bottom:10px;"><div style="font-weight:800;color:#15803D;font-size:14px;">اقرأ التاغات الحين بالجهاز 📡</div><div style="font-size:12px;color:#166534;margin-top:4px;">كل تاغ تقرأه ينربط بهذا الصنف تلقائيًا</div></div>' +
+      '<div id="rfidLinkList"></div>';
+    renderRfidLinkList();
+    startRfidCapture(onRfidLinkTag);
+  });
+}
+function onRfidLinkTag(epc) {
+  if (!rfidLinkItem) return;
+  if (rfidLinkSession[epc]) return;
+  rfidLinkSession[epc] = { epc: epc, isNew: true };
+  try { db.ref('data/rfidTags/' + epc).set({ itemId: rfidLinkItem.id, barcode: rfidLinkItem.barcode || '', name: rfidLinkItem.name || '', at: new Date().toISOString() }); } catch (e) {}
+  try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  renderRfidLinkList();
+}
+function renderRfidLinkList() {
+  const el = document.getElementById('rfidLinkList'); if (!el) return;
+  const keys = Object.keys(rfidLinkSession);
+  const cnt = document.getElementById('rfidLinkCount'); if (cnt) cnt.textContent = keys.length;
+  if (!keys.length) { el.innerHTML = '<div style="text-align:center;color:var(--textMuted);font-size:12.5px;padding:10px;">لسه ما قريت أي تاغ — قرّب الجهاز من التاغ</div>'; return; }
+  el.innerHTML = keys.map(function (epc) {
+    const t = rfidLinkSession[epc];
+    return '<div class="searchResultRow"><div style="flex:1;min-width:0;"><div class="n" style="font-family:monospace;font-size:12px;direction:ltr;text-align:left;">' + escapeHtml(epc) + '</div></div>' +
+      (t.isNew ? '<span style="color:#16A34A;font-weight:800;font-size:12px;">✓ جديد</span>' : '<span style="color:var(--textMuted);font-weight:700;font-size:12px;">مربوط</span>') +
+      '<button onclick="unlinkRfidTag(\'' + epc + '\')" style="margin-inline-start:8px;background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;">حذف</button></div>';
+  }).join('');
+}
+function unlinkRfidTag(epc) { delete rfidLinkSession[epc]; try { db.ref('data/rfidTags/' + epc).remove(); } catch (e) {} renderRfidLinkList(); }
+function closeRfidLink() { stopRfidCapture(); closeModal('rfidLinkModal'); }
+
+/* ---------- الجرد السريع ---------- */
+let rfidScanMode = 'full', rfidScanItem = null, rfidScanFound = {}, rfidScanActive = false;
+function openRfidScan() { rfidScanMode = 'full'; rfidScanItem = null; rfidScanFound = {}; rfidScanActive = false; openModal('rfidScanModal'); renderRfidScanSetup(); }
+function renderRfidScanSetup() {
+  stopRfidCapture();
+  const el = document.getElementById('rfidScanBody');
+  el.innerHTML = '' +
+    '<button onclick="startRfidScanFull()" style="width:100%;margin-bottom:12px;background:#16A34A;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">جرد كامل المحل</button>' +
+    '<div style="text-align:center;color:var(--textMuted);font-size:12px;margin:4px 0 10px;">— أو —</div>' +
+    '<div style="font-size:12.5px;color:var(--textMuted);font-weight:700;margin-bottom:6px;">جرد صنف معيّن:</div>' +
+    '<input id="rfidScanSearch" type="text" placeholder="ابحث عن صنف..." autocomplete="off" oninput="renderRfidScanResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:15px;font-weight:700;background:var(--surface);color:var(--text);">' +
+    '<div id="rfidScanResults" style="margin-top:8px;"></div>';
+}
+function renderRfidScanResults() {
+  const el = document.getElementById('rfidScanResults'); if (!el) return;
+  const list = rfidItemSearch((document.getElementById('rfidScanSearch') || {}).value);
+  if (!(document.getElementById('rfidScanSearch') || {}).value) { el.innerHTML = ''; return; }
+  if (!list.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد صنف</div>'; return; }
+  el.innerHTML = list.map(function (it) {
+    return '<div class="searchResultRow" onclick="startRfidScanItem(' + it.id + ')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(it.name || '') + '</div><div class="p">المخزون ' + Number(it.stock || 0) + '</div></div><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>';
+  }).join('');
+}
+function startRfidScanFull() { rfidScanMode = 'full'; rfidScanItem = null; beginRfidScan(); }
+function startRfidScanItem(itemId) { rfidScanItem = latestItems['i' + itemId]; rfidScanMode = 'item'; beginRfidScan(); }
+function beginRfidScan() {
+  rfidScanFound = {}; rfidScanActive = true;
+  const el = document.getElementById('rfidScanBody');
+  el.innerHTML = '' +
+    '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;">' +
+      '<div style="font-weight:800;color:#15803D;font-size:15px;">📡 جاري الجرد' + (rfidScanMode === 'item' && rfidScanItem ? ' — ' + escapeHtml(rfidScanItem.name) : ' (كامل المحل)') + '</div>' +
+      '<div style="font-size:12px;color:#166534;margin-top:4px;">امشِ في المحل وخلّي الجهاز يقرأ (قراءة مستمرة)</div>' +
+      '<div style="font-size:40px;font-weight:800;color:#16A34A;margin-top:10px;" id="rfidScanCount">0</div>' +
+      '<div style="font-size:11px;color:#166534;">تاغ مقروء (فريد)</div>' +
+    '</div>' +
+    '<button onclick="finishRfidScan()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">إنهاء الجرد وعرض التقرير</button>';
+  startRfidCapture(onRfidScanTag);
+}
+function onRfidScanTag(epc) {
+  if (!rfidScanActive) return;
+  if (rfidScanFound[epc]) { rfidScanFound[epc]++; return; }
+  rfidScanFound[epc] = 1;
+  const c = document.getElementById('rfidScanCount'); if (c) c.textContent = Object.keys(rfidScanFound).length;
+  try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) {}
+}
+function finishRfidScan() {
+  rfidScanActive = false; stopRfidCapture();
+  const el = document.getElementById('rfidScanBody');
+  el.innerHTML = skeletonHtml();
+  liveOnce('data/rfidTags').then(function (s) {
+    const tags = s.val() || {};
+    const found = Object.keys(rfidScanFound);
+    const foundByItem = {}, unknown = [];
+    found.forEach(function (epc) {
+      const t = tags[epc];
+      if (t && t.itemId != null) foundByItem[t.itemId] = (foundByItem[t.itemId] || 0) + 1;
+      else unknown.push(epc);
+    });
+    const linkedByItem = {}, nameByItem = {};
+    Object.values(tags).forEach(function (t) { if (t && t.itemId != null) { linkedByItem[t.itemId] = (linkedByItem[t.itemId] || 0) + 1; nameByItem[t.itemId] = t.name || nameByItem[t.itemId]; } });
+    let itemIds;
+    if (rfidScanMode === 'item' && rfidScanItem) itemIds = [String(rfidScanItem.id)];
+    else itemIds = Object.keys(linkedByItem);
+    const rows = itemIds.map(function (id) {
+      const it = latestItems['i' + id] || {};
+      const name = it.name || nameByItem[id] || 'صنف';
+      const stock = Number(it.stock || 0);
+      const f = foundByItem[id] || 0;
+      const linked = linkedByItem[id] || 0;
+      let status, color; const diff = f - stock;
+      if (f === stock) { status = '✓ مطابق'; color = '#16A34A'; }
+      else if (f < stock) { status = 'ناقص ' + (stock - f); color = '#DC2626'; }
+      else { status = 'زائد ' + (f - stock); color = '#D97706'; }
+      return { id: id, name: name, stock: stock, found: f, linked: linked, status: status, color: color, diff: diff };
+    }).sort(function (a, b) { return Math.abs(b.diff) - Math.abs(a.diff); });
+    const okN = rows.filter(function (r) { return r.found === r.stock; }).length;
+    const missN = rows.filter(function (r) { return r.found < r.stock; }).length;
+    const extraN = rows.filter(function (r) { return r.found > r.stock; }).length;
+    let h = '';
+    h += '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
+      '<div style="flex:1;background:#F0FDF4;border-radius:12px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#16A34A;">' + okN + '</div><div style="font-size:10.5px;color:#15803D;font-weight:700;">مطابق</div></div>' +
+      '<div style="flex:1;background:#FEF2F2;border-radius:12px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#DC2626;">' + missN + '</div><div style="font-size:10.5px;color:#DC2626;font-weight:700;">ناقص</div></div>' +
+      '<div style="flex:1;background:#FFFBEB;border-radius:12px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#D97706;">' + extraN + '</div><div style="font-size:10.5px;color:#D97706;font-weight:700;">زائد</div></div>' +
+      '</div>';
+    h += '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:8px;">إجمالي التاغات المقروءة: ' + found.length + ' فريد</div>';
+    if (!rows.length) h += '<div class="emptyMsg">لا يوجد أصناف مربوطة بتاغات بعد</div>';
+    h += rows.map(function (r) {
+      const note = r.linked < r.stock ? '<div style="font-size:10.5px;color:#D97706;margin-top:2px;">⚠ ' + (r.stock - r.linked) + ' قطعة بدون تاغ (ما تنحسبش)</div>' : '';
+      return '<div class="searchResultRow"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(r.name) + '</div><div class="p">الموجود ' + r.found + ' / المخزون ' + r.stock + '</div>' + note + '</div><span style="font-weight:800;font-size:12.5px;color:' + r.color + ';white-space:nowrap;">' + r.status + '</span></div>';
+    }).join('');
+    if (unknown.length) {
+      h += '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:#7C3AED;">تاغات غير مربوطة (' + unknown.length + ')</div>';
+      h += '<div style="font-size:11px;color:var(--textMuted);margin:4px 0 6px;line-height:1.7;">قُرئت تاغات مش مربوطة بأي صنف — اربطها من «ربط التاغات».</div>';
+      h += unknown.slice(0, 20).map(function (epc) { return '<div style="font-family:monospace;font-size:11px;direction:ltr;text-align:left;color:var(--textMuted);padding:2px 0;">' + escapeHtml(epc) + '</div>'; }).join('');
+    }
+    h += '<button onclick="renderRfidScanSetup()" style="width:100%;margin-top:16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">جرد جديد</button>';
+    el.innerHTML = h;
+  }).catch(function () { el.innerHTML = '<div class="emptyMsg">تعذّر إنشاء التقرير</div>'; });
+}
+function closeRfidScan() { rfidScanActive = false; stopRfidCapture(); closeModal('rfidScanModal'); }
+
 
 /* ============ المراجعة اليومية للحسابات (يوم بيوم) ============ */
 function reconDayGroups(rows) {
