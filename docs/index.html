@@ -7264,7 +7264,7 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.24.0';
+const APP_VERSION = '4.24.3';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
   { v: '4.24.0', date: '2026-11-11', items: [
@@ -13506,7 +13506,8 @@ function openBleRfid() {
   const b = document.getElementById('bleRfidBody');
   b.innerHTML = '' +
     '<div id="bleCheck"></div>' +
-    '<button onclick="bleScan()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:14px;cursor:pointer;">🔍 ابحث عن الجهاز</button>' +
+    '<button id="bleScanBtn" onclick="bleScan()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:14px;cursor:pointer;">🔍 ابحث عن الجهاز</button>' +
+    '<div style="font-size:11px;color:var(--textMuted);margin-bottom:8px;line-height:1.7;">💡 اضغط زر القارئ مرة لإيقاظه أثناء البحث. البحث يفضل شغّال لحد ما تضغط على الجهاز.</div>' +
     '<div id="bleDevices" style="margin-bottom:10px;"></div>' +
     '<div id="bleConnBox"></div>' +
     '<div style="margin-top:12px;font-size:12px;font-weight:800;color:var(--textMuted);">السجل:</div>' +
@@ -13514,28 +13515,44 @@ function openBleRfid() {
   try { bleSelfCheck(); } catch (e) {}
 }
 
+let bleScanning = false, bleSeen = {};
+function bleScanBtnText() { const b = document.getElementById('bleScanBtn'); if (b) { b.textContent = bleScanning ? '⏹ إيقاف البحث' : '🔍 ابحث عن الجهاز'; b.style.background = bleScanning ? '#DC2626' : '#2563EB'; } }
+async function bleStopScan() {
+  bleScanning = false; bleScanBtnText();
+  try { const B = await bleLoad(); await B.stopLEScan(); } catch (e) {}
+  bleLog('وقف البحث. الأجهزة: ' + Object.keys(bleSeen).length, 'ok');
+}
 async function bleScan() {
+  if (bleScanning) { await bleStopScan(); return; }
   const list = document.getElementById('bleDevices');
   try {
     const BleClient = await bleLoad();
     bleLog('تهيئة البلوتوث...');
     await BleClient.initialize();
-    list.innerHTML = '<div style="text-align:center;color:var(--textMuted);font-size:12px;padding:8px;">⏳ جارٍ البحث (6 ثوانٍ)...</div>';
-    const seen = {};
-    await BleClient.requestLEScan({ allowDuplicates: false }, function (result) {
+    bleSeen = {};
+    list.innerHTML = '<div style="text-align:center;color:var(--textMuted);font-size:12px;padding:8px;">⏳ البحث شغّال... قرّب القارئ واضغط زره.</div>';
+    // الأجهزة المتصلة أصلاً بالنظام
+    try {
+      const svc = ['0000ffe0-0000-1000-8000-00805f9b34fb', '0000ffe4-0000-1000-8000-00805f9b34fb', '0000ffe3-0000-1000-8000-00805f9b34fb'];
+      const conn = await BleClient.getConnectedDevices(svc);
+      (conn || []).forEach(function (d) { if (d && d.deviceId && !bleSeen[d.deviceId]) { bleSeen[d.deviceId] = { id: d.deviceId, name: d.name || 'جهاز متصل' }; } });
+      if (Object.keys(bleSeen).length) { renderBleDevices(bleSeen); }
+    } catch (e) {}
+    bleScanning = true; bleScanBtnText();
+    await BleClient.requestLEScan({ allowDuplicates: true }, function (result) {
       const d = result.device || {};
-      const id = d.deviceId; if (!id || seen[id]) return;
+      const id = d.deviceId; if (!id) return;
       const name = d.name || result.localName || '';
-      if (!name) return;
-      seen[id] = { id: id, name: name };
-      renderBleDevices(seen);
+      if (!name && !bleSeen[id]) return;              // تجاهل بدون اسم
+      if (bleSeen[id]) return;
+      bleSeen[id] = { id: id, name: name || '(بدون اسم)' };
+      renderBleDevices(bleSeen);
+      bleLog('ظهر: ' + (name || id), 'ok');
+      if (/CF|H102|UHF|RFID/i.test(name)) { try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {} }
     });
-    setTimeout(async function () {
-      try { await BleClient.stopLEScan(); } catch (e) {}
-      bleLog('انتهى البحث. الأجهزة: ' + Object.keys(seen).length, 'ok');
-      if (!Object.keys(seen).length) list.innerHTML = '<div style="text-align:center;color:#DC2626;font-size:12px;padding:8px;">ما لقيت أي جهاز — تأكد إن القارئ مشغّل وقريب.</div>';
-    }, 6000);
+    bleLog('البحث شغّال — يفضل حتى تضغط على الجهاز أو إيقاف');
   } catch (e) {
+    bleScanning = false; bleScanBtnText();
     bleLog('خطأ البحث: ' + (e && e.message ? e.message : e), 'err');
     list.innerHTML = '<div style="color:#DC2626;font-size:12px;">فشل: ' + escapeHtml(String(e && e.message || e)) + '</div>';
   }
@@ -13551,6 +13568,7 @@ function renderBleDevices(seen) {
 async function bleConnect(deviceId, name) {
   try {
     const BleClient = await bleLoad();
+    if (bleScanning) { try { await bleStopScan(); } catch (e) {} }
     bleLog('اتصال بـ ' + name + '...');
     await BleClient.connect(deviceId, function (id) { bleLog('انقطع الاتصال بالجهاز', 'err'); bleState.reading = false; });
     bleState.deviceId = deviceId;
@@ -13658,12 +13676,18 @@ async function closeBleRfid() {
 async function bleSelfCheck() {
   const el = document.getElementById('bleCheck'); if (!el) return;
   const lines = []; let ok = true;
+  const cap = window.Capacitor;
+  let plat = '(غير معروف)';
+  try { plat = cap && cap.getPlatform ? cap.getPlatform() : '(لا يوجد Capacitor)'; } catch (e) {}
+  lines.push((cap ? '✓' : '✗') + ' Capacitor موجود: ' + (cap ? 'نعم' : 'لا — أنت في المتصفح'));
+  lines.push('• المنصّة الحالية: ' + plat + (plat === 'web' ? ' ← أنت في المتصفح/الموقع، مش التطبيق' : (plat === 'ios' ? ' ← تطبيق الآيفون ✓' : '')));
   const nat = bleIsNative();
-  lines.push((nat ? '✓' : '✗') + ' يعمل داخل تطبيق iOS: ' + (nat ? 'نعم' : 'لا (افتحه من التطبيق مش المتصفح)'));
   if (!nat) ok = false;
-  let pluginOk = false;
+  let pluginOk = false, plugNames = '';
   try { pluginOk = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BluetoothLe); } catch (e) {}
-  lines.push((pluginOk ? '✓' : '✗') + ' إضافة البلوتوث داخل النسخة المبنية: ' + (pluginOk ? 'موجودة' : 'غير موجودة — النسخة ما بُنيت بالبلوتوث'));
+  try { plugNames = Object.keys((window.Capacitor && window.Capacitor.Plugins) || {}).join(', '); } catch (e) {}
+  lines.push((pluginOk ? '✓' : '✗') + ' إضافة البلوتوث (BluetoothLe) في النسخة: ' + (pluginOk ? 'موجودة' : 'غير موجودة'));
+  if (plugNames) lines.push('• الإضافات الموجودة: ' + plugNames);
   if (!pluginOk) ok = false;
   if (nat) {
     try { const B = await bleLoad(); await B.initialize(); lines.push('✓ تهيئة البلوتوث نجحت'); }
