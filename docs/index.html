@@ -5802,17 +5802,25 @@ function ghClearToken() {
   uiConfirm('حذف التوكن من هذا الجهاز؟').then(ok => { if (ok) { ghSaveToken(''); ghPicked = null; renderGhPublish(); } });
 }
 
-// يطابق اسم الملف المختار مع الوجهة المعروفة بتسامح (المسار، حالة الأحرف، و .yaml≡.yml، وأي نسخة مثل build-ios(1).yml)
+// يطابق اسم الملف المختار مع الوجهة المعروفة بتسامح:
+// المسار، حالة الأحرف، .yaml≡.yml، لاحقة النسخ مثل (1)، والشرطة السفلية بدل النقطة (الآيفون يغيّرها)
 function ghResolveTarget(rawName) {
   if (!rawName) return null;
-  let n = String(rawName).trim();
-  n = n.split('/').pop().split('\\').pop();          // شيل أي مسار
-  if (GH_TARGETS[n]) return { key: n, target: GH_TARGETS[n] };
-  const low = n.toLowerCase();
-  for (const k in GH_TARGETS) { if (k.toLowerCase() === low) return { key: k, target: GH_TARGETS[k] }; }
-  // طبّع: .yaml -> .yml، وشيل لاحقة النسخ مثل " (1)" أو "-1" قبل الامتداد
-  const norm = low.replace(/\.yaml$/, '.yml').replace(/[ _-]*\(?\d+\)?(\.[a-z0-9]+)$/, '$1');
-  for (const k in GH_TARGETS) { if (k.toLowerCase() === norm) return { key: k, target: GH_TARGETS[k] }; }
+  const base = String(rawName).trim().split('/').pop().split('\\').pop();
+  const keysLower = {};
+  for (const k in GH_TARGETS) keysLower[k.toLowerCase()] = k;
+  const cands = new Set();
+  const add = function (s) { if (s) cands.add(s); };
+  add(base);
+  // شيل لاحقة النسخ " (1)" / "-1" / "_1" قبل الامتداد
+  const stripped = base.replace(/[ _-]*\(?\d+\)?(\.[A-Za-z0-9]+)$/, '$1');
+  add(stripped);
+  [base, stripped].forEach(function (v) {
+    add(v.replace(/\.yaml$/i, '.yml'));              // yaml -> yml
+    add(v.replace(/_/g, '.'));                        // الآيفون غيّر النقاط لـ _
+    add(v.replace(/_/g, '.').replace(/\.yaml$/i, '.yml'));
+  });
+  for (const c of cands) { const m = keysLower[c.toLowerCase()]; if (m) return { key: m, target: GH_TARGETS[m] }; }
   return null;
 }
 function ghOnPick(input) {
@@ -7248,9 +7256,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.23.4';
+const APP_VERSION = '4.23.5';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.23.5', date: '2026-11-11', items: [
+    'أداة النشر: تتعرّف على الاسم حتى لو الآيفون غيّر النقطة لشرطة سفلية (capacitor_config.json) — مع .yaml/.yml ولاحقة النسخ وحالة الأحرف'
+  ] },
   { v: '4.23.4', date: '2026-11-11', items: [
     'أداة النشر (GitHub): تتعرّف على كل الملفات المعروفة بتسامح — حروف كبيرة/صغيرة، مسار، نسخ مثل (1)، و.yaml تُعامَل مثل .yml — فما تطلعش «اسم غير معروف» بسبب فرق بسيط في الاسم'
   ] },
