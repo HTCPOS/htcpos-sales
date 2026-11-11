@@ -2021,6 +2021,14 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="bleRfidModal" onclick="if(event.target===this)closeBleRfid()">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeBleRfid()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>RFID بالبلوتوث</h3>
+    <div id="bleRfidBody" style="margin-top:10px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="rfidHubModal" onclick="if(event.target===this)closeModal('rfidHubModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('rfidHubModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -7256,9 +7264,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.23.5';
+const APP_VERSION = '4.24.0';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.24.0', date: '2026-11-11', items: [
+    'جديد: قراءة RFID عبر البلوتوث المباشر (BLE) — قناة بيانات نظيفة من ذاكرة الجهاز بدل الكيبورد: صفر نقص حروف. شاشة «ربط وقراءة بالبلوتوث» في جرد RFID تتصل بالجهاز، تفحص جاهزية النسخة المبنية، وتقرأ التاغات كاملة',
+    'فحص تلقائي للتأكد إن النسخة المبنية فيها البلوتوث فعلاً'
+  ] },
   { v: '4.23.5', date: '2026-11-11', items: [
     'أداة النشر: تتعرّف على الاسم حتى لو الآيفون غيّر النقطة لشرطة سفلية (capacitor_config.json) — مع .yaml/.yml ولاحقة النسخ وحالة الأحرف'
   ] },
@@ -8937,7 +8949,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة الذي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'scannerTestModal', 'rfidHubModal', 'rfidLinkModal', 'rfidScanModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'scannerTestModal', 'rfidHubModal', 'rfidLinkModal', 'rfidScanModal', 'bleRfidModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) مثل أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -13225,6 +13237,7 @@ function openRfidHub() {
       '</div>' +
       '<button onclick="openRfidLink()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg> ربط التاغات بالأصناف</button>' +
       '<button onclick="openRfidScan()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01"/></svg> جرد سريع</button>' +
+      '<button onclick="openBleRfid()" style="width:100%;margin-top:10px;background:#0EA5E9;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg> ربط وقراءة بالبلوتوث (جديد)</button>' +
       '<div style="font-size:12px;color:var(--textMuted);line-height:1.9;margin-top:16px;">اربط تاغ على كل قطعة مرة وحدة، وبعدها اعمل جرد سريع أي وقت — يقارن الموجود بالمخزون ويطلّع الناقص والزايد تلقائيًا.</div>';
   }).catch(function () { el.innerHTML = '<div class="emptyMsg">تعذّر التحميل</div>'; });
 }
@@ -13465,6 +13478,201 @@ function finishRfidScan() {
 }
 function closeRfidScan() { rfidScanActive = false; stopRfidCapture(); rfidKbHide(); closeModal('rfidScanModal'); }
 
+
+/* ============ RFID عبر البلوتوث (BLE GATT) — القراءة النظيفة من ذاكرة الجهاز ============ */
+// البروتوكول من SDK الرسمي: إطار CF..CRC، أمر البدء CF FF 0001 05 00 00000000 F5B5
+let _BleClient = null, _bleNums = null;
+async function bleLoad() {
+  if (_BleClient) return _BleClient;
+  const m = await import('https://cdn.jsdelivr.net/npm/@capacitor-community/bluetooth-le@6/+esm');
+  _BleClient = m.BleClient; _bleNums = m.numbersToDataView;
+  return _BleClient;
+}
+const BLE_CMD_START = [0xCF, 0xFF, 0x00, 0x01, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF5, 0xB5];
+const BLE_CMD_STOP  = [0xCF, 0xFF, 0x00, 0x02, 0x00, 0xE7, 0x61];
+let bleState = { deviceId: null, service: null, writeChar: null, notifyChar: null, writeType: 'wwr', reading: false, found: {}, buf: [] };
+
+function bleLog(msg, kind) {
+  const el = document.getElementById('bleLog'); if (!el) return;
+  const c = kind === 'err' ? '#f87171' : (kind === 'ok' ? '#4ade80' : '#e2e8f0');
+  const t = new Date().toLocaleTimeString();
+  el.innerHTML = '<div style="color:' + c + ';">[' + t + '] ' + escapeHtml(String(msg)) + '</div>' + el.innerHTML;
+}
+function bleIsNative() { try { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); } catch (e) { return false; } }
+
+function openBleRfid() {
+  openModal('bleRfidModal');
+  bleState = { deviceId: null, service: null, writeChar: null, notifyChar: null, writeType: 'wwr', reading: false, found: {}, buf: [] };
+  const b = document.getElementById('bleRfidBody');
+  b.innerHTML = '' +
+    '<div id="bleCheck"></div>' +
+    '<button onclick="bleScan()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:14px;cursor:pointer;">🔍 ابحث عن الجهاز</button>' +
+    '<div id="bleDevices" style="margin-bottom:10px;"></div>' +
+    '<div id="bleConnBox"></div>' +
+    '<div style="margin-top:12px;font-size:12px;font-weight:800;color:var(--textMuted);">السجل:</div>' +
+    '<div id="bleLog" style="margin-top:6px;background:#0f172a;border-radius:10px;padding:10px;font-family:monospace;font-size:11px;direction:ltr;text-align:left;min-height:80px;max-height:220px;overflow:auto;line-height:1.6;"></div>';
+  try { bleSelfCheck(); } catch (e) {}
+}
+
+async function bleScan() {
+  const list = document.getElementById('bleDevices');
+  try {
+    const BleClient = await bleLoad();
+    bleLog('تهيئة البلوتوث...');
+    await BleClient.initialize();
+    list.innerHTML = '<div style="text-align:center;color:var(--textMuted);font-size:12px;padding:8px;">⏳ جارٍ البحث (6 ثوانٍ)...</div>';
+    const seen = {};
+    await BleClient.requestLEScan({ allowDuplicates: false }, function (result) {
+      const d = result.device || {};
+      const id = d.deviceId; if (!id || seen[id]) return;
+      const name = d.name || result.localName || '';
+      if (!name) return;
+      seen[id] = { id: id, name: name };
+      renderBleDevices(seen);
+    });
+    setTimeout(async function () {
+      try { await BleClient.stopLEScan(); } catch (e) {}
+      bleLog('انتهى البحث. الأجهزة: ' + Object.keys(seen).length, 'ok');
+      if (!Object.keys(seen).length) list.innerHTML = '<div style="text-align:center;color:#DC2626;font-size:12px;padding:8px;">ما لقيت أي جهاز — تأكد إن القارئ مشغّل وقريب.</div>';
+    }, 6000);
+  } catch (e) {
+    bleLog('خطأ البحث: ' + (e && e.message ? e.message : e), 'err');
+    list.innerHTML = '<div style="color:#DC2626;font-size:12px;">فشل: ' + escapeHtml(String(e && e.message || e)) + '</div>';
+  }
+}
+function renderBleDevices(seen) {
+  const list = document.getElementById('bleDevices'); if (!list) return;
+  list.innerHTML = Object.values(seen).map(function (d) {
+    const hot = /CF|H102|UHF|RFID/i.test(d.name);
+    return '<div class="searchResultRow" onclick="bleConnect(\'' + d.id + '\',\'' + escapeHtml(d.name).replace(/'/g, "") + '\')" style="cursor:pointer;' + (hot ? 'border:1.5px solid #16A34A;' : '') + '"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(d.name) + (hot ? ' ✅' : '') + '</div><div class="p" style="font-family:monospace;font-size:10px;direction:ltr;">' + escapeHtml(d.id) + '</div></div><span style="color:#2563EB;font-weight:800;font-size:12px;">اتصال</span></div>';
+  }).join('');
+}
+
+async function bleConnect(deviceId, name) {
+  try {
+    const BleClient = await bleLoad();
+    bleLog('اتصال بـ ' + name + '...');
+    await BleClient.connect(deviceId, function (id) { bleLog('انقطع الاتصال بالجهاز', 'err'); bleState.reading = false; });
+    bleState.deviceId = deviceId;
+    bleLog('متصل ✓ — جارٍ اكتشاف الخدمات', 'ok');
+    const services = await BleClient.getServices(deviceId);
+    let writeChar = null, notifyChar = null, wsvc = null, nsvc = null, wtype = 'wwr';
+    services.forEach(function (s) {
+      (s.characteristics || []).forEach(function (c) {
+        const p = c.properties || {};
+        if (!notifyChar && (p.notify || p.indicate)) { notifyChar = c.uuid; nsvc = s.uuid; }
+        if (!writeChar && (p.writeWithoutResponse || p.write)) { writeChar = c.uuid; wsvc = s.uuid; wtype = p.writeWithoutResponse ? 'wwr' : 'w'; }
+      });
+    });
+    if (!notifyChar || !writeChar) { bleLog('ما لقيت خصائص الكتابة/الإشعار. الخدمات: ' + services.length, 'err'); return; }
+    bleState.service = nsvc; bleState.notifyChar = notifyChar;
+    bleState.writeService = wsvc; bleState.writeChar = writeChar; bleState.writeType = wtype;
+    bleLog('notify=' + notifyChar.slice(0, 8) + ' write=' + writeChar.slice(0, 8) + ' (' + wtype + ')', 'ok');
+    await BleClient.startNotifications(deviceId, nsvc, notifyChar, function (dv) { bleOnNotify(dv); });
+    bleLog('اشتركت في الإشعارات ✓ — جاهز للجرد', 'ok');
+    renderBleConn(name);
+  } catch (e) {
+    bleLog('خطأ الاتصال: ' + (e && e.message ? e.message : e), 'err');
+  }
+}
+function renderBleConn(name) {
+  const box = document.getElementById('bleConnBox'); if (!box) return;
+  box.innerHTML = '' +
+    '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:12px;text-align:center;margin-bottom:10px;">' +
+      '<div style="font-weight:800;color:#15803D;font-size:14px;">✓ متصل: ' + escapeHtml(name) + '</div>' +
+      '<div style="font-size:34px;font-weight:800;color:#16A34A;margin-top:6px;" id="bleCount">0</div>' +
+      '<div style="font-size:11px;color:#166534;">تاغ فريد مقروء</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;">' +
+      '<button onclick="bleStartRead()" style="flex:1;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">ابدأ القراءة</button>' +
+      '<button onclick="bleStopRead()" style="flex:1;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">إيقاف</button>' +
+    '</div>' +
+    '<div id="bleTags" style="margin-top:10px;"></div>';
+}
+
+async function bleWrite(bytes) {
+  const BleClient = await bleLoad();
+  const dv = _bleNums(bytes);
+  if (bleState.writeType === 'wwr') await BleClient.writeWithoutResponse(bleState.deviceId, bleState.writeService, bleState.writeChar, dv);
+  else await BleClient.write(bleState.deviceId, bleState.writeService, bleState.writeChar, dv);
+}
+async function bleStartRead() {
+  try {
+    bleState.found = {}; bleState.buf = []; bleState.reading = true;
+    const c = document.getElementById('bleCount'); if (c) c.textContent = '0';
+    const t = document.getElementById('bleTags'); if (t) t.innerHTML = '';
+    bleLog('إرسال أمر بدء الجرد...');
+    await bleWrite(BLE_CMD_START);
+    bleLog('بدأ الجرد — مرّر الجهاز على التاغات', 'ok');
+  } catch (e) { bleLog('خطأ البدء: ' + (e && e.message ? e.message : e), 'err'); }
+}
+async function bleStopRead() {
+  try { bleState.reading = false; await bleWrite(BLE_CMD_STOP); bleLog('أوقفت الجرد. إجمالي: ' + Object.keys(bleState.found).length + ' تاغ', 'ok'); }
+  catch (e) { bleLog('خطأ الإيقاف: ' + (e && e.message ? e.message : e), 'err'); }
+}
+
+function bleOnNotify(dv) {
+  for (let i = 0; i < dv.byteLength; i++) bleState.buf.push(dv.getUint8(i));
+  // استخرج الإطارات الكاملة: CF ADDR CMD(2) LEN info(LEN) CRC(2) => الطول الكلي = LEN+7
+  let guard = 0;
+  while (guard++ < 200) {
+    const h = bleState.buf.indexOf(0xCF);
+    if (h < 0) { bleState.buf = []; break; }
+    if (h > 0) bleState.buf = bleState.buf.slice(h);
+    if (bleState.buf.length < 5) break;
+    const len = bleState.buf[4];
+    const total = len + 7;
+    if (bleState.buf.length < total) break;
+    const f = bleState.buf.slice(0, total);
+    bleState.buf = bleState.buf.slice(total);
+    bleHandleFrame(f);
+  }
+}
+function bleHandleFrame(f) {
+  const cmd = (f[2] << 8) | f[3];
+  const status = f[5];
+  if (cmd === 0x0001 && status === 0x00) {
+    const epclen = f[10];
+    if (epclen > 0 && 11 + epclen <= f.length) {
+      let epc = '';
+      for (let i = 11; i < 11 + epclen; i++) epc += f[i].toString(16).padStart(2, '0');
+      epc = epc.toUpperCase();
+      if (epc.length >= 8) bleAddTag(epc);
+    }
+  }
+}
+function bleAddTag(epc) {
+  if (bleState.found[epc]) { bleState.found[epc]++; return; }
+  bleState.found[epc] = 1;
+  const c = document.getElementById('bleCount'); if (c) c.textContent = Object.keys(bleState.found).length;
+  try { if (navigator.vibrate) navigator.vibrate(20); } catch (e) {}
+  const t = document.getElementById('bleTags');
+  if (t) t.innerHTML = '<div class="searchResultRow"><div class="n" style="font-family:monospace;font-size:12px;direction:ltr;text-align:left;">' + escapeHtml(epc) + '</div></div>' + t.innerHTML;
+}
+async function closeBleRfid() {
+  try { if (bleState.deviceId) { const BleClient = await bleLoad(); if (bleState.reading) { try { await bleWrite(BLE_CMD_STOP); } catch (e) {} } await BleClient.disconnect(bleState.deviceId); } } catch (e) {}
+  bleState.reading = false; bleState.deviceId = null;
+  closeModal('bleRfidModal');
+}
+
+async function bleSelfCheck() {
+  const el = document.getElementById('bleCheck'); if (!el) return;
+  const lines = []; let ok = true;
+  const nat = bleIsNative();
+  lines.push((nat ? '✓' : '✗') + ' يعمل داخل تطبيق iOS: ' + (nat ? 'نعم' : 'لا (افتحه من التطبيق مش المتصفح)'));
+  if (!nat) ok = false;
+  let pluginOk = false;
+  try { pluginOk = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.BluetoothLe); } catch (e) {}
+  lines.push((pluginOk ? '✓' : '✗') + ' إضافة البلوتوث داخل النسخة المبنية: ' + (pluginOk ? 'موجودة' : 'غير موجودة — النسخة ما بُنيت بالبلوتوث'));
+  if (!pluginOk) ok = false;
+  if (nat) {
+    try { const B = await bleLoad(); await B.initialize(); lines.push('✓ تهيئة البلوتوث نجحت'); }
+    catch (e) { lines.push('✗ تهيئة البلوتوث فشلت: ' + (e && e.message ? e.message : e)); ok = false; }
+  }
+  el.innerHTML = '<div style="background:' + (ok ? '#ECFDF5' : '#FEF2F2') + ';border:1px solid ' + (ok ? '#A7F3D0' : '#FECACA') + ';border-radius:12px;padding:12px;font-size:12.5px;line-height:1.9;color:' + (ok ? '#15803D' : '#991B1B') + ';margin-bottom:10px;">' +
+    '<div style="font-weight:800;margin-bottom:6px;">' + (ok ? '✅ النسخة مبنية صح والبلوتوث جاهز' : '❌ فيه مشكلة في جاهزية البلوتوث') + '</div>' +
+    lines.map(function (l) { return '<div>' + escapeHtml(l) + '</div>'; }).join('') + '</div>';
+}
 
 /* ============ المراجعة اليومية للحسابات (يوم بيوم) ============ */
 function reconDayGroups(rows) {
