@@ -1586,9 +1586,9 @@ setTimeout(() => window.hideSplash(), 4000);
         <span style="width:46px;height:46px;border-radius:14px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5v14M6 5v14M10 5v14M13 5v14M17 5v14M21 5v14"/></svg></span>
         <span style="flex:1;"><span style="display:block;font-size:15px;font-weight:800;color:var(--text);">الجرد بالباركود</span><span style="display:block;font-size:12.5px;color:var(--textMuted);margin-top:2px;">امسح كل قطعة أو اكتب العدد بيدك</span></span>
       </button>
-      <button type="button" onclick="productsHubRfid()" style="width:100%;display:flex;align-items:center;gap:14px;padding:15px 14px;margin-bottom:10px;border-radius:16px;cursor:pointer;text-align:right;background:var(--surface);border:1px solid var(--border2);opacity:.7;">
-        <span style="width:46px;height:46px;border-radius:14px;background:var(--surface2);color:#64748B;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="2"/></svg></span>
-        <span style="flex:1;"><span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--text);">جرد RFID <span style="font-size:11px;font-weight:800;background:#FEF3C7;color:#B45309;border-radius:8px;padding:2px 8px;">قريبًا</span></span><span style="display:block;font-size:12.5px;color:var(--textMuted);margin-top:2px;">يقرأ رف كامل بثواني - لما يوصل الجهاز</span></span>
+      <button type="button" onclick="closeModal('countChooserModal');openRfidHub();" style="width:100%;display:flex;align-items:center;gap:14px;padding:15px 14px;margin-bottom:10px;border-radius:16px;cursor:pointer;text-align:right;background:var(--surface);border:1px solid var(--border2);">
+        <span style="width:46px;height:46px;border-radius:14px;background:#ECFEFF;color:#0891B2;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="2"/></svg></span>
+        <span style="flex:1;"><span style="display:block;font-size:15px;font-weight:800;color:var(--text);">جرد RFID بالبلوتوث</span><span style="display:block;font-size:12.5px;color:var(--textMuted);margin-top:2px;">اقرأ رف كامل بثواني — اتصل بالقارئ واعمل جرد سريع</span></span>
       </button>
     </div>
   </div>
@@ -1906,11 +1906,6 @@ setTimeout(() => window.hideSplash(), 4000);
       <button class="mmItem" onclick="closeMainMenu();openEmpReport();">
         <span class="mmIco" style="--c:#2563EB;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M17 11l2 2 4-4"/></svg></span>
         <span class="mmLbl">مبيعات الموظفين</span>
-        <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      <button class="mmItem" onclick="closeMainMenu();openRfidHub();">
-        <span class="mmIco" style="--c:#0EA5E9;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7a10 10 0 0 1 14 0M8 10a6 6 0 0 1 8 0M11 13a2 2 0 0 1 2 0"/><rect x="10.5" y="15.5" width="3" height="5" rx="1"/></svg></span>
-        <span class="mmLbl">جرد RFID (التاغات)</span>
         <svg class="mmChev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <button class="mmItem" onclick="closeMainMenu();openDailyAccountsAudit();">
@@ -7005,10 +7000,6 @@ function productsHubCamera() {
   startItemCardCameraScan();
 }
 
-function productsHubRfid() {
-  alert('جرد RFID قريبًا\n\nلما تختار جهاز الـ RFID، أرسل اسم الموديل قبل الشراء حتى نتأكد إنه يدعم وضع "لوحة مفاتيح بلوتوث" (HID) ويشتغل مع التطبيق مباشرة.');
-}
-
 /* ================= البحث العام ================= */
 // بيدور في كل التطبيق مرة واحدة: الأصناف، الزبائن والمحلات، الفواتير، الملاحظات، التالف، والشاشات.
 // كل البحث من بيانات موجودة في الذاكرة أصلًا (فوري)، والفواتير من النسخة المحفوظة + زر للبحث في الكاشير
@@ -7233,9 +7224,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.25.1';
+const APP_VERSION = '4.25.3';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.25.3', date: '2026-11-11', items: [
+    'تنظيف الكود: حذف الدالة الميتة الوحيدة (رسالة «قريبًا» القديمة) بعد فحص شامل — لا دوال غير مستخدمة ولا متغيّرات معلّقة ولا تعريفات مكررة'
+  ] },
+  { v: '4.25.2', date: '2026-11-11', items: [
+    'نقل «جرد RFID» إلى مكانه الطبيعي تحت زر «الجرد» (مع الجرد بالباركود) بدل زر «قريبًا» المعطّل — وأُزيل من القائمة لتفادي التكرار'
+  ] },
   { v: '4.25.1', date: '2026-11-11', items: [
     'جرد RFID: شاشة «عرض التاغات المربوطة» (كل صنف وتاغاته مع حذف)، وتقرير جرد احترافي كامل: مطابق/ناقص/زائد + التاغات المفقودة بالضبط لكل صنف ناقص + أصناف بدون تاغات (لم تُجرد) + تاغات غير مربوطة'
   ] },
