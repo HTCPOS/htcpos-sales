@@ -7231,9 +7231,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.21.0';
+const APP_VERSION = '4.21.1';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.21.1', date: '2026-11-11', items: [
+    'جرد RFID: ربط التاغ ما يقبل الرمز إلا بعد قراءته كاملاً عدة مرات — يتجاهل القراءات الناقصة اللي تطلع من القراءة السريعة المستمرة فما يتخزّنش نفس التاغ بأكثر من رمز'
+  ] },
   { v: '4.21.0', date: '2026-11-11', items: [
     'جرد RFID: كيبورد داخلي بشكل الآيفون (إنجليزي/أرقام افتراضيًا + زر للعربي) للبحث عن الصنف — يظهر تلقائيًا فقط لما القارئ موصول (ما يفتحش كيبورد النظام)، ولما تفصل القارئ يرجع كيبورد الآيفون العادي. وفيه زر ⌨️ لفتحه يدويًا'
   ] },
@@ -12976,6 +12979,7 @@ function closeScannerTest() {
 /* ============ نظام RFID: ربط التاغات + الجرد السريع ============ */
 // القارئ (HID) يرسل EPC هيكس + Enter. نشط فقط داخل شاشات القراءة، ونتجاهله لو المؤشر في خانة كتابة.
 const RFID_MIN_READS = 2;   // التاغ الحقيقي يُقرأ عشرات المرات؛ القراءة المفردة = تشويش
+const RFID_LINK_MIN = 3;   // الربط: لا نقبل الرمز إلا بعد قراءته كاملاً عدة مرات (نتجاهل القراءات الناقصة)
 const RFID_MIN_LEN = 16;
 let rfidKeyHandler = null, rfidBuf = '', rfidIdleTimer = null, rfidOnTag = null;
 function startRfidCapture(cb) {
@@ -13102,7 +13106,7 @@ function openRfidHub() {
 }
 
 /* ---------- ربط التاغات ---------- */
-let rfidLinkItem = null, rfidLinkSession = {}, rfidLinkCounts = {};
+let rfidLinkItem = null, rfidLinkSession = {}, rfidLinkCounts = {}, rfidLinkTally = {};
 function openRfidLink() { rfidLinkItem = null; rfidLinkSession = {}; openModal('rfidLinkModal'); renderRfidLinkPick(); }
 function renderRfidLinkPick() {
   stopRfidCapture(); rfidKbHide();
@@ -13139,12 +13143,13 @@ function renderRfidLinkScan() {
   liveOnce('data/rfidTags').then(function (s) {
     const all = s.val() || {};
     const existing = Object.keys(all).filter(function (epc) { return all[epc] && String(all[epc].itemId) === String(it.id); });
-    rfidLinkSession = {};
+    rfidLinkSession = {}; rfidLinkTally = {};
     existing.forEach(function (epc) { rfidLinkSession[epc] = { epc: epc, existing: true }; });
     el.innerHTML = '' +
       '<button onclick="renderRfidLinkPick()" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ تغيير الصنف</button>' +
       '<div style="background:rgba(37,99,235,.08);border-radius:14px;padding:14px;margin-bottom:12px;"><div style="font-weight:800;font-size:16px;">' + escapeHtml(it.name || '') + '</div><div style="font-size:12px;color:var(--textMuted);margin-top:3px;">المخزون ' + Number(it.stock || 0) + ' · تاغات مربوطة: <b id="rfidLinkCount">' + existing.length + '</b></div></div>' +
       '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:14px;text-align:center;margin-bottom:10px;"><div style="font-weight:800;color:#15803D;font-size:14px;">قرّب التاغ من الجهاز واقرأه 📡</div><div style="font-size:12px;color:#166534;margin-top:4px;">كل تاغ تقرأه ينربط بهذا الصنف تلقائيًا</div></div>' +
+      '<div id="rfidLinkPending" style="font-size:12px;color:#92400E;text-align:center;margin-bottom:8px;min-height:16px;"></div>' +
       '<div id="rfidLinkList"></div>';
     renderRfidLinkList();
     startRfidCapture(onRfidLinkTag);
@@ -13152,11 +13157,23 @@ function renderRfidLinkScan() {
 }
 function onRfidLinkTag(epc) {
   if (!rfidLinkItem) return;
-  if (rfidLinkSession[epc]) return;
+  if (rfidLinkSession[epc]) return;                 // مربوط أصلاً
+  rfidLinkTally[epc] = (rfidLinkTally[epc] || 0) + 1;
+  if (rfidLinkTally[epc] < RFID_LINK_MIN) { renderRfidLinkPending(); return; } // لسه ما تأكّدش
+  delete rfidLinkTally[epc];
   rfidLinkSession[epc] = { epc: epc, isNew: true };
   try { db.ref('data/rfidTags/' + epc).set({ itemId: rfidLinkItem.id, barcode: rfidLinkItem.barcode || '', name: rfidLinkItem.name || '', at: new Date().toISOString() }); } catch (e) {}
   try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  renderRfidLinkPending();
   renderRfidLinkList();
+}
+function renderRfidLinkPending() {
+  const el = document.getElementById('rfidLinkPending'); if (!el) return;
+  const ks = Object.keys(rfidLinkTally);
+  if (!ks.length) { el.textContent = ''; return; }
+  ks.sort(function (a, b) { return rfidLinkTally[b] - rfidLinkTally[a]; });
+  const top = ks[0];
+  el.innerHTML = 'جاري تأكيد القراءة… (' + rfidLinkTally[top] + '/' + RFID_LINK_MIN + ') — قرّب التاغ وثبّته';
 }
 function renderRfidLinkList() {
   const el = document.getElementById('rfidLinkList'); if (!el) return;
