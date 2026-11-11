@@ -5802,24 +5802,39 @@ function ghClearToken() {
   uiConfirm('حذف التوكن من هذا الجهاز؟').then(ok => { if (ok) { ghSaveToken(''); ghPicked = null; renderGhPublish(); } });
 }
 
+// يطابق اسم الملف المختار مع الوجهة المعروفة بتسامح (المسار، حالة الأحرف، و .yaml≡.yml، وأي نسخة مثل build-ios(1).yml)
+function ghResolveTarget(rawName) {
+  if (!rawName) return null;
+  let n = String(rawName).trim();
+  n = n.split('/').pop().split('\\').pop();          // شيل أي مسار
+  if (GH_TARGETS[n]) return { key: n, target: GH_TARGETS[n] };
+  const low = n.toLowerCase();
+  for (const k in GH_TARGETS) { if (k.toLowerCase() === low) return { key: k, target: GH_TARGETS[k] }; }
+  // طبّع: .yaml -> .yml، وشيل لاحقة النسخ مثل " (1)" أو "-1" قبل الامتداد
+  const norm = low.replace(/\.yaml$/, '.yml').replace(/[ _-]*\(?\d+\)?(\.[a-z0-9]+)$/, '$1');
+  for (const k in GH_TARGETS) { if (k.toLowerCase() === norm) return { key: k, target: GH_TARGETS[k] }; }
+  return null;
+}
 function ghOnPick(input) {
   const f = input.files && input.files[0];
   const info = document.getElementById('ghPickInfo');
   const btn = document.getElementById('ghPublishBtn');
   if (!f) return;
   const name = f.name;
-  const target = GH_TARGETS[name];
+  const resolved = ghResolveTarget(name);
+  const target = resolved ? resolved.target : null;
+  const canonName = resolved ? resolved.key : name;
   if (!target) {
     ghPicked = null;
-    if (info) info.innerHTML = '<span style="color:#DC2626;font-weight:700;">⚠ اسم الملف غير معروف: ' + escapeHtml(name) + '<br>المسموح: index.html · setup.sh · package.json · capacitor.config.json · build-ios.yml</span>';
+    if (info) info.innerHTML = '<span style="color:#DC2626;font-weight:700;">⚠ اسم الملف غير معروف: ' + escapeHtml(name) + '<br>المسموح: index.html · setup.sh · package.json · capacitor.config.json · build-ios.yml/yaml</span>';
     if (btn) { btn.disabled = true; btn.style.background = '#9CA3AF'; btn.style.cursor = 'not-allowed'; }
     return;
   }
   const reader = new FileReader();
   reader.onload = () => {
-    ghPicked = { name: name, path: target.path, label: target.label, content: String(reader.result), after: target.after };
+    ghPicked = { name: canonName, path: target.path, label: target.label, content: String(reader.result), after: target.after };
     const kb = Math.round(ghPicked.content.length / 1024);
-    const upVer = ghContentVersion(name, ghPicked.content);
+    const upVer = ghContentVersion(canonName, ghPicked.content);
     if (info) info.innerHTML = '✓ <b>' + escapeHtml(name) + '</b> (' + kb + ' ك.ب)<br>الوجهة: <span dir="ltr">' + escapeHtml(target.path) + '</span> · ' + escapeHtml(target.label) + '<br>نسخة الملف: <b dir="ltr">v' + escapeHtml(upVer) + '</b>';
     if (btn) { btn.disabled = false; btn.style.background = '#0F766E'; btn.style.cursor = 'pointer'; }
   };
@@ -7233,9 +7248,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.23.3';
+const APP_VERSION = '4.23.4';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.23.4', date: '2026-11-11', items: [
+    'أداة النشر (GitHub): تتعرّف على كل الملفات المعروفة بتسامح — حروف كبيرة/صغيرة، مسار، نسخ مثل (1)، و.yaml تُعامَل مثل .yml — فما تطلعش «اسم غير معروف» بسبب فرق بسيط في الاسم'
+  ] },
   { v: '4.23.3', date: '2026-11-11', items: [
     'أداة النشر (GitHub): صارت تقبل رفع package.json و capacitor.config.json (بالإضافة لـindex.html و setup.sh و build-ios.yml) — لتفعيل البلوتوث وإعادة بناء الـIPA من داخل التطبيق'
   ] },
