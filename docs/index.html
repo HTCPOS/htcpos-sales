@@ -7264,7 +7264,7 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.24.3';
+const APP_VERSION = '4.24.4';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
   { v: '4.24.0', date: '2026-11-11', items: [
@@ -13575,13 +13575,20 @@ async function bleConnect(deviceId, name) {
     bleLog('متصل ✓ — جارٍ اكتشاف الخدمات', 'ok');
     const services = await BleClient.getServices(deviceId);
     let writeChar = null, notifyChar = null, wsvc = null, nsvc = null, wtype = 'wwr';
+    const notifyCands = [], writeCands = [];
     services.forEach(function (s) {
       (s.characteristics || []).forEach(function (c) {
         const p = c.properties || {};
-        if (!notifyChar && (p.notify || p.indicate)) { notifyChar = c.uuid; nsvc = s.uuid; }
-        if (!writeChar && (p.writeWithoutResponse || p.write)) { writeChar = c.uuid; wsvc = s.uuid; wtype = p.writeWithoutResponse ? 'wwr' : 'w'; }
+        const props = (p.read ? 'r' : '') + (p.write ? 'w' : '') + (p.writeWithoutResponse ? 'W' : '') + (p.notify ? 'n' : '') + (p.indicate ? 'i' : '');
+        bleLog('svc ' + s.uuid.slice(0, 8) + ' / char ' + c.uuid.slice(0, 8) + ' [' + props + ']');
+        if (p.notify || p.indicate) notifyCands.push({ svc: s.uuid, uuid: c.uuid });
+        if (p.writeWithoutResponse || p.write) writeCands.push({ svc: s.uuid, uuid: c.uuid, t: p.writeWithoutResponse ? 'wwr' : 'w' });
       });
     });
+    const pick = function (cands, pref) { return cands.find(function (x) { return x.uuid.toLowerCase().indexOf(pref) >= 0; }) || cands.find(function (x) { return x.svc.toLowerCase().indexOf('ffe0') >= 0; }) || cands[0]; };
+    const nc = pick(notifyCands, 'ffe4'); const wc = pick(writeCands, 'ffe3');
+    if (nc) { notifyChar = nc.uuid; nsvc = nc.svc; }
+    if (wc) { writeChar = wc.uuid; wsvc = wc.svc; wtype = wc.t || 'wwr'; }
     if (!notifyChar || !writeChar) { bleLog('ما لقيت خصائص الكتابة/الإشعار. الخدمات: ' + services.length, 'err'); return; }
     bleState.service = nsvc; bleState.notifyChar = notifyChar;
     bleState.writeService = wsvc; bleState.writeChar = writeChar; bleState.writeType = wtype;
@@ -13619,7 +13626,8 @@ async function bleStartRead() {
     bleState.found = {}; bleState.buf = []; bleState.reading = true;
     const c = document.getElementById('bleCount'); if (c) c.textContent = '0';
     const t = document.getElementById('bleTags'); if (t) t.innerHTML = '';
-    bleLog('إرسال أمر بدء الجرد...');
+    bleNotifyCount = 0;
+    bleLog('TX: ' + BLE_CMD_START.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('').toUpperCase());
     await bleWrite(BLE_CMD_START);
     bleLog('بدأ الجرد — مرّر الجهاز على التاغات', 'ok');
   } catch (e) { bleLog('خطأ البدء: ' + (e && e.message ? e.message : e), 'err'); }
@@ -13629,7 +13637,9 @@ async function bleStopRead() {
   catch (e) { bleLog('خطأ الإيقاف: ' + (e && e.message ? e.message : e), 'err'); }
 }
 
+let bleNotifyCount = 0;
 function bleOnNotify(dv) {
+  if (bleNotifyCount < 50) { let h = ''; for (let i = 0; i < dv.byteLength; i++) h += dv.getUint8(i).toString(16).padStart(2, '0'); bleLog('RX: ' + h.toUpperCase()); bleNotifyCount++; }
   for (let i = 0; i < dv.byteLength; i++) bleState.buf.push(dv.getUint8(i));
   // استخرج الإطارات الكاملة: CF ADDR CMD(2) LEN info(LEN) CRC(2) => الطول الكلي = LEN+7
   let guard = 0;
