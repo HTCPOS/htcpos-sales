@@ -7231,9 +7231,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.21.1';
+const APP_VERSION = '4.22.0';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.22.0', date: '2026-11-11', items: [
+    'جرد RFID: تغيير طريقة التقاط قراءة الجهاز إلى «خانة مخفية» بدل التقاط الحروف وحدة وحدة — يمنع الآيفون من إسقاط حروف من الرمز أثناء القراءة السريعة فيطلع الرمز كامل وثابت',
+    'جرد RFID: إضافة زر «اربط أوضح رمز» في الربط كخيار يدوي احتياطي لربط الرمز الأكثر تكرارًا'
+  ] },
   { v: '4.21.1', date: '2026-11-11', items: [
     'جرد RFID: ربط التاغ ما يقبل الرمز إلا بعد قراءته كاملاً عدة مرات — يتجاهل القراءات الناقصة اللي تطلع من القراءة السريعة المستمرة فما يتخزّنش نفس التاغ بأكثر من رمز'
   ] },
@@ -12981,29 +12985,49 @@ function closeScannerTest() {
 const RFID_MIN_READS = 2;   // التاغ الحقيقي يُقرأ عشرات المرات؛ القراءة المفردة = تشويش
 const RFID_LINK_MIN = 3;   // الربط: لا نقبل الرمز إلا بعد قراءته كاملاً عدة مرات (نتجاهل القراءات الناقصة)
 const RFID_MIN_LEN = 16;
-let rfidKeyHandler = null, rfidBuf = '', rfidIdleTimer = null, rfidOnTag = null;
+// نلتقط عبر خانة مخفية (sink): الجهاز يكتب فيها والمتصفح يخزّن النص كامل بثبات — يمنع سقوط الحروف.
+let rfidSinkEl = null, rfidSinkIdle = null, rfidSinkKeyH = null, rfidSinkInputH = null, rfidSinkRefocus = null, rfidOnTag = null;
+function rfidEnsureSink() {
+  if (rfidSinkEl) return rfidSinkEl;
+  const i = document.createElement('input');
+  i.id = 'rfidSink'; i.type = 'text'; i.setAttribute('inputmode', 'none');
+  i.autocomplete = 'off'; i.setAttribute('autocorrect', 'off'); i.setAttribute('autocapitalize', 'off'); i.spellcheck = false;
+  i.style.cssText = 'position:fixed;top:-200px;left:0;width:1px;height:1px;opacity:0;pointer-events:none;';
+  document.body.appendChild(i);
+  rfidSinkEl = i; return i;
+}
 function startRfidCapture(cb) {
   stopRfidCapture();
-  rfidOnTag = cb; rfidBuf = '';
+  rfidOnTag = cb;
+  const sink = rfidEnsureSink();
+  sink.value = '';
   const flush = function () {
-    const epc = (rfidBuf || '').trim().toUpperCase();
-    rfidBuf = '';
-    if (epc.length >= RFID_MIN_LEN && /^[0-9A-F]+$/.test(epc) && rfidOnTag) rfidOnTag(epc);
+    const epc = (sink.value || '').toUpperCase().replace(/[^0-9A-F]/g, '');
+    sink.value = '';
+    if (epc.length >= RFID_MIN_LEN && rfidOnTag) rfidOnTag(epc);
   };
-  rfidKeyHandler = function (e) {
-    const ae = document.activeElement;
-    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
-    const k = e.key;
-    if (!k || k === 'Shift' || k === 'Alt' || k === 'Control' || k === 'Meta' || k === 'CapsLock' || k === 'Tab') return;
-    if (k === 'Enter') { e.preventDefault(); e.stopPropagation(); if (rfidIdleTimer) { clearTimeout(rfidIdleTimer); rfidIdleTimer = null; } flush(); return; }
-    if (k.length === 1) { e.preventDefault(); e.stopPropagation(); rfidBuf += k; if (rfidIdleTimer) clearTimeout(rfidIdleTimer); rfidIdleTimer = setTimeout(flush, 300); }
+  rfidSinkKeyH = function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); if (rfidSinkIdle) { clearTimeout(rfidSinkIdle); rfidSinkIdle = null; } flush(); }
   };
-  document.addEventListener('keydown', rfidKeyHandler, true);
+  rfidSinkInputH = function () {
+    if (rfidSinkIdle) clearTimeout(rfidSinkIdle);
+    rfidSinkIdle = setTimeout(flush, 250);
+  };
+  sink.addEventListener('keydown', rfidSinkKeyH, true);
+  sink.addEventListener('input', rfidSinkInputH, true);
+  try { sink.focus(); } catch (e) {}
+  rfidSinkRefocus = setInterval(function () { if (rfidSinkEl && document.activeElement !== rfidSinkEl) { try { rfidSinkEl.focus(); } catch (e) {} } }, 700);
 }
 function stopRfidCapture() {
-  if (rfidKeyHandler) document.removeEventListener('keydown', rfidKeyHandler, true);
-  rfidKeyHandler = null; rfidOnTag = null; rfidBuf = '';
-  if (rfidIdleTimer) { clearTimeout(rfidIdleTimer); rfidIdleTimer = null; }
+  if (rfidSinkEl) {
+    if (rfidSinkKeyH) rfidSinkEl.removeEventListener('keydown', rfidSinkKeyH, true);
+    if (rfidSinkInputH) rfidSinkEl.removeEventListener('input', rfidSinkInputH, true);
+    try { rfidSinkEl.blur(); } catch (e) {}
+    rfidSinkEl.value = '';
+  }
+  rfidSinkKeyH = null; rfidSinkInputH = null; rfidOnTag = null;
+  if (rfidSinkIdle) { clearTimeout(rfidSinkIdle); rfidSinkIdle = null; }
+  if (rfidSinkRefocus) { clearInterval(rfidSinkRefocus); rfidSinkRefocus = null; }
 }
 
 /* ---------- كيبورد داخلي بشكل آيفون (يظهر فقط لما القارئ موصول) ---------- */
@@ -13150,6 +13174,7 @@ function renderRfidLinkScan() {
       '<div style="background:rgba(37,99,235,.08);border-radius:14px;padding:14px;margin-bottom:12px;"><div style="font-weight:800;font-size:16px;">' + escapeHtml(it.name || '') + '</div><div style="font-size:12px;color:var(--textMuted);margin-top:3px;">المخزون ' + Number(it.stock || 0) + ' · تاغات مربوطة: <b id="rfidLinkCount">' + existing.length + '</b></div></div>' +
       '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:14px;text-align:center;margin-bottom:10px;"><div style="font-weight:800;color:#15803D;font-size:14px;">قرّب التاغ من الجهاز واقرأه 📡</div><div style="font-size:12px;color:#166534;margin-top:4px;">كل تاغ تقرأه ينربط بهذا الصنف تلقائيًا</div></div>' +
       '<div id="rfidLinkPending" style="font-size:12px;color:#92400E;text-align:center;margin-bottom:8px;min-height:16px;"></div>' +
+      '<button id="rfidLinkForceBtn" onclick="rfidLinkForce()" style="display:none;width:100%;margin-bottom:10px;background:#F59E0B;color:#fff;border:none;border-radius:12px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;">اربط أوضح رمز (الأكثر تكرارًا)</button>' +
       '<div id="rfidLinkList"></div>';
     renderRfidLinkList();
     startRfidCapture(onRfidLinkTag);
@@ -13168,12 +13193,25 @@ function onRfidLinkTag(epc) {
   renderRfidLinkList();
 }
 function renderRfidLinkPending() {
-  const el = document.getElementById('rfidLinkPending'); if (!el) return;
+  const el = document.getElementById('rfidLinkPending');
+  const btn = document.getElementById('rfidLinkForceBtn');
+  if (!el) return;
   const ks = Object.keys(rfidLinkTally);
-  if (!ks.length) { el.textContent = ''; return; }
-  ks.sort(function (a, b) { return rfidLinkTally[b] - rfidLinkTally[a]; });
+  if (!ks.length) { el.textContent = ''; if (btn) btn.style.display = 'none'; return; }
+  ks.sort(function (a, b) { return (rfidLinkTally[b] - rfidLinkTally[a]) || (b.length - a.length); });
   const top = ks[0];
-  el.innerHTML = 'جاري تأكيد القراءة… (' + rfidLinkTally[top] + '/' + RFID_LINK_MIN + ') — قرّب التاغ وثبّته';
+  el.innerHTML = 'جاري تأكيد القراءة… أفضل رمز: <b style="font-family:monospace;direction:ltr;">' + escapeHtml(top) + '</b> (' + rfidLinkTally[top] + '/' + RFID_LINK_MIN + ')';
+  if (btn) { btn.style.display = 'block'; btn.setAttribute('data-epc', top); }
+}
+function rfidLinkForce() {
+  const btn = document.getElementById('rfidLinkForceBtn'); if (!btn || !rfidLinkItem) return;
+  const epc = btn.getAttribute('data-epc'); if (!epc) return;
+  if (rfidLinkSession[epc]) return;
+  delete rfidLinkTally[epc];
+  rfidLinkSession[epc] = { epc: epc, isNew: true };
+  try { db.ref('data/rfidTags/' + epc).set({ itemId: rfidLinkItem.id, barcode: rfidLinkItem.barcode || '', name: rfidLinkItem.name || '', at: new Date().toISOString() }); } catch (e) {}
+  try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  renderRfidLinkPending(); renderRfidLinkList();
 }
 function renderRfidLinkList() {
   const el = document.getElementById('rfidLinkList'); if (!el) return;
