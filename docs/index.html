@@ -7231,9 +7231,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.22.0';
+const APP_VERSION = '4.23.0';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.23.0', date: '2026-11-11', items: [
+    'جرد RFID — حل ذكي لنقص حروف الآيفون: القراءة الناقصة = جزء من الرمز الصحيح، فالربط يأخذ الرمز الأطول (الأقرب للصحيح) ويدمج قراءات نفس التاغ تلقائيًا = تاغ واحد',
+    'جرد RFID: المطابقة في الجرد صارت بالتشابه (أطول تسلسل مشترك) — القراءة الناقصة تتعرّف على تاغها الصحيح، فيُحسب كل تاغ مرة وحدة حتى لو القراءة فيها نقص',
+    'جرد RFID: الربط صار تلقائي وأسرع — ثبّت التاغ قدام الجهاز وارفعه، يتثبّت لحاله'
+  ] },
   { v: '4.22.0', date: '2026-11-11', items: [
     'جرد RFID: تغيير طريقة التقاط قراءة الجهاز إلى «خانة مخفية» بدل التقاط الحروف وحدة وحدة — يمنع الآيفون من إسقاط حروف من الرمز أثناء القراءة السريعة فيطلع الرمز كامل وثابت',
     'جرد RFID: إضافة زر «اربط أوضح رمز» في الربط كخيار يدوي احتياطي لربط الرمز الأكثر تكرارًا'
@@ -12983,7 +12988,30 @@ function closeScannerTest() {
 /* ============ نظام RFID: ربط التاغات + الجرد السريع ============ */
 // القارئ (HID) يرسل EPC هيكس + Enter. نشط فقط داخل شاشات القراءة، ونتجاهله لو المؤشر في خانة كتابة.
 const RFID_MIN_READS = 2;   // التاغ الحقيقي يُقرأ عشرات المرات؛ القراءة المفردة = تشويش
-const RFID_LINK_MIN = 3;   // الربط: لا نقبل الرمز إلا بعد قراءته كاملاً عدة مرات (نتجاهل القراءات الناقصة)
+const RFID_LINK_MIN = 3;
+const RFID_SIM = 17;       // حد التشابه (أطول تسلسل مشترك) لاعتبار قراءتين لنفس التاغ (من أصل ~24)
+const RFID_LINK_IDLE = 900; // مللي ثانية من غير قراءة = ثبّت الرمز الأطول
+function rfidLCS(a, b) {    // طول أطول تسلسل مشترك (يتحمّل الحروف الساقطة)
+  const n = a.length, m = b.length; if (!n || !m) return 0;
+  let prev = new Array(m + 1).fill(0), cur = new Array(m + 1).fill(0);
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) { cur[j] = (a[i - 1] === b[j - 1]) ? prev[j - 1] + 1 : (prev[j] > cur[j - 1] ? prev[j] : cur[j - 1]); }
+    const t = prev; prev = cur; cur = t; for (let j = 0; j <= m; j++) cur[j] = 0;
+  }
+  return prev[m];
+}
+function rfidSim(a, b) { return rfidLCS(a, b); }
+// يطابق قراءة ناقصة مع أقرب تاغ مربوط (تطابق فريد وواضح)
+function rfidMatchTag(epc, linkedList) {
+  let best = null, bestS = -1, second = -1;
+  for (let i = 0; i < linkedList.length; i++) {
+    const s = rfidSim(epc, linkedList[i]);
+    if (s > bestS) { second = bestS; bestS = s; best = linkedList[i]; }
+    else if (s > second) { second = s; }
+  }
+  if (best && bestS >= RFID_SIM && (bestS - second >= 2 || bestS === epc.length)) return best;
+  return null;
+}
 const RFID_MIN_LEN = 16;
 // نلتقط عبر خانة مخفية (sink): الجهاز يكتب فيها والمتصفح يخزّن النص كامل بثبات — يمنع سقوط الحروف.
 let rfidSinkEl = null, rfidSinkIdle = null, rfidSinkKeyH = null, rfidSinkInputH = null, rfidSinkRefocus = null, rfidOnTag = null;
@@ -13130,7 +13158,7 @@ function openRfidHub() {
 }
 
 /* ---------- ربط التاغات ---------- */
-let rfidLinkItem = null, rfidLinkSession = {}, rfidLinkCounts = {}, rfidLinkTally = {};
+let rfidLinkItem = null, rfidLinkSession = {}, rfidLinkCounts = {}, rfidLinkCand = {}, rfidLinkCommitTimer = null;
 function openRfidLink() { rfidLinkItem = null; rfidLinkSession = {}; openModal('rfidLinkModal'); renderRfidLinkPick(); }
 function renderRfidLinkPick() {
   stopRfidCapture(); rfidKbHide();
@@ -13167,7 +13195,7 @@ function renderRfidLinkScan() {
   liveOnce('data/rfidTags').then(function (s) {
     const all = s.val() || {};
     const existing = Object.keys(all).filter(function (epc) { return all[epc] && String(all[epc].itemId) === String(it.id); });
-    rfidLinkSession = {}; rfidLinkTally = {};
+    rfidLinkSession = {}; rfidLinkCand = {}; if (rfidLinkCommitTimer) { clearTimeout(rfidLinkCommitTimer); rfidLinkCommitTimer = null; }
     existing.forEach(function (epc) { rfidLinkSession[epc] = { epc: epc, existing: true }; });
     el.innerHTML = '' +
       '<button onclick="renderRfidLinkPick()" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ تغيير الصنف</button>' +
@@ -13182,37 +13210,38 @@ function renderRfidLinkScan() {
 }
 function onRfidLinkTag(epc) {
   if (!rfidLinkItem) return;
-  if (rfidLinkSession[epc]) return;                 // مربوط أصلاً
-  rfidLinkTally[epc] = (rfidLinkTally[epc] || 0) + 1;
-  if (rfidLinkTally[epc] < RFID_LINK_MIN) { renderRfidLinkPending(); return; } // لسه ما تأكّدش
-  delete rfidLinkTally[epc];
-  rfidLinkSession[epc] = { epc: epc, isNew: true };
-  try { db.ref('data/rfidTags/' + epc).set({ itemId: rfidLinkItem.id, barcode: rfidLinkItem.barcode || '', name: rfidLinkItem.name || '', at: new Date().toISOString() }); } catch (e) {}
-  try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  // نفس تاغ مربوط أصلاً (قراءة ناقصة منه)؟ تجاهل
+  for (const e in rfidLinkSession) { if (rfidLinkSession[e] && rfidSim(epc, e) >= RFID_SIM) return; }
+  rfidLinkCand[epc] = (rfidLinkCand[epc] || 0) + 1;
   renderRfidLinkPending();
-  renderRfidLinkList();
+  if (rfidLinkCommitTimer) clearTimeout(rfidLinkCommitTimer);
+  rfidLinkCommitTimer = setTimeout(commitRfidLinkCand, RFID_LINK_IDLE); // ثبّت لما ترفع التاغ
+}
+function rfidBestCand() {
+  const ks = Object.keys(rfidLinkCand); if (!ks.length) return null;
+  ks.sort(function (a, b) { return (b.length - a.length) || (rfidLinkCand[b] - rfidLinkCand[a]); });
+  return ks[0];               // الأطول = الأقرب للرمز الصحيح (الحذف يقصّر فقط)
+}
+function commitRfidLinkCand() {
+  if (rfidLinkCommitTimer) { clearTimeout(rfidLinkCommitTimer); rfidLinkCommitTimer = null; }
+  const best = rfidBestCand(); if (!best || !rfidLinkItem) return;
+  rfidLinkCand = {};
+  for (const e in rfidLinkSession) { if (rfidLinkSession[e] && rfidSim(best, e) >= RFID_SIM) { renderRfidLinkPending(); return; } }
+  rfidLinkSession[best] = { epc: best, isNew: true };
+  try { db.ref('data/rfidTags/' + best).set({ itemId: rfidLinkItem.id, barcode: rfidLinkItem.barcode || '', name: rfidLinkItem.name || '', at: new Date().toISOString() }); } catch (e) {}
+  try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+  renderRfidLinkPending(); renderRfidLinkList();
 }
 function renderRfidLinkPending() {
   const el = document.getElementById('rfidLinkPending');
   const btn = document.getElementById('rfidLinkForceBtn');
   if (!el) return;
-  const ks = Object.keys(rfidLinkTally);
-  if (!ks.length) { el.textContent = ''; if (btn) btn.style.display = 'none'; return; }
-  ks.sort(function (a, b) { return (rfidLinkTally[b] - rfidLinkTally[a]) || (b.length - a.length); });
-  const top = ks[0];
-  el.innerHTML = 'جاري تأكيد القراءة… أفضل رمز: <b style="font-family:monospace;direction:ltr;">' + escapeHtml(top) + '</b> (' + rfidLinkTally[top] + '/' + RFID_LINK_MIN + ')';
-  if (btn) { btn.style.display = 'block'; btn.setAttribute('data-epc', top); }
+  const best = rfidBestCand();
+  if (!best) { el.textContent = ''; if (btn) btn.style.display = 'none'; return; }
+  el.innerHTML = 'جاري القراءة… أفضل رمز: <b style="font-family:monospace;direction:ltr;">' + escapeHtml(best) + '</b> (' + best.length + ' حرف) — ارفع التاغ ليثبت';
+  if (btn) { btn.style.display = 'block'; }
 }
-function rfidLinkForce() {
-  const btn = document.getElementById('rfidLinkForceBtn'); if (!btn || !rfidLinkItem) return;
-  const epc = btn.getAttribute('data-epc'); if (!epc) return;
-  if (rfidLinkSession[epc]) return;
-  delete rfidLinkTally[epc];
-  rfidLinkSession[epc] = { epc: epc, isNew: true };
-  try { db.ref('data/rfidTags/' + epc).set({ itemId: rfidLinkItem.id, barcode: rfidLinkItem.barcode || '', name: rfidLinkItem.name || '', at: new Date().toISOString() }); } catch (e) {}
-  try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
-  renderRfidLinkPending(); renderRfidLinkList();
-}
+function rfidLinkForce() { commitRfidLinkCand(); }
 function renderRfidLinkList() {
   const el = document.getElementById('rfidLinkList'); if (!el) return;
   const keys = Object.keys(rfidLinkSession);
@@ -13313,12 +13342,14 @@ function finishRfidScan() {
     const tags = s.val() || {};
     const found = rfidConfirmedKeys();
     const weak = Object.keys(rfidScanFound).length - found.length;
-    const foundByItem = {}, unknown = [];
+    const linkedList = Object.keys(tags);
+    const presentTags = {}, unknown = [];   // كل تاغ مربوط موجود = مرة وحدة
     found.forEach(function (epc) {
-      const t = tags[epc];
-      if (t && t.itemId != null) foundByItem[t.itemId] = (foundByItem[t.itemId] || 0) + 1;
-      else unknown.push(epc);
+      const L = rfidMatchTag(epc, linkedList);   // طابق القراءة الناقصة مع تاغها الصحيح
+      if (L) presentTags[L] = true; else unknown.push(epc);
     });
+    const foundByItem = {};
+    Object.keys(presentTags).forEach(function (L) { const t = tags[L]; if (t && t.itemId != null) foundByItem[t.itemId] = (foundByItem[t.itemId] || 0) + 1; });
     const linkedByItem = {}, nameByItem = {};
     Object.values(tags).forEach(function (t) { if (t && t.itemId != null) { linkedByItem[t.itemId] = (linkedByItem[t.itemId] || 0) + 1; nameByItem[t.itemId] = t.name || nameByItem[t.itemId]; } });
     let itemIds;
