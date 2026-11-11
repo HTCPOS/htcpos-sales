@@ -5724,7 +5724,9 @@ const GH_BRANCH = 'main';
 const GH_TARGETS = {
   'index.html':    { path: 'docs/index.html',                 label: 'التطبيق (الواجهة الحية)', after: 'انتظر ~دقيقة (GitHub Pages) ثم أعد فتح التطبيق - يتحدّث لحاله.' },
   'setup.sh':      { path: 'setup.sh',                         label: 'سكريبت الجسر',            after: 'افتح إعدادات الكاميرا واضغط "تحديث الجسر".' },
-  'build-ios.yml': { path: '.github/workflows/build-ios.yml',  label: 'إعداد بناء IPA',          after: 'تم - يسري على عمليات البناء القادمة.' }
+  'build-ios.yml': { path: '.github/workflows/build-ios.yml',  label: 'إعداد بناء IPA',          after: 'تم - يسري على عمليات البناء القادمة.' },
+  'package.json':  { path: 'package.json',                     label: 'إعداد الحزم (Capacitor)', after: 'سيبدأ بناء IPA جديد تلقائيًا في Actions. افتح تبويب Actions، نزّل HTCPOS-ipa، وثبّته بـAltStore.' },
+  'capacitor.config.json': { path: 'capacitor.config.json',   label: 'إعداد Capacitor',          after: 'سيبدأ بناء IPA جديد تلقائيًا في Actions بعد رفع الملفات الثلاثة.' }
 };
 
 function ghToken() { try { return localStorage.getItem('ghToken') || ''; } catch (e) { return ''; } }
@@ -5809,7 +5811,7 @@ function ghOnPick(input) {
   const target = GH_TARGETS[name];
   if (!target) {
     ghPicked = null;
-    if (info) info.innerHTML = '<span style="color:#DC2626;font-weight:700;">⚠ اسم الملف غير معروف: ' + escapeHtml(name) + '<br>لازم يكون index.html أو setup.sh.</span>';
+    if (info) info.innerHTML = '<span style="color:#DC2626;font-weight:700;">⚠ اسم الملف غير معروف: ' + escapeHtml(name) + '<br>المسموح: index.html · setup.sh · package.json · capacitor.config.json · build-ios.yml</span>';
     if (btn) { btn.disabled = true; btn.style.background = '#9CA3AF'; btn.style.cursor = 'not-allowed'; }
     return;
   }
@@ -7231,9 +7233,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.23.2';
+const APP_VERSION = '4.23.3';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.23.3', date: '2026-11-11', items: [
+    'أداة النشر (GitHub): صارت تقبل رفع package.json و capacitor.config.json (بالإضافة لـindex.html و setup.sh و build-ios.yml) — لتفعيل البلوتوث وإعادة بناء الـIPA من داخل التطبيق'
+  ] },
   { v: '4.23.2', date: '2026-11-11', items: [
     'جرد RFID: التطبيق يتعلّم بادئة رمز التاغات تلقائيًا من المربوط عندك (افتراضي E280) ويستعملها في فصل التاغات الملتصقة — فيشتغل مهما كان نوع البطاقات'
   ] },
