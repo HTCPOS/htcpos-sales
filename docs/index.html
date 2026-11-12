@@ -7263,9 +7263,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.21';
+const APP_VERSION = '4.27.22';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
+  { v: '4.27.22', date: '2026-11-12', items: [
+    'تسريع الجرد: غُيّر وضع الجرد إلى بثّ متواصل (Session S0 بدل S1) مع Q4، وأصبحت نبضة الإبقاء الحيّ أسرع (كل 150م، إعادة بعد 200م فقط) — يرفع معدل القراءة كثيرًا مثل وضع البحث. اختبره بشاشة التشخيص وقارن «قراءة/ث»'
+  ] },
   { v: '4.27.21', date: '2026-11-12', items: [
     'شاشة اختبار وتشخيص جديدة في «جرد RFID»: تعرض حالة الاتصال والبطارية وإعدادات الجهاز (القوة/Q/الجلسة/البزّار)، وتختبر القراءة في كل وضع (الجرد/الربط/البحث) مع إحصائيات حيّة (وسوم فريدة، قراءة/ث، قوة الإشارة، إطارات تالفة، نبضات الإعادة) وعيّنة من الإطارات الخام — مع زر «نسخ التقرير» لإرساله للمطوّر'
   ] },
@@ -13153,8 +13156,8 @@ async function bleStartReading(cb, keepAlive) {
   if (keepAlive) {
     bleKeepTimer = setInterval(function () {
       if (!bleState.reading || !bleState.connected) { bleClearKeepAlive(); return; }
-      if (Date.now() - (bleState.lastRx || 0) > 500) { try { bleWrite(BLE_CMD_START); if (bleDiag.on) bleDiag.restarts++; } catch (e) {} }
-    }, 250);
+      if (Date.now() - (bleState.lastRx || 0) > 200) { try { bleWrite(BLE_CMD_START); if (bleDiag.on) bleDiag.restarts++; } catch (e) {} }
+    }, 150);
   }
 }
 async function bleStopReading() { bleClearKeepAlive(); bleState.reading = false; try { await bleWrite(BLE_CMD_STOP); } catch (e) {} rfidOnTag = null; }
@@ -13553,7 +13556,7 @@ function renderRfidSettings() {
       '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">أوضاع جاهزة بضغطة</div>' +
       '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:12px;line-height:1.7;">كل زر يضبط القوة + Q + الجلسة دفعة واحدة حسب المهمة.</div>' +
       '<div style="display:flex;flex-direction:column;gap:9px;">' +
-        '<button onclick="rfidApplyMode(\'scan\')" style="width:100%;background:#0F766E;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:right;"><span style="flex-shrink:0;">' + rfIco('inventory', 22) + '</span><span style="flex:1;"><span style="display:block;font-weight:800;font-size:14px;">وضع الجرد</span><span style="display:block;font-size:11px;opacity:.9;margin-top:2px;">لجرد عدد كبير بسرعة · قوة 26 · Q5 · S1</span></span></button>' +
+        '<button onclick="rfidApplyMode(\'scan\')" style="width:100%;background:#0F766E;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:right;"><span style="flex-shrink:0;">' + rfIco('inventory', 22) + '</span><span style="flex:1;"><span style="display:block;font-weight:800;font-size:14px;">وضع الجرد</span><span style="display:block;font-size:11px;opacity:.9;margin-top:2px;">لجرد عدد كبير بسرعة · قوة 26 · Q4 · S0</span></span></button>' +
         '<button onclick="rfidApplyMode(\'link\')" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:right;"><span style="flex-shrink:0;">' + rfIco('link', 22) + '</span><span style="flex:1;"><span style="display:block;font-weight:800;font-size:14px;">ربط وسم لصنف</span><span style="display:block;font-size:11px;opacity:.9;margin-top:2px;">قراءة قريبة دقيقة لوسم واحد · قوة 5 · Q0 · S0</span></span></button>' +
         '<button onclick="rfidApplyMode(\'find\')" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:right;"><span style="flex-shrink:0;">' + rfIco('compass', 22) + '</span><span style="flex:1;"><span style="display:block;font-weight:800;font-size:14px;">وضع البحث عن وسم مفقود</span><span style="display:block;font-size:11px;opacity:.9;margin-top:2px;">الوسم يرد باستمرار للرادار · قوة 20 · Q2 · S0</span></span></button>' +
       '</div>' +
@@ -13606,7 +13609,7 @@ async function rfidApplyPwr() {
 }
 // أوضاع جاهزة: تضبط القوة + Q + الجلسة بأمر كتابة واحد (كل القيم داخل المدى — آمنة)
 const RFID_MODES = {
-  scan: { p: 26, q: 5, s: 1, name: 'وضع الجرد' },
+  scan: { p: 26, q: 4, s: 0, name: 'وضع الجرد' },
   link: { p: 5, q: 0, s: 0, name: 'ربط وسم لصنف' },
   find: { p: 20, q: 2, s: 0, name: 'وضع البحث' }
 };
