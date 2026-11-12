@@ -7255,9 +7255,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.18';
+const APP_VERSION = '4.27.19';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
+  { v: '4.27.19', date: '2026-11-12', items: [
+    'قراءة متواصلة: عند الضغط على «قراءة» يستمر القارئ في المسح حتى توقفه بنفسك (زر الإيقاف) — إذا توقّف الجهاز تلقائيًا بعد دفعة، يعيد التطبيق تشغيل القراءة فورًا (نبضة إبقاء حيّ)، فلا تحتاج تضغط زر الجهاز كل مرة'
+  ] },
   { v: '4.27.18', date: '2026-11-12', items: [
     'تقرير الجرد يركّز على المشاكل: قائمة «أصناف بدون وسوم» صارت مطويّة افتراضيًا (زر عرض) حتى لا تغرق التقرير — تظهر الأصناف الناقصة/الزائدة أولًا',
     'لكل صنف فيه فرق: زرّان اختياريان (غير إجباريين) — «تسوية المخزون حسب الجرد» (يرسل التعديل للكاشير بنفس الآلية الآمنة)، و«إدراج النقص في التالف» (يفتح نموذج التالف الاحترافي بالصنف جاهزًا)'
@@ -13123,11 +13126,23 @@ async function rfidConnect() {
     renderRfidHub();
   } catch (e) { rfidLog('خطأ: ' + (e && e.message ? e.message : e), 'err'); }
 }
-async function rfidDisconnect() { try { const B = await bleLoad(); if (bleState.reading) { try { await bleWrite(BLE_CMD_STOP); } catch (e) {} } if (bleState.deviceId) await B.disconnect(bleState.deviceId); } catch (e) {} bleState.connected = false; bleState.reading = false; bleState.deviceId = null; }
+async function rfidDisconnect() { try { bleClearKeepAlive(); } catch (e) {} try { const B = await bleLoad(); if (bleState.reading) { try { await bleWrite(BLE_CMD_STOP); } catch (e) {} } if (bleState.deviceId) await B.disconnect(bleState.deviceId); } catch (e) {} bleState.connected = false; bleState.reading = false; bleState.deviceId = null; }
 async function bleWrite(bytes) { const B = await bleLoad(); const dv = _bleNums(bytes); if (bleState.writeType === 'wwr') await B.writeWithoutResponse(bleState.deviceId, bleState.writeService, bleState.writeChar, dv); else await B.write(bleState.deviceId, bleState.writeService, bleState.writeChar, dv); }
-async function bleStartReading(cb) { rfidOnTag = cb; bleState.buf = []; bleState.reading = true; await bleWrite(BLE_CMD_START); }
-async function bleStopReading() { bleState.reading = false; try { await bleWrite(BLE_CMD_STOP); } catch (e) {} rfidOnTag = null; }
+let bleKeepTimer = null;
+function bleClearKeepAlive() { if (bleKeepTimer) { clearInterval(bleKeepTimer); bleKeepTimer = null; } }
+async function bleStartReading(cb) {
+  rfidOnTag = cb; bleState.buf = []; bleState.reading = true; bleState.lastRx = Date.now();
+  await bleWrite(BLE_CMD_START);
+  // إبقاء القراءة متواصلة: لو الجهاز توقّف (ما وصلت إطارات ~1.2ث) نعيد أمر البدء تلقائيًا حتى يوقفها المستخدم
+  bleClearKeepAlive();
+  bleKeepTimer = setInterval(function () {
+    if (!bleState.reading || !bleState.connected) { bleClearKeepAlive(); return; }
+    if (Date.now() - (bleState.lastRx || 0) > 1200) { try { bleWrite(BLE_CMD_START); } catch (e) {} }
+  }, 700);
+}
+async function bleStopReading() { bleClearKeepAlive(); bleState.reading = false; try { await bleWrite(BLE_CMD_STOP); } catch (e) {} rfidOnTag = null; }
 function bleOnNotify(dv) {
+  bleState.lastRx = Date.now();
   for (let i = 0; i < dv.byteLength; i++) bleState.buf.push(dv.getUint8(i));
   let g = 0;
   while (g++ < 300) {
