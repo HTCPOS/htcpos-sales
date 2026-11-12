@@ -7255,9 +7255,16 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.16';
+const APP_VERSION = '4.27.18';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
+  { v: '4.27.18', date: '2026-11-12', items: [
+    'تقرير الجرد يركّز على المشاكل: قائمة «أصناف بدون وسوم» صارت مطويّة افتراضيًا (زر عرض) حتى لا تغرق التقرير — تظهر الأصناف الناقصة/الزائدة أولًا',
+    'لكل صنف فيه فرق: زرّان اختياريان (غير إجباريين) — «تسوية المخزون حسب الجرد» (يرسل التعديل للكاشير بنفس الآلية الآمنة)، و«إدراج النقص في التالف» (يفتح نموذج التالف الاحترافي بالصنف جاهزًا)'
+  ] },
+  { v: '4.27.17', date: '2026-11-12', items: [
+    'ربط الوسوم: إظهار باركود الصنف المرتبط به أسفل اسمه في بطاقة الربط (أو «بدون باركود» إن لم يوجد) للتأكد من الصنف الصحيح قبل الربط'
+  ] },
   { v: '4.27.16', date: '2026-11-12', items: [
     'مراجعة لغوية شاملة لكامل التطبيق: تحويل عبارات الواجهة العامية إلى عربية فصحى احترافية في كل الشاشات (الكاميرات، الجسر، العمولة، النواقص، تحليل الإيصالات، RFID). أمثلة: «فاضي»→«فارغ»، «شغّال»→«يعمل»، «ما لقيت»→«لم يُعثر على»، «شيل»→«حذف»، «قرب يخلص»→«أوشك على النفاد»، «راح ترجع»→«ستعود»، «دوّر عليها»→«ابحث عنها». بدون أي تغيير في المنطق أو الوظائف'
   ] },
@@ -13244,7 +13251,9 @@ function renderRfidLinkScan() {
     const all = s.val() || {}; const existing = Object.keys(all).filter(function (e) { return all[e] && String(all[e].itemId) === String(it.id); });
     rfidLinkSession = {}; existing.forEach(function (e) { rfidLinkSession[e] = { epc: e, existing: true }; });
     el.innerHTML = '<button onclick="renderRfidLinkPick()" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ تغيير الصنف</button>' +
-      '<div style="background:rgba(37,99,235,.08);border-radius:14px;padding:14px;margin-bottom:12px;"><div style="font-weight:800;font-size:16px;">' + escapeHtml(it.name || '') + '</div><div style="font-size:12px;color:var(--textMuted);margin-top:3px;">المخزون ' + Number(it.stock || 0) + ' · مربوط: <b id="rfidLinkCount">' + existing.length + '</b></div></div>' +
+      '<div style="background:rgba(37,99,235,.08);border-radius:14px;padding:14px;margin-bottom:12px;"><div style="font-weight:800;font-size:16px;">' + escapeHtml(it.name || '') + '</div>' +
+        '<div style="font-size:12.5px;color:var(--textMuted);margin-top:4px;">الباركود: ' + (it.barcode ? '<b style="font-family:monospace;direction:ltr;unicode-bidi:embed;">' + escapeHtml(it.barcode) + '</b>' : '<span style="color:#DC2626;">بدون باركود</span>') + '</div>' +
+        '<div style="font-size:12px;color:var(--textMuted);margin-top:3px;">المخزون ' + Number(it.stock || 0) + ' · مربوط: <b id="rfidLinkCount">' + existing.length + '</b></div></div>' +
       '<div id="rfidLinkCtl"></div><div id="rfidLinkList" style="margin-top:10px;"></div>';
     renderRfidLinkCtl(); renderRfidLinkList();
   });
@@ -13349,13 +13358,41 @@ async function finishRfidScan() {
       const canExpand = r.missingTags.length > 0;
       let row = '<div class="searchResultRow"' + (canExpand ? ' onclick="rfidToggle(\'' + rid + '\')" style="cursor:pointer;"' : '') + '><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(r.name) + (canExpand ? ' <span style="font-size:10px;color:#DC2626;">\u25be المفقود</span>' : '') + '</div><div class="p">الموجود ' + r.found + ' / المخزون ' + r.stock + '</div>' + note + '</div><span style="font-weight:800;font-size:12.5px;color:' + r.color + ';white-space:nowrap;">' + r.status + '</span></div>';
       if (canExpand) row += '<div id="' + rid + '" style="display:none;background:#FEF2F2;border-radius:10px;padding:8px 10px;margin:-4px 0 8px;"><div style="font-size:11px;font-weight:800;color:#991B1B;margin-bottom:4px;">وسوم مفقودة (مربوطة ولم تُقرأ — ابحث عنها):</div>' + r.missingTags.map(function (e) { return '<div style="font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;color:#991B1B;word-break:break-all;">' + escapeHtml(e) + '</div>'; }).join('') + '</div>';
+      if (r.found !== r.stock) {
+        row += '<div style="display:flex;gap:8px;margin:-2px 0 10px;">' +
+          '<button onclick="rfidReconcileStock(\'' + r.id + '\',' + r.found + ',' + r.stock + ',this)" style="flex:1;background:transparent;color:#2563EB;border:1px solid #2563EB;border-radius:9px;padding:7px;font-size:11.5px;font-weight:800;cursor:pointer;">تسوية المخزون حسب الجرد</button>' +
+          (r.found < r.stock ? '<button onclick="openDamagedForm(\'' + r.id + '\')" style="flex:1;background:transparent;color:#DC2626;border:1px solid #DC2626;border-radius:9px;padding:7px;font-size:11.5px;font-weight:800;cursor:pointer;">إدراج النقص في التالف</button>' : '') +
+          '</div>';
+      }
       return row;
     }).join('');
-    if (untagged.length) { h += '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:#64748B;">أصناف بدون وسوم — لم تُجرد (' + untagged.length + ')</div><div style="font-size:11px;color:var(--textMuted);margin:4px 0 6px;line-height:1.7;">ما عندهاش وسوم فما دخلتش الجرد. جهّزها من «ربط الوسوم».</div>' + untagged.slice(0, 30).map(function (it) { return '<div class="searchResultRow"><div class="n">' + escapeHtml(it.name || '') + '</div><span style="color:var(--textMuted);font-size:11px;white-space:nowrap;">مخزون ' + Number(it.stock || 0) + '</span></div>'; }).join('') + (untagged.length > 30 ? '<div style="font-size:11px;color:var(--textMuted);padding:4px;">… و' + (untagged.length - 30) + ' غيرها</div>' : ''); }
+    if (untagged.length) {
+      h += '<div style="margin-top:16px;">' +
+        '<button onclick="rfidToggle(\'rfidUntaggedList\')" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:11px 13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">' +
+          '<span style="font-size:12.5px;font-weight:800;color:#64748B;">أصناف بدون وسوم — لم تُجرد (' + untagged.length + ')</span>' +
+          '<span style="font-size:11px;color:#2563EB;font-weight:800;">عرض</span>' +
+        '</button>' +
+        '<div id="rfidUntaggedList" style="display:none;margin-top:8px;"><div style="font-size:11px;color:var(--textMuted);margin:0 0 6px;line-height:1.7;">هذه الأصناف ليست عليها وسوم، فلم تدخل الجرد. جهّزها من «ربط الوسوم».</div>' + untagged.slice(0, 50).map(function (it) { return '<div class="searchResultRow"><div class="n">' + escapeHtml(it.name || '') + '</div><span style="color:var(--textMuted);font-size:11px;white-space:nowrap;">مخزون ' + Number(it.stock || 0) + '</span></div>'; }).join('') + (untagged.length > 50 ? '<div style="font-size:11px;color:var(--textMuted);padding:4px;">… و' + (untagged.length - 50) + ' غيرها</div>' : '') + '</div></div>';
+    }
     if (unknown.length) { h += '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:#7C3AED;">وسوم غير مربوطة (' + unknown.length + ')</div><div style="font-size:11px;color:var(--textMuted);margin:4px 0 6px;">قُرئت وسوم غير مربوطة بأي صنف — اربطها من «ربط الوسوم».</div>' + unknown.slice(0, 20).map(function (e) { return '<div style="font-family:monospace;font-size:11px;direction:ltr;text-align:left;color:var(--textMuted);padding:2px 0;word-break:break-all;">' + escapeHtml(e) + '</div>'; }).join(''); }
     h += '<button onclick="renderRfidScanSetup()" style="width:100%;margin-top:16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">جرد جديد</button>';
     el.innerHTML = h;
   });
+}
+// تسوية مخزون صنف حسب نتيجة الجرد (اختياري) — عبر نفس آلية تعديل المخزون الآمنة (commands/editItem)
+async function rfidReconcileStock(id, found, stock, btn) {
+  const it = latestItems['i' + id] || {}; const name = it.name || 'صنف';
+  const delta = Number(found) - Number(stock); if (!delta) return;
+  if (!await uiConfirm('تسوية مخزون «' + name + '» حسب الجرد؟\n\nالمخزون الحالي: ' + stock + '\nالمقروء في الجرد: ' + found + '\nسيصبح المخزون: ' + found + '\n\nسيُرسل التعديل إلى الكاشير.', { okText: 'تسوية' })) return;
+  const reqId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  try {
+    await db.ref('commands/editItem/' + id).update({ qtyDelta: firebase.database.ServerValue.increment(delta), reqId: reqId });
+    try { recordEditHistory(id, name, { qty: { from: Number(stock), to: Number(found) } }, reqId, 'rfidReconcile', null); } catch (e) {}
+    try { logActivity('تسوية جرد RFID', name + ': ' + stock + ' ← ' + found); } catch (e) {}
+    it.stock = Number(found);
+    if (btn && btn.parentElement) { btn.parentElement.innerHTML = '<div style="color:#16A34A;font-weight:800;font-size:12px;text-align:center;padding:5px;">✓ تم إرسال التسوية إلى الكاشير</div>'; }
+    try { showQuickToast('تم إرسال التسوية إلى الكاشير', true); } catch (e) {}
+  } catch (e) { try { showQuickToast('تعذّر إرسال التسوية: ' + (e && e.message || e)); } catch (_) {} }
 }
 /* ---------- البحث عن وسم مفقود (رادار RSSI) ---------- */
 let finderState = null, finderAllTags = {}, finderAudio = null;
