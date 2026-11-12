@@ -7255,9 +7255,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.12';
+const APP_VERSION = '4.27.13';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
+  { v: '4.27.13', date: '2026-11-12', items: [
+    'أوضاع جاهزة بضغطة في إعدادات الجهاز — كل زر يضبط القوة + Q + الجلسة دفعة واحدة بأمر واحد وبقيم آمنة داخل المدى، ويؤكّد من الجهاز: «وضع الجرد» (26·Q5·S1) · «ربط تاغ لصنف» (5·Q0·S0) · «وضع البحث» (20·Q2·S0)'
+  ] },
   { v: '4.27.12', date: '2026-11-12', items: [
     'أزلنا زر «اكتشف أقصى قوة» — تبيّن أن هذا الطراز يُرجع القيمة لأصغر حد (1) عند تجاوز الحد بدل أن يقصّها، فكان يعطي نتيجة غلط ويضعف القوة. الحد الأقصى الموثّق من دليل H102 هو 26 dBm وهو المعتمد. لو ضعفت قوتك اضبطها على 26 واضغط تطبيق القوة'
   ] },
@@ -13437,6 +13440,16 @@ function renderRfidSettings() {
   const el = document.getElementById('rfidSetBody'); if (!el) return;
   el.innerHTML = '' +
     '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">' +
+      '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">أوضاع جاهزة بضغطة</div>' +
+      '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:12px;line-height:1.7;">كل زر يضبط القوة + Q + الجلسة دفعة واحدة حسب المهمة.</div>' +
+      '<div style="display:flex;flex-direction:column;gap:9px;">' +
+        '<button onclick="rfidApplyMode(\'scan\')" style="width:100%;background:#0F766E;color:#fff;border:none;border-radius:12px;padding:12px 14px;text-align:right;cursor:pointer;"><div style="font-weight:800;font-size:14px;">🧮 وضع الجرد</div><div style="font-size:11px;opacity:.9;margin-top:2px;">لجرد عدد كبير بسرعة · قوة 26 · Q5 · S1</div></button>' +
+        '<button onclick="rfidApplyMode(\'link\')" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:12px 14px;text-align:right;cursor:pointer;"><div style="font-weight:800;font-size:14px;">🔗 ربط تاغ لصنف</div><div style="font-size:11px;opacity:.9;margin-top:2px;">قراءة قريبة دقيقة لتاغ واحد · قوة 5 · Q0 · S0</div></button>' +
+        '<button onclick="rfidApplyMode(\'find\')" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:12px;padding:12px 14px;text-align:right;cursor:pointer;"><div style="font-weight:800;font-size:14px;">🧭 وضع البحث عن تاغ ضايع</div><div style="font-size:11px;opacity:.9;margin-top:2px;">التاغ يرد باستمرار للرادار · قوة 20 · Q2 · S0</div></button>' +
+      '</div>' +
+      '<div id="rfidModeMsg" style="font-size:12.5px;font-weight:700;margin-top:10px;text-align:center;"></div>' +
+    '</div>' +
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">' +
       '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">قوة القراءة</div>' +
       '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">قوة قليلة = قراءة قريبة دقيقة (للربط والبحث عن تاغ ملتصق). قوة قصوى = مدى أبعد (للجرد).</div>' +
       '<input id="rfidPwr" type="range" min="1" max="26" value="20" oninput="document.getElementById(\'rfidPwrV\').textContent=this.value" style="width:100%;">' +
@@ -13480,6 +13493,33 @@ async function rfidApplyPwr() {
   if (!rfidParamBlock) { await rfidLoadParams(); if (!rfidParamBlock) return; }
   await rfidSetByte(rfOff('pwr'), p);  // أمر 0x0071 واحد، مع إرجاع تلقائي عند الفشل
   renderParamControls();
+}
+// أوضاع جاهزة: تضبط القوة + Q + الجلسة بأمر كتابة واحد (كل القيم داخل المدى — آمنة)
+const RFID_MODES = {
+  scan: { p: 26, q: 5, s: 1, name: 'وضع الجرد' },
+  link: { p: 5, q: 0, s: 0, name: 'ربط تاغ لصنف' },
+  find: { p: 20, q: 2, s: 0, name: 'وضع البحث' }
+};
+function rfidModeMsg(t, mode) { const el = document.getElementById('rfidModeMsg'); if (el) { el.textContent = t; el.style.color = (mode == null) ? 'var(--textMuted)' : (mode ? '#16A34A' : '#DC2626'); } }
+async function rfidApplyMode(key) {
+  const m = RFID_MODES[key]; if (!m) return;
+  if (!bleState.connected) { rfidModeMsg('وصّل القارئ أولاً', false); return; }
+  rfidModeMsg('⏳ جارٍ ضبط ' + m.name + '... لا تغلق', null);
+  try {
+    if (!rfidParamBlock) { await rfidLoadParams(); if (!rfidParamBlock) return; }
+    rfidParamBlock[rfOff('pwr')] = m.p;
+    rfidParamBlock[rfOff('q')] = m.q;
+    rfidParamBlock[rfOff('session')] = m.s;
+    await rfidWriteParams();  // كتابة واحدة لكل البايتات (0x0071)
+    // تأكيد بإعادة القراءة
+    const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
+    rfidParamBlock = f.slice(6, f.length - 2);
+    renderParamControls();
+    const gp = rfidParamBlock[rfOff('pwr')], gq = rfidParamBlock[rfOff('q')], gs = rfidParamBlock[rfOff('session')];
+    try { const s = document.getElementById('rfidPwr'); if (s) { s.value = gp; const v = document.getElementById('rfidPwrV'); if (v) v.textContent = gp; } } catch (e) {}
+    if (gp === m.p && gq === m.q && gs === m.s) { rfidModeMsg('✓ تم تفعيل ' + m.name + ' (قوة ' + gp + ' · Q' + gq + ' · S' + gs + ')', true); try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
+    else { rfidModeMsg('طُبّق جزئيًا — الجهاز يعرض قوة ' + gp + ' · Q' + gq + ' · S' + gs, false); }
+  } catch (e) { rfidModeMsg('فشل: ' + (e && e.message || e), false); }
 }
 async function rfidReadBattery() {
   try { const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x83, 0x00]), 0x0083); const pct = f[6]; const el = document.getElementById('rfidBatt'); if (el) el.textContent = pct + '%'; rfidSetMsg('البطارية: ' + pct + '%', true); }
