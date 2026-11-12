@@ -7240,9 +7240,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.1';
+const APP_VERSION = '4.27.2';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.27.2', date: '2026-11-12', items: [
+    'إعدادات الجهاز: تحكم آمن في صوت القارئ (البزّار تشغيل/صامت) و Q والجلسة من التطبيق — بقراءة الإعدادات وتعديل البايت المطلوب فقط مع حفظ الباقي، ومعايرة الأماكن مؤكّدة من قيم جهازك'
+  ] },
   { v: '4.27.1', date: '2026-11-12', items: [
     'إعدادات الجهاز: نسخة احتياطية حقيقية — احفظ كل إعدادات الجهاز الحالية واسترجعها كما هي أي وقت (أمان قبل أي تعديل). الأوامر لا تمسّ فيرموير الجهاز'
   ] },
@@ -13410,6 +13413,12 @@ function renderRfidSettings() {
       '<div><div style="font-weight:800;font-size:14px;">بطارية القارئ</div><div id="rfidBatt" style="font-size:12px;color:var(--textMuted);margin-top:2px;">—</div></div>' +
       '<button onclick="rfidReadBattery()" style="background:#16A34A;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:800;font-size:13px;cursor:pointer;">اقرأ</button>' +
     '</div>' +
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">' +
+      '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">الصوت · Q · الجلسة</div>' +
+      '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">اقرأ الإعدادات الحالية وعدّلها مباشرة. (نسختك الاحتياطية جاهزة للأمان).</div>' +
+      '<button onclick="rfidLoadParams()" style="width:100%;background:#475569;color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;">اقرأ الإعدادات المتقدمة</button>' +
+      '<div id="rfidAdvBody" style="margin-top:10px;"></div>' +
+    '</div>' +
     '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;">' +
       '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">النسخة الاحتياطية (أمان)</div>' +
       '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">احفظ كل إعدادات الجهاز الحالية؛ تقدر ترجّعها كما هي أي وقت.</div>' +
@@ -13474,6 +13483,36 @@ async function rfidRestoreFactory() {
   try { await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x52, 0x00]), 0x0052); rfidSetMsg('تمت إعادة الضبط ✓', true); }
   catch (e) { rfidSetMsg('فشل: ' + (e && e.message || e), false); }
 }
+// محرّر الإعدادات المتقدمة (read-modify-write آمن مع الاحتفاظ بباقي البايتات)
+let rfidParamBlock = null;
+const RFID_OFF_PWR = 13, RFID_OFF_Q = 15, RFID_OFF_SESSION = 16, RFID_OFF_BUZZER = 21;
+async function rfidLoadParams() {
+  try {
+    const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
+    rfidParamBlock = f.slice(6, f.length - 2);
+    renderParamControls();
+    rfidSetMsg('تم قراءة الإعدادات ✓', true);
+  } catch (e) { rfidSetMsg('فشل القراءة: ' + (e && e.message || e), false); }
+}
+function renderParamControls() {
+  const el = document.getElementById('rfidAdvBody'); if (!el || !rfidParamBlock) return;
+  const b = rfidParamBlock; const buzzOn = (b[RFID_OFF_BUZZER] || 0) > 0;
+  el.innerHTML = '' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;">🔊 صوت القارئ (البزّار)</span>' +
+      '<button onclick="rfidToggleBuzzer()" style="background:' + (buzzOn ? '#16A34A' : '#9CA3AF') + ';color:#fff;border:none;border-radius:20px;padding:6px 18px;font-weight:800;font-size:12px;cursor:pointer;">' + (buzzOn ? 'يعمل' : 'صامت') + '</button></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;">Q Value <span style="color:var(--textMuted);font-size:10px;">(عدد التاغات)</span></span>' +
+      '<select onchange="rfidSetByte(' + RFID_OFF_Q + ',parseInt(this.value))" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--surface);color:var(--text);font-weight:700;">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (q) { return '<option value="' + q + '"' + (b[RFID_OFF_Q] === q ? ' selected' : '') + '>' + q + '</option>'; }).join('') + '</select></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;"><span style="font-weight:700;font-size:13px;">Session</span>' +
+      '<select onchange="rfidSetByte(' + RFID_OFF_SESSION + ',parseInt(this.value))" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--surface);color:var(--text);font-weight:700;">' + [0, 1, 2, 3].map(function (s) { return '<option value="' + s + '"' + (b[RFID_OFF_SESSION] === s ? ' selected' : '') + '>S' + s + '</option>'; }).join('') + '</select></div>' +
+    '<div style="font-size:10.5px;color:var(--textMuted);margin-top:6px;">القوة في الكتلة: ' + b[RFID_OFF_PWR] + ' dBm (تطابق = الأماكن صحيحة)</div>';
+}
+async function rfidWriteParams() { const body = [0xCF, 0xFF, 0x00, 0x71, rfidParamBlock.length].concat(rfidParamBlock); await bleCommand(bleFrame(body), 0x0071); }
+async function rfidSetByte(idx, val) {
+  if (!rfidParamBlock) return; const old = rfidParamBlock[idx]; rfidParamBlock[idx] = val & 0xFF;
+  try { await rfidWriteParams(); rfidSetMsg('تم التطبيق ✓', true); try { if (navigator.vibrate) navigator.vibrate(30); } catch (e) {} }
+  catch (e) { rfidParamBlock[idx] = old; rfidSetMsg('فشل: ' + (e && e.message || e), false); renderParamControls(); }
+}
+async function rfidToggleBuzzer() { if (!rfidParamBlock) return; const cur = (rfidParamBlock[RFID_OFF_BUZZER] || 0) > 0; await rfidSetByte(RFID_OFF_BUZZER, cur ? 0 : 3); renderParamControls(); }
 function closeRfidSettings() { closeModal('rfidSetModal'); }
 
 async function closeRfidScan() { if (bleState.reading) { try { await bleStopReading(); } catch (e) {} } closeModal('rfidScanModal'); }
