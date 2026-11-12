@@ -7240,11 +7240,14 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.5';
+const APP_VERSION = '4.27.7';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
-  { v: '4.27.5', date: '2026-11-12', items: [
-    'صوت القارئ (البزّار): تحكم بالمستوى بدل تشغيل/إيقاف فقط — صامت / خفيف / متوسط / قوي (يكتب بايت الصوت المؤكّد في موضعه الصحيح). جرّب المستويات واختر الأنسب؛ نسختك الاحتياطية جاهزة'
+  { v: '4.27.7', date: '2026-11-12', items: [
+    'إصلاح قوة القراءة: المسافة ما كانت تتغيّر لأن الجرد يستخدم القوة *المخزّنة* في كتلة إعدادات الجهاز، والأمر الفوري وحده ما يكفي. الآن «تطبيق القوة» يكتب القوة في الكتلة المخزّنة (نفس الطريقة المثبتة لـ Q/الجلسة/الصوت) + الأمر الفوري، ويؤكّد بإعادة القراءة من الجهاز. شريط القوة يبدأ من القيمة الحقيقية للجهاز عند قراءة الإعدادات'
+  ] },
+  { v: '4.27.6', date: '2026-11-12', items: [
+    'صوت القارئ: رجّعناه تشغيل/صامت فقط — اتأكد عمليًا أن هذا الطراز (CF-H102) شدة صوت البزّار فيه ثابتة بالعتاد ولا تتغيّر برمجيًا (القيم 1/2/3 أعطت نفس الصوت)، فأزلنا المستويات المضللة'
   ] },
   { v: '4.27.4', date: '2026-11-12', items: [
     'إصلاح مؤكّد من كتلة إعداداتك: الجهاز يُرجع كتلة ٢٥ بايت فصارت مواضع القوة/Q/الجلسة/الصوت مزاحة بمقدار ٢. الآن تُحسب من *نهاية* الكتلة (تصمد مع ٢٣ أو ٢٥ بايت): القوة تظهر 22 dBm، و Q=4، والجلسة S0 — والأهم أن زر «صامت» صار يكتب بايت الصوت الصحيح فيُسكت البزّار فعلاً، ويرجع بنفس قيمة جهازك عند التشغيل',
@@ -13443,8 +13446,26 @@ function rfidSetMsg(t, ok) { const el = document.getElementById('rfidSetMsg'); i
 function rfidSetPwrPreset(p) { const s = document.getElementById('rfidPwr'); if (s) { s.value = p; document.getElementById('rfidPwrV').textContent = p; } }
 async function rfidApplyPwr() {
   const p = parseInt((document.getElementById('rfidPwr') || {}).value || '20', 10);
-  try { await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x53, 0x02, p, 0x00]), 0x0053); rfidSetMsg('تم ضبط القوة على ' + p + ' dBm ✓', true); try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
-  catch (e) { rfidSetMsg('فشل: ' + (e && e.message || e), false); }
+  if (!(p >= 1 && p <= 26)) { rfidSetMsg('القوة يجب أن تكون بين 1 و 26', false); return; }
+  try {
+    // 1) أمر القوة الفوري
+    await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x53, 0x02, p, 0x00]), 0x0053);
+    // 2) الأهم: اكتب القوة في كتلة الإعدادات المخزّنة (هي اللي يستخدمها الجرد فعلاً) بنفس الطريقة المثبتة
+    if (!rfidParamBlock) {
+      const f0 = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
+      rfidParamBlock = f0.slice(6, f0.length - 2);
+    }
+    rfidParamBlock[rfOff('pwr')] = p & 0xFF;
+    await rfidWriteParams();
+    // 3) تأكيد: أعِد القراءة من الجهاز وتحقّق أن القيمة انكتبت فعلاً
+    const f2 = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
+    rfidParamBlock = f2.slice(6, f2.length - 2);
+    const now = rfidParamBlock[rfOff('pwr')];
+    renderParamControls();
+    if (now === p) { rfidSetMsg('تم ضبط القوة على ' + p + ' dBm وحُفظت في الجهاز ✓ (مؤكّد)', true); try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
+    else { rfidSetMsg('أُرسلت ' + p + ' لكن الجهاز يعرض ' + now + ' — لم تُقبل القيمة', false); }
+  }
+  catch (e) { rfidSetMsg('فشل ضبط القوة: ' + (e && e.message || e), false); }
 }
 async function rfidReadBattery() {
   try { const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x83, 0x00]), 0x0083); const pct = f[6]; const el = document.getElementById('rfidBatt'); if (el) el.textContent = pct + '%'; rfidSetMsg('البطارية: ' + pct + '%', true); }
@@ -13503,16 +13524,20 @@ async function rfidLoadParams() {
     const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
     rfidParamBlock = f.slice(6, f.length - 2);
     renderParamControls();
+    // زامن شريط القوة مع القوة الحقيقية المخزّنة في الجهاز
+    try { const cp = rfidParamBlock[rfOff('pwr')]; const s = document.getElementById('rfidPwr'); if (s && cp >= 1 && cp <= 26) { s.value = cp; const v = document.getElementById('rfidPwrV'); if (v) v.textContent = cp; } } catch (e) {}
     rfidSetMsg('تم قراءة الإعدادات ✓', true);
   } catch (e) { rfidSetMsg('فشل القراءة: ' + (e && e.message || e), false); }
 }
 function renderParamControls() {
   const el = document.getElementById('rfidAdvBody'); if (!el || !rfidParamBlock) return;
-  const b = rfidParamBlock; const O = { pwr: rfOff('pwr'), q: rfOff('q'), session: rfOff('session'), buzzer: rfOff('buzzer') }; const buzzVal = b[O.buzzer] || 0;
-  const buzzLevels = [{ v: 0, t: 'صامت' }, { v: 1, t: 'خفيف' }, { v: 2, t: 'متوسط' }, { v: 3, t: 'قوي' }];
+  const b = rfidParamBlock; const O = { pwr: rfOff('pwr'), q: rfOff('q'), session: rfOff('session'), buzzer: rfOff('buzzer') }; const buzzOn = (b[O.buzzer] || 0) > 0;
   el.innerHTML = '' +
-    '<div style="padding:8px 0;border-bottom:1px solid var(--border);"><div style="font-weight:700;font-size:13px;margin-bottom:8px;">🔊 صوت القارئ (البزّار)</div>' +
-      '<div style="display:flex;gap:6px;">' + buzzLevels.map(function (L) { var on = (buzzVal === L.v); return '<button onclick="rfidSetBuzz(' + L.v + ')" style="flex:1;background:' + (on ? '#2563EB' : 'var(--surface)') + ';color:' + (on ? '#fff' : 'var(--text)') + ';border:1px solid ' + (on ? '#2563EB' : 'var(--border)') + ';border-radius:10px;padding:8px 4px;font-weight:800;font-size:12px;cursor:pointer;">' + L.t + '</button>'; }).join('') + '</div></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;">🔊 صوت القارئ (البزّار)</span>' +
+      '<div style="display:flex;gap:6px;">' +
+        '<button onclick="rfidSetBuzz(0)" style="background:' + (!buzzOn ? '#2563EB' : 'var(--surface)') + ';color:' + (!buzzOn ? '#fff' : 'var(--text)') + ';border:1px solid ' + (!buzzOn ? '#2563EB' : 'var(--border)') + ';border-radius:20px;padding:6px 18px;font-weight:800;font-size:12px;cursor:pointer;">صامت</button>' +
+        '<button onclick="rfidSetBuzz(1)" style="background:' + (buzzOn ? '#16A34A' : 'var(--surface)') + ';color:' + (buzzOn ? '#fff' : 'var(--text)') + ';border:1px solid ' + (buzzOn ? '#16A34A' : 'var(--border)') + ';border-radius:20px;padding:6px 18px;font-weight:800;font-size:12px;cursor:pointer;">يعمل</button>' +
+      '</div></div>' +
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;">Q Value <span style="color:var(--textMuted);font-size:10px;">(عدد التاغات)</span></span>' +
       '<select onchange="rfidSetByte(' + O.q + ',parseInt(this.value))" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--surface);color:var(--text);font-weight:700;">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (q) { return '<option value="' + q + '"' + (b[O.q] === q ? ' selected' : '') + '>' + q + '</option>'; }).join('') + '</select></div>' +
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;"><span style="font-weight:700;font-size:13px;">Session</span>' +
