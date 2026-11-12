@@ -7232,9 +7232,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.26.2';
+const APP_VERSION = '4.26.3';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.26.3', date: '2026-11-12', items: [
+    'باحث التاغ الضايع: معايرة المؤشّر على أرقام RSSI الحقيقية للجهاز (بعيد ~-680، ملتصق ~-340) — يعطي قراءة صحيحة من أول لحظة بدون معايرة يدوية، ويزيد تدريجيًا مع القرب'
+  ] },
   { v: '4.26.0', date: '2026-11-11', items: [
     'جديد: «ابحث عن تاغ ضايع» (رادار RSSI) — ٣ أوضاع: صنف معيّن، أي تاغ قريب (مع تحديد اسمه أو غير مربوط وتثبيت عليه)، ومؤشّر قوة يزيد كل ما تقرب + اهتزاز وصوت يتسارع. من «جرد RFID»'
   ] },
@@ -13327,13 +13330,11 @@ function updateFinderMeter() {
     return;
   }
   fs.smooth = (fs.smooth == null) ? cur.rssi : (fs.smooth * 0.55 + cur.rssi * 0.45);
-  // معايرة نسبية تلقائية: الأضعف اللي شفناه=0%، الأقوى=100%. تشتغل مهما كان ترميز RSSI.
+  // مُعاير على أرقام الجهاز الحقيقية: بعيد ~ -680، ملتصق ~ -340. ويتوسّع لو شاف أبعد/أقرب.
   fs.min = (fs.min == null) ? fs.smooth : Math.min(fs.min, fs.smooth);
   fs.max = (fs.max == null) ? fs.smooth : Math.max(fs.max, fs.smooth);
-  const span = fs.max - fs.min;
-  let pct;
-  if (span < 8) pct = 50; // لسه ما فيش مدى كافٍ — حرّك قريب وبعيد
-  else pct = Math.round((fs.smooth - fs.min) / span * 100);
+  const FAR = Math.min(-680, fs.min), NEAR = Math.max(-340, fs.max);
+  let pct = Math.round((fs.smooth - FAR) / (NEAR - FAR) * 100);
   pct = Math.max(0, Math.min(100, pct));
   const col = pct >= 70 ? '#16A34A' : (pct >= 35 ? '#D97706' : '#DC2626');
   if (bar) { bar.style.width = pct + '%'; bar.style.background = col; }
