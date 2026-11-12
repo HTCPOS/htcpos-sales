@@ -7232,7 +7232,7 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.26.1';
+const APP_VERSION = '4.26.2';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
   { v: '4.26.0', date: '2026-11-11', items: [
@@ -13327,18 +13327,19 @@ function updateFinderMeter() {
     return;
   }
   fs.smooth = (fs.smooth == null) ? cur.rssi : (fs.smooth * 0.55 + cur.rssi * 0.45);
-  // مقياس مطلق: RSSI موقّع /10 = dBm. بعيد ~ -72 dBm، قريب جدًا ~ -38 dBm. يزيد تدريجيًا مع القرب.
-  let FAR = -720, NEAR = -380;
-  if (fs.min != null) FAR = Math.min(FAR, fs.min);   // لو شاف أضعف، وسّع القاع
-  if (fs.max != null) NEAR = Math.max(NEAR, fs.max); // لو شاف أقوى، وسّع القمة
+  // معايرة نسبية تلقائية: الأضعف اللي شفناه=0%، الأقوى=100%. تشتغل مهما كان ترميز RSSI.
   fs.min = (fs.min == null) ? fs.smooth : Math.min(fs.min, fs.smooth);
   fs.max = (fs.max == null) ? fs.smooth : Math.max(fs.max, fs.smooth);
-  let pct = Math.round((fs.smooth - FAR) / (NEAR - FAR) * 100); pct = Math.max(0, Math.min(100, pct));
+  const span = fs.max - fs.min;
+  let pct;
+  if (span < 8) pct = 50; // لسه ما فيش مدى كافٍ — حرّك قريب وبعيد
+  else pct = Math.round((fs.smooth - fs.min) / span * 100);
+  pct = Math.max(0, Math.min(100, pct));
   const col = pct >= 70 ? '#16A34A' : (pct >= 35 ? '#D97706' : '#DC2626');
   if (bar) { bar.style.width = pct + '%'; bar.style.background = col; }
   if (pctEl) { pctEl.textContent = pct; pctEl.style.color = col; }
   if (txt) { txt.textContent = pct >= 80 ? 'قريب جدًا 🔥' : (pct >= 50 ? 'اقترب أكثر' : (pct >= 25 ? 'في الاتجاه الصح' : 'بعيد 🔻')); txt.style.color = col; }
-  if (rssiEl) rssiEl.textContent = 'إشارة: ' + (fs.smooth / 10).toFixed(1) + ' dBm';
+  if (rssiEl) rssiEl.innerHTML = 'RSSI خام: <b>' + Math.round(cur.rssi) + '</b> · المدى: ' + Math.round(fs.min) + ' … ' + Math.round(fs.max) + (span < 8 ? ' <span style="color:#D97706;">(حرّك قريب وبعيد للمعايرة)</span>' : '');
   if (nameEl && fs.mode === 'any') nameEl.innerHTML = 'أقرب تاغ: ' + (cur.name ? escapeHtml(cur.name) : '<span style="color:#7C3AED;">غير مربوط</span>');
   // زر التثبيت في وضع "أي تاغ"
   if (lockEl && fs.mode === 'any') {
