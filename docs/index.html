@@ -7240,11 +7240,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.7';
+const APP_VERSION = '4.27.8';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
-  { v: '4.27.7', date: '2026-11-12', items: [
-    'إصلاح قوة القراءة: المسافة ما كانت تتغيّر لأن الجرد يستخدم القوة *المخزّنة* في كتلة إعدادات الجهاز، والأمر الفوري وحده ما يكفي. الآن «تطبيق القوة» يكتب القوة في الكتلة المخزّنة (نفس الطريقة المثبتة لـ Q/الجلسة/الصوت) + الأمر الفوري، ويؤكّد بإعادة القراءة من الجهاز. شريط القوة يبدأ من القيمة الحقيقية للجهاز عند قراءة الإعدادات'
+  { v: '4.27.8', date: '2026-11-12', items: [
+    'قوة القراءة: «تطبيق القوة» صار يكتب القوة في كتلة إعدادات الجهاز المخزّنة (هي اللي يستخدمها الجرد فعلاً) عبر *نفس الأمر الواحد المثبت* اللي نجح مع الصوت و Q والجلسة — بدون أوامر زائدة كانت تزحم الجهاز وتسبّب «ما ردّ». القوة تُحفظ وتتغيّر المسافة فعلاً',
+    'شريط القوة يبدأ من القيمة الحقيقية للجهاز عند قراءة الإعدادات المتقدمة'
   ] },
   { v: '4.27.6', date: '2026-11-12', items: [
     'صوت القارئ: رجّعناه تشغيل/صامت فقط — اتأكد عمليًا أن هذا الطراز (CF-H102) شدة صوت البزّار فيه ثابتة بالعتاد ولا تتغيّر برمجيًا (القيم 1/2/3 أعطت نفس الصوت)، فأزلنا المستويات المضللة'
@@ -13447,25 +13448,10 @@ function rfidSetPwrPreset(p) { const s = document.getElementById('rfidPwr'); if 
 async function rfidApplyPwr() {
   const p = parseInt((document.getElementById('rfidPwr') || {}).value || '20', 10);
   if (!(p >= 1 && p <= 26)) { rfidSetMsg('القوة يجب أن تكون بين 1 و 26', false); return; }
-  try {
-    // 1) أمر القوة الفوري
-    await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x53, 0x02, p, 0x00]), 0x0053);
-    // 2) الأهم: اكتب القوة في كتلة الإعدادات المخزّنة (هي اللي يستخدمها الجرد فعلاً) بنفس الطريقة المثبتة
-    if (!rfidParamBlock) {
-      const f0 = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
-      rfidParamBlock = f0.slice(6, f0.length - 2);
-    }
-    rfidParamBlock[rfOff('pwr')] = p & 0xFF;
-    await rfidWriteParams();
-    // 3) تأكيد: أعِد القراءة من الجهاز وتحقّق أن القيمة انكتبت فعلاً
-    const f2 = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
-    rfidParamBlock = f2.slice(6, f2.length - 2);
-    const now = rfidParamBlock[rfOff('pwr')];
-    renderParamControls();
-    if (now === p) { rfidSetMsg('تم ضبط القوة على ' + p + ' dBm وحُفظت في الجهاز ✓ (مؤكّد)', true); try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
-    else { rfidSetMsg('أُرسلت ' + p + ' لكن الجهاز يعرض ' + now + ' — لم تُقبل القيمة', false); }
-  }
-  catch (e) { rfidSetMsg('فشل ضبط القوة: ' + (e && e.message || e), false); }
+  // اكتب القوة في كتلة الإعدادات المخزّنة (هي اللي يستخدمها الجرد) بنفس المسار المثبت للصوت/Q
+  if (!rfidParamBlock) { await rfidLoadParams(); if (!rfidParamBlock) return; }
+  await rfidSetByte(rfOff('pwr'), p);  // أمر 0x0071 واحد، مع إرجاع تلقائي عند الفشل
+  renderParamControls();
 }
 async function rfidReadBattery() {
   try { const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x83, 0x00]), 0x0083); const pct = f[6]; const el = document.getElementById('rfidBatt'); if (el) el.textContent = pct + '%'; rfidSetMsg('البطارية: ' + pct + '%', true); }
