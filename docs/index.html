@@ -2001,6 +2001,14 @@ setTimeout(() => window.hideSplash(), 4000);
   </div>
 </div>
 
+<div class="modalBg" id="rfidSetModal" onclick="if(event.target===this)closeRfidSettings()">
+  <div class="modalSheet">
+    <button class="closeM" onclick="closeRfidSettings()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>إعدادات الجهاز</h3>
+    <div id="rfidSetBody" style="margin-top:10px;"></div>
+  </div>
+</div>
+
 <div class="modalBg" id="rfidHubModal" onclick="if(event.target===this)closeModal('rfidHubModal')">
   <div class="modalSheet">
     <button class="closeM" onclick="closeModal('rfidHubModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -7232,9 +7240,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.26.3';
+const APP_VERSION = '4.27.1';
 const APP_BUILD_DATE = '2026-11-11';
 const APP_RELEASES = [
+  { v: '4.27.1', date: '2026-11-12', items: [
+    'إعدادات الجهاز: نسخة احتياطية حقيقية — احفظ كل إعدادات الجهاز الحالية واسترجعها كما هي أي وقت (أمان قبل أي تعديل). الأوامر لا تمسّ فيرموير الجهاز'
+  ] },
+  { v: '4.27.0', date: '2026-11-12', items: [
+    'جديد: «إعدادات الجهاز» من البلوتوث — التحكم في قوة القراءة (1-26 dBm مع أوضاع جاهزة)، قراءة البطارية، قراءة كل إعدادات الجهاز، وإعادة ضبط المصنع. (الصوت/Q/الجلسة تُضاف بعد قراءة إعدادات جهازك)'
+  ] },
   { v: '4.26.3', date: '2026-11-12', items: [
     'باحث التاغ الضايع: معايرة المؤشّر على أرقام RSSI الحقيقية للجهاز (بعيد ~-680، ملتصق ~-340) — يعطي قراءة صحيحة من أول لحظة بدون معايرة يدوية، ويزيد تدريجيًا مع القرب'
   ] },
@@ -8935,7 +8949,7 @@ function skeletonHtml(rows) {
 /* ===== رأس النوافذ: ثابت فوق + رجوع أو ✕ + سحب لتحت للإغلاق ===== */
 const SHEET_HEAD_SKIP = ['depositModal', 'shortageFormModal', 'editCustomerModal'];
 // الشاشات الكبيرة الذي بتتفتح كصفحات كاملة من الجنب (أسلوب التطبيقات البنكية) - الباقي يفضل نافذة من تحت
-const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'rfidHubModal', 'rfidLinkModal', 'rfidScanModal', 'rfidFindModal']);
+const PAGE_MODALS = new Set(['reportsModal', 'customersModal', 'productsHubModal', 'productsModal', 'lowStockModal', 'zeroPriceModal', 'shortagesModal', 'returnsModal', 'purchaseDebtsModal', 'activityLogModal', 'notesModal', 'errorsModal', 'generalSettingsModal', 'aboutModal', 'usageModal', 'scriptUpdateModal', 'attendanceLogModal', 'damagedModal', 'missingItemsModal', 'inventoryCountModal', 'batchLabelModal', 'customerDebtModal', 'alertsModal', 'invoiceResultsModal', 'soundSettingsModal', 'labelSettingsModal', 'fontModal', 'userAccountModal', 'globalSearchModal', 'itemDetailModal', 'searchModal', 'camSettingsModal', 'debtsHubModal', 'dayDebtsModal', 'dayReportModal', 'dayCloseModal', 'tsSetupModal', 'itemSalesModal', 'commissionModal', 'commSettingsModal', 'dailyReconModal', 'dailyAuditModal', 'rfidHubModal', 'rfidLinkModal', 'rfidScanModal', 'rfidFindModal', 'rfidSetModal']);
 // تبويبات الشريط السفلي: لما تتفتح من الشريط تظهر مكانها (بدون دخول من الجنب) مثل أي تطبيق
 const TAB_MODALS = new Set(['productsHubModal', 'customersModal', 'reportsModal']);
 const SHEET_BACK_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>';
@@ -13076,7 +13090,7 @@ function bleHandleFrame(f) {
       epc = epc.toUpperCase();
       if (epc.length >= 8 && rfidOnTag) rfidOnTag(epc, rssi);
     }
-  }
+  } else if (typeof bleRespCb === 'function') { try { bleRespCb(cmd, f); } catch (e) {} }  // ردود أوامر الإعدادات
 }
 
 /* ---------- مركز RFID ---------- */
@@ -13102,7 +13116,8 @@ function renderRfidHub() {
       '<button onclick="rfidViewTags()" style="width:100%;margin-bottom:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">📋 عرض التاغات المربوطة</button>' +
       '<button onclick="' + (conn ? 'openRfidLink()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#2563EB' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">ربط التاغات بالأصناف</button>' +
       '<button onclick="' + (conn ? 'openRfidScan()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#16A34A' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">جرد سريع</button>' +
-      '<button onclick="' + (conn ? 'openRfidFind()' : 'rfidNeedConn()') + '" style="width:100%;background:' + (conn ? '#0891B2' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">🔎 ابحث عن تاغ ضايع</button>' +
+      '<button onclick="' + (conn ? 'openRfidFind()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#0891B2' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">🔎 ابحث عن تاغ ضايع</button>' +
+      '<button onclick="' + (conn ? 'openRfidSettings()' : 'rfidNeedConn()') + '" style="width:100%;background:' + (conn ? '#475569' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">⚙️ إعدادات الجهاز</button>' +
       '<div style="margin-top:12px;font-size:11px;font-weight:800;color:var(--textMuted);">السجل:</div>' +
       '<div id="rfidLog" style="margin-top:6px;background:#0f172a;border-radius:10px;padding:8px;font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;min-height:36px;max-height:140px;overflow:auto;line-height:1.6;"></div>';
   }).catch(function () { el.innerHTML = '<div class="emptyMsg">تعذّر التحميل</div>'; });
@@ -13362,6 +13377,104 @@ async function finderStop(back) {
   if (back) renderRfidFindSetup();
 }
 async function closeRfidFind() { await finderStop(false); closeModal('rfidFindModal'); }
+
+/* ---------- إعدادات الجهاز (أوامر BLE) ---------- */
+let bleRespCb = null;
+function bleCrc16(data) { let crc = 0xFFFF; for (let i = 0; i < data.length; i++) { crc ^= data[i]; for (let j = 0; j < 8; j++) { crc = (crc & 1) ? ((crc >> 1) ^ 0x8408) : (crc >> 1); } } return crc & 0xFFFF; }
+function bleFrame(body) { const c = bleCrc16(body); return body.concat([(c >> 8) & 0xFF, c & 0xFF]); }
+function bleCommand(bytes, expectCmd) {
+  return new Promise(function (resolve, reject) {
+    let done = false;
+    const to = setTimeout(function () { if (!done) { bleRespCb = null; reject(new Error('مهلة — ما ردّ الجهاز')); } }, 2600);
+    bleRespCb = function (cmd, f) { if (expectCmd == null || cmd === expectCmd) { done = true; clearTimeout(to); bleRespCb = null; resolve(f); } };
+    bleWrite(bytes).catch(function (e) { clearTimeout(to); bleRespCb = null; reject(e); });
+  });
+}
+function openRfidSettings() { if (!bleState.connected) { rfidNeedConn(); return; } openModal('rfidSetModal'); renderRfidSettings(); }
+function renderRfidSettings() {
+  const el = document.getElementById('rfidSetBody'); if (!el) return;
+  el.innerHTML = '' +
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">' +
+      '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">قوة القراءة</div>' +
+      '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">قوة قليلة = قراءة قريبة دقيقة (للربط والبحث عن تاغ ملتصق). قوة قصوى = مدى أبعد (للجرد).</div>' +
+      '<input id="rfidPwr" type="range" min="1" max="26" value="20" oninput="document.getElementById(\'rfidPwrV\').textContent=this.value" style="width:100%;">' +
+      '<div style="text-align:center;font-weight:800;font-size:18px;margin:6px 0;"><span id="rfidPwrV">20</span> dBm</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:10px;">' +
+        '<button onclick="rfidSetPwrPreset(5)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;">قريب دقيق (5)</button>' +
+        '<button onclick="rfidSetPwrPreset(15)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;">متوسط (15)</button>' +
+        '<button onclick="rfidSetPwrPreset(26)" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;">أقصى (26)</button>' +
+      '</div>' +
+      '<button onclick="rfidApplyPwr()" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">تطبيق القوة</button>' +
+    '</div>' +
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">' +
+      '<div><div style="font-weight:800;font-size:14px;">بطارية القارئ</div><div id="rfidBatt" style="font-size:12px;color:var(--textMuted);margin-top:2px;">—</div></div>' +
+      '<button onclick="rfidReadBattery()" style="background:#16A34A;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:800;font-size:13px;cursor:pointer;">اقرأ</button>' +
+    '</div>' +
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;">' +
+      '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">النسخة الاحتياطية (أمان)</div>' +
+      '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">احفظ كل إعدادات الجهاز الحالية؛ تقدر ترجّعها كما هي أي وقت.</div>' +
+      '<button onclick="rfidBackup()" style="width:100%;margin-bottom:8px;background:#2563EB;color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;">💾 احفظ نسخة احتياطية الآن</button>' +
+      '<div id="rfidBackupInfo" style="font-size:11.5px;color:var(--textMuted);margin-bottom:8px;text-align:center;">—</div>' +
+      '<div id="rfidParamDump" style="font-family:monospace;font-size:9.5px;direction:ltr;text-align:left;color:var(--textMuted);word-break:break-all;margin-bottom:8px;"></div>' +
+      '<button id="rfidRestoreBtn" onclick="rfidRestoreBackup()" style="display:none;width:100%;margin-bottom:8px;background:#16A34A;color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;">↩ استعادة النسخة الاحتياطية</button>' +
+      '<button onclick="rfidRestoreFactory()" style="width:100%;background:#FEE2E2;color:#DC2626;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;">إعادة ضبط المصنع</button>' +
+    '</div>' +
+    '<div id="rfidSetMsg" style="margin-top:10px;font-size:12.5px;font-weight:700;text-align:center;"></div>';
+  try { rfidLoadBackupInfo(); } catch (e) {}
+}
+function rfidSetMsg(t, ok) { const el = document.getElementById('rfidSetMsg'); if (el) { el.textContent = t; el.style.color = ok ? '#16A34A' : '#DC2626'; } }
+function rfidSetPwrPreset(p) { const s = document.getElementById('rfidPwr'); if (s) { s.value = p; document.getElementById('rfidPwrV').textContent = p; } }
+async function rfidApplyPwr() {
+  const p = parseInt((document.getElementById('rfidPwr') || {}).value || '20', 10);
+  try { await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x53, 0x02, p, 0x00]), 0x0053); rfidSetMsg('تم ضبط القوة على ' + p + ' dBm ✓', true); try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {} }
+  catch (e) { rfidSetMsg('فشل: ' + (e && e.message || e), false); }
+}
+async function rfidReadBattery() {
+  try { const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x83, 0x00]), 0x0083); const pct = f[6]; const el = document.getElementById('rfidBatt'); if (el) el.textContent = pct + '%'; rfidSetMsg('البطارية: ' + pct + '%', true); }
+  catch (e) { rfidSetMsg('فشل قراءة البطارية: ' + (e && e.message || e), false); }
+}
+function rfidHex(arr) { let h = ''; for (let i = 0; i < arr.length; i++) h += arr[i].toString(16).padStart(2, '0'); return h.toUpperCase(); }
+function rfidLoadBackupInfo() {
+  liveOnce('data/rfidDeviceBackup/last').then(function (s) {
+    const b = s.val(); const info = document.getElementById('rfidBackupInfo'); const btn = document.getElementById('rfidRestoreBtn'); const dump = document.getElementById('rfidParamDump');
+    if (b && b.payload) {
+      if (info) info.textContent = 'آخر نسخة: ' + (b.at ? new Date(b.at).toLocaleString('ar') : '—');
+      if (btn) btn.style.display = 'block';
+      if (dump) dump.textContent = b.payload;
+    } else { if (info) info.textContent = 'لا يوجد نسخة محفوظة بعد'; if (btn) btn.style.display = 'none'; }
+  }).catch(function () {});
+}
+async function rfidBackup() {
+  try {
+    const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072);
+    if (!f || f.length < 9) { rfidSetMsg('رد غير متوقع من الجهاز', false); return; }
+    const status = f[5];
+    const payload = f.slice(6, f.length - 2);          // بين STATUS و CRC = كتلة الإعدادات
+    const rec = { payload: rfidHex(payload), full: rfidHex(f), status: status, at: new Date().toISOString(), device: bleState.name || '' };
+    try { await db.ref('data/rfidDeviceBackup/last').set(rec); } catch (e) {}
+    rfidSetMsg('تم حفظ النسخة الاحتياطية ✓ (' + payload.length + ' بايت)', true);
+    rfidLoadBackupInfo();
+    try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  } catch (e) { rfidSetMsg('فشل الحفظ: ' + (e && e.message || e), false); }
+}
+async function rfidRestoreBackup() {
+  const s = await liveOnce('data/rfidDeviceBackup/last'); const b = s.val();
+  if (!b || !b.payload) { rfidSetMsg('لا يوجد نسخة محفوظة', false); return; }
+  if (!confirm('استعادة إعدادات الجهاز من آخر نسخة احتياطية؟')) return;
+  try {
+    const payload = []; for (let i = 0; i < b.payload.length; i += 2) payload.push(parseInt(b.payload.substr(i, 2), 16));
+    const body = [0xCF, 0xFF, 0x00, 0x71, payload.length].concat(payload);
+    await bleCommand(bleFrame(body), 0x0071);
+    rfidSetMsg('تمت الاستعادة ✓', true);
+    try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  } catch (e) { rfidSetMsg('فشل الاستعادة: ' + (e && e.message || e), false); }
+}
+async function rfidRestoreFactory() {
+  if (!confirm('إعادة ضبط المصنع؟ راح ترجع الإعدادات الافتراضية (قد يتحول لوضع HID وتحتاج تعيده Serial).')) return;
+  try { await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x52, 0x00]), 0x0052); rfidSetMsg('تمت إعادة الضبط ✓', true); }
+  catch (e) { rfidSetMsg('فشل: ' + (e && e.message || e), false); }
+}
+function closeRfidSettings() { closeModal('rfidSetModal'); }
 
 async function closeRfidScan() { if (bleState.reading) { try { await bleStopReading(); } catch (e) {} } closeModal('rfidScanModal'); }
 
