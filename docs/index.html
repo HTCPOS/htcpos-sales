@@ -139,7 +139,7 @@ window.applyAppFont = function (id, save) {
   }
   /* بگ معروف في WebKit: الكيرسر بيطلع في مكان غلط لما اتجاه الكتابة (ltr) يختلف عن اتجاه
      المحاذاة (right) في نفس اللحظة التي بتدوس فيها على الحقل. بنخليهم متطابقين وقت التركيز فقط
-     (لسه المحاذاة يمين لما الحقل فاضي أو غير متركّز عليه، حتى شكل النص العربي يفضل كما هو) */
+     (لسه المحاذاة يمين لما الحقل فارغ أو غير متركّز عليه، حتى شكل النص العربي يفضل كما هو) */
   .loginCard input:focus { text-align:left; }
   .loginCard input::placeholder { color:#7C9483; }
   body.dark-theme #loginScreen .loginCard input { background:rgba(255,255,255,.03); border-color:rgba(74,222,128,.18); color:#F8FAFC; }
@@ -335,7 +335,7 @@ window.applyAppFont = function (id, save) {
   /* النافذتين دول في نص الشاشة (غير نافذة سفلية) - تغيير المساحة تحتهم كان بيخلي الحركة تبان
      قافزة فجأة. تحريك النافذة نفسها لفوق شوية بـ transform بدل هكذا بيدي حركة أنعم بكتير */
   /* رفع النافذة فوق الكيبورد بخاصية translate المستقلة (غير transform): هكذا ما بتتخانقش مع حركة
-     فتح النافذة (الذي شغالة على transform)، فالنافذة ما بتهزش لما الكيبورد يفتح وهي لسه بتظهر */
+     فتح النافذة (الذي تعمل على transform)، فالنافذة ما بتهزش لما الكيبورد يفتح وهي لسه بتظهر */
   body.keyboard-open #depositModal .modalSheet,
   body.keyboard-open #shortageFormModal .modalSheet {
     translate: 0 calc(var(--kb-h) * -0.32);
@@ -347,7 +347,7 @@ window.applyAppFont = function (id, save) {
     transition: translate .3s cubic-bezier(.32,.72,0,1);
   }
   /* نافذة اختيار الزبون: الجزء الفوقاني (العنوان والملاحظة وخانة البحث) ثابت ودايمًا ظاهر،
-     والقائمة فقط هي الذي بتسكرول. لما الكيبورد يفتح النافذة بتصغر على المساحة التي فوقه بالظبط
+     والقائمة فقط هي الذي بتالتمرير. لما الكيبورد يفتح النافذة بتصغر على المساحة التي فوقه بالظبط
      بدل ما تندفع لفوق وتطلع برا الشاشة */
   #customerPickerModal .cpSheet { display:flex; flex-direction:column; height:75vh; max-height:75vh; overflow:hidden; padding-bottom:calc(10px + env(safe-area-inset-bottom)); transition:height .26s cubic-bezier(.25,.8,.25,1), max-height .26s cubic-bezier(.25,.8,.25,1); }
   #customerPickerModal .cpHead { flex-shrink:0; }
@@ -373,7 +373,7 @@ window.applyAppFont = function (id, save) {
 
   /* ===== إصلاح موحد لكل النوافذ السفلية مع الكيبورد =====
      لما الكيبورد يفتح: النافذة بتقعد على المساحة التي فوقه بالظبط بدل ما تندفع لفوق وتطلع برا الشاشة.
-     النوافذ التي طولها ثابت بتاخد المساحة المتاحة كلها (وقوايمها بتسكرول جواها)،
+     النوافذ التي طولها ثابت بتاخد المساحة المتاحة كلها (وقوايمها بتالتمرير جواها)،
      والنوافذ المرنة بتفضل بحجمها إذا صغيرة ومش بتكبر من غير داعي.
      النوافذ الوسطية (الإيداع / النواقص / تعديل الزبون) ونافذة ادراج الزبون ليها معالجة خاصة بيها */
   .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet { transition:height .26s cubic-bezier(.25,.8,.25,1), max-height .26s cubic-bezier(.25,.8,.25,1), scale .34s cubic-bezier(.32,.72,0,1), filter .34s ease; }
@@ -385,7 +385,7 @@ window.applyAppFont = function (id, save) {
   body.keyboard-open .modalBg:not(#depositModal):not(#shortageFormModal):not(#editCustomerModal):not(#customerPickerModal) .modalSheet[style^="height:"]:not([style^="height:auto"]) {
     height:calc(100vh - var(--kb-h) - env(safe-area-inset-top) - 18px) !important;
   }
-  /* كل المنتجات: القايمة فقط الذي بتسكرول، وبتتحمّل على دفعات */
+  /* كل المنتجات: القايمة فقط الذي بتالتمرير، وبتتحمّل على دفعات */
   #productsModal .modalSheet { display:flex; flex-direction:column; overflow:hidden; }
   /* بطاقة الصنف: تمرير سلس للوصول لكل الخانات (بطاقة التفاصيل المختصرة تسع الشاشة فما تمرّرش) */
   #itemCardModal .modalSheet { overflow-y:auto; -webkit-overflow-scrolling:touch; }
@@ -595,10 +595,10 @@ window.applyAppFont = function (id, save) {
   .modalSheet h3 { font-size:16px; font-weight:800; margin-bottom:14px; color:var(--text); }
   /* حد أقصى لطول أي نافذة = الشاشة ناقص الشريط السفلي وناقص منطقة الساعة/النوتش (المنطقة الآمنة).
      هكذا النافذة دايمًا بتبدأ تحت شريط الساعة مهما كان طولها المكتوب (85vh / 88vh) أو طول محتواها،
-     والزيادة بتسكرول جوه النافذة. قواعد الكيبورد أدق من هذه فبتكسبها وقت ما الكيبورد مفتوح */
+     والزيادة بتالتمرير جوه النافذة. قواعد الكيبورد أدق من هذه فبتكسبها وقت ما الكيبورد مفتوح */
   .modalSheet { max-height:calc(100vh - var(--navbar-h, 76px) - env(safe-area-inset-top) - 30px) !important; }
   .modalSheet .closeM { float:left; position:relative; z-index:999; background:var(--surface2); color:var(--text); border:none; width:32px; height:32px; border-radius:50%; font-size:14px; cursor:pointer; }
-  /* رأس النافذة الثابت: شريط سحب + (رجوع أو ✕) + العنوان - بيفضل ظاهر فوق مهما سكرولت،
+  /* رأس النافذة الثابت: شريط سحب + (رجوع أو ✕) + العنوان - بيفضل ظاهر فوق مهما التمريرت،
      وبيتبني تلقائي لأي نافذة فيها <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> وعنوان مباشرة جوه الـ sheet */
   .modalSheet.hasHead { padding-top:0; }
   .sheetHead { position:sticky; top:0; z-index:20; margin:0 -20px 10px; padding:7px 20px 10px; background:var(--surface); border-bottom:1px solid transparent; transition:border-color .2s ease, box-shadow .2s ease; touch-action:none; }
@@ -811,7 +811,7 @@ window.applyAppFont = function (id, save) {
       repeating-linear-gradient(135deg, rgba(22,163,74,.05) 0 2px, transparent 2px 46px),
       radial-gradient(120% 70% at 85% -10%, rgba(34,197,94,.10), transparent 60%); }
   body.dark-theme #app::before { opacity:.35; }
-  #scrollArea { z-index:1; } /* (ما نغيرش position - هي absolute وده الذي بيخليها تسكرول) */
+  #scrollArea { z-index:1; } /* (ما نغيرش position - هي absolute وده الذي بيخليها تالتمرير) */
 
   @media (prefers-reduced-motion: reduce) {
     .modalBg.asPage > .modalSheet, .modalBg.asPage.closing > .modalSheet { animation-duration:.01s !important; }
@@ -1996,7 +1996,7 @@ setTimeout(() => window.hideSplash(), 4000);
 <div class="modalBg" id="rfidFindModal" onclick="if(event.target===this)closeRfidFind()">
   <div class="modalSheet">
     <button class="closeM" onclick="closeRfidFind()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <h3>ابحث عن تاغ ضايع</h3>
+    <h3>ابحث عن وسم مفقود</h3>
     <div id="rfidFindBody" style="margin-top:10px;"></div>
   </div>
 </div>
@@ -2020,7 +2020,7 @@ setTimeout(() => window.hideSplash(), 4000);
 <div class="modalBg" id="rfidLinkModal" onclick="if(event.target===this)closeRfidLink()">
   <div class="modalSheet">
     <button class="closeM" onclick="closeRfidLink()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    <h3>ربط التاغات</h3>
+    <h3>ربط الوسوم</h3>
     <div id="rfidLinkBody" style="margin-top:10px;"></div>
   </div>
 </div>
@@ -2727,7 +2727,7 @@ function prefillRememberedLogin() {
 
 // بتتابع اتصال "المنظومة الرئيسية" نفسها بالنت (غير دخولك انتي على التطبيق هذا) - عن طريق مراقبة
 // وقت "آخر مزامنة" (lastSync) الذي المنظومة بتسجّله في القاعدة أول ما تكون متصلة ونشطة. إذا
-// شفنا وقت مزامنة جديد لسه ما سجّلناهوش، هذا معناه المنظومة "شغالة" - نسجّل هذا كـ"فتح". ولو
+// شفنا وقت مزامنة جديد لسه ما سجّلناهوش، هذا معناه المنظومة "تعمل" - نسجّل هذا كـ"فتح". ولو
 // عدّى وقت طويل من غير أي مزامنة جديدة، نعتبرها "اتقفلت" ونسجّل "إغلاق" وقت آخر نشاط شوفناه.
 // هذا بيشتغل فقط وإنتي فاتحة التطبيق - مفيش طريقة تقنية نراقب بيها ونحن التطبيق مقفول (شرحتها ليكي)
 let attendanceState = { lastSeenSync: null, isOpen: false };
@@ -3561,7 +3561,7 @@ function renderLabelQueue() {
         <span style="font-size:14px;font-weight:900;">القائمة <span style="color:var(--textMuted);font-size:12.5px;">· ${items} صنف · ${labels} ملصق</span></span>
         <button type="button" onclick="lqClear()" style="border:none;background:none;color:#DC2626;font-size:12.5px;font-weight:800;cursor:pointer;">تفريغ</button>
       </div>${rows}`
-    : '<div class="emptyMsg" style="margin-top:18px;line-height:1.9;">القائمة فاضية<br><span style="font-size:12px;">ابحث عن صنف فوق، اختر الكمية، واضغط إدراج</span></div>';
+    : '<div class="emptyMsg" style="margin-top:18px;line-height:1.9;">القائمة فارغة<br><span style="font-size:12px;">ابحث عن صنف فوق، اختر الكمية، واضغط إدراج</span></div>';
   const btn = document.getElementById('lqPrintBtn');
   if (btn) {
     btn.textContent = labels ? 'طباعة (' + labels + ' ملصق)' : 'طباعة';
@@ -3935,7 +3935,7 @@ async function guardClosedDay(dateVal, what) {
   let closed = null;
   try { const snap = await db.ref('data/dayClosings/' + key).once('value'); closed = snap.val(); } catch (e) {}
   if (!closed || !closed.closedAt) return true;
-  const ok = await uiConfirm('يوم ' + dhDayLabel(key) + ' مقفل\nتم إقفاله وحساب الدرج. ' + what + ' بيغيّر أرقام يوم مقفل.\n\nمتأكد تكمل؟', { kind: 'danger', okText: 'متأكد، كمّل' });
+  const ok = await uiConfirm('يوم ' + dhDayLabel(key) + ' مقفل\nتم إقفاله وحساب الدرج. ' + what + ' سيُغيّر أرقام يوم مقفل.\n\nهل أنت متأكد من المتابعة؟', { kind: 'danger', okText: 'نعم، تابع' });
   if (ok) logActivity('تعديل على يوم مقفل', what + ' - ' + key);
   return ok;
 }
@@ -4144,7 +4144,7 @@ async function runIntegrityCheck() {
   const customers = (cS && cS.val()) || {};
   const debts = ent(dS), deps = ent(pS), pdebts = ent(pdS), pdeps = ent(ppS);
   const issues = [];
-  const badAmt = (list, field, label) => { const n = list.filter(x => !isFinite(Number(x[field])) || Number(x[field]) <= 0).length; if (n) issues.push({ lvl: 'err', t: n + ' ' + label + ' بمبلغ غير صحيح (صفر أو سالب أو فاضي)' }); };
+  const badAmt = (list, field, label) => { const n = list.filter(x => !isFinite(Number(x[field])) || Number(x[field]) <= 0).length; if (n) issues.push({ lvl: 'err', t: n + ' ' + label + ' بمبلغ غير صحيح (صفر أو سالب أو فارغ)' }); };
   badAmt(debts, 'amount', 'دين'); badAmt(deps.filter(x => !x.payout), 'amount', 'إيداع'); badAmt(pdebts, 'price', 'صنف مشتريات'); badAmt(pdeps, 'amount', 'تسديد مشتريات');
   const noCust = [...debts, ...deps].filter(x => !x.customerId).length;
   if (noCust) issues.push({ lvl: 'warn', t: noCust + ' حركة بدون زبون مرتبط' });
@@ -4533,7 +4533,7 @@ function renderRcptReview() {
   if (!r.inv) {
     const why = r.source === 'offline' ? 'غير موجود في الأرشيف، والكاشير غير متصل الآن' : r.source === 'timeout' ? 'غير موجود في الأرشيف، والكاشير ما رد' : 'ما لقيت فاتورة بيع بهذا الرقم';
     el.innerHTML = `<div style="background:#FEE2E2;color:#991B1B;border-radius:16px;padding:14px;font-size:14px;font-weight:700;line-height:1.8;text-align:center;margin-top:8px;">
-        ما لقيت الإيصال <span dir="ltr">${escapeHtml(r.num)}</span><br><span style="font-weight:600;font-size:13px;">${why}</span></div>
+        لم يُعثر على الإيصال <span dir="ltr">${escapeHtml(r.num)}</span><br><span style="font-weight:600;font-size:13px;">${why}</span></div>
       <div style="font-size:13px;color:var(--textMuted);text-align:center;margin-top:12px;line-height:1.8;">تأكد من الرقم واكتبه بيدك، أو صوّر الإيصال مرة ثانية</div>
       <button type="button" onclick="closeModal('rcptDebtModal')" style="width:100%;margin-top:14px;border:none;border-radius:16px;height:50px;background:var(--surface2);color:var(--text);font-size:15px;font-weight:700;cursor:pointer;">رجوع</button>`;
     return;
@@ -4741,7 +4741,7 @@ async function commChangeRate() {
 async function commRemove(k) {
   if (!commSession || commSession.paid) return;
   const l = commSession.lines[k]; if (!l) return;
-  if (!(await uiConfirm('شيل الإيصال ' + (l.number || k) + ' من حسبة ' + commMonthLabel(commMonth) + '؟', { kind: 'danger', okText: 'شيل' }))) return;
+  if (!(await uiConfirm('حذف الإيصال ' + (l.number || k) + ' من حسبة ' + commMonthLabel(commMonth) + '؟', { kind: 'danger', okText: 'حذف' }))) return;
   delete commSession.lines[k];
   await commSave();
   try { await db.ref('data/commission/index/' + k).remove(); } catch (e) {}
@@ -4782,7 +4782,7 @@ async function commProcess(num, fromCamera) {
   const found = await findInvoiceByNumber(num).catch(() => ({ inv: null }));
   if (st) st.textContent = '';
   const inv = found && found.inv;
-  if (!inv) { beepBad(); await uiAlert('ما لقيت الإيصال ' + num + (found && found.source === 'offline' ? '\n(ليس في الأرشيف والكاشير غير متصل)' : '')); return true; }
+  if (!inv) { beepBad(); await uiAlert('لم يُعثر على الإيصال ' + num + (found && found.source === 'offline' ? '\n(ليس في الأرشيف والكاشير غير متصل)' : '')); return true; }
   // الأصناف + المرتجع
   const retList = invReturnedList(inv) || [];
   const retLeft = {};
@@ -4802,7 +4802,7 @@ async function commProcess(num, fromCamera) {
   let otherMonth = null;
   if (m && m !== commMonth) {
     beepBad();
-    const c = await uiChoose('🟠 الإيصال من شهر تاني', num + ' بتاريخ ' + commMonthLabel(m) + '، وأنت بتحسب ' + commMonthLabel(commMonth) + '.', [
+    const c = await uiChoose('🟠 الإيصال من شهر آخر', num + ' بتاريخ ' + commMonthLabel(m) + '، وأنت تحسب ' + commMonthLabel(commMonth) + '.', [
       { label: 'تجاهل وكمّل', value: 'skip', color: '#64748B' }, { label: 'احسبه رغم ذلك', value: 'count', color: '#D97706' }]);
     if (c !== 'count') return true;
     otherMonth = m;
@@ -4892,7 +4892,7 @@ function openCommSettings() {
     <input id="commDefRate" type="text" inputmode="decimal" lang="en" value="${commSettings.defaultRate || 20}" style="width:100%;height:46px;border:1.5px solid var(--border);border-radius:13px;padding:0 12px;background:var(--surface);color:var(--text);font-size:16px;font-weight:700;box-sizing:border-box;">
     <div class="setSec">أصناف ما تنحسب للفني</div>
     <textarea id="commExclude" rows="3" placeholder="مثال: كفر، شاحن، لاصقة، سماعة" style="width:100%;border:1.5px solid var(--border);border-radius:13px;padding:10px 12px;background:var(--surface);color:var(--text);font-size:14.5px;box-sizing:border-box;">${escapeHtml(commSettings.exclude || '')}</textarea>
-    <div style="font-size:12px;color:var(--textMuted);margin:6px 4px 0;">أي صنف فيه كلمة من هذي الكلمات يجي بدون علامة (تقدر تعلّمه يدويًا)</div>
+    <div style="font-size:12px;color:var(--textMuted);margin:6px 4px 0;">أي صنف فيه كلمة من هذه الكلمات يجي بدون علامة (تقدر تعلّمه يدويًا)</div>
     <button type="button" onclick="commSaveSettings()" style="width:100%;margin-top:14px;height:52px;border:none;border-radius:16px;background:#16A34A;color:#fff;font-size:16px;font-weight:800;cursor:pointer;">حفظ</button>`;
   openModal('commSettingsModal');
 }
@@ -5074,13 +5074,13 @@ function renderTsSetup(ss, st) {
   const stepT = (n, t) => `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span style="width:26px;height:26px;border-radius:50%;background:#16A34A;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${n}</span><b style="font-size:15px;">${t}</b></div>`;
   let h = '';
   // الحالة
-  const stTxt = !ss ? 'جاري التحقق...' : !ready ? '⚠️ حدّث السكريبت لـ 3.6.0 أولًا (الإعدادات ← تحديث السكريبت)' : ts.running ? '✅ Tailscale شغال على الكاشير' : ts.installed ? 'Tailscale مثبّت فقط متوقف' : 'لسه ما اتثبّت على الكاشير';
+  const stTxt = !ss ? 'جارٍ التحقق...' : !ready ? '⚠️ حدّث السكريبت لـ 3.6.0 أولًا (الإعدادات ← تحديث السكريبت)' : ts.running ? '✅ Tailscale يعمل على الكاشير' : ts.installed ? 'Tailscale مثبّت فقط متوقف' : 'لم يُثبّت بعد على الكاشير';
   h += box(`<div style="font-size:14px;font-weight:700;">${stTxt}</div>${st && st.ip ? `<div style="font-size:12.5px;color:var(--textMuted);margin-top:4px;direction:ltr;text-align:right;">${escapeHtml(st.ip)}</div>` : ''}`);
   h += box(stepT(1, 'اعمل مفتاح من موقع Tailscale') + `<div style="font-size:13px;color:var(--textMuted);line-height:1.9;">افتح الصفحة ← <b style="color:var(--text);">Generate auth key</b> ← اترك الإعدادات كما هي ← <b style="color:var(--text);">Generate key</b> ← <b style="color:var(--text);">Copy</b></div>
       <button type="button" onclick="window.open('https://login.tailscale.com/admin/settings/keys','_blank')" style="width:100%;margin-top:10px;height:46px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface2);color:var(--text);font-size:14.5px;font-weight:700;cursor:pointer;">فتح صفحة المفاتيح ↗</button>`);
   h += box(stepT(2, 'الصق المفتاح وثبّت على الكاشير') + `<input id="tsKey" type="text" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="tskey-auth-..." style="width:100%;height:48px;border:1.5px solid var(--border);border-radius:14px;padding:0 12px;background:var(--surface2);color:var(--text);font-size:14px;box-sizing:border-box;">
       <button type="button" onclick="startTsSetup()" ${ready ? '' : 'disabled'} style="width:100%;margin-top:10px;height:52px;border:none;border-radius:16px;background:${ready ? 'linear-gradient(180deg,#2BB35A,#15803D)' : 'var(--surface2)'};color:${ready ? '#fff' : 'var(--textMuted)'};font-size:16px;font-weight:700;cursor:pointer;">ثبّت على الكاشير</button>
-      ${st && st.log ? `<div style="margin-top:12px;background:var(--surface2);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.9;max-height:220px;overflow:auto;">${(Array.isArray(st.log) ? st.log : Object.values(st.log)).map(l => `<div style="color:${l.l === 'err' ? '#DC2626' : l.l === 'ok' ? '#16A34A' : 'var(--text)'};"><span style="color:var(--textMuted);direction:ltr;display:inline-block;">${escapeHtml(l.t || '')}</span> ${escapeHtml(l.m || '')}</div>`).join('')}${st.state === 'running' ? '<div style="color:var(--textMuted);">⏳ شغال...</div>' : ''}</div>` : ''}`);
+      ${st && st.log ? `<div style="margin-top:12px;background:var(--surface2);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.9;max-height:220px;overflow:auto;">${(Array.isArray(st.log) ? st.log : Object.values(st.log)).map(l => `<div style="color:${l.l === 'err' ? '#DC2626' : l.l === 'ok' ? '#16A34A' : 'var(--text)'};"><span style="color:var(--textMuted);direction:ltr;display:inline-block;">${escapeHtml(l.t || '')}</span> ${escapeHtml(l.m || '')}</div>`).join('')}${st.state === 'running' ? '<div style="color:var(--textMuted);">⏳ يعمل...</div>' : ''}</div>` : ''}`);
   h += box(stepT(3, 'وافق مرة وحدة من موقع Tailscale') + `<div style="font-size:13px;color:var(--textMuted);line-height:1.9;">جنب <b style="color:var(--text);">htc-cashier</b> اضغط <b style="color:var(--text);">⋯</b> ← <b style="color:var(--text);">Edit route settings</b> ← فعّل <b style="color:var(--text);direction:ltr;display:inline-block;">192.168.0.0/24</b> ← Save<br>ومرة ثانية <b style="color:var(--text);">⋯</b> ← <b style="color:var(--text);">Disable key expiry</b></div>
       <button type="button" onclick="window.open('https://login.tailscale.com/admin/machines','_blank')" style="width:100%;margin-top:10px;height:46px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface2);color:var(--text);font-size:14.5px;font-weight:700;cursor:pointer;">فتح صفحة الأجهزة ↗</button>`);
   h += box(stepT(4, 'جرّب من برا المحل') + `<div style="font-size:13px;color:var(--textMuted);line-height:1.9;">شغّل Tailscale في جوالك (Connected)، وافتح أي فاتورة ← <b style="color:var(--text);">شاهد الفاتورة في الكاميرا</b> ← <b style="color:var(--text);">افتح على الدقيقة (VLC)</b>. قبلها حط كلمة مرور جهاز الكاميرات في <a href="#" onclick="event.preventDefault();openCamSettings();" style="color:#16A34A;font-weight:700;">إعدادات الكاميرا</a>.</div>`);
@@ -5444,7 +5444,7 @@ async function bridgeStatusWatch() {
     } catch (e) {}
     line.innerHTML = (online
       ? '<span style="color:#16A34A;">● الجسر متصل ويعمل</span>'
-      : '<span style="color:#DC2626;">● الجسر لا يستجيب (تأكد أن المكينة شغّالة وعلى الإنترنت)</span>') + extra;
+      : '<span style="color:#DC2626;">● الجسر لا يستجيب (تأكد أن المكينة تعمل وعلى الإنترنت)</span>') + extra;
   } catch (e) { line.innerHTML = '<span style="color:#DC2626;">تعذّر فحص الحالة</span>'; }
 }
 async function bridgeSendCommand(action) {
@@ -5511,7 +5511,7 @@ async function bridgeShellSend() {
     } catch (e) {}
     if (waited >= 70) {
       bridgeShellStop();
-      outEl.textContent = '$ ' + cmd + '\n\n⚠ ما وصلت نتيجة خلال 70 ثانية. تأكد أن المكينة شغّالة وعلى الإنترنت، أو الأمر طويل.';
+      outEl.textContent = '$ ' + cmd + '\n\n⚠ لم تصل نتيجة خلال 70 ثانية. تأكد أن المكينة تعمل وعلى الإنترنت، أو الأمر طويل.';
       if (stEl) stEl.textContent = 'انتهت المهلة';
       if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
     } else if (stEl) { stEl.textContent = 'بانتظار المكينة... (' + waited + 'ث)'; }
@@ -5631,12 +5631,12 @@ async function runCamDiag() {
   catch (e) { machineReachable = false; }
 
   if (!machineReachable) {
-    rows.push(diagRow('bad', 'المكينة لا تردّ على الطرفية', 'ما قدرنا ننفّذ فحصًا داخل المكينة خلال المهلة. تأكد أن المكينة شغّالة وموصّلة بالنت وأن مراقب الأوامر (bridgectl) يعمل.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
+    rows.push(diagRow('bad', 'المكينة لا تردّ على الطرفية', 'لم نتمكّن من تنفيذ فحص داخل المكينة خلال المهلة. تأكد أن المكينة تعمل وموصّلة بالنت وأن مراقب الأوامر (bridgectl) يعمل.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
   } else {
     // 3a) الخادم المحلي
     rows.push(d.LOCAL === '200'
       ? diagRow('ok', 'خادم الكاميرات (camsrv) يعمل', 'يستجيب محليًا على المكينة (منفذ 8787).')
-      : diagRow('bad', 'خادم الكاميرات (camsrv) لا يعمل', 'المنفذ المحلي 8787 ما ردّ (الرمز: ' + escapeHtml(d.LOCAL || '—') + '). هذا سبب الشاشة السوداء غالبًا.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
+      : diagRow('bad', 'خادم الكاميرات (camsrv) لا يعمل', 'المنفذ المحلي 8787 لم يردّ (الرمز: ' + escapeHtml(d.LOCAL || '—') + '). هذا سبب الشاشة السوداء غالبًا.', 'bridgeRestart', '↻ إعادة تشغيل الجسر'));
 
     // 3b) عدد العمليات (تكرار؟)
     const nCam = parseInt(d.CAMSRV || '0', 10), nCf = parseInt(d.CF || '0', 10), nRun = parseInt(d.RUN || '0', 10), nCtl = parseInt(d.CTL || '0', 10);
@@ -5656,11 +5656,11 @@ async function runCamDiag() {
       rows.push(diagRow('bad', 'ملف الإعدادات مفقود', 'camsrv.conf غير موجود على المكينة. لازم تعيد تركيب الجسر (تحديث الجسر).', 'bridgeUpdate', 'تحديث/تركيب الجسر'));
     } else {
       const confProblems = [];
-      if (!d.DVR_IP) confProblems.push('خانة DVR_IP (عنوان جهاز التسجيل) فاضية');
-      if (!d.DVR_USER) confProblems.push('خانة DVR_USER (اسم المستخدم) فاضية');
-      if (d.DVR_PASS !== '1') confProblems.push('خانة DVR_PASS (كلمة مرور جهاز التسجيل) فاضية');
-      if (!d.CAM_CODE) confProblems.push('خانة CAM_CODE (رمز الوصول) فاضية');
-      if (!d.FB_EMAIL) confProblems.push('خانة FB_EMAIL (بريد Firebase) فاضية');
+      if (!d.DVR_IP) confProblems.push('خانة DVR_IP (عنوان جهاز التسجيل) فارغة');
+      if (!d.DVR_USER) confProblems.push('خانة DVR_USER (اسم المستخدم) فارغة');
+      if (d.DVR_PASS !== '1') confProblems.push('خانة DVR_PASS (كلمة مرور جهاز التسجيل) فارغة');
+      if (!d.CAM_CODE) confProblems.push('خانة CAM_CODE (رمز الوصول) فارغة');
+      if (!d.FB_EMAIL) confProblems.push('خانة FB_EMAIL (بريد Firebase) فارغة');
       if (confProblems.length) {
         rows.push(diagRow('bad', 'في خانة إعدادات ناقصة', 'الخانات التي فيها مشكلة:<br>• ' + confProblems.join('<br>• ') + '<br>تنعدّل من الطرفية أو بإعادة تركيب الجسر.', 'nano ~/cam/camsrv.conf', '✏️ افتح الإعدادات في الطرفية'));
       } else {
@@ -5672,7 +5672,7 @@ async function runCamDiag() {
     if (d.DVRPING && d.DVRPING !== '000' && d.DVRPING !== '') {
       rows.push(diagRow('ok', 'جهاز التسجيل (DVR) متصل', 'المكينة توصل لجهاز التسجيل على ' + escapeHtml(d.DVR_IP || '') + ' (رد: ' + escapeHtml(d.DVRPING) + ').'));
     } else {
-      rows.push(diagRow('bad', 'المكينة ما توصل لجهاز التسجيل', 'جهاز التسجيل على ' + escapeHtml(d.DVR_IP || '؟') + ' ما ردّ. تأكد أن الـ DVR شغّال وعلى نفس الشبكة، وأن خانة DVR_IP صحيحة.', 'ping -c 3 ' + (d.DVR_IP || '192.168.0.100'), '📡 اختبر الاتصال بالـ DVR'));
+      rows.push(diagRow('bad', 'المكينة لا تصل لجهاز التسجيل', 'جهاز التسجيل على ' + escapeHtml(d.DVR_IP || '؟') + ' لم يردّ. تأكد أن الـ DVR يعمل وعلى نفس الشبكة، وأن خانة DVR_IP صحيحة.', 'ping -c 3 ' + (d.DVR_IP || '192.168.0.100'), '📡 اختبر الاتصال بالـ DVR'));
     }
 
     // 3e) نسخة الجسر
@@ -5728,7 +5728,7 @@ function b64utf8(str) {
   return btoa(bin);
 }
 
-// يستخرج رقم نسخة الملف المختار من محتواه (حتى تظهر النسخة الحقيقية المرفوعة لا نسخة التطبيق الشغّال)
+// يستخرج رقم نسخة الملف المختار من محتواه (حتى تظهر النسخة الحقيقية المرفوعة لا نسخة التطبيق العامل)
 function ghContentVersion(name, content) {
   try {
     if (name === 'index.html') {
@@ -6262,8 +6262,8 @@ function renderRescuePanel() {
   const on = guardianOnline();
   const sec = g.lastSeen ? Math.max(0, (Date.now() + (typeof serverTimeOffset === 'number' ? serverTimeOffset : 0) - Number(g.lastSeen)) / 1000) : 0;
   const mainTxt = !g.mainRunning ? '<span style="color:#DC2626;">متوقف</span>'
-    : (Number(g.aliveAgeMin) > 3 ? '<span style="color:#D97706;">شغال لكن ما يستجيب (' + escapeHtml(String(g.aliveAgeMin)) + ' دقيقة)</span>'
-    : '<span style="color:#16A34A;">شغال</span>' + (Number(g.mainCount) > 1 ? ' <span style="color:#D97706;">(' + g.mainCount + ' نسخ)</span>' : ''));
+    : (Number(g.aliveAgeMin) > 3 ? '<span style="color:#D97706;">يعمل لكن لا يستجيب (' + escapeHtml(String(g.aliveAgeMin)) + ' دقيقة)</span>'
+    : '<span style="color:#16A34A;">يعمل</span>' + (Number(g.mainCount) > 1 ? ' <span style="color:#D97706;">(' + g.mainCount + ' نسخ)</span>' : ''));
   const btn = (action, label, color, bg) => `<button type="button" onclick="sendRescue('${action}')" ${rescuePendingId || !on ? 'disabled' : ''} style="flex:1;min-width:0;border:none;border-radius:11px;padding:11px 6px;font-size:13px;font-weight:800;cursor:pointer;color:${color};background:${bg};opacity:${rescuePendingId || !on ? '.5' : '1'};">${label}</button>`;
   let h = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:12px 13px;margin:10px 0;">
     <div style="font-size:13.5px;font-weight:900;margin-bottom:6px;">التحكم عن بعد</div>
@@ -6490,7 +6490,7 @@ function scriptUpdPickFile(input) {
     }
     if (!content.startsWith('# StoreSalesAlert - ASCII launcher')) err = 'هذا غير ملف السكريبت ولا ملف الحارس';
     else if (/[^\x00-\x7F]/.test(content)) err = 'الملف فيه حروف غير إنجليزية - استخدم الملف كما وصلك بدون تعديل';
-    else if (content.indexOf('update_pending') < 0) err = 'هذي نسخة قديمة من السكريبت ما تدعم التحديث عن بعد';
+    else if (content.indexOf('update_pending') < 0) err = 'هذه نسخة قديمة من السكريبت ما تدعم التحديث عن بعد';
     else {
       try {
         const m = content.match(/\$__b64 = @'\r?\n([\s\S]*?)\r?\n'@/);
@@ -6610,7 +6610,7 @@ function renderScriptUpdate() {
       <div style="font-size:13px;font-weight:900;margin:4px 2px 4px;">${f && f.kind === 'guardian' ? 'تحديث الحارس' : 'التحديث'} إلى ${escapeHtml(f && f.version ? f.version : '')}</div>${scriptUpdStepsHtml(mine, f)}</div>`;
     if (us && us.id === scriptUpdPendingId) h += scriptUpdLogHtml(us.log, true);
     if (mine === 'sent' && f && f.sentAt && Date.now() - f.sentAt > 55000) {
-      h += `<div style="margin-top:10px;font-size:12.5px;color:#B45309;font-weight:700;line-height:1.8;">الكاشير ما استلم الطلب بعد. الطلب محفوظ وراح يتنفذ أول ما يتصل الكاشير.</div>`;
+      h += `<div style="margin-top:10px;font-size:12.5px;color:#B45309;font-weight:700;line-height:1.8;">الكاشير لم يستلم الطلب بعد. الطلب محفوظ وراح يتنفذ أول ما يتصل الكاشير.</div>`;
     }
     if (mine === 'sent') h += `<button type="button" onclick="scriptUpdCancel()" style="width:100%;margin-top:12px;border:1px solid var(--border);background:none;color:var(--text);border-radius:12px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;">إلغاء التحديث</button>`;
     h += `<div style="margin-top:10px;font-size:11.5px;color:var(--textMuted);line-height:1.8;">إذا النسخة الجديدة ما اشتغلت، الكاشير يرجّع النسخة السابقة تلقائيًا خلال دقائق.</div>`;
@@ -6632,7 +6632,7 @@ function renderScriptUpdate() {
     h += `<div style="margin-top:12px;background:var(--surface2);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;line-height:1.9;">
         <div>الملف: <b>${escapeHtml(f.name)}</b> (${Math.round(f.size / 1024)} KB)</div>
         <div>${isG ? 'الحارس' : 'السكريبت'}: <b>${escapeHtml(curV || 'قديم')}</b> ← <b style="color:#16A34A;">${escapeHtml(f.version)}</b></div></div>`;
-    if (cmp <= 0) h += `<div style="margin-top:8px;font-size:12.5px;color:#B45309;font-weight:800;">${cmp === 0 ? 'هذي نفس النسخة الشغالة حاليًا' : 'هذي نسخة أقدم من الشغالة حاليًا'}</div>`;
+    if (cmp <= 0) h += `<div style="margin-top:8px;font-size:12.5px;color:#B45309;font-weight:800;">${cmp === 0 ? 'هذه نفس النسخة العاملة حاليًا' : 'هذه نسخة أقدم من العاملة حاليًا'}</div>`;
     h += `<button id="suSendBtn" type="button" onclick="scriptUpdSend()" style="width:100%;margin-top:12px;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;background:#2563EB;">${cmp <= 0 ? 'تركيبها على أي حال' : 'تحديث الآن'}</button>`;
   }
   // آخر نتيجة
@@ -6701,7 +6701,7 @@ function loadProfitReport(range, period, label) {
     resRef.off('value', handler);
     ref.remove().catch(() => {});
     if (profitReq !== token) return;
-    el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">كمبيوتر الكاشير لم يرد خلال 45 ثانية<br><span style="font-size:12px;">تأكد إنه شغال والشريط أخضر، وجرّب مرة ثانية</span></div>';
+    el.innerHTML = '<div class="emptyMsg" style="line-height:1.9;">كمبيوتر الكاشير لم يرد خلال 45 ثانية<br><span style="font-size:12px;">تأكد أنه يعمل والشريط أخضر، وجرّب مرة ثانية</span></div>';
   }, 45000);
   ref.set({ from: range.from, to: range.to, at: firebase.database.ServerValue.TIMESTAMP }).catch(err => {
     if (done) return;
@@ -6922,7 +6922,7 @@ function phLowThreshold() {
 
 async function phSetLowThreshold() {
   const cur = phLowThreshold();
-  const v = await uiPrompt('الصنف يُعتبر "قرب يخلص" لما كميته تكون أقل من أو تساوي:', String(cur), { numeric: true });
+  const v = await uiPrompt('الصنف يُعتبر "أوشك على النفاد" لما كميته تكون أقل من أو تساوي:', String(cur), { numeric: true });
   if (v === null) return;
   const n = Number(String(v).replace(',', '.'));
   if (!(n > 0) || n > 1000) { alert('اكتب رقم أكبر من صفر'); return; }
@@ -6972,7 +6972,7 @@ function renderProductsHub() {
     ['out', 'low', 'zeroPrice', 'pricing'].forEach(f => { if (phMatchFilter(it, f, low)) counts[f]++; });
   });
   const chips = [
-    ['all', 'الكل'], ['out', 'نفدت'], ['low', 'قربت تخلص (≤' + low + ')'], ['zeroPrice', 'سعر البيع صفر'], ['pricing', 'مشاكل التسعير']
+    ['all', 'الكل'], ['out', 'نفدت'], ['low', 'أوشكت على النفاد (≤' + low + ')'], ['zeroPrice', 'سعر البيع صفر'], ['pricing', 'مشاكل التسعير']
   ];
   document.getElementById('phChips').innerHTML = chips.map(([f, label]) =>
     `<button type="button" class="lsChip${phFilter === f ? ' on' : ''}" style="direction:rtl;" onclick="setProductsHubFilter('${f}')">${label} <b style="opacity:.75;">${counts[f]}</b></button>`
@@ -7009,7 +7009,7 @@ function appendProductsHubPage() {
   const more = document.getElementById('phMore');
   if (more) {
     more.style.display = v.shown < v.list.length ? 'block' : 'none';
-    more.textContent = 'عرض ' + v.shown + ' من ' + v.list.length + ' — كمّل سكرول لباقي الأصناف';
+    more.textContent = 'عرض ' + v.shown + ' من ' + v.list.length + ' — تابع التمرير لعرض بقية الأصناف';
   }
   const el = document.getElementById('phList');
   if (el && v.shown < v.list.length && el.scrollHeight <= el.clientHeight + 40) setTimeout(appendProductsHubPage, 0);
@@ -7255,17 +7255,26 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.13';
+const APP_VERSION = '4.27.16';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
+  { v: '4.27.16', date: '2026-11-12', items: [
+    'مراجعة لغوية شاملة لكامل التطبيق: تحويل عبارات الواجهة العامية إلى عربية فصحى احترافية في كل الشاشات (الكاميرات، الجسر، العمولة، النواقص، تحليل الإيصالات، RFID). أمثلة: «فاضي»→«فارغ»، «شغّال»→«يعمل»، «ما لقيت»→«لم يُعثر على»، «شيل»→«حذف»، «قرب يخلص»→«أوشك على النفاد»، «راح ترجع»→«ستعود»، «دوّر عليها»→«ابحث عنها». بدون أي تغيير في المنطق أو الوظائف'
+  ] },
+  { v: '4.27.15', date: '2026-11-12', items: [
+    'توحيد لغة واجهة RFID إلى العربية الفصحى الاحترافية: استبدال المصطلح الدخيل «تاغ» بالمصطلح العربي «وسم/وسوم»، وتحويل كل العبارات العامية إلى فصحى (مثل: «ما الذي تبحث عنه؟»، «اختر الصنف الذي تريد ربط وسومه»، «تجوّل في المتجر ودَع القارئ يلتقط الوسوم»)'
+  ] },
+  { v: '4.27.14', date: '2026-11-12', items: [
+    'تحسين مظهر واجهة RFID بالكامل: استبدلنا كل الإيموجي القديمة بأيقونات SVG خطّية موحّدة (بنفس ستايل التطبيق)، ووحّدنا محاذاة الأزرار والأيقونات في كل القوائم (الرئيسية، الربط، الجرد، البحث، الإعدادات) لمظهر احترافي ومتناسق'
+  ] },
   { v: '4.27.13', date: '2026-11-12', items: [
-    'أوضاع جاهزة بضغطة في إعدادات الجهاز — كل زر يضبط القوة + Q + الجلسة دفعة واحدة بأمر واحد وبقيم آمنة داخل المدى، ويؤكّد من الجهاز: «وضع الجرد» (26·Q5·S1) · «ربط تاغ لصنف» (5·Q0·S0) · «وضع البحث» (20·Q2·S0)'
+    'أوضاع جاهزة بضغطة في إعدادات الجهاز — كل زر يضبط القوة + Q + الجلسة دفعة واحدة بأمر واحد وبقيم آمنة داخل المدى، ويؤكّد من الجهاز: «وضع الجرد» (26·Q5·S1) · «ربط وسم لصنف» (5·Q0·S0) · «وضع البحث» (20·Q2·S0)'
   ] },
   { v: '4.27.12', date: '2026-11-12', items: [
     'أزلنا زر «اكتشف أقصى قوة» — تبيّن أن هذا الطراز يُرجع القيمة لأصغر حد (1) عند تجاوز الحد بدل أن يقصّها، فكان يعطي نتيجة غلط ويضعف القوة. الحد الأقصى الموثّق من دليل H102 هو 26 dBm وهو المعتمد. لو ضعفت قوتك اضبطها على 26 واضغط تطبيق القوة'
   ] },
   { v: '4.27.11', date: '2026-11-12', items: [
-    'إصلاح «Load failed» في النشر: أزلنا هيدر Cache-Control اللي كان يسبّب فشل CORS في متصفح الآيفون. منع الكاش يتم الآن عبر no-store + كسر الكاش بالرابط — بدون كسر الطلب'
+    'إصلاح «Load failed» في النشر: أزلنا هيدر Cache-Control الذي كان يسبّب فشل CORS في متصفح الآيفون. منع الكاش يتم الآن عبر no-store + كسر الكاش بالرابط — بدون كسر الطلب'
   ] },
   { v: '4.27.10', date: '2026-11-12', items: [
     'قوة القراءة: زر «اكتشف أقصى قوة (من الجهاز)» — يسأل القارئ مباشرة بدل التخمين (يكتب قيمة عالية ويقرأ ما خزّنه فعليًا = أقصى حد يقبله)، ثم يُرجع قوتك الأصلية تلقائيًا. آمن وقابل للرجوع، ويضبط حد المنزلق على قيمة جهازك الحقيقية'
@@ -7274,7 +7283,7 @@ const APP_RELEASES = [
     'نشر التحديث: إصلاح خطأ «does not match» (تعارض نسخة 409). كان GitHub يرجّع SHA قديمًا من الكاش فيُرفض الرفع — الآن نجلب الـSHA بدون كاش، ولو صار تعارض نعيد جلب أحدث SHA ونحاول تلقائيًا مرة واحدة. ورسالة الخطأ صارت تبيّن رمز الحالة'
   ] },
   { v: '4.27.8', date: '2026-11-12', items: [
-    'قوة القراءة: «تطبيق القوة» صار يكتب القوة في كتلة إعدادات الجهاز المخزّنة (هي اللي يستخدمها الجرد فعلاً) عبر *نفس الأمر الواحد المثبت* اللي نجح مع الصوت و Q والجلسة — بدون أوامر زائدة كانت تزحم الجهاز وتسبّب «ما ردّ». القوة تُحفظ وتتغيّر المسافة فعلاً',
+    'قوة القراءة: «تطبيق القوة» صار يكتب القوة في كتلة إعدادات الجهاز المخزّنة (هي التي يستخدمها الجرد فعلاً) عبر *نفس الأمر الواحد المثبت* الذي نجح مع الصوت و Q والجلسة — بدون أوامر زائدة كانت تزحم الجهاز وتسبّب «لم يردّ». القوة تُحفظ وتتغيّر المسافة فعلاً',
     'شريط القوة يبدأ من القيمة الحقيقية للجهاز عند قراءة الإعدادات المتقدمة'
   ] },
   { v: '4.27.6', date: '2026-11-12', items: [
@@ -7295,10 +7304,10 @@ const APP_RELEASES = [
     'جديد: «إعدادات الجهاز» من البلوتوث — التحكم في قوة القراءة (1-26 dBm مع أوضاع جاهزة)، قراءة البطارية، قراءة كل إعدادات الجهاز، وإعادة ضبط المصنع. (الصوت/Q/الجلسة تُضاف بعد قراءة إعدادات جهازك)'
   ] },
   { v: '4.26.3', date: '2026-11-12', items: [
-    'باحث التاغ الضايع: معايرة المؤشّر على أرقام RSSI الحقيقية للجهاز (بعيد ~-680، ملتصق ~-340) — يعطي قراءة صحيحة من أول لحظة بدون معايرة يدوية، ويزيد تدريجيًا مع القرب'
+    'باحث الوسم المفقود: معايرة المؤشّر على أرقام RSSI الحقيقية للجهاز (بعيد ~-680، ملتصق ~-340) — يعطي قراءة صحيحة من أول لحظة بدون معايرة يدوية، ويزيد تدريجيًا مع القرب'
   ] },
   { v: '4.26.0', date: '2026-11-11', items: [
-    'جديد: «ابحث عن تاغ ضايع» (رادار RSSI) — ٣ أوضاع: صنف معيّن، أي تاغ قريب (مع تحديد اسمه أو غير مربوط وتثبيت عليه)، ومؤشّر قوة يزيد كل ما تقرب + اهتزاز وصوت يتسارع. من «جرد RFID»'
+    'جديد: «ابحث عن وسم مفقود» (رادار RSSI) — ٣ أوضاع: صنف معيّن، أي وسم قريب (مع تحديد اسمه أو غير مربوط وتثبيت عليه)، ومؤشّر قوة يزيد كل ما تقرب + اهتزاز وصوت يتسارع. من «جرد RFID»'
   ] },
   { v: '4.25.3', date: '2026-11-11', items: [
     'تنظيف الكود: حذف الدالة الميتة الوحيدة (رسالة «قريبًا» القديمة) بعد فحص شامل — لا دوال غير مستخدمة ولا متغيّرات معلّقة ولا تعريفات مكررة'
@@ -7307,13 +7316,13 @@ const APP_RELEASES = [
     'نقل «جرد RFID» إلى مكانه الطبيعي تحت زر «الجرد» (مع الجرد بالباركود) بدل زر «قريبًا» المعطّل — وأُزيل من القائمة لتفادي التكرار'
   ] },
   { v: '4.25.1', date: '2026-11-11', items: [
-    'جرد RFID: شاشة «عرض التاغات المربوطة» (كل صنف وتاغاته مع حذف)، وتقرير جرد احترافي كامل: مطابق/ناقص/زائد + التاغات المفقودة بالضبط لكل صنف ناقص + أصناف بدون تاغات (لم تُجرد) + تاغات غير مربوطة'
+    'جرد RFID: شاشة «عرض الوسوم المربوطة» (كل صنف ووسومه مع حذف)، وتقرير جرد احترافي كامل: مطابق/ناقص/زائد + الوسوم المفقودة بالضبط لكل صنف ناقص + أصناف بدون وسوم (لم تُجرد) + وسوم غير مربوطة'
   ] },
   { v: '4.25.0', date: '2026-11-11', items: [
-    'إعادة بناء نظام RFID بالكامل على البلوتوث المباشر (BLE): اتصال بالقارئ، ربط التاغات بالأصناف، وجرد سريع يقارن بالمخزون — قراءة نظيفة 100% بدون الكيبورد. أُزيلت كل بقايا النظام القديم (الكيبورد، المطابقة التقريبية، اختبار القارئ القديم)'
+    'إعادة بناء نظام RFID بالكامل على البلوتوث المباشر (BLE): اتصال بالقارئ، ربط الوسوم بالأصناف، وجرد سريع يقارن بالمخزون — قراءة نظيفة 100% بدون الكيبورد. أُزيلت كل بقايا النظام القديم (الكيبورد، المطابقة التقريبية، اختبار القارئ القديم)'
   ] },
   { v: '4.24.0', date: '2026-11-11', items: [
-    'جديد: قراءة RFID عبر البلوتوث المباشر (BLE) — قناة بيانات نظيفة من ذاكرة الجهاز بدل الكيبورد: صفر نقص حروف. شاشة «ربط وقراءة بالبلوتوث» في جرد RFID تتصل بالجهاز، تفحص جاهزية النسخة المبنية، وتقرأ التاغات كاملة',
+    'جديد: قراءة RFID عبر البلوتوث المباشر (BLE) — قناة بيانات نظيفة من ذاكرة الجهاز بدل الكيبورد: صفر نقص حروف. شاشة «ربط وقراءة بالبلوتوث» في جرد RFID تتصل بالجهاز، تفحص جاهزية النسخة المبنية، وتقرأ الوسوم كاملة',
     'فحص تلقائي للتأكد إن النسخة المبنية فيها البلوتوث فعلاً'
   ] },
   { v: '4.23.5', date: '2026-11-11', items: [
@@ -7326,22 +7335,22 @@ const APP_RELEASES = [
     'أداة النشر (GitHub): صارت تقبل رفع package.json و capacitor.config.json (بالإضافة لـindex.html و setup.sh و build-ios.yml) — لتفعيل البلوتوث وإعادة بناء الـIPA من داخل التطبيق'
   ] },
   { v: '4.23.2', date: '2026-11-11', items: [
-    'جرد RFID: التطبيق يتعلّم بادئة رمز التاغات تلقائيًا من المربوط عندك (افتراضي E280) ويستعملها في فصل التاغات الملتصقة — فيشتغل مهما كان نوع البطاقات'
+    'جرد RFID: التطبيق يتعلّم بادئة رمز الوسوم تلقائيًا من المربوط عندك (افتراضي E280) ويستعملها في فصل الوسوم الملتصقة — فيشتغل مهما كان نوع البطاقات'
   ] },
   { v: '4.23.1', date: '2026-11-11', items: [
-    'جرد RFID: لما تلتصق عدة تاغات في قراءة وحدة (رقم طويل)، التطبيق يفصلها عند بداية كل رمز (E280) فيرجّع كل تاغ لحاله — يحل لخبطة قراءة التاغات المتجاورة'
+    'جرد RFID: لما تلتصق عدة وسوم في قراءة وحدة (رقم طويل)، التطبيق يفصلها عند بداية كل رمز (E280) فيرجّع كل وسم لحاله — يحل لخبطة قراءة الوسوم المتجاورة'
   ] },
   { v: '4.23.0', date: '2026-11-11', items: [
-    'جرد RFID — حل ذكي لنقص حروف الآيفون: القراءة الناقصة = جزء من الرمز الصحيح، فالربط يأخذ الرمز الأطول (الأقرب للصحيح) ويدمج قراءات نفس التاغ تلقائيًا = تاغ واحد',
-    'جرد RFID: المطابقة في الجرد صارت بالتشابه (أطول تسلسل مشترك) — القراءة الناقصة تتعرّف على تاغها الصحيح، فيُحسب كل تاغ مرة وحدة حتى لو القراءة فيها نقص',
-    'جرد RFID: الربط صار تلقائي وأسرع — ثبّت التاغ قدام الجهاز وارفعه، يتثبّت لحاله'
+    'جرد RFID — حل ذكي لنقص حروف الآيفون: القراءة الناقصة = جزء من الرمز الصحيح، فالربط يأخذ الرمز الأطول (الأقرب للصحيح) ويدمج قراءات نفس الوسم تلقائيًا = وسم واحد',
+    'جرد RFID: المطابقة في الجرد صارت بالتشابه (أطول تسلسل مشترك) — القراءة الناقصة تتعرّف على وسمها الصحيح، فيُحسب كل وسم مرة وحدة حتى لو القراءة فيها نقص',
+    'جرد RFID: الربط صار تلقائي وأسرع — ثبّت الوسم قدام الجهاز وارفعه، يتثبّت لحاله'
   ] },
   { v: '4.22.0', date: '2026-11-11', items: [
     'جرد RFID: تغيير طريقة التقاط قراءة الجهاز إلى «خانة مخفية» بدل التقاط الحروف وحدة وحدة — يمنع الآيفون من إسقاط حروف من الرمز أثناء القراءة السريعة فيطلع الرمز كامل وثابت',
     'جرد RFID: إضافة زر «اربط أوضح رمز» في الربط كخيار يدوي احتياطي لربط الرمز الأكثر تكرارًا'
   ] },
   { v: '4.21.1', date: '2026-11-11', items: [
-    'جرد RFID: ربط التاغ ما يقبل الرمز إلا بعد قراءته كاملاً عدة مرات — يتجاهل القراءات الناقصة اللي تطلع من القراءة السريعة المستمرة فما يتخزّنش نفس التاغ بأكثر من رمز'
+    'جرد RFID: ربط الوسم ما يقبل الرمز إلا بعد قراءته كاملاً عدة مرات — يتجاهل القراءات الناقصة التي تظهر من القراءة السريعة المستمرة فلا يُخزَّن نفس الوسم بأكثر من رمز'
   ] },
   { v: '4.21.0', date: '2026-11-11', items: [
     'جرد RFID: كيبورد داخلي بشكل الآيفون (إنجليزي/أرقام افتراضيًا + زر للعربي) للبحث عن الصنف — يظهر تلقائيًا فقط لما القارئ موصول (ما يفتحش كيبورد النظام)، ولما تفصل القارئ يرجع كيبورد الآيفون العادي. وفيه زر ⌨️ لفتحه يدويًا'
@@ -7350,11 +7359,11 @@ const APP_RELEASES = [
     'جرد RFID: إضافة زر «تشخيص القراءات» في شاشة الجرد — يبيّن كل رمز EPC مقروء وطوله وعدد تكراره وتوزيع الأطوال، لضبط القارئ بدقة'
   ] },
   { v: '4.20.1', date: '2026-11-11', items: [
-    'جرد RFID: إصلاح تضخّم العدد (كان يعدّ قراءات التشويش الناقصة) — صار يعدّ التاغ المؤكّد فقط (اللي يُقرأ أكثر من مرة) ويتجاهل القراءات الضعيفة، فالعدد يطابق التاغات الحقيقية',
+    'جرد RFID: إصلاح تضخّم العدد (كان يعدّ قراءات التشويش الناقصة) — صار يعدّ الوسم المؤكّد فقط (الذي يُقرأ أكثر من مرة) ويتجاهل القراءات الضعيفة، فالعدد يطابق الوسوم الحقيقية',
     'جرد RFID: اختيار الصنف صار بالضغط من قائمة (بدون كتابة) — لأن iOS يخفي الكيبورد وقت ما يكون قارئ البلوتوث موصول'
   ] },
   { v: '4.20.0', date: '2026-11-11', items: [
-    'جديد: نظام الجرد السريع بـRFID (من القائمة «جرد RFID»): اربط تاغ على كل قطعة مرة وحدة، وبعدها اعمل جرد كامل المحل أو صنف معيّن في دقائق — يقارن الموجود بالمخزون ويطلّع الناقص والزايد والتاغات غير المربوطة تلقائيًا'
+    'جديد: نظام الجرد السريع بـRFID (من القائمة «جرد RFID»): اربط وسم على كل قطعة مرة وحدة، وبعدها اعمل جرد كامل المحل أو صنف معيّن في دقائق — يقارن الموجود بالمخزون ويطلّع الناقص والزايد والوسوم غير المربوطة تلقائيًا'
   ] },
   { v: '4.19.0', date: '2026-11-11', items: [
     'إضافة شاشة «اختبار قارئ الباركود/RFID» (من القائمة): تبيّن أي إدخال يرسله القارئ مباشرة مع التوقيت والرموز — لتشخيص توصيل الأجهزة الخارجية'
@@ -7362,7 +7371,7 @@ const APP_RELEASES = [
   { v: '4.18.0', date: '2026-11-07', items: [
     'إصلاح مهم: الصنف المرتجع كان يُحسب في كشف الحساب بدون خصمه فيضخّم الرصيد — صار يُخصم بشكل صحيح فالرصيد يطابق الحساب الحقيقي',
     'جديد: «مراجعة الحساب يوم بيوم» داخل حساب كل زبون — رصيد بداية/نهاية كل يوم، كل حركة وأثرها، تمييز السداد التلقائي والمرتجعات، وتنبيه لأي حركة بتاريخ غير صحيح',
-    'جديد: صفحة «المراجعة اليومية للحسابات» (من القائمة) — لكل يوم: مجموع الفواتير والإيداعات والسداد والمرتجعات وصافي التغيّر، والزبائن اللي اتصفّى حسابهم في اليوم'
+    'جديد: صفحة «المراجعة اليومية للحسابات» (من القائمة) — لكل يوم: مجموع الفواتير والإيداعات والسداد والمرتجعات وصافي التغيّر، والزبائن الذين سُوّي حسابهم في اليوم'
   ] },
   { v: '4.17.0', date: '2026-11-04', items: [
     'ديون الزبائن: لو انرجع صنف على فاتورة دين، يتسجّل «مُرجَع» تلقائيًا - يختفي من الأصناف المستحقة ولا يُحسب في الرصيد، في حساب الزبون وفي قائمة الزبائن. تلقائي بالكامل وبدون تكرار'
@@ -7371,7 +7380,7 @@ const APP_RELEASES = [
     'شاشة قراءة رقم الإيصال: إزالة زر الإيقاف الطايف فوق الكاميرا، جعل الصفحة تتمرّر للأسفل، وتحسين ترتيب العناصر. القراءة تبقى داخل الإطار الأخضر فقط'
   ] },
   { v: '4.16.1', date: '2026-11-04', items: [
-    'أداة النشر لـGitHub: تبيّن الآن نسخة الملف الذي اخترته قبل الرفع، ورسالة التحديث تحمل نسخة الملف المرفوع فعلاً (كانت تكتب نسخة التطبيق الشغّال دائمًا فتسبّب التباس)'
+    'أداة النشر لـGitHub: تبيّن الآن نسخة الملف الذي اخترته قبل الرفع، ورسالة التحديث تحمل نسخة الملف المرفوع فعلاً (كانت تكتب نسخة التطبيق العامل دائمًا فتسبّب التباس)'
   ] },
   { v: '4.16.0', date: '2026-11-04', items: [
     'نقل زر القائمة (☰) إلى الشريط السفلي مكان تبويب التقارير، وإضافة «التقارير» كمربّع في الإجراءات السريعة بجانب «التالف»'
@@ -7387,7 +7396,7 @@ const APP_RELEASES = [
   ] },
   { v: '4.15.0', date: '2026-11-03', items: [
     'إضافة قسم «الأمان» في الإعدادات: تقدر تفعّل أو توقف الدخول ببصمة الوجه يدويًا في أي وقت — مفيد لو التطبيق ما طلبش منك البصمة عند الدخول',
-    'تفعيل البصمة من الإعدادات يتأكد من كلمة المرور أولاً حتى الدخول السريع ما يفشلش لاحقًا'
+    'تفعيل البصمة من الإعدادات يتأكد من كلمة المرور أولاً حتى الدخول السريع لا يفشل لاحقًا'
   ] },
   { v: '4.14.4', date: '2026-11-03', items: [
     'عند الضغط على «حفظ التعديل» حتى بدون أي تغيير، يرجع تلقائيًا إلى خانة البحث مثل الحفظ العادي'
@@ -7594,7 +7603,7 @@ const APP_RELEASES = [
     'إعدادات الكاميرا: عنوان جهاز الكاميرات واسم المستخدم وكلمة المرور (محفوظة في الجوال فقط)'
   ] },
   { v: '4.1.1', date: '2026-10-02', items: [
-    'صافي المبيعات في الرئيسية مخفي عند فتح التطبيق (••••••) مع زر عين لإظهاره، ويتخفي تاني لما التطبيق يروح للخلفية'
+    'صافي المبيعات في الرئيسية مخفي عند فتح التطبيق (••••••) مع زر عين لإظهاره، ويختفي مجددًا عندما ينتقل التطبيق للخلفية'
   ] },
   { v: '4.1.0', date: '2026-10-02', items: [
     'إقفال اليوم: حساب الدرج (مبيعات − مرتجعات − بطاقة − ديون اليوم + تحصيل نقدي − تسديد نقدي) مقابل المعدود، ويطلع الفرق (مطابق/زيادة/عجز)',
@@ -7606,7 +7615,7 @@ const APP_RELEASES = [
   ] },
   { v: '4.0.0', date: '2026-10-02', items: [
     'النسخة النهائية المعتمدة: مراجعة شاملة لكل الشاشات (54 شاشة) بالوضع العادي والليلي',
-    'نوافذ الإدخال تطلع فوق الكيبورد، وكيبورد أرقام للأسئلة التي تطلب رقم (مثل حد "قرب يخلص")',
+    'نوافذ الإدخال تظهر فوق لوحة المفاتيح، وكيبورد أرقام للأسئلة التي تطلب رقم (مثل حد "أوشك على النفاد")',
     'الوضع الليلي: إصلاح الأزرار الرمادية والبيضاء والنصوص الغامقة والإطارات، وألوان أيقونات الرئيسية',
     'أزرار تصنيف النواقص تنزل سطر بدل ما تنقطع عند الحافة',
     'تنظيف الكود: حذف 5 دوال قديمة غير مستخدمة'
@@ -7687,7 +7696,7 @@ const APP_RELEASES = [
     'إصلاح خطأ "invalid image" عند تصوير إيصال ثاني: القارئ ينتظر لين الكاميرا تجهز فعلًا، والخطأ يظهر فقط إذا فشل 8 ثواني متواصلة'
   ] },
   { v: '2.28.2', date: '2026-10-01', items: [
-    'المبلغ ما عاد يظهر فاضي: إذا قراءة وحدة فقط شافته ومافي تعارض، يتعبّى في شاشة المراجعة للتأكيد',
+    'المبلغ لم يعد يظهر فارغًا: إذا قراءة وحدة فقط شافته ومافي تعارض، يتعبّى في شاشة المراجعة للتأكيد',
     'تسامح مع أخطاء القارئ داخل الأرقام (O بدل 0، l بدل 1)',
     'إصلاح قراءة المبالغ فوق الألف (1,180.000 كانت ممكن تنقرأ 1.180)'
   ] },
@@ -7707,7 +7716,7 @@ const APP_RELEASES = [
     'اختيار خط التطبيق من الإعدادات ← الخط: 10 خطوط عربية احترافية بمعاينة حية (منها خط الآيفون وCairo وTajawal وAlmarai)'
   ] },
   { v: '2.26.0', date: '2026-10-01', items: [
-    'كل الرسائل والتأكيدات صارت بتصميم التطبيق (تطلع من تحت بأيقونة ولون حسب النوع) بدل نوافذ الآيفون الرمادية',
+    'كل الرسائل والتأكيدات صارت بتصميم التطبيق (تظهر من الأسفل بأيقونة ولون حسب النوع) بدل نوافذ الآيفون الرمادية',
     'خط عربي احترافي جديد (IBM Plex Sans Arabic) لكل التطبيق',
     'الوضع الليلي: المربعات الملونة الفاتحة صارت بدرجات داكنة مريحة للعين',
     'أيقونة بدل الرمز النصي في زر الحذف، وتحميل لامع بدل "جاري التحميل"'
@@ -7770,7 +7779,7 @@ const APP_RELEASES = [
     'سجل مباشر للتحديث مثل شاشة الكمبيوتر: النجاح بالأخضر والأخطاء بالأحمر، مع زر نسخ السجل',
     'الكاشير يفحص الملف (البصمة وصياغة الكود ورقم الإصدار) قبل التركيب، ويحتفظ بنسخة من السابق',
     'رجوع تلقائي للنسخة السابقة إذا الجديدة ما اشتغلت، مع تنبيه على تليجرام',
-    'عرض إصدار السكريبت الشغال في حول التطبيق'
+    'عرض إصدار السكريبت العامل في حول التطبيق'
   ] },
   { v: '2.16.0', date: '2026-09-30', items: [
     'تبويب الأرباح في التقارير: صافي الربح بعد الخصومات والمرتجعات وخسائر التالف، بدقة 100% من تكلفة وقت البيع',
@@ -7800,7 +7809,7 @@ const APP_RELEASES = [
   ] },
   { v: '2.12.0', date: '2026-09-29', items: [
     'زر "المنتجات" في الشريط السفلي أصبح "مركز الأصناف": بحث وكاميرا واختصارات وفلاتر في شاشة واحدة',
-    'فلاتر بأعدادها: نفدت، قربت تخلص (الحد قابل للتغيير)، سعر البيع صفر، ومشاكل التسعير',
+    'فلاتر بأعدادها: نفدت، أوشكت على النفاد (الحد قابل للتغيير)، سعر البيع صفر، ومشاكل التسعير',
     'الضغط على أي صنف يفتح بطاقة الصنف مباشرة',
     'مكان جاهز لجرد RFID مستقبلًا'
   ] },
@@ -8042,7 +8051,7 @@ function openAttendanceLog() {
   }).catch(err => { body.innerHTML = '<div class="emptyMsg">حدثت مشكلة وقت التحميل: ' + (err && err.message ? err.message : err) + '</div>'; });
 }
 
-// التطبيق بيفضل مسجل دخول في الخلفية (Firebase) حتى البيانات تفضل شغالة،
+// التطبيق بيفضل مسجل دخول في الخلفية (Firebase) حتى البيانات تفضل تعمل،
 // لكن الشاشة بتتقفل في كل مرة تفتح فيها التطبيق ولازم كلمة المرور أو بصمة الوجه تاني - مفيش دخول تلقائي.
 let appUnlockedThisSession = false;
 
@@ -8060,7 +8069,7 @@ window.addEventListener('resize', updateNavbarOffset);
 // resize:none بيوقف تصغير الشاشة خالص لما الكيبورد يفتح، فبدل ما آبل تحرك المحتوى تلقائي
 // بنتأكد إحنا إن الحقل الذي المستخدم بيكتب فيه يفضل ظاهر فوق الكيبورد.
 // شاشة الدخول (#loginScreen) ثابتة بـ position:fixed، فـ scrollIntoView مالهاش تأثير عليها -
-// بنضيفلها مساحة فاضية تحت بمقاس الكيبورد بدل كده، فالبطاقة تتزحزح لفوق داخل المساحة المتبقية.
+// بنضيفلها مساحة فارغة تحت بمقاس الكيبورد بدل كده، فالبطاقة تتزحزح لفوق داخل المساحة المتبقية.
 if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.Keyboard) {
   const Keyboard = window.Capacitor.Plugins.Keyboard;
   Keyboard.addListener('keyboardWillShow', (info) => {
@@ -8079,7 +8088,7 @@ if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.is
     document.body.classList.remove('keyboard-open');
   });
 }
-// نحرّك الحقل فقط إذا فعلاً هيتغطي بالكيبورد (مفيد للحقول جوه المودالات القابلة للسكرول -
+// نحرّك الحقل فقط إذا فعلاً هيتغطي بالكيبورد (مفيد للحقول جوه المودالات القابلة للالتمرير -
 // إذا أصلاً ظاهر كويس منسيبه ثابت كما هو حتى الكيرسر يفضل متطابق مع مكان الصندوق بالظبط)
 function scrollIntoViewIfCovered(el, keyboardHeight) {
   const rect = el.getBoundingClientRect();
@@ -8401,7 +8410,7 @@ function getCashierState() {
   if (!navigator.onLine) return { color:'#DC2626', bg:'#FEF2F2', title:'الجوال مقطوع عن النت', reason:'التطبيق غير قادر على الوصول للبيانات.', fix:'شغّل الواي فاي أو بيانات الجوال.' };
   if (!scriptStatus || !scriptStatus.lastSeen) return { color:'#64748B', bg:'#F1F5F9', title:'لم تصل أي نبضة بعد من الكاشير', reason:'السكريبت الجديد لم يعمل بعد على الكمبيوتر.', fix:'شغّل ملف StoreSalesAlert.ps1 الجديد على جهاز الكاشير.' };
   const sec = Math.max(0, (Date.now() + serverTimeOffset - scriptStatus.lastSeen) / 1000);
-  if (sec > 60 && typeof guardianOnline === 'function' && guardianOnline()) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت متوقف — الحارس متصل (اضغط للتحكم)', reason:'الكمبيوتر شغال ومتصل، لكن السكريبت الأساسي ما يرد. الحارس يعيد تشغيله تلقائيًا خلال دقايق.', fix:'تقدر تضغط "إعادة تشغيل السكريبت" تحت الحين بدل ما تنتظر.' };
+  if (sec > 60 && typeof guardianOnline === 'function' && guardianOnline()) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت متوقف — الحارس متصل (اضغط للتحكم)', reason:'الكمبيوتر يعمل ومتصل، لكن السكريبت الأساسي ما يرد. الحارس يعيد تشغيله تلقائيًا خلال دقايق.', fix:'تقدر تضغط "إعادة تشغيل السكريبت" تحت الحين بدل ما تنتظر.' };
   if (sec > 60) return { color:'#DC2626', bg:'#FEF2F2', title:'الكاشير غير متصل — آخر اتصال ' + ageText(sec), reason:'جهاز الكاشير مقطوع عن النت، أو الكمبيوتر مطفأ، أو نافذة السكريبت أُغلقت.', fix:'تأكد أن الكمبيوتر يعمل ومتصل بالنت. السكريبت يعمل مخفيًا تلقائيًا مع الكمبيوتر - إن لم يعمل، أعد تشغيل الكمبيوتر أو شغّل أمر run.txt. التعديلات محفوظة وبتتنفذ فور عودته.' };
   if (scriptStatus.dbOk === false) return { color:'#D97706', bg:'#FFFBEB', title:'السكريبت يعمل لكن قاعدة البيانات لا تستجيب', reason:scriptStatus.dbError || 'سبب غير معروف', fix:scriptStatus.dbFix || 'افتح برنامج الكاشير وتأكد أنه يعمل.' };
   return { color:'#16A34A', bg:'#F0FDF4', title:'الكاشير متصل وكل شيء يعمل', reason:'', fix:'' };
@@ -8429,7 +8438,7 @@ function backupStatusHtml() {
   const days = (Date.now() - d.getTime()) / 86400000;
   const when = isNaN(d) ? String(b.at) : d.toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
   if (!b.ok) return box('#FEF2F2', '#B91C1C', 'فشلت آخر نسخة احتياطية (' + escapeHtml(when) + ')<div style="font-weight:600;color:#1E293B;">' + escapeHtml(b.msg || '') + '</div><div style="font-weight:600;color:#1E293B;">تُعاد تلقائيًا كل ساعة - التفاصيل في قائمة الأخطاء بالأسفل.</div>');
-  if (days > 2) return box('#FEF3C7', '#92400E', 'آخر نسخة احتياطية من ' + Math.floor(days) + ' أيام (' + escapeHtml(when) + ') - تأكد إن كمبيوتر الكاشير يشتغل والسكريبت شغال');
+  if (days > 2) return box('#FEF3C7', '#92400E', 'آخر نسخة احتياطية من ' + Math.floor(days) + ' أيام (' + escapeHtml(when) + ') - تأكد أن كمبيوتر الكاشير يشتغل والسكريبت يعمل');
   return box('#F0FDF4', '#15803D', 'آخر نسخة احتياطية: ' + escapeHtml(when) + ' · ' + (b.sizeMb || 0) + ' ميجا' + (b.telegram ? ' · أُرسلت لتليجرام' : ' · <span style="color:#B45309;">لم تُرسل لتليجرام</span>'));
 }
 
@@ -9857,7 +9866,7 @@ async function attemptCardReceiptOcrScan() {
     const statusEl = document.getElementById('cardReceiptOcrStatus');
     if (foundCount >= 2) {
       playFeedback('deposit'); // لقينا الإيصال - قراءة ناجحة
-      if (statusEl) statusEl.textContent = 'لقيت الإيصال - جاري التحليل الدقيق...';
+      if (statusEl) statusEl.textContent = 'عُثر على الإيصال - جارٍ التحليل الدقيق...';
       await finalizeCardReceiptCapture(video, guide, quick);
     } else {
       if (statusEl) statusEl.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-left:4px;"><path d="M3 12a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6"/></svg> وجّه الكاميرا على الإيصال كامل داخل الإطار';
@@ -9886,7 +9895,7 @@ async function attemptCardReceiptOcrScan() {
 async function nativeVisionOcrProcess(canvas) {
   const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Ocr;
   if (!plugin || typeof plugin.process !== 'function') return null;
-  // صورة فاضية (الكاميرا لسه بتفتح) = مفيش حاجة نقراها - ما نبعتهاش للقارئ حتى لا يرجعش "invalid image"
+  // صورة فارغة (الكاميرا لسه بتفتح) = مفيش حاجة نقراها - ما نبعتهاش للقارئ حتى لا يرجعش "invalid image"
   if (!canvas || canvas.width < 40 || canvas.height < 40) return null;
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
   if (!dataUrl || dataUrl.length < 2000) return null;
@@ -9926,7 +9935,7 @@ function voteReceiptKeyFields(fieldsAll, merged) {
     } else {
       pending.push(k);
       if (second) merged[k] = { value: null, raw_value: src[top].raw_value, confidence: 0, verified: false, needs_review: true, bbox: null, votes: 'تعارض' };
-      // قيمة وحدة بس، وما في أي قراءة شافت قيمة مختلفة: نعبّيها للمراجعة بدل ما الخانة تطلع فاضية
+      // قيمة وحدة بس، وما في أي قراءة شافت قيمة مختلفة: نعبّيها للمراجعة بدل ما الخانة تطلع فارغة
       else if (top) merged[k] = { value: top, raw_value: src[top].raw_value, confidence: 70, verified: false, needs_review: true, bbox: src[top].bbox || null, votes: '1/' + fieldsAll.length };
     }
   });
@@ -10204,7 +10213,7 @@ function extractReceiptFields(ocrData) {
     else if (veryShortMatches.length > 1) found.receipt_number = { raw_value: null, confidence: 0, bbox: null, ambiguous: true };
   }
 
-  // نوع المعاملة: عربي، من قاموس مغلق فقط - إذا غير متطابق تمامًا بنسيبه فاضي بدل ما نخمن
+  // نوع المعاملة: عربي، من قاموس مغلق فقط - إذا غير متطابق تمامًا بنسيبه فارغ بدل ما نخمن
   const typeWhitelist = ['شراء', 'استرجاع', 'الغاء', 'إلغاء'];
   const typeHit = typeWhitelist.find(w => fullText.includes(w));
   if (typeHit) claim('transaction_type', typeHit, 70, findLineInfoContaining(lines, typeHit));
@@ -10222,7 +10231,7 @@ function findLineInfoContaining(lines, needle) {
     if (line.text && line.text.replace(/\s/g, '').includes(cleanNeedle)) {
       return {
         // Apple Vision غير بترجع مكان كل سطر (bbox) مثل Tesseract - إذا مفيش bbox أصلًا نرجّع null
-        // بدل ما نحاول نقرا x0/y0 من حاجة فاضية ويحصل كراش يوقف القراءة كلها من غير أي تفسير
+        // بدل ما نحاول نقرا x0/y0 من حاجة فارغة ويحصل كراش يوقف القراءة كلها من غير أي تفسير
         bbox: line.bbox ? { x0: line.bbox.x0, y0: line.bbox.y0, x1: line.bbox.x1, y1: line.bbox.y1 } : null,
         confidence: typeof line.confidence === 'number' ? line.confidence : null
       };
@@ -10552,7 +10561,7 @@ function offlineNoteHtml(text) {
   return '<div style="background:#FEF3C7;color:#92400E;font-size:12px;padding:10px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20Z"/><path d="M12 9v5"/><circle cx="12" cy="17" r=".6" fill="#92400E"/></svg> ' + text + '</div>';
 }
 
-// أرشيف يوم واحد فقط - مصفوفة فواتير/مرتجعات (أو فاضية إذا مفيش)
+// أرشيف يوم واحد فقط - مصفوفة فواتير/مرتجعات (أو فارغة إذا مفيش)
 // ============ بيانات متزامنة في الذاكرة (الديون / الإيداعات / الزبائن / ديون المشتريات) ============
 // بدل ما نحمّل المجموعة كلها من جديد كل مرة تنفتح شاشة، بنحمّلها مرة واحدة وبتفضل متزامنة لوحدها
 // (أي تعديل من الجوال هذا أو من جوال تاني بيوصل فورًا). liveOnce بترجع نفس شكل once('value')
@@ -10582,7 +10591,7 @@ function liveOnce(path) {
 // ============ الاستعلام من الكاشير + النسخة المحفوظة (أسرع نتيجة ممكنة) ============
 // - إذا الكاشير مقفول (من النبضة): بندور في النسخة المحفوظة فورًا، ومن غير ما نبعت طلب للكاشير
 //   (حتى لا يتراكمش طلب ينفذه بكرة لما يفتح)
-// - إذا الكاشير شغال: بنعرض نتيجة النسخة المحفوظة فورًا مع "جاري التحديث"، وبنستبدلها بالنتيجة الحية أول ما توصل
+// - إذا الكاشير يعمل: بنعرض نتيجة النسخة المحفوظة فورًا مع "جاري التحديث"، وبنستبدلها بالنتيجة الحية أول ما توصل
 // - الأرشيف بيتحمّل مرة واحدة في الذاكرة، وبعدها بنحدّث الأيام الجديدة فقط
 function cashierLooksOnline() {
   if (!navigator.onLine) return false;
@@ -10681,7 +10690,7 @@ function loadArchiveCache() {
   return archiveCachePromise;
 }
 
-// أرشيف يوم واحد فقط - مصفوفة فواتير/مرتجعات (أو فاضية إذا مفيش)
+// أرشيف يوم واحد فقط - مصفوفة فواتير/مرتجعات (أو فارغة إذا مفيش)
 function fetchArchiveDay(dateStr) {
   if (archiveCache && dateStr >= archiveCacheStart()) return loadArchiveCache().then(c => Object.values(c[dateStr] || {}).filter(Boolean));
   return db.ref('data/dailyArchive/' + dateStr).once('value').then(snap => {
@@ -11037,7 +11046,7 @@ function renderCountDraftBanner() {
     since = ' من ' + dt.toLocaleDateString('ar-EG-u-nu-latn') + ' الساعة ' + dt.toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
   }
   el.innerHTML = `<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:10px 12px;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-    <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> جرد مفتوح${since} — ${n} صنف. العد محفوظ، كمّل من مكان ما وقفت.</span>
+    <span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> جرد مفتوح${since} — ${n} صنف. العد محفوظ، تابع من حيث توقفت.</span>
     <button onclick="cancelInventoryCount()" style="background:var(--surface);color:#DC2626;border:1px solid #FCA5A5;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">إلغاء الجرد</button>
   </div>`;
 }
@@ -11246,7 +11255,7 @@ let itemCardScannerInstance = null;
 let itemCardLastScannedId = null;
 let itemCardLastScanTime = 0;
 
-// زر "رجوع لنتائج البحث": بيظهر فوق تفاصيل الصنف طول ما فيه كلمة بحث، وبيرجع لنفس القايمة ونفس مكان السكرول
+// زر "رجوع لنتائج البحث": بيظهر فوق تفاصيل الصنف طول ما فيه كلمة بحث، وبيرجع لنفس القايمة ونفس مكان الالتمرير
 function backToResultsBarHtml(onclickJs, query) {
   return `<button type="button" class="backToResultsBtn" onclick="${onclickJs}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg><span style="flex-shrink:0;">رجوع لنتائج البحث</span><span class="bq">«${escapeHtml(query)}»</span></button>`;
 }
@@ -13068,7 +13077,7 @@ function rfidLog(msg, kind) { const el = document.getElementById('rfidLog'); if 
 
 async function rfidConnect() {
   try {
-    if (!bleIsNative()) { rfidLog('لازم تفتح من تطبيق الآيفون، مش المتصفح', 'err'); return; }
+    if (!bleIsNative()) { rfidLog('يجب الفتح من تطبيق الآيفون، لا من المتصفح', 'err'); return; }
     const B = await bleLoad();
     await B.initialize();
     rfidLog('بحث عن القارئ...');
@@ -13090,7 +13099,7 @@ async function rfidConnect() {
       });
       try { await B.stopLEScan(); } catch (e) {}
     }
-    if (!target) { rfidLog('ما لقيت القارئ — تأكد إنه شغّال وقريب', 'err'); return; }
+    if (!target) { rfidLog('لم يُعثر على القارئ — تأكد أنه يعمل وقريب', 'err'); return; }
     rfidLog('اتصال بـ ' + target.name + '...');
     await B.connect(target.id, function () { bleState.connected = false; bleState.reading = false; rfidLog('انقطع الاتصال بالقارئ', 'err'); try { renderRfidHub(); } catch (e) {} });
     bleState.deviceId = target.id; bleState.name = target.name;
@@ -13099,7 +13108,7 @@ async function rfidConnect() {
     services.forEach(function (s) { (s.characteristics || []).forEach(function (c) { const p = c.properties || {}; if (p.notify || p.indicate) ncs.push({ svc: s.uuid, uuid: c.uuid }); if (p.writeWithoutResponse || p.write) wcs.push({ svc: s.uuid, uuid: c.uuid, t: p.writeWithoutResponse ? 'wwr' : 'w' }); }); });
     const pick = function (a, p) { return a.find(function (x) { return x.uuid.toLowerCase().indexOf(p) >= 0; }) || a.find(function (x) { return x.svc.toLowerCase().indexOf('ffe0') >= 0; }) || a[0]; };
     const nc = pick(ncs, 'ffe4'), wc = pick(wcs, 'ffe3');
-    if (!nc || !wc) { rfidLog('ما لقيت خصائص القراءة/الكتابة', 'err'); return; }
+    if (!nc || !wc) { rfidLog('لم يُعثر على خصائص القراءة/الكتابة', 'err'); return; }
     bleState.notifyService = nc.svc; bleState.notifyChar = nc.uuid; bleState.writeService = wc.svc; bleState.writeChar = wc.uuid; bleState.writeType = wc.t || 'wwr';
     await B.startNotifications(target.id, nc.svc, nc.uuid, function (dv) { bleOnNotify(dv); });
     bleState.connected = true;
@@ -13139,6 +13148,30 @@ function bleHandleFrame(f) {
 }
 
 /* ---------- مركز RFID ---------- */
+// أيقونات SVG خطّية موحّدة لواجهة RFID (بديل الإيموجي) — تتبع ستايل التطبيق (stroke/currentColor)
+function rfIco(name, size, stroke) {
+  const P = {
+    search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+    list: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M8 11h8M8 16h5"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/>',
+    inventory: '<path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v10"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><polygon points="16 8 10.5 10.5 8 16 13.5 13.5 16 8"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>',
+    radar: '<path d="M5 12a7 7 0 0 1 14 0"/><path d="M8.5 12a3.5 3.5 0 0 1 7 0"/><circle cx="12" cy="12" r="1.3"/>',
+    play: '<polygon points="7 4 20 12 7 20 7 4"/>',
+    stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
+    save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+    restore: '<polyline points="1 4 1 10 7 10"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"/>',
+    power: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    volume: '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  };
+  size = size || 18;
+  return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="' + (stroke || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;flex-shrink:0;">' + (P[name] || '') + '</svg>';
+}
 function openRfidHub() { openModal('rfidHubModal'); renderRfidHub(); }
 function rfidNeedConn() { try { showQuickToast('اتصل بالقارئ أولًا'); } catch (e) {} }
 function renderRfidHub() {
@@ -13150,19 +13183,19 @@ function renderRfidHub() {
     const conn = bleState.connected;
     el.innerHTML = '' +
       '<div style="background:' + (conn ? '#ECFDF5' : '#FEF2F2') + ';border:1px solid ' + (conn ? '#A7F3D0' : '#FECACA') + ';border-radius:14px;padding:14px;margin-bottom:12px;text-align:center;">' +
-        '<div style="font-weight:800;font-size:14px;color:' + (conn ? '#15803D' : '#991B1B') + ';">' + (conn ? '✓ القارئ متصل (' + escapeHtml(bleState.name) + ')' : '✗ القارئ غير متصل') + '</div>' +
+        '<div style="font-weight:800;font-size:14px;color:' + (conn ? '#15803D' : '#991B1B') + ';display:flex;align-items:center;justify-content:center;gap:6px;">' + (conn ? rfIco('check', 16, '#15803D') + 'القارئ متصل (' + escapeHtml(bleState.name) + ')' : rfIco('x', 16, '#991B1B') + 'القارئ غير متصل') + '</div>' +
         (conn ? '<button onclick="rfidDisconnect().then(renderRfidHub)" style="margin-top:8px;background:none;border:none;color:#DC2626;font-weight:700;font-size:12px;cursor:pointer;">قطع الاتصال</button>'
-              : '<button id="rfidConnBtn" onclick="rfidConnect()" style="margin-top:8px;width:100%;background:#2563EB;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;">🔍 ابحث واتصل بالقارئ</button>') +
+              : '<button id="rfidConnBtn" onclick="rfidConnect()" style="margin-top:8px;width:100%;background:#2563EB;color:#fff;border:none;border-radius:10px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('search', 18) + 'ابحث واتصل بالقارئ</button>') +
       '</div>' +
       '<div style="background:var(--surface2);border-radius:14px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-around;text-align:center;">' +
-        '<div><div style="font-size:22px;font-weight:800;color:#2563EB;">' + n + '</div><div style="font-size:11px;color:var(--textMuted);font-weight:700;">تاغ مربوط</div></div>' +
+        '<div><div style="font-size:22px;font-weight:800;color:#2563EB;">' + n + '</div><div style="font-size:11px;color:var(--textMuted);font-weight:700;">وسم مربوط</div></div>' +
         '<div><div style="font-size:22px;font-weight:800;color:#16A34A;">' + Object.keys(byItem).length + '</div><div style="font-size:11px;color:var(--textMuted);font-weight:700;">صنف</div></div>' +
       '</div>' +
-      '<button onclick="rfidViewTags()" style="width:100%;margin-bottom:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">📋 عرض التاغات المربوطة</button>' +
-      '<button onclick="' + (conn ? 'openRfidLink()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#2563EB' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">ربط التاغات بالأصناف</button>' +
-      '<button onclick="' + (conn ? 'openRfidScan()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#16A34A' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">جرد سريع</button>' +
-      '<button onclick="' + (conn ? 'openRfidFind()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#0891B2' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">🔎 ابحث عن تاغ ضايع</button>' +
-      '<button onclick="' + (conn ? 'openRfidSettings()' : 'rfidNeedConn()') + '" style="width:100%;background:' + (conn ? '#475569' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">⚙️ إعدادات الجهاز</button>' +
+      '<button onclick="rfidViewTags()" style="width:100%;margin-bottom:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('list', 18) + 'عرض الوسوم المربوطة</button>' +
+      '<button onclick="' + (conn ? 'openRfidLink()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#2563EB' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('link', 19) + 'ربط الوسوم بالأصناف</button>' +
+      '<button onclick="' + (conn ? 'openRfidScan()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#16A34A' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('inventory', 19) + 'جرد سريع</button>' +
+      '<button onclick="' + (conn ? 'openRfidFind()' : 'rfidNeedConn()') + '" style="width:100%;margin-bottom:10px;background:' + (conn ? '#0891B2' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('compass', 19) + 'ابحث عن وسم مفقود</button>' +
+      '<button onclick="' + (conn ? 'openRfidSettings()' : 'rfidNeedConn()') + '" style="width:100%;background:' + (conn ? '#475569' : '#9CA3AF') + ';color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('settings', 19) + 'إعدادات الجهاز</button>' +
       '<div style="margin-top:12px;font-size:11px;font-weight:800;color:var(--textMuted);">السجل:</div>' +
       '<div id="rfidLog" style="margin-top:6px;background:#0f172a;border-radius:10px;padding:8px;font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;min-height:36px;max-height:140px;overflow:auto;line-height:1.6;"></div>';
   }).catch(function () { el.innerHTML = '<div class="emptyMsg">تعذّر التحميل</div>'; });
@@ -13177,20 +13210,20 @@ function rfidViewTags() {
     Object.keys(tags).forEach(function (epc) { const t = tags[epc]; if (!t || t.itemId == null) return; const id = t.itemId; if (!byItem[id]) byItem[id] = { name: (latestItems['i' + id] && latestItems['i' + id].name) || t.name || 'صنف', epcs: [] }; byItem[id].epcs.push(epc); });
     const ids = Object.keys(byItem);
     let h = '<button onclick="renderRfidHub()" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ رجوع</button>';
-    h += '<div style="font-weight:800;font-size:15px;margin-bottom:10px;">التاغات المربوطة (' + Object.keys(tags).length + ')</div>';
-    if (!ids.length) h += '<div class="emptyMsg">لا يوجد تاغات مربوطة بعد — اربط من «ربط التاغات».</div>';
-    else h += ids.map(function (id) { const g = byItem[id]; return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:800;font-size:14px;">' + escapeHtml(g.name) + '</div><span style="background:#DBEAFE;color:#1D4ED8;font-size:11px;font-weight:800;border-radius:8px;padding:2px 8px;white-space:nowrap;">' + g.epcs.length + ' تاغ</span></div>' + g.epcs.map(function (e) { return '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px;"><span style="font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;color:var(--textMuted);flex:1;min-width:0;word-break:break-all;">' + escapeHtml(e) + '</span><button onclick="rfidDelTagRefresh(\'' + e + '\')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">حذف</button></div>'; }).join('') + '</div>'; }).join('');
+    h += '<div style="font-weight:800;font-size:15px;margin-bottom:10px;">الوسوم المربوطة (' + Object.keys(tags).length + ')</div>';
+    if (!ids.length) h += '<div class="emptyMsg">لا يوجد وسوم مربوطة بعد — اربط من «ربط الوسوم».</div>';
+    else h += ids.map(function (id) { const g = byItem[id]; return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:800;font-size:14px;">' + escapeHtml(g.name) + '</div><span style="background:#DBEAFE;color:#1D4ED8;font-size:11px;font-weight:800;border-radius:8px;padding:2px 8px;white-space:nowrap;">' + g.epcs.length + ' وسم</span></div>' + g.epcs.map(function (e) { return '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px;"><span style="font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;color:var(--textMuted);flex:1;min-width:0;word-break:break-all;">' + escapeHtml(e) + '</span><button onclick="rfidDelTagRefresh(\'' + e + '\')" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">حذف</button></div>'; }).join('') + '</div>'; }).join('');
     el.innerHTML = h;
   }).catch(function () { el.innerHTML = '<div class="emptyMsg">تعذّر التحميل</div>'; });
 }
 function rfidDelTagRefresh(epc) { try { db.ref('data/rfidTags/' + epc).remove(); } catch (e) {} setTimeout(rfidViewTags, 250); }
 
-/* ---------- ربط التاغات ---------- */
+/* ---------- ربط الوسوم ---------- */
 let rfidLinkItem = null, rfidLinkSession = {};
 function openRfidLink() { if (!bleState.connected) { rfidNeedConn(); return; } rfidLinkItem = null; rfidLinkSession = {}; openModal('rfidLinkModal'); renderRfidLinkPick(); }
 function renderRfidLinkPick() {
   const el = document.getElementById('rfidLinkBody');
-  el.innerHTML = '<div style="font-size:13px;color:var(--textMuted);font-weight:700;margin-bottom:8px;">اختر الصنف اللي تبي تربط تاغاته:</div>' +
+  el.innerHTML = '<div style="font-size:13px;color:var(--textMuted);font-weight:700;margin-bottom:8px;">اختر الصنف الذي تريد ربط وسومه:</div>' +
     '<input id="rfidLinkSearch" type="text" placeholder="ابحث بالاسم أو الباركود..." autocomplete="off" oninput="renderRfidLinkResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:16px;font-weight:700;background:var(--surface);color:var(--text);">' +
     '<div id="rfidLinkResults" style="margin-top:8px;"></div>';
   setTimeout(function () { const i = document.getElementById('rfidLinkSearch'); if (i) i.focus(); }, 200);
@@ -13219,8 +13252,8 @@ function renderRfidLinkScan() {
 function renderRfidLinkCtl() {
   const el = document.getElementById('rfidLinkCtl'); if (!el) return;
   el.innerHTML = bleState.reading
-    ? '<button onclick="rfidLinkStop()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;">⏹ إيقاف القراءة</button><div style="text-align:center;color:#15803D;font-size:12px;margin-top:6px;">📡 قرّب التاغات من القارئ...</div>'
-    : '<button onclick="rfidLinkStart()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;">▶ ابدأ قراءة التاغات</button>';
+    ? '<button onclick="rfidLinkStop()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('stop', 18) + 'إيقاف القراءة</button><div style="text-align:center;color:#15803D;font-size:12px;margin-top:6px;">قرّب الوسوم من القارئ...</div>'
+    : '<button onclick="rfidLinkStart()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('play', 18) + 'ابدأ قراءة الوسوم</button>';
 }
 async function rfidLinkStart() { try { await bleStartReading(onRfidLinkTag); renderRfidLinkCtl(); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} } }
 async function rfidLinkStop() { try { await bleStopReading(); } catch (e) {} renderRfidLinkCtl(); }
@@ -13234,8 +13267,8 @@ function onRfidLinkTag(epc) {
 function renderRfidLinkList() {
   const el = document.getElementById('rfidLinkList'); if (!el) return;
   const keys = Object.keys(rfidLinkSession); const cnt = document.getElementById('rfidLinkCount'); if (cnt) cnt.textContent = keys.length;
-  if (!keys.length) { el.innerHTML = '<div style="text-align:center;color:var(--textMuted);font-size:12.5px;padding:10px;">ابدأ القراءة وقرّب التاغات</div>'; return; }
-  el.innerHTML = keys.map(function (epc) { const t = rfidLinkSession[epc]; return '<div class="searchResultRow"><div style="flex:1;min-width:0;"><div class="n" style="font-family:monospace;font-size:11px;direction:ltr;text-align:left;">' + escapeHtml(epc) + '</div></div>' + (t.isNew ? '<span style="color:#16A34A;font-weight:800;font-size:12px;">✓ جديد</span>' : '<span style="color:var(--textMuted);font-weight:700;font-size:12px;">مربوط</span>') + '<button onclick="unlinkRfidTag(\'' + epc + '\')" style="margin-inline-start:8px;background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;">حذف</button></div>'; }).join('');
+  if (!keys.length) { el.innerHTML = '<div style="text-align:center;color:var(--textMuted);font-size:12.5px;padding:10px;">ابدأ القراءة وقرّب الوسوم</div>'; return; }
+  el.innerHTML = keys.map(function (epc) { const t = rfidLinkSession[epc]; return '<div class="searchResultRow"><div style="flex:1;min-width:0;"><div class="n" style="font-family:monospace;font-size:11px;direction:ltr;text-align:left;">' + escapeHtml(epc) + '</div></div>' + (t.isNew ? '<span style="color:#16A34A;font-weight:800;font-size:12px;display:inline-flex;align-items:center;gap:3px;">' + rfIco('check', 13, '#16A34A') + 'جديد</span>' : '<span style="color:var(--textMuted);font-weight:700;font-size:12px;">مربوط</span>') + '<button onclick="unlinkRfidTag(\'' + epc + '\')" style="margin-inline-start:8px;background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;">حذف</button></div>'; }).join('');
 }
 function unlinkRfidTag(epc) { delete rfidLinkSession[epc]; try { db.ref('data/rfidTags/' + epc).remove(); } catch (e) {} renderRfidLinkList(); }
 async function closeRfidLink() { if (bleState.reading) { try { await bleStopReading(); } catch (e) {} } closeModal('rfidLinkModal'); }
@@ -13251,7 +13284,7 @@ function renderRfidScanSetup() {
     rfidScanTagged = Object.values(latestItems || {}).filter(function (it) { return it && rfidScanCounts[it.id] > 0; }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'ar'); });
     let h = '<button onclick="startRfidScanFull()" style="width:100%;margin-bottom:12px;background:#16A34A;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">جرد كامل المحل</button>' +
       '<div style="text-align:center;color:var(--textMuted);font-size:12px;margin:4px 0 10px;">— أو جرد صنف معيّن —</div>';
-    if (!rfidScanTagged.length) h += '<div class="emptyMsg">لا يوجد أصناف مربوطة بعد — اربط من «ربط التاغات».</div>';
+    if (!rfidScanTagged.length) h += '<div class="emptyMsg">لا يوجد أصناف مربوطة بعد — اربط من «ربط الوسوم».</div>';
     else h += '<input id="rfidScanSearch" type="text" placeholder="ابحث عن صنف..." autocomplete="off" oninput="renderRfidScanResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:16px;font-weight:700;background:var(--surface);color:var(--text);"><div id="rfidScanResults" style="margin-top:8px;"></div>';
     el.innerHTML = h; if (rfidScanTagged.length) renderRfidScanResults();
   });
@@ -13261,13 +13294,13 @@ function renderRfidScanResults() {
   const raw = ((document.getElementById('rfidScanSearch') || {}).value || '').trim(); const nq = normalizeArabicName(raw);
   const list = (raw ? rfidScanTagged.filter(function (it) { return normalizeArabicName(it.name || '').includes(nq) || (it.barcode && String(it.barcode) === raw); }) : rfidScanTagged).slice(0, 40);
   if (!list.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد صنف</div>'; return; }
-  el.innerHTML = list.map(function (it) { return '<div class="searchResultRow" onclick="startRfidScanItem(' + it.id + ')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(it.name || '') + '</div><div class="p">المخزون ' + Number(it.stock || 0) + ' · ' + (rfidScanCounts[it.id] || 0) + ' تاغ</div></div><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>'; }).join('');
+  el.innerHTML = list.map(function (it) { return '<div class="searchResultRow" onclick="startRfidScanItem(' + it.id + ')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(it.name || '') + '</div><div class="p">المخزون ' + Number(it.stock || 0) + ' · ' + (rfidScanCounts[it.id] || 0) + ' وسم</div></div><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>'; }).join('');
 }
 function startRfidScanFull() { rfidScanMode = 'full'; rfidScanItem = null; beginRfidScan(); }
 function startRfidScanItem(id) { rfidScanItem = latestItems['i' + id]; rfidScanMode = 'item'; beginRfidScan(); }
 async function beginRfidScan() {
   rfidScanFound = {}; const el = document.getElementById('rfidScanBody');
-  el.innerHTML = '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;"><div style="font-weight:800;color:#15803D;font-size:15px;">📡 جاري الجرد' + (rfidScanMode === 'item' && rfidScanItem ? ' — ' + escapeHtml(rfidScanItem.name) : ' (كامل المحل)') + '</div><div style="font-size:12px;color:#166534;margin-top:4px;">امشِ في المحل وخلّي القارئ يقرأ</div><div style="font-size:40px;font-weight:800;color:#16A34A;margin-top:10px;" id="rfidScanCount">0</div><div style="font-size:11px;color:#166534;">تاغ مقروء</div></div>' +
+  el.innerHTML = '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;"><div style="font-weight:800;color:#15803D;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px;">' + rfIco('radar', 18, '#15803D') + 'جاري الجرد' + (rfidScanMode === 'item' && rfidScanItem ? ' — ' + escapeHtml(rfidScanItem.name) : ' (كامل المحل)') + '</div><div style="font-size:12px;color:#166534;margin-top:4px;">تجوّل في المتجر ودَع القارئ يلتقط الوسوم</div><div style="font-size:40px;font-weight:800;color:#16A34A;margin-top:10px;" id="rfidScanCount">0</div><div style="font-size:11px;color:#166534;">وسم مقروء</div></div>' +
     '<button onclick="finishRfidScan()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">إنهاء الجرد وعرض التقرير</button>';
   try { await bleStartReading(onRfidScanTag); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} }
 }
@@ -13308,37 +13341,37 @@ async function finishRfidScan() {
       '<div style="flex:1;background:#F0FDF4;border-radius:12px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#16A34A;">' + okN + '</div><div style="font-size:10.5px;color:#15803D;font-weight:700;">مطابق</div></div>' +
       '<div style="flex:1;background:#FEF2F2;border-radius:12px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#DC2626;">' + missN + '</div><div style="font-size:10.5px;color:#DC2626;font-weight:700;">ناقص</div></div>' +
       '<div style="flex:1;background:#FFFBEB;border-radius:12px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#D97706;">' + extraN + '</div><div style="font-size:10.5px;color:#D97706;font-weight:700;">زائد</div></div></div>';
-    h += '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.8;">تاغات مقروءة: <b>' + found.length + '</b>' + (rfidScanMode === 'full' ? ' · أصناف مجهّزة: <b>' + rows.length + '</b> · بدون تاغات: <b>' + untagged.length + '</b>' : '') + (unknown.length ? ' · غير معروفة: <b>' + unknown.length + '</b>' : '') + '</div>';
-    if (!rows.length) h += '<div class="emptyMsg">لا يوجد أصناف مربوطة بتاغات</div>';
+    h += '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.8;">وسوم مقروءة: <b>' + found.length + '</b>' + (rfidScanMode === 'full' ? ' · أصناف مجهّزة: <b>' + rows.length + '</b> · بدون وسوم: <b>' + untagged.length + '</b>' : '') + (unknown.length ? ' · غير معروفة: <b>' + unknown.length + '</b>' : '') + '</div>';
+    if (!rows.length) h += '<div class="emptyMsg">لا يوجد أصناف مربوطة بوسوم</div>';
     h += rows.map(function (r) {
       const rid = 'rr_' + r.id;
-      const note = r.linked < r.stock ? '<div style="font-size:10.5px;color:#D97706;margin-top:2px;">\u26a0 ' + (r.stock - r.linked) + ' قطعة بدون تاغ (غير محسوبة)</div>' : '';
+      const note = r.linked < r.stock ? '<div style="font-size:10.5px;color:#D97706;margin-top:2px;">\u26a0 ' + (r.stock - r.linked) + ' قطعة بدون وسم (غير محسوبة)</div>' : '';
       const canExpand = r.missingTags.length > 0;
       let row = '<div class="searchResultRow"' + (canExpand ? ' onclick="rfidToggle(\'' + rid + '\')" style="cursor:pointer;"' : '') + '><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(r.name) + (canExpand ? ' <span style="font-size:10px;color:#DC2626;">\u25be المفقود</span>' : '') + '</div><div class="p">الموجود ' + r.found + ' / المخزون ' + r.stock + '</div>' + note + '</div><span style="font-weight:800;font-size:12.5px;color:' + r.color + ';white-space:nowrap;">' + r.status + '</span></div>';
-      if (canExpand) row += '<div id="' + rid + '" style="display:none;background:#FEF2F2;border-radius:10px;padding:8px 10px;margin:-4px 0 8px;"><div style="font-size:11px;font-weight:800;color:#991B1B;margin-bottom:4px;">تاغات مفقودة (مربوطة وما انقرأت — دوّر عليها):</div>' + r.missingTags.map(function (e) { return '<div style="font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;color:#991B1B;word-break:break-all;">' + escapeHtml(e) + '</div>'; }).join('') + '</div>';
+      if (canExpand) row += '<div id="' + rid + '" style="display:none;background:#FEF2F2;border-radius:10px;padding:8px 10px;margin:-4px 0 8px;"><div style="font-size:11px;font-weight:800;color:#991B1B;margin-bottom:4px;">وسوم مفقودة (مربوطة ولم تُقرأ — ابحث عنها):</div>' + r.missingTags.map(function (e) { return '<div style="font-family:monospace;font-size:10.5px;direction:ltr;text-align:left;color:#991B1B;word-break:break-all;">' + escapeHtml(e) + '</div>'; }).join('') + '</div>';
       return row;
     }).join('');
-    if (untagged.length) { h += '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:#64748B;">أصناف بدون تاغات — لم تُجرد (' + untagged.length + ')</div><div style="font-size:11px;color:var(--textMuted);margin:4px 0 6px;line-height:1.7;">ما عندهاش تاغات فما دخلتش الجرد. جهّزها من «ربط التاغات».</div>' + untagged.slice(0, 30).map(function (it) { return '<div class="searchResultRow"><div class="n">' + escapeHtml(it.name || '') + '</div><span style="color:var(--textMuted);font-size:11px;white-space:nowrap;">مخزون ' + Number(it.stock || 0) + '</span></div>'; }).join('') + (untagged.length > 30 ? '<div style="font-size:11px;color:var(--textMuted);padding:4px;">… و' + (untagged.length - 30) + ' غيرها</div>' : ''); }
-    if (unknown.length) { h += '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:#7C3AED;">تاغات غير مربوطة (' + unknown.length + ')</div><div style="font-size:11px;color:var(--textMuted);margin:4px 0 6px;">قُرئت تاغات مش مربوطة بأي صنف — اربطها من «ربط التاغات».</div>' + unknown.slice(0, 20).map(function (e) { return '<div style="font-family:monospace;font-size:11px;direction:ltr;text-align:left;color:var(--textMuted);padding:2px 0;word-break:break-all;">' + escapeHtml(e) + '</div>'; }).join(''); }
+    if (untagged.length) { h += '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:#64748B;">أصناف بدون وسوم — لم تُجرد (' + untagged.length + ')</div><div style="font-size:11px;color:var(--textMuted);margin:4px 0 6px;line-height:1.7;">ما عندهاش وسوم فما دخلتش الجرد. جهّزها من «ربط الوسوم».</div>' + untagged.slice(0, 30).map(function (it) { return '<div class="searchResultRow"><div class="n">' + escapeHtml(it.name || '') + '</div><span style="color:var(--textMuted);font-size:11px;white-space:nowrap;">مخزون ' + Number(it.stock || 0) + '</span></div>'; }).join('') + (untagged.length > 30 ? '<div style="font-size:11px;color:var(--textMuted);padding:4px;">… و' + (untagged.length - 30) + ' غيرها</div>' : ''); }
+    if (unknown.length) { h += '<div style="margin-top:16px;font-size:12.5px;font-weight:800;color:#7C3AED;">وسوم غير مربوطة (' + unknown.length + ')</div><div style="font-size:11px;color:var(--textMuted);margin:4px 0 6px;">قُرئت وسوم غير مربوطة بأي صنف — اربطها من «ربط الوسوم».</div>' + unknown.slice(0, 20).map(function (e) { return '<div style="font-family:monospace;font-size:11px;direction:ltr;text-align:left;color:var(--textMuted);padding:2px 0;word-break:break-all;">' + escapeHtml(e) + '</div>'; }).join(''); }
     h += '<button onclick="renderRfidScanSetup()" style="width:100%;margin-top:16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">جرد جديد</button>';
     el.innerHTML = h;
   });
 }
-/* ---------- البحث عن تاغ ضايع (رادار RSSI) ---------- */
+/* ---------- البحث عن وسم مفقود (رادار RSSI) ---------- */
 let finderState = null, finderAllTags = {}, finderAudio = null;
 function finderBeep(freq) { try { if (!finderAudio) finderAudio = new (window.AudioContext || window.webkitAudioContext)(); const o = finderAudio.createOscillator(), g = finderAudio.createGain(); o.frequency.value = freq; o.connect(g); g.connect(finderAudio.destination); const t = finderAudio.currentTime; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08); o.start(t); o.stop(t + 0.09); } catch (e) {} }
 function openRfidFind() { if (!bleState.connected) { rfidNeedConn(); return; } openModal('rfidFindModal'); const el = document.getElementById('rfidFindBody'); el.innerHTML = skeletonHtml(); liveOnce('data/rfidTags').then(function (s) { finderAllTags = s.val() || {}; renderRfidFindSetup(); }); }
 function renderRfidFindSetup() {
   const el = document.getElementById('rfidFindBody');
-  el.innerHTML = '<div style="font-size:13px;color:var(--textMuted);font-weight:700;margin-bottom:12px;">شنو تدوّر عليه؟</div>' +
-    '<button onclick="rfidFindItemPick()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">🔎 صنف معيّن ضايع</button>' +
-    '<button onclick="rfidFindAny()" style="width:100%;background:#0891B2;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">📡 أي تاغ قريب (وقع مني شي)</button>' +
-    '<div style="font-size:11.5px;color:var(--textMuted);margin-top:14px;line-height:1.8;">المؤشّر يزيد كل ما تقرب من التاغ، والاهتزاز/الصوت يتسارع. امشِ ناحية الإشارة الأقوى.</div>';
+  el.innerHTML = '<div style="font-size:13px;color:var(--textMuted);font-weight:700;margin-bottom:12px;">ما الذي تبحث عنه؟</div>' +
+    '<button onclick="rfidFindItemPick()" style="width:100%;margin-bottom:10px;background:#2563EB;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('search', 18) + 'صنف معيّن مفقود</button>' +
+    '<button onclick="rfidFindAny()" style="width:100%;background:#0891B2;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('radar', 18) + 'أي وسم قريب (فقدتُ شيئًا)</button>' +
+    '<div style="font-size:11.5px;color:var(--textMuted);margin-top:14px;line-height:1.8;">يزداد المؤشّر كلما اقتربت من الوسم، ويتسارع الاهتزاز والصوت. اتّجه نحو الإشارة الأقوى.</div>';
 }
 function rfidFindItemPick() {
   const el = document.getElementById('rfidFindBody');
   el.innerHTML = '<button onclick="renderRfidFindSetup()" style="background:none;border:none;color:#2563EB;font-weight:800;font-size:13px;cursor:pointer;padding:0 0 10px;">‹ رجوع</button>' +
-    '<input id="rfidFindSearch" type="text" placeholder="ابحث عن الصنف الضايع..." autocomplete="off" oninput="renderRfidFindResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:16px;font-weight:700;background:var(--surface);color:var(--text);">' +
+    '<input id="rfidFindSearch" type="text" placeholder="ابحث عن الصنف المفقود..." autocomplete="off" oninput="renderRfidFindResults()" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:16px;font-weight:700;background:var(--surface);color:var(--text);">' +
     '<div id="rfidFindResults" style="margin-top:8px;"></div>';
   setTimeout(function () { const i = document.getElementById('rfidFindSearch'); if (i) i.focus(); }, 200);
 }
@@ -13348,11 +13381,11 @@ function renderRfidFindResults() {
   const raw = ((document.getElementById('rfidFindSearch') || {}).value || '').trim(); if (!raw) { el.innerHTML = ''; return; }
   const nq = normalizeArabicName(raw);
   const list = Object.values(latestItems || {}).filter(function (it) { return it && finderItemTags(it.id).length > 0 && (normalizeArabicName(it.name || '').includes(nq) || (it.barcode && String(it.barcode) === raw)); }).slice(0, 40);
-  if (!list.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد صنف مربوط بتاغات بهذا الاسم</div>'; return; }
-  el.innerHTML = list.map(function (it) { return '<div class="searchResultRow" onclick="rfidFindStartItem(' + it.id + ')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(it.name || '') + '</div><div class="p">' + finderItemTags(it.id).length + ' تاغ</div></div><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>'; }).join('');
+  if (!list.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد صنف مربوط بوسوم بهذا الاسم</div>'; return; }
+  el.innerHTML = list.map(function (it) { return '<div class="searchResultRow" onclick="rfidFindStartItem(' + it.id + ')" style="cursor:pointer;"><div style="flex:1;min-width:0;"><div class="n">' + escapeHtml(it.name || '') + '</div><div class="p">' + finderItemTags(it.id).length + ' وسم</div></div><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>'; }).join('');
 }
 function rfidFindStartItem(id) { const it = latestItems['i' + id] || {}; const tset = {}; finderItemTags(id).forEach(function (e) { tset[e] = 1; }); startFinder(tset, it.name || 'الصنف', 'item'); }
-function rfidFindAny() { startFinder(null, 'أي تاغ', 'any'); }
+function rfidFindAny() { startFinder(null, 'أي وسم', 'any'); }
 async function startFinder(targets, label, mode) {
   finderState = { targets: targets, label: label, mode: mode, lockEpc: null, smooth: null, min: null, max: null, last: 0, nearest: {}, tick: 0, timer: null };
   const el = document.getElementById('rfidFindBody');
@@ -13361,7 +13394,7 @@ async function startFinder(targets, label, mode) {
     '<div style="background:var(--surface2);border-radius:18px;height:26px;overflow:hidden;margin-bottom:10px;"><div id="finderBar" style="height:100%;width:0%;background:#DC2626;transition:width .15s,background .2s;"></div></div>' +
     '<div style="text-align:center;"><div id="finderPct" style="font-size:52px;font-weight:800;color:#DC2626;line-height:1;">0</div><div id="finderText" style="font-size:16px;font-weight:800;margin-top:6px;color:var(--textMuted);">ابحث...</div><div id="finderRssi" style="font-size:11px;color:var(--textMuted);margin-top:4px;"></div></div>' +
     '<div id="finderLock" style="margin-top:12px;"></div>' +
-    '<button onclick="finderStop(false)" style="width:100%;margin-top:14px;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;">⏹ إيقاف البحث</button>';
+    '<button onclick="finderStop(false)" style="width:100%;margin-top:14px;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('stop', 17) + 'إيقاف البحث</button>';
   try { finderBeep(500); } catch (e) {}
   try { await bleStartReading(onFinderTag); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} }
   finderState.timer = setInterval(updateFinderMeter, 110);
@@ -13399,14 +13432,14 @@ function updateFinderMeter() {
   const col = pct >= 70 ? '#16A34A' : (pct >= 35 ? '#D97706' : '#DC2626');
   if (bar) { bar.style.width = pct + '%'; bar.style.background = col; }
   if (pctEl) { pctEl.textContent = pct; pctEl.style.color = col; }
-  if (txt) { txt.textContent = pct >= 80 ? 'قريب جدًا 🔥' : (pct >= 50 ? 'اقترب أكثر' : (pct >= 25 ? 'في الاتجاه الصح' : 'بعيد 🔻')); txt.style.color = col; }
+  if (txt) { txt.textContent = pct >= 80 ? 'قريب جدًا' : (pct >= 50 ? 'اقترب أكثر' : (pct >= 25 ? 'في الاتجاه الصحيح' : 'بعيد')); txt.style.color = col; }
   if (rssiEl) rssiEl.innerHTML = 'RSSI خام: <b>' + Math.round(cur.rssi) + '</b> · المدى: ' + Math.round(fs.min) + ' … ' + Math.round(fs.max) + (span < 8 ? ' <span style="color:#D97706;">(حرّك قريب وبعيد للمعايرة)</span>' : '');
-  if (nameEl && fs.mode === 'any') nameEl.innerHTML = 'أقرب تاغ: ' + (cur.name ? escapeHtml(cur.name) : '<span style="color:#7C3AED;">غير مربوط</span>');
-  // زر التثبيت في وضع "أي تاغ"
+  if (nameEl && fs.mode === 'any') nameEl.innerHTML = 'أقرب وسم: ' + (cur.name ? escapeHtml(cur.name) : '<span style="color:#7C3AED;">غير مربوط</span>');
+  // زر التثبيت في وضع "أي وسم"
   if (lockEl && fs.mode === 'any') {
     lockEl.innerHTML = fs.lockEpc
-      ? '<button onclick="finderUnlock()" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;">إلغاء التثبيت (رجوع لأي تاغ)</button>'
-      : '<button onclick="finderLockCur()" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;">🎯 ثبّت على هذا التاغ وتتبّعه</button>';
+      ? '<button onclick="finderUnlock()" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;">إلغاء التثبيت (رجوع لأي وسم)</button>'
+      : '<button onclick="finderLockCur()" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">' + rfIco('target', 15) + 'ثبّت على هذا الوسم وتتبّعه</button>';
   }
   // اهتزاز + صوت يتسارع
   fs.tick++;
@@ -13430,7 +13463,7 @@ function bleFrame(body) { const c = bleCrc16(body); return body.concat([(c >> 8)
 function bleCommand(bytes, expectCmd) {
   return new Promise(function (resolve, reject) {
     let done = false;
-    const to = setTimeout(function () { if (!done) { bleRespCb = null; reject(new Error('مهلة — ما ردّ الجهاز')); } }, 2600);
+    const to = setTimeout(function () { if (!done) { bleRespCb = null; reject(new Error('مهلة — لم يردّ الجهاز')); } }, 2600);
     bleRespCb = function (cmd, f) { if (expectCmd == null || cmd === expectCmd) { done = true; clearTimeout(to); bleRespCb = null; resolve(f); } };
     bleWrite(bytes).catch(function (e) { clearTimeout(to); bleRespCb = null; reject(e); });
   });
@@ -13443,15 +13476,15 @@ function renderRfidSettings() {
       '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">أوضاع جاهزة بضغطة</div>' +
       '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:12px;line-height:1.7;">كل زر يضبط القوة + Q + الجلسة دفعة واحدة حسب المهمة.</div>' +
       '<div style="display:flex;flex-direction:column;gap:9px;">' +
-        '<button onclick="rfidApplyMode(\'scan\')" style="width:100%;background:#0F766E;color:#fff;border:none;border-radius:12px;padding:12px 14px;text-align:right;cursor:pointer;"><div style="font-weight:800;font-size:14px;">🧮 وضع الجرد</div><div style="font-size:11px;opacity:.9;margin-top:2px;">لجرد عدد كبير بسرعة · قوة 26 · Q5 · S1</div></button>' +
-        '<button onclick="rfidApplyMode(\'link\')" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:12px 14px;text-align:right;cursor:pointer;"><div style="font-weight:800;font-size:14px;">🔗 ربط تاغ لصنف</div><div style="font-size:11px;opacity:.9;margin-top:2px;">قراءة قريبة دقيقة لتاغ واحد · قوة 5 · Q0 · S0</div></button>' +
-        '<button onclick="rfidApplyMode(\'find\')" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:12px;padding:12px 14px;text-align:right;cursor:pointer;"><div style="font-weight:800;font-size:14px;">🧭 وضع البحث عن تاغ ضايع</div><div style="font-size:11px;opacity:.9;margin-top:2px;">التاغ يرد باستمرار للرادار · قوة 20 · Q2 · S0</div></button>' +
+        '<button onclick="rfidApplyMode(\'scan\')" style="width:100%;background:#0F766E;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:right;"><span style="flex-shrink:0;">' + rfIco('inventory', 22) + '</span><span style="flex:1;"><span style="display:block;font-weight:800;font-size:14px;">وضع الجرد</span><span style="display:block;font-size:11px;opacity:.9;margin-top:2px;">لجرد عدد كبير بسرعة · قوة 26 · Q5 · S1</span></span></button>' +
+        '<button onclick="rfidApplyMode(\'link\')" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:right;"><span style="flex-shrink:0;">' + rfIco('link', 22) + '</span><span style="flex:1;"><span style="display:block;font-weight:800;font-size:14px;">ربط وسم لصنف</span><span style="display:block;font-size:11px;opacity:.9;margin-top:2px;">قراءة قريبة دقيقة لوسم واحد · قوة 5 · Q0 · S0</span></span></button>' +
+        '<button onclick="rfidApplyMode(\'find\')" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:right;"><span style="flex-shrink:0;">' + rfIco('compass', 22) + '</span><span style="flex:1;"><span style="display:block;font-weight:800;font-size:14px;">وضع البحث عن وسم مفقود</span><span style="display:block;font-size:11px;opacity:.9;margin-top:2px;">الوسم يرد باستمرار للرادار · قوة 20 · Q2 · S0</span></span></button>' +
       '</div>' +
       '<div id="rfidModeMsg" style="font-size:12.5px;font-weight:700;margin-top:10px;text-align:center;"></div>' +
     '</div>' +
     '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">' +
       '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">قوة القراءة</div>' +
-      '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">قوة قليلة = قراءة قريبة دقيقة (للربط والبحث عن تاغ ملتصق). قوة قصوى = مدى أبعد (للجرد).</div>' +
+      '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">قوة قليلة = قراءة قريبة دقيقة (للربط والبحث عن وسم ملتصق). قوة قصوى = مدى أبعد (للجرد).</div>' +
       '<input id="rfidPwr" type="range" min="1" max="26" value="20" oninput="document.getElementById(\'rfidPwrV\').textContent=this.value" style="width:100%;">' +
       '<div style="text-align:center;font-weight:800;font-size:18px;margin:6px 0;"><span id="rfidPwrV">20</span> dBm</div>' +
       '<div style="display:flex;gap:6px;margin-bottom:10px;">' +
@@ -13475,10 +13508,10 @@ function renderRfidSettings() {
     '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;">' +
       '<div style="font-weight:800;font-size:14px;margin-bottom:4px;">النسخة الاحتياطية (أمان)</div>' +
       '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">احفظ كل إعدادات الجهاز الحالية؛ تقدر ترجّعها كما هي أي وقت.</div>' +
-      '<button onclick="rfidBackup()" style="width:100%;margin-bottom:8px;background:#2563EB;color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;">💾 احفظ نسخة احتياطية الآن</button>' +
+      '<button onclick="rfidBackup()" style="width:100%;margin-bottom:8px;background:#2563EB;color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('save', 16) + 'احفظ نسخة احتياطية الآن</button>' +
       '<div id="rfidBackupInfo" style="font-size:11.5px;color:var(--textMuted);margin-bottom:8px;text-align:center;">—</div>' +
       '<div id="rfidParamDump" style="font-family:monospace;font-size:9.5px;direction:ltr;text-align:left;color:var(--textMuted);word-break:break-all;margin-bottom:8px;"></div>' +
-      '<button id="rfidRestoreBtn" onclick="rfidRestoreBackup()" style="display:none;width:100%;margin-bottom:8px;background:#16A34A;color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;">↩ استعادة النسخة الاحتياطية</button>' +
+      '<button id="rfidRestoreBtn" onclick="rfidRestoreBackup()" style="display:none;width:100%;margin-bottom:8px;background:#16A34A;color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;align-items:center;justify-content:center;gap:8px;">' + rfIco('restore', 16) + 'استعادة النسخة الاحتياطية</button>' +
       '<button onclick="rfidRestoreFactory()" style="width:100%;background:#FEE2E2;color:#DC2626;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:13px;cursor:pointer;">إعادة ضبط المصنع</button>' +
     '</div>' +
     '<div id="rfidSetMsg" style="margin-top:10px;font-size:12.5px;font-weight:700;text-align:center;"></div>';
@@ -13497,14 +13530,14 @@ async function rfidApplyPwr() {
 // أوضاع جاهزة: تضبط القوة + Q + الجلسة بأمر كتابة واحد (كل القيم داخل المدى — آمنة)
 const RFID_MODES = {
   scan: { p: 26, q: 5, s: 1, name: 'وضع الجرد' },
-  link: { p: 5, q: 0, s: 0, name: 'ربط تاغ لصنف' },
+  link: { p: 5, q: 0, s: 0, name: 'ربط وسم لصنف' },
   find: { p: 20, q: 2, s: 0, name: 'وضع البحث' }
 };
 function rfidModeMsg(t, mode) { const el = document.getElementById('rfidModeMsg'); if (el) { el.textContent = t; el.style.color = (mode == null) ? 'var(--textMuted)' : (mode ? '#16A34A' : '#DC2626'); } }
 async function rfidApplyMode(key) {
   const m = RFID_MODES[key]; if (!m) return;
   if (!bleState.connected) { rfidModeMsg('وصّل القارئ أولاً', false); return; }
-  rfidModeMsg('⏳ جارٍ ضبط ' + m.name + '... لا تغلق', null);
+  rfidModeMsg('جارٍ ضبط ' + m.name + '... لا تغلق', null);
   try {
     if (!rfidParamBlock) { await rfidLoadParams(); if (!rfidParamBlock) return; }
     rfidParamBlock[rfOff('pwr')] = m.p;
@@ -13531,7 +13564,7 @@ function rfidLoadBackupInfo() {
     const b = s.val(); const info = document.getElementById('rfidBackupInfo'); const btn = document.getElementById('rfidRestoreBtn'); const dump = document.getElementById('rfidParamDump');
     if (b && b.payload) {
       if (info) info.textContent = 'آخر نسخة: ' + (b.at ? new Date(b.at).toLocaleString('ar') : '—');
-      if (btn) btn.style.display = 'block';
+      if (btn) btn.style.display = 'flex';
       if (dump) dump.textContent = b.payload;
     } else { if (info) info.textContent = 'لا يوجد نسخة محفوظة بعد'; if (btn) btn.style.display = 'none'; }
   }).catch(function () {});
@@ -13562,7 +13595,7 @@ async function rfidRestoreBackup() {
   } catch (e) { rfidSetMsg('فشل الاستعادة: ' + (e && e.message || e), false); }
 }
 async function rfidRestoreFactory() {
-  if (!confirm('إعادة ضبط المصنع؟ راح ترجع الإعدادات الافتراضية (قد يتحول لوضع HID وتحتاج تعيده Serial).')) return;
+  if (!confirm('إعادة ضبط المصنع؟ ستعود الإعدادات الافتراضية (قد يتحوّل لوضع HID وتحتاج إعادته عبر Serial).')) return;
   try { await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x52, 0x00]), 0x0052); rfidSetMsg('تمت إعادة الضبط ✓', true); }
   catch (e) { rfidSetMsg('فشل: ' + (e && e.message || e), false); }
 }
@@ -13587,17 +13620,17 @@ function renderParamControls() {
   const el = document.getElementById('rfidAdvBody'); if (!el || !rfidParamBlock) return;
   const b = rfidParamBlock; const O = { pwr: rfOff('pwr'), q: rfOff('q'), session: rfOff('session'), buzzer: rfOff('buzzer') }; const buzzOn = (b[O.buzzer] || 0) > 0;
   el.innerHTML = '' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;">🔊 صوت القارئ (البزّار)</span>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:6px;">' + rfIco('volume', 16) + 'صوت القارئ (البزّار)</span>' +
       '<div style="display:flex;gap:6px;">' +
         '<button onclick="rfidSetBuzz(0)" style="background:' + (!buzzOn ? '#2563EB' : 'var(--surface)') + ';color:' + (!buzzOn ? '#fff' : 'var(--text)') + ';border:1px solid ' + (!buzzOn ? '#2563EB' : 'var(--border)') + ';border-radius:20px;padding:6px 18px;font-weight:800;font-size:12px;cursor:pointer;">صامت</button>' +
         '<button onclick="rfidSetBuzz(1)" style="background:' + (buzzOn ? '#16A34A' : 'var(--surface)') + ';color:' + (buzzOn ? '#fff' : 'var(--text)') + ';border:1px solid ' + (buzzOn ? '#16A34A' : 'var(--border)') + ';border-radius:20px;padding:6px 18px;font-weight:800;font-size:12px;cursor:pointer;">يعمل</button>' +
       '</div></div>' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;">Q Value <span style="color:var(--textMuted);font-size:10px;">(عدد التاغات)</span></span>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-weight:700;font-size:13px;">Q Value <span style="color:var(--textMuted);font-size:10px;">(عدد الوسوم)</span></span>' +
       '<select onchange="rfidSetByte(' + O.q + ',parseInt(this.value))" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--surface);color:var(--text);font-weight:700;">' + [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (q) { return '<option value="' + q + '"' + (b[O.q] === q ? ' selected' : '') + '>' + q + '</option>'; }).join('') + '</select></div>' +
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;"><span style="font-weight:700;font-size:13px;">Session</span>' +
       '<select onchange="rfidSetByte(' + O.session + ',parseInt(this.value))" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--surface);color:var(--text);font-weight:700;">' + [0, 1, 2, 3].map(function (s) { return '<option value="' + s + '"' + (b[O.session] === s ? ' selected' : '') + '>S' + s + '</option>'; }).join('') + '</select></div>' +
     '<div style="font-size:11px;color:var(--textMuted);margin-top:6px;">القوة الحالية: <b>' + b[O.pwr] + ' dBm</b></div>' +
-    '<div style="background:#0f172a;border-radius:8px;padding:8px;margin-top:8px;font-family:monospace;font-size:10px;direction:ltr;text-align:left;color:#93c5fd;word-break:break-all;">RAW(' + b.length + 'B): ' + b.map(function(x,i){return x.toString(16).padStart(2,'0');}).join('').toUpperCase() + '<br>' + b.map(function(x,i){ var m=(i===O.pwr?'⚡':i===O.q?'Q':i===O.session?'S':i===O.buzzer?'🔊':''); return i+(m?'['+m+']':'')+':'+x; }).join(' ') + '</div>';
+    '<div style="background:#0f172a;border-radius:8px;padding:8px;margin-top:8px;font-family:monospace;font-size:10px;direction:ltr;text-align:left;color:#93c5fd;word-break:break-all;">RAW(' + b.length + 'B): ' + b.map(function(x,i){return x.toString(16).padStart(2,'0');}).join('').toUpperCase() + '<br>' + b.map(function(x,i){ var m=(i===O.pwr?'PWR':i===O.q?'Q':i===O.session?'S':i===O.buzzer?'BUZ':''); return i+(m?'['+m+']':'')+':'+x; }).join(' ') + '</div>';
 }
 async function rfidWriteParams() { const body = [0xCF, 0xFF, 0x00, 0x71, rfidParamBlock.length].concat(rfidParamBlock); await bleCommand(bleFrame(body), 0x0071); }
 async function rfidSetByte(idx, val) {
@@ -13730,7 +13763,7 @@ async function openDailyAccountsAudit() {
     });
     const days = Object.keys(dayMap).sort().reverse();
     if (!days.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد حركات حسابات مسجّلة</div>'; return; }
-    let h = '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">لكل يوم: مجموع حركات حسابات الزبائن، صافي التغيّر في المستحقات، والزبائن اللي اتصفّى حسابهم (رصيد صفر) في اليوم.</div>';
+    let h = '<div style="font-size:11.5px;color:var(--textMuted);margin-bottom:10px;line-height:1.7;">لكل يوم: مجموع حركات حسابات الزبائن، صافي التغيّر في المستحقات، والزبائن الذين سُوّي حسابهم (رصيد صفر) في اليوم.</div>';
     days.forEach(day => {
       const m = dayMap[day];
       const net = m.sales - m.deposits - m.payments - m.returns - m.purchaseAcc;
@@ -14350,7 +14383,7 @@ function shortageNameKey(name) {
   return (name || '').trim().toLowerCase().replace(/[.#$\[\]\/]/g, '-');
 }
 
-let shortagesLoadToken = 0; // شبكة أمان ضد تحميلين متزاحمين على بعض: إذا تحميل جديد بدأ، أي تحميل قديم لسه شغال بنتجاهل نتيجته إذا رجعت متأخرة
+let shortagesLoadToken = 0; // شبكة أمان ضد تحميلين متزاحمين على بعض: إذا تحميل جديد بدأ، أي تحميل قديم لسه يعمل بنتجاهل نتيجته إذا رجعت متأخرة
 function loadShortages() {
   const myToken = ++shortagesLoadToken;
   const el = document.getElementById('shortagesList');
@@ -14425,7 +14458,7 @@ function loadShortages() {
     renderShortageSourceTabs();
     renderShortagesList();
     // (شيلنا استدعاء عرض "تم شراؤها" من هنا بناءً على طلبك - غير محتاجة تشوفي الأصناف التي
-    // اشتريتيها تاني، القسم هذا بيفضل فاضي دايمًا الآن)
+    // اشتريتيها تاني، القسم هذا بيفضل فارغ دايمًا الآن)
   });
 }
 
@@ -14984,7 +15017,7 @@ function loadReports() {
   setReportPeriod(currentReportPeriod);
 }
 
-// كل المنتجات: بتتعرض على دفعات (60 صنف) وبتكمّل تلقائي وانت بتسكرول - أسرع بكتير من رسم 1500 صف مرة واحدة
+// كل المنتجات: بتتعرض على دفعات (60 صنف) وبتكمّل تلقائي وانت بتالتمرير - أسرع بكتير من رسم 1500 صف مرة واحدة
 // والبحث بالاسم (بيتجاهل فروق أ/ا، ة/ه، ى/ي) أو بالباركود
 const PRODUCTS_PAGE = 60;
 let productsView = { list: [], shown: 0 };
@@ -15025,7 +15058,7 @@ function appendProductsPage() {
   const more = document.getElementById('productsMore');
   if (more) {
     more.style.display = v.shown < v.list.length ? 'block' : 'none';
-    more.textContent = 'عرض ' + v.shown + ' من ' + v.list.length + ' — كمّل سكرول لباقي الأصناف';
+    more.textContent = 'عرض ' + v.shown + ' من ' + v.list.length + ' — تابع التمرير لعرض بقية الأصناف';
   }
   // إذا الشاشة طويلة والدفعة الأولى ما ملتهاش، نكمّل على طول
   const el = document.getElementById('productsList');
