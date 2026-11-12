@@ -5841,7 +5841,8 @@ function ghOnPick(input) {
 async function ghApi(method, apiPath, body) {
   const r = await fetch('https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/' + apiPath, {
     method: method,
-    headers: { 'Authorization': 'Bearer ' + ghToken(), 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    headers: { 'Authorization': 'Bearer ' + ghToken(), 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
     body: body ? JSON.stringify(body) : undefined
   });
   let j = null; try { j = await r.json(); } catch (e) {}
@@ -5861,20 +5862,34 @@ async function ghDoPublish() {
   if (btn) { btn.disabled = true; btn.style.background = '#9CA3AF'; btn.style.cursor = 'not-allowed'; btn.textContent = '⏳ جارٍ الرفع...'; }
   setLog('<div style="font-size:13px;color:var(--textMuted);font-weight:700;">⏳ جارٍ جلب النسخة الحالية...</div>');
   try {
-    let sha = null;
-    const cur = await ghApi('GET', 'contents/' + ghPicked.path + '?ref=' + GH_BRANCH);
-    if (cur.ok && cur.data && cur.data.sha) sha = cur.data.sha;
-    else if (cur.status === 401) { setLog(ghErr('التوكن غير صالح أو منتهي (401). احذفه وأعد إدخاله.')); ghResetBtn(); return; }
-    else if (cur.status === 403) { setLog(ghErr('التوكن ما عنده صلاحية (403). تأكد أن صلاحية Contents = Read and write على مستودع htcpos-sales.')); ghResetBtn(); return; }
-    // 404 = ملف جديد (ما يحتاج sha) - عادي
+    // جلب أحدث SHA للملف (بدون كاش) — 404 يعني ملف جديد
+    const getSha = async function () {
+      const cur = await ghApi('GET', 'contents/' + ghPicked.path + '?ref=' + GH_BRANCH + '&_=' + Date.now());
+      if (cur.ok && cur.data && cur.data.sha) return { sha: cur.data.sha };
+      if (cur.status === 401) return { err: 'التوكن غير صالح أو منتهي (401). احذفه وأعد إدخاله.' };
+      if (cur.status === 403) return { err: 'التوكن ما عنده صلاحية (403). تأكد أن صلاحية Contents = Read and write على مستودع htcpos-sales.' };
+      return { sha: null }; // 404 = ملف جديد
+    };
+    let s = await getSha();
+    if (s.err) { setLog(ghErr(s.err)); ghResetBtn(); return; }
+    let sha = s.sha;
     setLog('<div style="font-size:13px;color:var(--textMuted);font-weight:700;">⏳ جارٍ الرفع والنشر...</div>');
     const upVer = ghContentVersion(ghPicked.name, ghPicked.content);
-    const put = await ghApi('PUT', 'contents/' + ghPicked.path, {
-      message: 'تحديث ' + ghPicked.path + ' من التطبيق (v' + upVer + ')',
-      content: b64utf8(ghPicked.content),
-      branch: GH_BRANCH,
-      sha: sha || undefined
-    });
+    const doPut = function (useSha) {
+      return ghApi('PUT', 'contents/' + ghPicked.path, {
+        message: 'تحديث ' + ghPicked.path + ' من التطبيق (v' + upVer + ')',
+        content: b64utf8(ghPicked.content),
+        branch: GH_BRANCH,
+        sha: useSha || undefined
+      });
+    };
+    let put = await doPut(sha);
+    // تعارض نسخة (409 / "does not match"): أعِد جلب أحدث SHA وحاول مرة واحدة
+    if (!put.ok && (put.status === 409 || (put.data && put.data.message && /does not match|sha/i.test(put.data.message)))) {
+      setLog('<div style="font-size:13px;color:var(--textMuted);font-weight:700;">⏳ تعارض نسخة — إعادة الجلب والمحاولة...</div>');
+      const s2 = await getSha();
+      if (!s2.err) { sha = s2.sha; put = await doPut(sha); }
+    }
     if (put.ok) {
       setLog('<div style="background:#DCFCE7;color:#166534;border-radius:12px;padding:12px 13px;font-size:13.5px;font-weight:800;line-height:1.8;">✅ تم نشر <span dir="ltr">v' + escapeHtml(upVer) + '</span> بنجاح!<br><span style="font-weight:600;">' + escapeHtml(ghPicked.after || '') + '</span></div>');
       ghPicked = null;
@@ -5883,7 +5898,7 @@ async function ghDoPublish() {
       try { showQuickToast('تم النشر على GitHub', true); } catch (e) {}
     } else {
       const msg = put.data && put.data.message ? put.data.message : ('رمز ' + put.status);
-      setLog(ghErr('فشل الرفع: ' + escapeHtml(String(msg)))); ghResetBtn();
+      setLog(ghErr('فشل الرفع (' + put.status + '): ' + escapeHtml(String(msg)))); ghResetBtn();
     }
   } catch (e) {
     setLog(ghErr('خطأ في الاتصال: ' + escapeHtml(String(e && e.message ? e.message : e)) + '<br>تأكد من الإنترنت.')); ghResetBtn();
@@ -7240,9 +7255,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.8';
+const APP_VERSION = '4.27.9';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
+  { v: '4.27.9', date: '2026-11-12', items: [
+    'نشر التحديث: إصلاح خطأ «does not match» (تعارض نسخة 409). كان GitHub يرجّع SHA قديمًا من الكاش فيُرفض الرفع — الآن نجلب الـSHA بدون كاش، ولو صار تعارض نعيد جلب أحدث SHA ونحاول تلقائيًا مرة واحدة. ورسالة الخطأ صارت تبيّن رمز الحالة'
+  ] },
   { v: '4.27.8', date: '2026-11-12', items: [
     'قوة القراءة: «تطبيق القوة» صار يكتب القوة في كتلة إعدادات الجهاز المخزّنة (هي اللي يستخدمها الجرد فعلاً) عبر *نفس الأمر الواحد المثبت* اللي نجح مع الصوت و Q والجلسة — بدون أوامر زائدة كانت تزحم الجهاز وتسبّب «ما ردّ». القوة تُحفظ وتتغيّر المسافة فعلاً',
     'شريط القوة يبدأ من القيمة الحقيقية للجهاز عند قراءة الإعدادات المتقدمة'
