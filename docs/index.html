@@ -7263,9 +7263,13 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.22';
+const APP_VERSION = '4.27.23';
 const APP_BUILD_DATE = '2026-11-12';
 const APP_RELEASES = [
+  { v: '4.27.23', date: '2026-11-12', items: [
+    'إصلاح جذري: كل شاشة تطبّق إعداداتها تلقائيًا عند بدء القراءة — «ربط/إدراج صنف» يضبط قوة منخفضة (قراءة قريبة فقط، لا يلتقط من بعيد)، و«الجرد» يضبط القوة القصوى والبثّ المتواصل (سريع)، و«البحث» يضبط إعداداته. لم تعد الإعدادات تبقى من وضع سابق',
+    'هذا يحل: الربط كان يلتقط من بعيد، والجرد كان بطيئًا — بسبب بقاء إعدادات الوضع السابق'
+  ] },
   { v: '4.27.22', date: '2026-11-12', items: [
     'تسريع الجرد: غُيّر وضع الجرد إلى بثّ متواصل (Session S0 بدل S1) مع Q4، وأصبحت نبضة الإبقاء الحيّ أسرع (كل 150م، إعادة بعد 200م فقط) — يرفع معدل القراءة كثيرًا مثل وضع البحث. اختبره بشاشة التشخيص وقارن «قراءة/ث»'
   ] },
@@ -13307,7 +13311,7 @@ function renderRfidLinkCtl() {
     ? '<button onclick="rfidLinkStop()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('stop', 18) + 'إيقاف القراءة</button><div style="text-align:center;color:#15803D;font-size:12px;margin-top:6px;">قرّب الوسوم من القارئ...</div>'
     : '<button onclick="rfidLinkStart()" style="width:100%;background:#16A34A;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('play', 18) + 'ابدأ قراءة الوسوم</button>';
 }
-async function rfidLinkStart() { try { await bleStartReading(onRfidLinkTag); renderRfidLinkCtl(); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} } }
+async function rfidLinkStart() { try { await rfidApplyModeSilent('link'); await bleStartReading(onRfidLinkTag); renderRfidLinkCtl(); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} } }
 async function rfidLinkStop() { try { await bleStopReading(); } catch (e) {} renderRfidLinkCtl(); }
 function onRfidLinkTag(epc) {
   if (!rfidLinkItem || rfidLinkSession[epc]) return;
@@ -13354,7 +13358,7 @@ async function beginRfidScan() {
   rfidScanFound = {}; const el = document.getElementById('rfidScanBody');
   el.innerHTML = '<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;"><div style="font-weight:800;color:#15803D;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px;">' + rfIco('radar', 18, '#15803D') + 'جاري الجرد' + (rfidScanMode === 'item' && rfidScanItem ? ' — ' + escapeHtml(rfidScanItem.name) : ' (كامل المحل)') + '</div><div style="font-size:12px;color:#166534;margin-top:4px;">تجوّل في المتجر ودَع القارئ يلتقط الوسوم</div><div style="font-size:40px;font-weight:800;color:#16A34A;margin-top:10px;" id="rfidScanCount">0</div><div style="font-size:11px;color:#166534;">وسم مقروء</div></div>' +
     '<button onclick="finishRfidScan()" style="width:100%;background:#DC2626;color:#fff;border:none;border-radius:14px;padding:16px;font-weight:800;font-size:15px;cursor:pointer;">إنهاء الجرد وعرض التقرير</button>';
-  try { await bleStartReading(onRfidScanTag, true); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} }
+  try { await rfidApplyModeSilent('scan'); await bleStartReading(onRfidScanTag, true); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} }
 }
 function onRfidScanTag(epc) { if (rfidScanFound[epc]) { rfidScanFound[epc]++; return; } rfidScanFound[epc] = 1; const c = document.getElementById('rfidScanCount'); if (c) c.textContent = Object.keys(rfidScanFound).length; try { if (navigator.vibrate) navigator.vibrate(20); } catch (e) {} }
 async function finishRfidScan() {
@@ -13476,7 +13480,7 @@ async function startFinder(targets, label, mode) {
     '<div id="finderLock" style="margin-top:12px;"></div>' +
     '<button onclick="finderStop(false)" style="width:100%;margin-top:14px;background:#DC2626;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">' + rfIco('stop', 17) + 'إيقاف البحث</button>';
   try { finderBeep(500); } catch (e) {}
-  try { await bleStartReading(onFinderTag, true); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} }
+  try { await rfidApplyModeSilent('find'); await bleStartReading(onFinderTag, true); } catch (e) { try { showQuickToast('خطأ: ' + (e && e.message || e)); } catch (_) {} }
   finderState.timer = setInterval(updateFinderMeter, 110);
 }
 function onFinderTag(epc, rssi) {
@@ -13614,6 +13618,16 @@ const RFID_MODES = {
   find: { p: 20, q: 2, s: 0, name: 'وضع البحث' }
 };
 function rfidModeMsg(t, mode) { const el = document.getElementById('rfidModeMsg'); if (el) { el.textContent = t; el.style.color = (mode == null) ? 'var(--textMuted)' : (mode ? '#16A34A' : '#DC2626'); } }
+// تطبيق إعدادات وضع بصمت (قوة/Q/الجلسة) قبل بدء القراءة — لضمان المدى الصحيح لكل شاشة
+async function rfidApplyModeSilent(key) {
+  const m = RFID_MODES[key]; if (!m || !bleState.connected) return;
+  try {
+    if (!rfidParamBlock) { const f = await bleCommand(bleFrame([0xCF, 0xFF, 0x00, 0x72, 0x00]), 0x0072); rfidParamBlock = f.slice(6, f.length - 2); }
+    if (rfidParamBlock[rfOff('pwr')] === m.p && rfidParamBlock[rfOff('q')] === m.q && rfidParamBlock[rfOff('session')] === m.s) return; // مضبوط أصلًا
+    rfidParamBlock[rfOff('pwr')] = m.p; rfidParamBlock[rfOff('q')] = m.q; rfidParamBlock[rfOff('session')] = m.s;
+    await rfidWriteParams();
+  } catch (e) {}
+}
 async function rfidApplyMode(key) {
   const m = RFID_MODES[key]; if (!m) return;
   if (!bleState.connected) { rfidModeMsg('وصّل القارئ أولاً', false); return; }
