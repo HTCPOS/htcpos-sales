@@ -7283,9 +7283,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.31';
+const APP_VERSION = '4.27.33';
 const APP_BUILD_DATE = '2026-11-13';
 const APP_RELEASES = [
+  { v: '4.27.33', date: '2026-11-13', items: [
+    'تقرير الموظف — مبيعات الدَّين: صار يُبنى من سجلات الدَّين التي تُدخلها يدويًا في حسابات الزبائن (كل سجل = الصنف المحدّد الذي سجّلته بالضبط)، منسوبة للموظف عبر رقم فاتورته، ومجمّعة يوم بيوم حسب تاريخ الوصل (لا تاريخ الإدخال). يعرض الصنف والكمية والسعر واسم المدين ورقم الفاتورة وحالة السداد'
+  ] },
   { v: '4.27.31', date: '2026-11-13', items: [
     'إصلاح زر اختيار التاريخ في بحث الإيصال: يفتح المنتقي بالضغط مباشرة (حقل محصور في أيقونة التقويم بحجم ثابت فلا يتمدّد على زر «بحث») — يفتح التاريخ ويبحث كلٌّ في مكانه'
   ] },
@@ -8888,8 +8891,49 @@ function empReportPickEmp(name) {
         <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:9px;text-align:center;"><div style="font-size:11px;color:var(--textMuted);">الصافي</div><div style="font-weight:800;font-size:14px;">${fmtMoney(net)}</div><div style="font-size:10.5px;color:var(--textMuted);">د.ل</div></div>
       </div>
     </div>
+    <div style="font-size:13px;color:var(--text);font-weight:800;margin:4px 2px 8px;">مبيعات الدَّين — الأصناف حسب تاريخ الوصل (يوم بيوم)</div>
+    <div id="empDebtByDay" style="margin-bottom:14px;"></div>
     <div style="font-size:12px;color:var(--textMuted);font-weight:700;margin:0 2px 8px;">كل الفواتير والحركات (${list.length})</div>`;
   body.innerHTML = back + head + renderInvoiceResultsList(list);
+  renderEmpDebtByDay(name, list);
+}
+// مبيعات الدَّين لموظف: من سجلات الدَّين التي أُدخلت يدويًا (كل سجل = صنف محدّد)، منسوبة للموظف
+// عبر رقم فاتورته، ومجمّعة يوم بيوم حسب تاريخ الوصل (debt.date) لا تاريخ الإدراج (debt.createdAt)
+function renderEmpDebtByDay(name, list) {
+  const host = document.getElementById('empDebtByDay'); if (!host) return;
+  host.innerHTML = '<div style="color:var(--textMuted);font-size:12px;padding:8px;">جاري تحميل مبيعات الدَّين...</div>';
+  const empInvNums = new Set((list || []).filter(e => e && e.type !== 'return' && e.number).map(e => String(e.number).replace(/[^0-9]/g, '')).filter(Boolean));
+  liveOnce('data/debts').then(ds => {
+    if (!document.getElementById('empDebtByDay')) return;
+    const debts = Object.values((ds && ds.val()) || {}).filter(Boolean);
+    // سجلات الدَّين على فواتير باعها هذا الموظف (الربط عبر رقم الفاتورة)
+    const mine = debts.filter(d => { const n = String(d.invoiceNumber || '').replace(/[^0-9]/g, ''); return n && empInvNums.has(n); });
+    if (!mine.length) { host.innerHTML = '<div style="color:var(--textMuted);font-size:12.5px;padding:12px;text-align:center;border:1px dashed var(--border);border-radius:12px;">لا توجد أصناف مُسجّلة بالدَّين لهذا الموظف في هذه الفترة</div>'; return; }
+    const pad = n => String(n).padStart(2, '0');
+    const byDay = {};
+    mine.forEach(d => { const dt = new Date(d.date); const key = isNaN(dt.getTime()) ? '0000-00-00' : (dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate())); (byDay[key] = byDay[key] || []).push(d); });
+    const days = Object.keys(byDay).sort().reverse();
+    const grand = mine.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    let h = '<div style="background:#FEF3C7;border-radius:12px;padding:10px 13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px;"><span style="color:#92400E;">إجمالي مبيعات الدَّين</span><span style="color:#92400E;">' + fmtMoney(grand) + ' د.ل · ' + mine.length + ' صنف</span></div>';
+    days.forEach(key => {
+      const recs = byDay[key];
+      let dayLabel;
+      if (key === '0000-00-00') dayLabel = 'تاريخ غير معروف';
+      else { const d = new Date(key); dayLabel = CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+      const dayTotal = recs.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+      const inner = recs.map(d => {
+        const paid = d.paid ? '<span style="background:#DCFCE7;color:#15803D;border-radius:7px;padding:1px 7px;font-size:10.5px;font-weight:800;margin-right:6px;">مسدّد</span>' : '';
+        return '<div style="margin-top:8px;padding-top:7px;border-top:1px dashed var(--border2);">'
+          + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(String(d.itemName || 'صنف')) + '</span><span style="direction:ltr;white-space:nowrap;">' + fmtQty(d.qty || 1) + ' × ' + fmtMoney(d.price) + ' = ' + fmtMoney(d.amount) + '</span></div>'
+          + '<div style="font-size:11.5px;color:var(--textMuted);margin-top:2px;">' + paid + 'على: ' + escapeHtml(String(d.customerName || 'زبون')) + ' · فاتورة ' + escapeHtml(String(d.invoiceNumber || '')) + '</div>'
+          + '</div>';
+      }).join('');
+      h += '<div style="border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13.5px;"><span>' + dayLabel + '</span><span style="color:#B45309;">' + fmtMoney(dayTotal) + ' د.ل</span></div>'
+        + inner + '</div>';
+    });
+    host.innerHTML = h;
+  }).catch(() => { const hh = document.getElementById('empDebtByDay'); if (hh) hh.innerHTML = '<div style="color:var(--textMuted);font-size:12px;padding:8px;">تعذّر تحميل مبيعات الدَّين</div>'; });
 }
 
 function applyEmpAmtVisibility() {
