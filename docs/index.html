@@ -1456,7 +1456,7 @@ setTimeout(() => window.hideSplash(), 4000);
     </div>
     <button type="button" id="lpPrintBtn" onclick="submitLabelPrint()" style="width:100%;margin-top:14px;background:#2563EB;color:#fff;border:none;border-radius:12px;padding:13px;font-weight:800;font-size:15px;cursor:pointer;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg> طباعة</button>
     <div id="lpStatus" style="text-align:center;font-size:12.5px;font-weight:700;margin-top:10px;line-height:1.7;"></div>
-    <button type="button" onclick="closeModal('labelPrintModal');openLabelSettings();" style="width:100%;margin-top:8px;background:none;border:none;color:var(--textMuted);font-weight:700;font-size:12.5px;cursor:pointer;padding:8px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg> إعدادات الطباعة والمقاس</button>
+    <button type="button" onclick="openLabelSettings();" style="width:100%;margin-top:8px;background:none;border:none;color:var(--textMuted);font-weight:700;font-size:12.5px;cursor:pointer;padding:8px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg> إعدادات الطباعة والمقاس</button>
   </div>
 </div>
 
@@ -1543,7 +1543,7 @@ setTimeout(() => window.hideSplash(), 4000);
         <span style="flex:1;"><span style="display:block;font-size:14.5px;font-weight:800;color:var(--text);">طباعة باركود</span><span style="display:block;font-size:12px;color:var(--textMuted);font-weight:700;margin-top:2px;">مجموعة أصناف بكمياتها في طلب واحد</span></span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
-      <button onclick="closeModal('printHubModal');openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
+      <button onclick="openLabelSettings();" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 6px;border:none;background:none;border-bottom:1px solid var(--border2);cursor:pointer;text-align:right;">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
         <span style="flex:1;font-size:14.5px;font-weight:700;color:var(--text);">إعدادات الملصق والطابعة</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--textMuted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
@@ -1576,11 +1576,11 @@ setTimeout(() => window.hideSplash(), 4000);
     <button class="closeM" onclick="closeModal('countChooserModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <h3>الجرد</h3>
     <div style="margin-top:14px;">
-      <button type="button" onclick="closeModal('countChooserModal');openInventoryCount();" style="width:100%;display:flex;align-items:center;gap:14px;padding:15px 14px;margin-bottom:10px;border-radius:16px;cursor:pointer;text-align:right;background:var(--surface);border:1px solid var(--border2);">
+      <button type="button" onclick="openInventoryCount();" style="width:100%;display:flex;align-items:center;gap:14px;padding:15px 14px;margin-bottom:10px;border-radius:16px;cursor:pointer;text-align:right;background:var(--surface);border:1px solid var(--border2);">
         <span style="width:46px;height:46px;border-radius:14px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 5v14M6 5v14M10 5v14M13 5v14M17 5v14M21 5v14"/></svg></span>
         <span style="flex:1;"><span style="display:block;font-size:15px;font-weight:800;color:var(--text);">الجرد بالباركود</span><span style="display:block;font-size:12.5px;color:var(--textMuted);margin-top:2px;">امسح كل قطعة أو اكتب العدد بيدك</span></span>
       </button>
-      <button type="button" onclick="closeModal('countChooserModal');openRfidHub();" style="width:100%;display:flex;align-items:center;gap:14px;padding:15px 14px;margin-bottom:10px;border-radius:16px;cursor:pointer;text-align:right;background:var(--surface);border:1px solid var(--border2);">
+      <button type="button" onclick="openRfidHub();" style="width:100%;display:flex;align-items:center;gap:14px;padding:15px 14px;margin-bottom:10px;border-radius:16px;cursor:pointer;text-align:right;background:var(--surface);border:1px solid var(--border2);">
         <span style="width:46px;height:46px;border-radius:14px;background:#ECFEFF;color:#0891B2;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/><circle cx="12" cy="12" r="2"/></svg></span>
         <span style="flex:1;"><span style="display:block;font-size:15px;font-weight:800;color:var(--text);">جرد RFID بالبلوتوث</span><span style="display:block;font-size:12.5px;color:var(--textMuted);margin-top:2px;">اقرأ رف كامل بثواني — اتصل بالقارئ واعمل جرد سريع</span></span>
       </button>
@@ -2229,7 +2229,7 @@ setTimeout(() => window.hideSplash(), 4000);
     <div id="priceCheckResults" style="max-height:32vh;overflow:auto;"></div>
     <div id="priceCheckBackBar" style="display:none;"></div>
     <div id="priceCheckDetail" style="display:none;"></div>
-    <a href="#" onclick="event.preventDefault();closeModal('priceCheckModal');openModal('productsModal');" style="display:block;text-align:center;font-size:12px;color:var(--textMuted);margin-top:16px;">تصفح كل المنتجات</a>
+    <a href="#" onclick="event.preventDefault();openModal('productsModal');" style="display:block;text-align:center;font-size:12px;color:var(--textMuted);margin-top:16px;">تصفح كل المنتجات</a>
   </div>
 </div>
 
@@ -4132,7 +4132,7 @@ function renderDayReport() {
         <div style="font-size:12px;color:#16A34A;font-weight:800;margin-top:10px;">🔒 اليوم مقفول</div>
       </div>`;
   } else {
-    h += `<button type="button" onclick="closeModal('dayReportModal');openDayClose(dayReportKey);" style="width:100%;margin-top:14px;border:none;border-radius:18px;height:54px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16px;font-weight:700;cursor:pointer;">🔒 إقفال اليوم وحساب الدرج</button>`;
+    h += `<button type="button" onclick="openDayClose(dayReportKey);" style="width:100%;margin-top:14px;border:none;border-radius:18px;height:54px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16px;font-weight:700;cursor:pointer;">🔒 إقفال اليوم وحساب الدرج</button>`;
   }
   body.innerHTML = h;
 }
@@ -5701,7 +5701,6 @@ async function runCamDiag() {
 function fixInTerminal(cmd) {
   if (cmd === 'bridgeRestart') { closeModal('camDiagModal'); bridgeRestartRemote(); return; }
   if (cmd === 'bridgeUpdate') { closeModal('camDiagModal'); bridgeUpdateRemote(); return; }
-  closeModal('camDiagModal');
   openBridgeShell();
   setTimeout(() => { const i = document.getElementById('bridgeShellInput'); if (i) { i.value = cmd; i.focus(); } }, 250);
 }
@@ -6010,13 +6009,13 @@ function renderDevTools() {
       <span style="flex:0 0 auto;">${IC.shield}</span>
       <span style="font-size:12px;font-weight:700;line-height:1.7;">أدوات حسّاسة — ${bioHint} لا تعطِها لأي شخص.</span>
     </div>
-    ${item(IC.publish, '#0F766E', 'نشر تحديث (GitHub)', 'ارفع index.html أو setup.sh للمستودع', "closeModal('devToolsModal');openGhPublish();")}
-    ${item(IC.script, '#2563EB', 'تحديث السكريبت على الكاشير', 'ركّب نسخة جديدة من سكريبت الكاشير', "closeModal('devToolsModal');openScriptUpdate();")}
+    ${item(IC.publish, '#0F766E', 'نشر تحديث (GitHub)', 'ارفع index.html أو setup.sh للمستودع', "openGhPublish();")}
+    ${item(IC.script, '#2563EB', 'تحديث السكريبت على الكاشير', 'ركّب نسخة جديدة من سكريبت الكاشير', "openScriptUpdate();")}
     ${item(IC.bridge, '#1D4ED8', 'تحديث مكينة الكاميرات (الجسر)', 'المكينة تنزّل آخر نسخة وتشغّل نفسها', "bridgeUpdateRemote();")}
     ${item(IC.restart, '#D97706', 'إعادة تشغيل الجسر', 'إعادة تشغيل نظيفة لمكينة الكاميرات', "bridgeRestartRemote();")}
-    ${item(IC.terminal, '#334155', 'أوامر المكينة (الطرفية)', 'تنفيذ أوامر على المكينة عن بُعد', "closeModal('devToolsModal');openBridgeShell();")}
+    ${item(IC.terminal, '#334155', 'أوامر المكينة (الطرفية)', 'تنفيذ أوامر على المكينة عن بُعد', "openBridgeShell();")}
     <div class="setSec" style="margin-top:6px;">التشخيص</div>
-    ${item(IC.log, '#0EA5E9', 'سجل الأخطاء', 'كل فشل يتسجّل بكود - انسخه وأرسله للمطوّر', "closeModal('devToolsModal');openErrorLog();")}
+    ${item(IC.log, '#0EA5E9', 'سجل الأخطاء', 'كل فشل يتسجّل بكود - انسخه وأرسله للمطوّر', "openErrorLog();")}
     <div class="setSec" style="margin-top:6px;">الأمان</div>
     ${item(IC.key, '#DC2626', 'تغيير الرمز السري', 'غيّر رمز فتح هذا القسم', "changeDevPin();")}`;
 }
@@ -7257,9 +7256,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.25';
+const APP_VERSION = '4.27.26';
 const APP_BUILD_DATE = '2026-11-13';
 const APP_RELEASES = [
+  { v: '4.27.26', date: '2026-11-13', items: [
+    'إصلاح الرجوع التدريجي في كل التطبيق: 13 شاشة كانت تقفل النافذة الأم قبل فتح الجديدة فيرجع للرئيسية — الآن تفتح الجديدة فوق الأم، فزر الرجوع يرجّعك للشاشة السابقة خطوة بخطوة (الجرد، فحص السعر، كشف الحساب، الطباعة، تقرير اليوم/الإقفال، أدوات المطوّر، إعادة التقاط الإيصال...)'
+  ] },
   { v: '4.27.25', date: '2026-11-13', items: [
     'إعادة ترتيب الواجهة الرئيسية باحترافية مع الحفاظ على كل الميزات: «تقرير اليوم» و«الكاميرات» صارا بطاقتين مدمجتين في صف واحد (توفير مساحة وتوازن)، وأُضيف عنوان «تنبيهات ومؤشرات» فوق المربعات، ونُقلت «الإجراءات السريعة» للأعلى فوق سجل الفواتير (أسهل وصولًا)، وصار تدرّج الشاشة: المؤشر الرئيسي ← إجراءات أساسية ← تنبيهات ← أدوات ← سجل الفواتير'
   ] },
@@ -10517,7 +10519,6 @@ function onReceiptFieldEdited(key) {
 
 function retakeReceiptPhoto() {
   receiptCaptureState = null;
-  closeModal('receiptReviewModal');
   openCardReceiptOcrCamera();
 }
 
@@ -14091,7 +14092,6 @@ function confirmStatementFilterAndOpen() {
   };
   if (!filters.purchase && !filters.deposit && !filters.payment && !filters.purchaseAccount) { alert('اختر نوع حركة واحد على الأقل'); return; }
   if (filters.fromDate && filters.toDate && filters.fromDate > filters.toDate) { alert('تاريخ "من" يجب يكون قبل تاريخ "إلى"'); return; }
-  closeModal('statementFilterModal');
   openCustomerStatementView(filters);
 }
 
