@@ -4119,6 +4119,9 @@ function renderDayReport() {
         <span style="font-size:21px;font-weight:800;direction:ltr;color:#15803D;">${fmtMoney(cashExpected)}</span></div>
     </div>`;
 
+  // تفاصيل أصناف الدَّين لهذا اليوم (حسب تاريخ الوصل)
+  h += `<div id="drDebtItems" style="margin-top:12px;"></div>`;
+
   if (c.cardIn > 0.005)
     h += `<div style="font-size:12.5px;color:var(--textMuted);margin:10px 6px 0;">تحصيل بالبطاقة اليوم: ${fmtMoney(c.cardIn)} د.ل (في البنك، ليس في الدرج)</div>`;
 
@@ -4136,6 +4139,31 @@ function renderDayReport() {
     h += `<button type="button" onclick="openDayClose(dayReportKey);" style="width:100%;margin-top:14px;border:none;border-radius:18px;height:54px;background:linear-gradient(180deg,#2BB35A,#15803D);color:#fff;font-size:16px;font-weight:700;cursor:pointer;">🔒 إقفال اليوم وحساب الدرج</button>`;
   }
   body.innerHTML = h;
+  renderDayReportDebts(dayReportKey);
+}
+// تفاصيل أصناف الدَّين في يوم معيّن (حسب تاريخ الوصل debt.date) — قابلة للطي
+function renderDayReportDebts(dayKey) {
+  const host = document.getElementById('drDebtItems'); if (!host) return;
+  liveOnce('data/debts').then(ds => {
+    if (!document.getElementById('drDebtItems')) return;
+    const debts = Object.values((ds && ds.val()) || {}).filter(Boolean);
+    const mine = debts.filter(d => { const t = new Date(d.date).getTime(); return !isNaN(t) && dhDayKeyOf(t) === dayKey; });
+    if (!mine.length) { host.innerHTML = ''; return; }
+    const tot = mine.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const rows = mine.map(d => {
+      const paid = d.paid ? '<span style="background:#DCFCE7;color:#15803D;border-radius:7px;padding:1px 7px;font-size:10.5px;font-weight:800;margin-left:6px;">مسدّد</span>' : '';
+      return '<div style="padding:9px 0;border-bottom:1px solid var(--border2);">'
+        + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(String(d.itemName || 'صنف')) + '</span><span style="direction:ltr;white-space:nowrap;">' + fmtQty(d.qty || 1) + ' × ' + fmtMoney(d.price) + ' = ' + fmtMoney(d.amount) + '</span></div>'
+        + '<div style="font-size:11.5px;color:var(--textMuted);margin-top:2px;">' + paid + 'على: ' + escapeHtml(String(d.customerName || 'زبون')) + ' · فاتورة ' + escapeHtml(String(d.invoiceNumber || '')) + '</div>'
+        + '</div>';
+    }).join('');
+    host.innerHTML = '<div style="background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,.05);">'
+      + '<button type="button" onclick="(function(b){var x=document.getElementById(\'drDebtList\');var open=x.style.display!==\'none\';x.style.display=open?\'none\':\'block\';b.querySelector(\'.drDebtChev\').style.transform=open?\'rotate(0deg)\':\'rotate(90deg)\';})(this)" style="width:100%;background:none;border:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0;font-family:inherit;">'
+      + '<span style="display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px;color:var(--text);"><svg class="drDebtChev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#B45309" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s;"><path d="m9 18 6-6-6-6"/></svg>تفاصيل مبيعات الدَّين · ' + mine.length + ' صنف</span>'
+      + '<span style="font-weight:800;color:#B45309;direction:ltr;">' + fmtMoney(tot) + ' د.ل</span></button>'
+      + '<div id="drDebtList" style="display:none;margin-top:10px;">' + rows + '</div>'
+      + '</div>';
+  }).catch(() => {});
 }
 
 // ===== فحص سلامة الحسابات =====
@@ -7283,9 +7311,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.33';
+const APP_VERSION = '4.27.34';
 const APP_BUILD_DATE = '2026-11-13';
 const APP_RELEASES = [
+  { v: '4.27.34', date: '2026-11-13', items: [
+    'تقرير اليوم: إضافة قسم «تفاصيل مبيعات الدَّين» (قابل للطي) يعرض أصناف الدَّين المسجّلة في ذلك اليوم حسب تاريخ الوصل — الصنف والكمية والسعر واسم المدين ورقم الفاتورة وحالة السداد، تحت إجمالي ديون اليوم'
+  ] },
   { v: '4.27.33', date: '2026-11-13', items: [
     'تقرير الموظف — مبيعات الدَّين: صار يُبنى من سجلات الدَّين التي تُدخلها يدويًا في حسابات الزبائن (كل سجل = الصنف المحدّد الذي سجّلته بالضبط)، منسوبة للموظف عبر رقم فاتورته، ومجمّعة يوم بيوم حسب تاريخ الوصل (لا تاريخ الإدخال). يعرض الصنف والكمية والسعر واسم المدين ورقم الفاتورة وحالة السداد'
   ] },
