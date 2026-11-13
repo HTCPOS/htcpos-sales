@@ -2488,16 +2488,17 @@ function setupNotifications() {
 
 function requestNotificationPermission() {
   if (!('Notification' in window)) { alert('هذا المتصفح لا يدعم الإشعارات'); return; }
-  Notification.requestPermission().then(perm => {
+  let p; try { p = Notification.requestPermission(); } catch (e) { alert('هذا الجهاز لا يسمح بتفعيل الإشعارات من هنا'); return; }
+  Promise.resolve(p).then(perm => {
     if (perm === 'granted') {
       navigator.serviceWorker.ready.then(reg => {
         const messaging = firebase.messaging();
         registerFcmToken(messaging, reg);
-      });
+      }).catch(() => {});
     } else {
       alert('يجب أن توافق على الإشعارات حتى تستقبل تنبيهات');
     }
-  });
+  }).catch(() => { alert('تعذّر تفعيل الإشعارات على هذا الجهاز'); });
 }
 
 function registerFcmToken(messaging, reg) {
@@ -5308,7 +5309,10 @@ let appErrorLog = [];
 try { appErrorLog = JSON.parse(localStorage.getItem('appErrorLog') || '[]'); } catch (e) { appErrorLog = []; }
 // امسح سجل الأخطاء تلقائيًا عند تحديث نسخة التطبيق (كل بناء يبدأ نظيفًا)
 try { if (localStorage.getItem('appErrorLogVer') !== APP_VERSION) { appErrorLog = []; localStorage.setItem('appErrorLog', '[]'); localStorage.setItem('appErrorLogVer', APP_VERSION); } } catch (e) {}
+// أخطاء بيئة/صلاحيات على الجهاز (ليست أعطال كود) — نتجاهلها حتى لا تملأ السجل وتخفي الأعطال الحقيقية
+const BENIGN_ERR_RE = /not allowed by the user agent|denied permission|permission denied|NotAllowedError|The request is not allowed|permission dismissed|user gesture|secure context|NotFoundError|NotReadableError|AbortError|The operation is insecure|clipboard/i;
 function logAppError(src, msg) {
+  try { if (BENIGN_ERR_RE.test(String(msg))) return; } catch (e) {}
   try {
     appErrorLog.push({ t: Date.now(), src: src, msg: String(msg).slice(0, 800) });
     if (appErrorLog.length > 40) appErrorLog = appErrorLog.slice(-40);
@@ -5350,7 +5354,9 @@ function openErrorLog() {
   const txt = errReport();
   uiDialog({ title: 'سجل الأخطاء', msg: '', prompt: true, multiline: true, def: txt, readonly: true, okText: 'نسخ ومسح', cancel: true, cancelText: 'إغلاق' }).then(function (v) {
     if (v !== null) {
-      try { if (navigator.clipboard) navigator.clipboard.writeText(txt); showQuickToast('تم نسخ السجل - أرسله للمطوّر', true); } catch (e) {}
+      let copied = false;
+      try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(function () { showQuickToast('تم نسخ السجل - أرسله للمطوّر', true); }).catch(function () { uiCopyBox(txt); }); copied = true; } } catch (e) {}
+      if (!copied) { try { uiCopyBox(txt); } catch (e) {} }
       try { appErrorLog = []; localStorage.setItem('appErrorLog', '[]'); updateErrBadge(); } catch (e) {}
     }
   });
@@ -7279,9 +7285,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.28';
+const APP_VERSION = '4.27.30';
 const APP_BUILD_DATE = '2026-11-13';
 const APP_RELEASES = [
+  { v: '4.27.30', date: '2026-11-13', items: [
+    'بصمة الوجه تنطلق تلقائيًا عند فتح التطبيق (في التطبيق الأصلي) — لم تعد تحتاج الضغط على زر البصمة. إن أُلغيت أو فشلت، الزر لا يزال متاحًا. في متصفح الويب تبقى بلمسة (قيد النظام نفسه)'
+  ] },
+  { v: '4.27.29', date: '2026-11-13', items: [
+    'الأربعون خطأً كانت رفض صلاحيات من الجهاز (الإشعارات/الحافظة على الآيفون) وليست أعطال كود. الآن: تُعالَج هذه بشكل سليم وتُستبعد من سجل الأخطاء، فالمؤشر الأحمر يبقى فقط للأعطال البرمجية الحقيقية. ونسخ السجل صار موثوقًا مع بديل يدوي إذا رفض المتصفح الحافظة'
+  ] },
   { v: '4.27.28', date: '2026-11-13', items: [
     'فحص شامل للتطبيق: لا أزرار معطّلة، لا دوال مكررة، لا معرّفات مكررة. وأهم شيء: أي خطأ برمجي يحدث صار يظهر تلقائيًا كمؤشر أحمر أسفل الشاشة — بالضغط عليه تنسخ السجل وترسله لي، فنمسك الأخطاء فور حدوثها بدل اكتشافها بالصدفة. السجل يُمسح تلقائيًا مع كل تحديث'
   ] },
@@ -8242,6 +8254,18 @@ function showFaceIdLock(email) {
   document.getElementById('passwordFormCard').style.display = 'none';
   if (!document.getElementById('loginScreen').classList.contains('booting')) loginSwapAnim(fc);
 }
+// تشغيل بصمة الوجه تلقائيًا عند فتح التطبيق (التطبيق الأصلي فقط — لا يحتاج لمسة) بعد ظهور الشاشة
+let autoFaceIdDone = false;
+function autoTriggerFaceId() {
+  if (autoFaceIdDone || !isNativeApp()) return;
+  const go = () => {
+    if (autoFaceIdDone) return; autoFaceIdDone = true;
+    setTimeout(() => { if (!appUnlockedThisSession && document.getElementById('faceIdLockCard').style.display !== 'none') { try { loginWithFaceId(); } catch (e) {} } }, 500);
+  };
+  if (loginRevealed) { go(); return; }
+  const iv = setInterval(() => { if (loginRevealed) { clearInterval(iv); go(); } }, 120);
+  setTimeout(() => { clearInterval(iv); go(); }, 3500);
+}
 // إظهار شاشة الدخول: بعد ما الشعار يتحمل والخط يجهز (بحد أقصى 0.9 ثانية حتى لا نستناش للأبد)
 let loginRevealed = false;
 function revealLogin() {
@@ -8273,6 +8297,7 @@ function onAuthDecided(user) {
     document.getElementById('app').style.display = 'none';
     document.getElementById('loginEmail').value = user.email;
     showFaceIdLock(user.email);
+    autoTriggerFaceId();
   } else {
     // إذا المستخدم مسجل دخول أصلاً من قبل (الجلسة محفوظة) فقط بصمة الوجه غير مفعّلة -
     // نعرض فورم الباسورد العادي ونعبي الإيميل تلقائي
