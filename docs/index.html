@@ -4617,6 +4617,8 @@ async function rcptSave() {
   const itemsSum = items.reduce((s, it) => s + Number(it.qty || 1) * Number(it.price || 0), 0);
   const nowIso = new Date().toISOString();
   const base = { customerId: cust.id, customerName: cust.name, invoiceNumber: String(inv.number || r.num), date: inv.date, createdAt: nowIso, paid: false, source: 'receipt' };
+  // اسم الموظف البائع مأخوذ من الفاتورة (للنسب في تقرير الموظفين)
+  if (inv.empName && String(inv.empName).trim()) base.empName = String(inv.empName).trim();
   if (note) base.note = note;
   // نفس شكل الديون الحالية (صنف لكل سجل) إذا مجموع الأصناف = الإجمالي، وإلا سجل واحد بالإجمالي (فيه خصم مثلًا)
   let records;
@@ -7374,9 +7376,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.41';
+const APP_VERSION = '4.27.42';
 const APP_BUILD_DATE = '2026-11-14';
 const APP_RELEASES = [
+  { v: '4.27.42', date: '2026-11-14', items: [
+    'نسب مبيعات الدَّين للموظف وتاريخها يُؤخذان من الفاتورة لا من وقت الإدراج: عند تسجيل الدَّين يُحفظ اسم الموظف البائع من الفاتورة على السجل، فيُنسب الدَّين لصاحبه الحقيقي. والدين الذي تُدرجه اليوم لفاتورة أمس يظهر في تقرير أمس (حسب تاريخ الفاتورة). الديون القديمة تُنسب عبر رقم الفاتورة كما كان'
+  ] },
   { v: '4.27.41', date: '2026-11-14', items: [
     'إصلاح خطأ في شاشة «البحث عن وسم»: كان متغيّر مدى المعايرة غير معرّف فيسبّب تكرار ReferencerError (span) أثناء تحديث المؤشر. عُرّف الآن بشكل صحيح'
   ] },
@@ -8926,7 +8931,7 @@ function showInvoiceDetail(inv) {
         <div class="n" style="${isRet ? 'color:#991B1B;font-weight:800;' : ''}">${escapeHtml(it.name)}${retBadge}</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="p">${it.qty} × ${fmtMoney(it.price)} د.ل</div>
-          <button onclick='openCustomerPicker(${escapeHtml(JSON.stringify({name:it.name, qty:it.qty, price:it.price, amount:(it.qty*it.price), invoiceNumber:inv.number, date:inv.date}))})' style="background:#FFF7ED;color:#EA580C;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/></svg> دين</button>
+          <button onclick='openCustomerPicker(${escapeHtml(JSON.stringify({name:it.name, qty:it.qty, price:it.price, amount:(it.qty*it.price), invoiceNumber:inv.number, date:inv.date, empName:(inv.empName||'')}))})' style="background:#FFF7ED;color:#EA580C;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap; display:inline-flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/></svg> دين</button>
         </div>
       </div>`;
     }).join('');
@@ -9068,16 +9073,27 @@ function empReportPickEmp(name) {
 function renderEmpDebtByDay(name, list) {
   const host = document.getElementById('empDebtByDay'); if (!host) return;
   host.innerHTML = '<div style="color:var(--textMuted);font-size:12px;padding:8px;">جاري تحميل مبيعات الدَّين...</div>';
+  const pad = n => String(n).padStart(2, '0');
+  const dayKey = dstr => { const dt = new Date(dstr); return isNaN(dt.getTime()) ? '0000-00-00' : (dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate())); };
+  // أيام الفترة المعروضة (من حركات الموظف المحمّلة) — للتقيّد بتاريخ الفاتورة لا تاريخ الإدراج
+  const listDays = new Set((list || []).map(e => dayKey(e && e.date)).filter(k => k !== '0000-00-00'));
+  // أرقام فواتير الموظف في الفترة — احتياطي لنسب الديون القديمة التي لم يُحفظ عليها اسم الموظف
   const empInvNums = new Set((list || []).filter(e => e && e.type !== 'return' && e.number).map(e => String(e.number).replace(/[^0-9]/g, '')).filter(Boolean));
   liveOnce('data/debts').then(ds => {
     if (!document.getElementById('empDebtByDay')) return;
     const debts = Object.values((ds && ds.val()) || {}).filter(Boolean);
-    // سجلات الدَّين على فواتير باعها هذا الموظف (الربط عبر رقم الفاتورة)
-    const mine = debts.filter(d => { const n = String(d.invoiceNumber || '').replace(/[^0-9]/g, ''); return n && empInvNums.has(n); });
+    const mine = debts.filter(d => {
+      // ضمن أيام الفترة حسب تاريخ الفاتورة (debt.date) — لا تاريخ الإدراج (createdAt)
+      if (listDays.size && !listDays.has(dayKey(d.date))) return false;
+      // النسب: اسم الموظف المخزَّن من الفاتورة أولًا؛ فإن لم يوجد (دين قديم) فعبر رقم الفاتورة
+      const de = (d.empName && String(d.empName).trim()) ? String(d.empName).trim() : '';
+      if (de) return de === name;
+      const n = String(d.invoiceNumber || '').replace(/[^0-9]/g, '');
+      return n && empInvNums.has(n);
+    });
     if (!mine.length) { host.innerHTML = '<div style="color:var(--textMuted);font-size:12.5px;padding:12px;text-align:center;border:1px dashed var(--border);border-radius:12px;">لا توجد أصناف مُسجّلة بالدَّين لهذا الموظف في هذه الفترة</div>'; return; }
-    const pad = n => String(n).padStart(2, '0');
     const byDay = {};
-    mine.forEach(d => { const dt = new Date(d.date); const key = isNaN(dt.getTime()) ? '0000-00-00' : (dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate())); (byDay[key] = byDay[key] || []).push(d); });
+    mine.forEach(d => { const key = dayKey(d.date); (byDay[key] = byDay[key] || []).push(d); });
     const days = Object.keys(byDay).sort().reverse();
     const grand = mine.reduce((s, d) => s + (Number(d.amount) || 0), 0);
     let h = '<div style="background:#FEF3C7;border-radius:12px;padding:10px 13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px;"><span style="color:#92400E;">إجمالي مبيعات الدَّين</span><span style="color:#92400E;">' + fmtMoney(grand) + ' د.ل · ' + mine.length + ' صنف</span></div>';
@@ -9817,6 +9833,8 @@ async function assignDebtToCustomer(customerId, customerName) {
     createdAt: new Date().toISOString(),
     paid: false
   };
+  // اسم الموظف البائع مأخوذ من الفاتورة (للنسب في تقرير الموظفين)
+  if (pendingDebtItem.empName && String(pendingDebtItem.empName).trim()) debtRecord.empName = String(pendingDebtItem.empName).trim();
   if (note) debtRecord.note = note;
   debtRef.set(debtRecord).then(() => {
     logActivity('إضافة دين', itemLabel + ' (' + amountLabel + ' د.ل) على ' + customerName + (note ? ' - ملاحظة: ' + note : ''));
