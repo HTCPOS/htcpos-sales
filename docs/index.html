@@ -7376,9 +7376,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.42';
+const APP_VERSION = '4.27.43';
 const APP_BUILD_DATE = '2026-11-14';
 const APP_RELEASES = [
+  { v: '4.27.43', date: '2026-11-14', items: [
+    'تقرير مبيعات الدَّين يأخذ تاريخ البيع واسم البائع من الفاتورة نفسها في الأرشيف — لا من وقت الإدراج. فحتى الديون القديمة التي أدرجتها اليوم تنتقل لتاريخ فاتورتها (أمس مثلًا) ولموظفها الحقيقي. وأُضيف اسم «البائع» تحت كل سطر لترى مصدر النسب بنفسك'
+  ] },
   { v: '4.27.42', date: '2026-11-14', items: [
     'نسب مبيعات الدَّين للموظف وتاريخها يُؤخذان من الفاتورة لا من وقت الإدراج: عند تسجيل الدَّين يُحفظ اسم الموظف البائع من الفاتورة على السجل، فيُنسب الدَّين لصاحبه الحقيقي. والدين الذي تُدرجه اليوم لفاتورة أمس يظهر في تقرير أمس (حسب تاريخ الفاتورة). الديون القديمة تُنسب عبر رقم الفاتورة كما كان'
   ] },
@@ -9077,23 +9080,40 @@ function renderEmpDebtByDay(name, list) {
   const dayKey = dstr => { const dt = new Date(dstr); return isNaN(dt.getTime()) ? '0000-00-00' : (dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate())); };
   // أيام الفترة المعروضة (من حركات الموظف المحمّلة) — للتقيّد بتاريخ الفاتورة لا تاريخ الإدراج
   const listDays = new Set((list || []).map(e => dayKey(e && e.date)).filter(k => k !== '0000-00-00'));
-  // أرقام فواتير الموظف في الفترة — احتياطي لنسب الديون القديمة التي لم يُحفظ عليها اسم الموظف
+  // أرقام فواتير الموظف في الفترة — احتياطي أخير لو الفاتورة خارج الأرشيف المحمّل
   const empInvNums = new Set((list || []).filter(e => e && e.type !== 'return' && e.number).map(e => String(e.number).replace(/[^0-9]/g, '')).filter(Boolean));
-  liveOnce('data/debts').then(ds => {
+  Promise.all([fetchFullArchiveFlat().catch(() => []), liveOnce('data/debts')]).then(([flat, ds]) => {
     if (!document.getElementById('empDebtByDay')) return;
+    // مصدر الحقيقة: خريطة رقم الفاتورة ← { تاريخ البيع، اسم البائع } من أرشيف الفواتير نفسه
+    const invMap = {};
+    (flat || []).forEach(e => {
+      if (!e || e.type === 'return') return;
+      const k = String(e.number || '').replace(/[^0-9]/g, ''); if (!k) return;
+      const emp = (e.empName && String(e.empName).trim()) ? String(e.empName).trim() : '';
+      const cur = invMap[k];
+      if (!cur) invMap[k] = { date: e.date, empName: emp };
+      else if (!cur.empName && emp) { cur.empName = emp; cur.date = e.date; }
+    });
+    // لكل دَّين: نأخذ التاريخ والموظف من الفاتورة (إن وُجدت)، وإلا من حقول الدَّين المخزّنة
+    const resolveDebt = d => {
+      const k = String(d.invoiceNumber || '').replace(/[^0-9]/g, '');
+      const inv = k ? invMap[k] : null;
+      const date = (inv && inv.date) ? inv.date : d.date;
+      let emp = (inv && inv.empName) ? inv.empName : '';
+      if (!emp && d.empName && String(d.empName).trim()) emp = String(d.empName).trim();
+      return { date: date, empName: emp, invNum: k };
+    };
     const debts = Object.values((ds && ds.val()) || {}).filter(Boolean);
     const mine = debts.filter(d => {
-      // ضمن أيام الفترة حسب تاريخ الفاتورة (debt.date) — لا تاريخ الإدراج (createdAt)
-      if (listDays.size && !listDays.has(dayKey(d.date))) return false;
-      // النسب: اسم الموظف المخزَّن من الفاتورة أولًا؛ فإن لم يوجد (دين قديم) فعبر رقم الفاتورة
-      const de = (d.empName && String(d.empName).trim()) ? String(d.empName).trim() : '';
-      if (de) return de === name;
-      const n = String(d.invoiceNumber || '').replace(/[^0-9]/g, '');
-      return n && empInvNums.has(n);
+      const r = resolveDebt(d);
+      // ضمن أيام الفترة حسب تاريخ الفاتورة — لا تاريخ الإدراج
+      if (listDays.size && !listDays.has(dayKey(r.date))) return false;
+      if (r.empName) return r.empName === name;                 // النسب لبائع الفاتورة الحقيقي
+      return r.invNum && empInvNums.has(r.invNum);              // احتياطي: فاتورة خارج الأرشيف وبلا اسم موظف
     });
     if (!mine.length) { host.innerHTML = '<div style="color:var(--textMuted);font-size:12.5px;padding:12px;text-align:center;border:1px dashed var(--border);border-radius:12px;">لا توجد أصناف مُسجّلة بالدَّين لهذا الموظف في هذه الفترة</div>'; return; }
     const byDay = {};
-    mine.forEach(d => { const key = dayKey(d.date); (byDay[key] = byDay[key] || []).push(d); });
+    mine.forEach(d => { const key = dayKey(resolveDebt(d).date); (byDay[key] = byDay[key] || []).push(d); });
     const days = Object.keys(byDay).sort().reverse();
     const grand = mine.reduce((s, d) => s + (Number(d.amount) || 0), 0);
     let h = '<div style="background:#FEF3C7;border-radius:12px;padding:10px 13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px;"><span style="color:#92400E;">إجمالي مبيعات الدَّين</span><span style="color:#92400E;">' + fmtMoney(grand) + ' د.ل · ' + mine.length + ' صنف</span></div>';
@@ -9105,9 +9125,11 @@ function renderEmpDebtByDay(name, list) {
       const dayTotal = recs.reduce((s, d) => s + (Number(d.amount) || 0), 0);
       const inner = recs.map(d => {
         const paid = d.paid ? '<span style="background:#DCFCE7;color:#15803D;border-radius:7px;padding:1px 7px;font-size:10.5px;font-weight:800;margin-right:6px;">مسدّد</span>' : '';
+        const r = resolveDebt(d);
+        const seller = r.empName ? ' · <span style="color:#2563EB;font-weight:700;">البائع: ' + escapeHtml(r.empName) + '</span>' : '';
         return '<div style="margin-top:8px;padding-top:7px;border-top:1px dashed var(--border2);">'
           + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(String(d.itemName || 'صنف')) + '</span><span style="direction:ltr;white-space:nowrap;">' + fmtQty(d.qty || 1) + ' × ' + fmtMoney(d.price) + ' = ' + fmtMoney(d.amount) + '</span></div>'
-          + '<div style="font-size:11.5px;color:var(--textMuted);margin-top:2px;">' + paid + 'على: ' + escapeHtml(String(d.customerName || 'زبون')) + ' · فاتورة ' + escapeHtml(String(d.invoiceNumber || '')) + '</div>'
+          + '<div style="font-size:11.5px;color:var(--textMuted);margin-top:2px;">' + paid + 'على: ' + escapeHtml(String(d.customerName || 'زبون')) + ' · فاتورة ' + escapeHtml(String(d.invoiceNumber || '')) + seller + '</div>'
           + '</div>';
       }).join('');
       h += '<div style="border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;">'
