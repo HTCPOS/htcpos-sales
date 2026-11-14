@@ -6992,6 +6992,7 @@ function phMatchFilter(it, f, low) {
   if (f === 'low') return stock > 0 && stock <= low;
   if (f === 'zeroPrice') return price <= 0;
   if (f === 'pricing') return cost <= 0 || (price > 0 && price < cost);
+  if (f === 'margin10') { const w = Number(it.wholesale || 0); return cost > 0 && w > 0 && (w - cost) < 10; }
   return true;
 }
 
@@ -7023,12 +7024,12 @@ function renderProductsHub() {
   if (!listEl) return;
   const items = Object.values(latestItems || {});
   const low = phLowThreshold();
-  const counts = { all: items.length, out: 0, low: 0, zeroPrice: 0, pricing: 0 };
+  const counts = { all: items.length, out: 0, low: 0, zeroPrice: 0, pricing: 0, margin10: 0 };
   items.forEach(it => {
-    ['out', 'low', 'zeroPrice', 'pricing'].forEach(f => { if (phMatchFilter(it, f, low)) counts[f]++; });
+    ['out', 'low', 'zeroPrice', 'pricing', 'margin10'].forEach(f => { if (phMatchFilter(it, f, low)) counts[f]++; });
   });
   const chips = [
-    ['all', 'الكل'], ['out', 'نفدت'], ['low', 'أوشكت على النفاد (≤' + low + ')'], ['zeroPrice', 'سعر البيع صفر'], ['pricing', 'مشاكل التسعير']
+    ['all', 'الكل'], ['out', 'نفدت'], ['low', 'أوشكت على النفاد (≤' + low + ')'], ['zeroPrice', 'سعر البيع صفر'], ['pricing', 'مشاكل التسعير'], ['margin10', 'فرق الجملة < 10']
   ];
   document.getElementById('phChips').innerHTML = chips.map(([f, label]) =>
     `<button type="button" class="lsChip${phFilter === f ? ' on' : ''}" style="direction:rtl;" onclick="setProductsHubFilter('${f}')">${label} <b style="opacity:.75;">${counts[f]}</b></button>`
@@ -7042,7 +7043,8 @@ function renderProductsHub() {
   list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
   phView = { list: list, shown: 0, raw: raw, low: low };
   if (!list.length) { listEl.innerHTML = '<div class="emptyMsg">لا يوجد أصناف مطابقة</div>'; return; }
-  const note = phFilter === 'pricing' ? '<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:9px 12px;margin:0 0 8px;font-weight:700;">أصناف تكلفتها صفر أو سعر بيعها أقل من تكلفتها - غالبًا خطأ إدخال يؤثر على حساب الأرباح.</div>' : '';
+  const note = phFilter === 'pricing' ? '<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:9px 12px;margin:0 0 8px;font-weight:700;">أصناف تكلفتها صفر أو سعر بيعها أقل من تكلفتها - غالبًا خطأ إدخال يؤثر على حساب الأرباح.</div>'
+    : phFilter === 'margin10' ? '<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:9px 12px;margin:0 0 8px;font-weight:700;">أصناف هامش الجملة فيها أقل من 10 د.ل (الجملة − التكلفة). اضغط الصنف لتعديل التكلفة أو الجملة أو سعر البيع.</div>' : '';
   listEl.innerHTML = note + `<div class="plCount">${list.length} صنف</div><div id="phRows"></div><div id="phMore" class="emptyMsg" style="display:none;"></div>`;
   listEl.scrollTop = 0;
   appendProductsHubPage();
@@ -7056,8 +7058,16 @@ function appendProductsHubPage() {
   if (!next.length) return;
   rowsEl.insertAdjacentHTML('beforeend', next.map(it => {
     const warnCost = Number(it.cost || 0) <= 0 ? ' · <span style="color:#B45309;">التكلفة صفر</span>' : (Number(it.price || 0) > 0 && Number(it.price) < Number(it.cost) ? ' · <span style="color:#DC2626;">أقل من التكلفة</span>' : '');
+    let sub;
+    if (phFilter === 'margin10') {
+      const w = Number(it.wholesale || 0), c = Number(it.cost || 0), diff = w - c;
+      const dColor = diff < 0 ? '#DC2626' : '#B45309';
+      sub = `<div class="gsSub">تكلفة ${fmtMoney(c)} ← جملة ${fmtMoney(w)} · <b style="color:${dColor};">الفرق ${fmtMoney(diff)} د.ل</b></div>`;
+    } else {
+      sub = `<div class="gsSub">${fmtMoney(it.price)} د.ل${it.barcode ? ' · ' + escapeHtml(String(it.barcode)) : ''}${warnCost}</div>`;
+    }
     return `<div class="searchResultRow gsRow" onclick="openItemFromHub(${it.id})">
-      <div class="n">${highlightCustomerMatch(String(it.name || ''), v.raw)}<div class="gsSub">${fmtMoney(it.price)} د.ل${it.barcode ? ' · ' + escapeHtml(String(it.barcode)) : ''}${warnCost}</div></div>
+      <div class="n">${highlightCustomerMatch(String(it.name || ''), v.raw)}${sub}</div>
       ${phStockBadge(it.stock, v.low)}
     </div>`;
   }).join(''));
@@ -7311,9 +7321,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.34';
-const APP_BUILD_DATE = '2026-11-13';
+const APP_VERSION = '4.27.35';
+const APP_BUILD_DATE = '2026-11-14';
 const APP_RELEASES = [
+  { v: '4.27.35', date: '2026-11-14', items: [
+    'مركز الأصناف: فلتر جديد «فرق الجملة < 10» يعرض الأصناف التي هامش الجملة فيها (الجملة − التكلفة) أقل من 10 د.ل، مع عرض التكلفة والجملة والفرق في كل صف. اضغط الصنف لتعديل التكلفة/الجملة/سعر البيع'
+  ] },
   { v: '4.27.34', date: '2026-11-13', items: [
     'تقرير اليوم: إضافة قسم «تفاصيل مبيعات الدَّين» (قابل للطي) يعرض أصناف الدَّين المسجّلة في ذلك اليوم حسب تاريخ الوصل — الصنف والكمية والسعر واسم المدين ورقم الفاتورة وحالة السداد، تحت إجمالي ديون اليوم'
   ] },
