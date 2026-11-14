@@ -7040,7 +7040,13 @@ function renderProductsHub() {
   const q = normalizeArabicName(raw);
   let list = items.filter(it => phMatchFilter(it, phFilter, low));
   if (q) list = list.filter(it => normalizeArabicName(it.name).includes(q) || (it.barcode && String(it.barcode).includes(raw)));
-  list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+  if (phFilter === 'margin10') {
+    // ترتيب تدريجي حسب الفرق: الأكثر سلبية أولًا ثم صعودًا حتى 9
+    const diffOf = it => (Number(it.wholesale || 0) - Number(it.cost || 0));
+    list.sort((a, b) => diffOf(a) - diffOf(b) || String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+  } else {
+    list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+  }
   phView = { list: list, shown: 0, raw: raw, low: low };
   if (!list.length) { listEl.innerHTML = '<div class="emptyMsg">لا يوجد أصناف مطابقة</div>'; return; }
   const note = phFilter === 'pricing' ? '<div style="background:#FEF3C7;color:#92400E;font-size:12px;border-radius:10px;padding:9px 12px;margin:0 0 8px;font-weight:700;">أصناف تكلفتها صفر أو سعر بيعها أقل من تكلفتها - غالبًا خطأ إدخال يؤثر على حساب الأرباح.</div>'
@@ -7089,6 +7095,7 @@ function onProductsHubScroll() {
 function openItemFromHub(id) {
   try { document.activeElement && document.activeElement.blur(); } catch (e) {}
   openItemCardModal();
+  itemCardFromHub = true;   // فُتح من مركز الأصناف: بعد الحفظ نرجع للقائمة لا لحقل البحث
   showItemCardDetail(id);
 }
 
@@ -7321,9 +7328,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.35';
+const APP_VERSION = '4.27.37';
 const APP_BUILD_DATE = '2026-11-14';
 const APP_RELEASES = [
+  { v: '4.27.37', date: '2026-11-14', items: [
+    'إصلاح: عند تعديل صنف فُتح من مركز الأصناف، بعد الحفظ يرجع للقائمة مباشرة بدل الرجوع لحقل كتابة اسم صنف جديد'
+  ] },
+  { v: '4.27.36', date: '2026-11-14', items: [
+    'فلتر «فرق الجملة < 10»: ترتيب تدريجي حسب الفرق — الأكثر سلبية أولًا ثم صعودًا حتى 9، لتبدأ بالأصناف الأكثر خسارة'
+  ] },
   { v: '4.27.35', date: '2026-11-14', items: [
     'مركز الأصناف: فلتر جديد «فرق الجملة < 10» يعرض الأصناف التي هامش الجملة فيها (الجملة − التكلفة) أقل من 10 د.ل، مع عرض التكلفة والجملة والفرق في كل صف. اضغط الصنف لتعديل التكلفة/الجملة/سعر البيع'
   ] },
@@ -11457,6 +11470,14 @@ async function itemCardBackToResults() {
 }
 
 // بعد حفظ تعديل صنف: نرجّع المستخدم لخانة البحث جاهزة لصنف تاني (بدون ما يرجع بيده)
+let itemCardFromHub = false;
+// بعد التعديل: إن فُتح الصنف من مركز الأصناف نرجع للقائمة، وإلا نرجع لحقل البحث
+function itemCardAfterEdit() {
+  if (itemCardFromHub) {
+    try { closeItemCardModal(); } catch (e) {}
+    try { const ph = document.getElementById('productsHubModal'); if (ph && ph.style.display === 'flex') renderProductsHub(); } catch (e) {}
+  } else itemCardReturnToSearch();
+}
 function itemCardReturnToSearch() {
   const sIn = document.getElementById('itemCardSearchInput');
   const resEl = document.getElementById('itemCardResults');
@@ -11470,6 +11491,7 @@ function itemCardReturnToSearch() {
 }
 
 function openItemCardModal() {
+  itemCardFromHub = false;
   document.getElementById('itemCardSearchInput').value = '';
   document.getElementById('itemCardResults').innerHTML = '';
   document.getElementById('itemCardResults').style.display = '';
@@ -11656,7 +11678,7 @@ function saveItemCardEdit(itemId) {
   if (it.barcode && nums.wholesale !== Number(it.wholesale || 0)) changes.wholesale = nums.wholesale;
   if (nums.price !== Number(it.price || 0)) changes.price = nums.price;
 
-  if (!Object.keys(changes).length) { try { showQuickToast('لا يوجد تغييرات على ' + (it.name || '')); } catch (e) {} itemCardReturnToSearch(); return; }
+  if (!Object.keys(changes).length) { try { showQuickToast('لا يوجد تغييرات على ' + (it.name || '')); } catch (e) {} itemCardAfterEdit(); return; }
 
   // الكمية بتتبعت كفرق (زيادة/نقص) غير كرقم نهائي، والفرق بيتجمع على السيرفر بـ increment.
   // هكذا إذا الكاشير مقطوع وباع قطع قبل ما التعديل يوصله، مبيعاته ما تضيعش:
@@ -11688,7 +11710,7 @@ function saveItemCardEdit(itemId) {
     setItemCardEditStatus(itemId, '… تم إرسال التعديل، في انتظار تأكيد الكاشير', '#2563EB');
     watchItemCardEditResult(itemId, reqId);
     try { showQuickToast('تم حفظ تعديل ' + (changes.name || oldName)); } catch (e) {}
-    itemCardReturnToSearch();
+    itemCardAfterEdit();
   }).catch(err => {
     const m = (err && err.message ? err.message : String(err));
     errEl.textContent = 'فشل إرسال التعديل: ' + m + ' ← ' + clientErrorFix(m);
