@@ -7374,9 +7374,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.40';
+const APP_VERSION = '4.27.41';
 const APP_BUILD_DATE = '2026-11-14';
 const APP_RELEASES = [
+  { v: '4.27.41', date: '2026-11-14', items: [
+    'إصلاح خطأ في شاشة «البحث عن وسم»: كان متغيّر مدى المعايرة غير معرّف فيسبّب تكرار ReferencerError (span) أثناء تحديث المؤشر. عُرّف الآن بشكل صحيح'
+  ] },
   { v: '4.27.40', date: '2026-11-14', items: [
     'فلتر «فرق الجملة < 10»: زر «استبعاد» لكل صنف تقصد إبقاءه بهامش منخفض (نماذج مثلًا) فيختفي من القائمة. المستبعدة محفوظة في قاعدة البيانات (مسار مستقل لا يقرأه الكاشير ولا يؤثر عليه) فتبقى حتى بعد قفل التطبيق أو تبديل الجهاز. سطر «مستبعدة: N — اعرضها» يفتح قائمتها مع زر «استئناف» لإرجاع أي صنف متى قررت'
   ] },
@@ -13804,6 +13807,7 @@ function updateFinderMeter() {
   if (bar) { bar.style.width = pct + '%'; bar.style.background = col; }
   if (pctEl) { pctEl.textContent = pct; pctEl.style.color = col; }
   if (txt) { txt.textContent = pct >= 80 ? 'قريب جدًا' : (pct >= 50 ? 'اقترب أكثر' : (pct >= 25 ? 'في الاتجاه الصحيح' : 'بعيد')); txt.style.color = col; }
+  const span = (Number(fs.max || 0) - Number(fs.min || 0)) / 10; // مدى المعايرة بالـ dBm
   if (rssiEl) rssiEl.innerHTML = 'RSSI خام: <b>' + Math.round(cur.rssi) + '</b> · المدى: ' + Math.round(fs.min) + ' … ' + Math.round(fs.max) + (span < 8 ? ' <span style="color:#D97706;">(حرّك قريب وبعيد للمعايرة)</span>' : '');
   if (nameEl && fs.mode === 'any') nameEl.innerHTML = 'أقرب وسم: ' + (cur.name ? escapeHtml(cur.name) : '<span style="color:#7C3AED;">غير مربوط</span>');
   // زر التثبيت في وضع "أي وسم"
