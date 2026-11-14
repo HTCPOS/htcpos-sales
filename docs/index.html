@@ -2366,6 +2366,7 @@ setTimeout(() => window.hideSplash(), 4000);
       <div id="integrityBox"></div>
     </div>
     <div id="errorsStatusCard" style="border-radius:12px;padding:12px;margin:10px 0;font-size:13px;font-weight:700;line-height:1.7;"></div>
+    <div id="diagCard" style="margin:10px 0;"></div>
     <div id="rescuePanel"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
       <span style="font-size:12px;color:var(--textMuted);font-weight:700;">آخر الأخطاء (الأحدث فوق)</span>
@@ -2460,9 +2461,10 @@ const db = firebase.database();
 
 // بانر تحذير إذا النت مقطوع - حتى محدش يفتكر إن التعديل اتحفظ وهو فعليًا لسه واقف عنده
 db.ref('.info/connected').on('value', snap => {
+  const connected = snap.val() === true;
+  try { fbConnected = connected; } catch (e) {}
   const banner = document.getElementById('offlineBanner');
   if (!banner) return;
-  const connected = snap.val() === true;
   banner.style.display = connected ? 'none' : 'flex';
   if (typeof updateTopOffset === 'function') setTimeout(updateTopOffset, 30);
 });
@@ -6992,7 +6994,7 @@ function phMatchFilter(it, f, low) {
   if (f === 'low') return stock > 0 && stock <= low;
   if (f === 'zeroPrice') return price <= 0;
   if (f === 'pricing') return cost <= 0 || (price > 0 && price < cost);
-  if (f === 'margin10') { const w = Number(it.wholesale || 0); return cost > 0 && w > 0 && (w - cost) < 10; }
+  if (f === 'margin10') { const w = Number(it.wholesale || 0); return cost > 0 && w > 0 && (w - cost) < 10 && !marginFixedThisSession.has(String(it.id)); }
   return true;
 }
 
@@ -7328,9 +7330,15 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.37';
+const APP_VERSION = '4.27.39';
 const APP_BUILD_DATE = '2026-11-14';
 const APP_RELEASES = [
+  { v: '4.27.39', date: '2026-11-14', items: [
+    'شاشة «تشخيص مصدر المشكلة» (قراءة فقط): تفتح من شريط حالة الكاشير، وتبيّن بوضوح هل المشكلة من اتصال جوالك بالإنترنت، أم من جهاز الكاشير نفسه (مطفأ/مقطوع)، أم أن كل شيء سليم — مع عدد الأوامر المعلّقة في الطابور. توضّح أيضًا أن إضافات التطبيق لا تؤثر على اتصال الكاشير'
+  ] },
+  { v: '4.27.38', date: '2026-11-14', items: [
+    'فلتر «فرق الجملة < 10»: الصنف الذي تعدّله يُستبعد من القائمة لهذه الجلسة فلا يرجع ويظهر مجددًا (السبب أن تعديلك معلّق حتى يؤكّده الكاشير، فكانت المزامنة تُرجع القيمة القديمة). حل آمن لا يمسّ أي بيانات — عند إعادة فتح التطبيق تُحسب القائمة من جديد'
+  ] },
   { v: '4.27.37', date: '2026-11-14', items: [
     'إصلاح: عند تعديل صنف فُتح من مركز الأصناف، بعد الحفظ يرجع للقائمة مباشرة بدل الرجوع لحقل كتابة اسم صنف جديد'
   ] },
@@ -8376,6 +8384,9 @@ function onAuthDecided(user) {
 let latestSummary = {};
 let latestInvoices = [];
 let latestItems = {};
+// أصناف عالجها المستخدم في فلتر «فرق الجملة» بهذه الجلسة — تُستبعد من الفلتر فقط (لا تمسّ أي بيانات)
+let marginFixedThisSession = new Set();
+let fbConnected = null; // حالة اتصال التطبيق بقاعدة البيانات (قراءة فقط عبر .info/connected)
 
 // تعقيم أي نص حر (اسم زبون/صنف/ملاحظة) قبل عرضه كـ HTML - بيمنع حد يكتب كود HTML/جافاسكريبت
 // جوه اسم أو ملاحظة ويخلّيه يتنفذ لما يتعرض في أي قائمة (XSS). بنستخدمها في كل مكان بيعرض
@@ -8603,8 +8614,47 @@ function renderErrorsStatusCard() {
   try { renderRescuePanel(); } catch (e) {}
 }
 
+// ======= تشخيص مصدر المشكلة (قراءة فقط) =======
+const DIAG_CMD_LABELS = { editItem: 'تعديل صنف', updateStock: 'تعديل مخزون', addShortage: 'إضافة نقص', deleteShortage: 'حذف نقص', printLabels: 'طباعة ملصقات', invoiceQuery: 'بحث فاتورة', reportQuery: 'تقرير', profitQuery: 'أرباح', scriptUpdate: 'تحديث سكريبت', bridgeShell: 'أمر جسر', bridgeUpdate: 'تحديث جسر', rescue: 'إنقاذ', guardianUpdate: 'تحديث حارس', tailscaleSetup: 'إعداد شبكة', usageCheckNow: 'فحص استخدام' };
+function diagBox(color, bg, html) { return '<div style="background:' + bg + ';color:' + color + ';border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:700;line-height:1.7;margin-bottom:8px;">' + html + '</div>'; }
+function buildDiagHtml(pending) {
+  const online = navigator.onLine;
+  const cs = getCashierState();
+  const cashierProblem = cs.color === '#DC2626' || cs.color === '#D97706';
+  let h = '<div style="font-weight:800;font-size:14px;margin:2px 0 8px;display:flex;align-items:center;gap:6px;">تشخيص مصدر المشكلة</div>';
+  // 1) اتصال التطبيق
+  if (!online) h += diagBox('#B91C1C', '#FEF2F2', '● التطبيق: جوالك غير متصل بالإنترنت');
+  else if (fbConnected === false) h += diagBox('#92400E', '#FFFBEB', '● التطبيق: متصل بالنت لكن لم يتصل بقاعدة البيانات بعد');
+  else h += diagBox('#15803D', '#F0FDF4', '● التطبيق: متصل بقاعدة البيانات');
+  // 2) الكاشير
+  h += diagBox(cs.color === '#16A34A' ? '#15803D' : (cs.color === '#DC2626' ? '#B91C1C' : '#92400E'), cs.bg, '● الكاشير: ' + escapeHtml(cs.title));
+  // 3) الأوامر المعلّقة للكاشير
+  if (pending === null) h += diagBox('#475569', '#F1F5F9', '● الأوامر المرسلة للكاشير: جارٍ القراءة...');
+  else if (pending.total === 0) h += diagBox('#15803D', '#F0FDF4', '● الأوامر المرسلة للكاشير: لا يوجد شيء معلّق (كل ما أرسلناه نُفِّذ)');
+  else h += diagBox('#92400E', '#FFFBEB', '● أوامر معلّقة للكاشير: <b>' + pending.total + '</b><div style="font-weight:600;color:#1E293B;margin-top:3px;">' + escapeHtml(pending.breakdown.join(' · ')) + '</div>');
+  // 4) خلاصة المصدر
+  let verdict;
+  if (!online) verdict = ['#B91C1C', '#FEF2F2', 'المصدر: اتصالك بالإنترنت — ليس التطبيق ولا الكاشير. شغّل الواي‑فاي أو البيانات.'];
+  else if (cashierProblem) verdict = ['#B91C1C', '#FEF2F2', 'المصدر الأرجح: <b>جهاز الكاشير نفسه</b> (مطفأ/مقطوع عن النت/السكريبت متوقف) — وليس إضافاتنا في التطبيق.' + (pending && pending.total ? ' أوامرك الـ' + pending.total + ' محفوظة وتُنفّذ فور عودته.' : '')];
+  else if (pending && pending.total > 0) verdict = ['#92400E', '#FFFBEB', 'الكاشير متصل ويعالج، ويوجد ' + pending.total + ' أمر في الطابور (طبيعي أثناء المعالجة). أعد فتح هذه الشاشة بعد دقيقة؛ إن لم ينقص العدد فقد يكون أمر عالق — أرسل لي لقطة الشاشة.'];
+  else verdict = ['#15803D', '#F0FDF4', 'كل شيء سليم: التطبيق والكاشير متصلان، ولا أوامر معلّقة. لا مصدر مشكلة ظاهر.'];
+  h += '<div style="background:' + verdict[1] + ';color:' + verdict[0] + ';border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;line-height:1.8;border:1px solid ' + verdict[0] + '33;"><b>الخلاصة:</b> ' + verdict[2] + '</div>';
+  h += '<div style="font-size:10.5px;color:var(--textMuted);margin-top:6px;line-height:1.7;">ملاحظة: إضافات التطبيق (RFID، الديون، الفلاتر) تُكتب في أماكن لا يقرأها الكاشير، فلا تؤثر على اتصاله. ما يصل للكاشير منّا هو «الأوامر» أعلاه فقط.</div>';
+  return h;
+}
+function renderDiagCard() {
+  const el = document.getElementById('diagCard'); if (!el) return;
+  el.innerHTML = buildDiagHtml(null);
+  db.ref('commands').once('value').then(snap => {
+    if (!document.getElementById('diagCard')) return;
+    const v = snap.val() || {}; let total = 0; const breakdown = [];
+    Object.keys(v).forEach(k => { const node = v[k]; const n = (node && typeof node === 'object') ? Object.keys(node).length : (node ? 1 : 0); if (n > 0) { total += n; breakdown.push((DIAG_CMD_LABELS[k] || k) + ': ' + n); } });
+    el.innerHTML = buildDiagHtml({ total: total, breakdown: breakdown });
+  }).catch(() => { if (document.getElementById('diagCard')) document.getElementById('diagCard').innerHTML = buildDiagHtml({ total: 0, breakdown: [] }); });
+}
 function renderErrorsModal() {
   renderErrorsStatusCard();
+  try { renderDiagCard(); } catch (e) {}
   const el = document.getElementById('errorsBody');
   if (!errorLogEntries.length) { el.innerHTML = '<div class="emptyMsg">لا يوجد أخطاء <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>'; return; }
   el.innerHTML = errorLogEntries.map(e => `
@@ -11701,6 +11751,8 @@ function saveItemCardEdit(itemId) {
     if ('cost' in changes) it.cost = changes.cost;
     if ('wholesale' in changes) it.wholesale = changes.wholesale;
     if ('price' in changes) it.price = changes.price;
+    // إن كان الصنف فُتح من فلتر «فرق الجملة»، اعتبره مُعالَجًا هذه الجلسة فلا يرجع في القائمة
+    if (itemCardFromHub && ('cost' in changes || 'wholesale' in changes || 'price' in changes)) { try { marginFixedThisSession.add(String(itemId)); } catch (e) {} }
     const summary = Object.keys(changes).map(k => editFieldLabel(k) + ': ' + (k === 'name' ? changes[k] : k === 'qty' ? changes[k] : fmtMoney(changes[k]) + ' د.ل')).join(' - ');
     logActivity('تعديل صنف', oldName + ' ← ' + summary);
     const histChanges = {};
