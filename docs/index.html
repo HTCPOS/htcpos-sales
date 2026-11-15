@@ -7376,9 +7376,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.43';
-const APP_BUILD_DATE = '2026-11-14';
+const APP_VERSION = '4.27.44';
+const APP_BUILD_DATE = '2026-11-15';
 const APP_RELEASES = [
+  { v: '4.27.44', date: '2026-11-15', items: [
+    'تقرير مبيعات الدَّين يخصم المرتجعات من الإجمالي: كان الخصم يظهر في حساب الزبون فقط أما إجمالي الديون فيبقى بالمبلغ الكامل. الآن يُحسب الصافي بعد المرتجعات من الأرشيف مباشرة — يظهر «قبل المرتجعات» و«− مرتجعات»، وكل سطر مُرجَع يبيّن المبلغ القديم ← الصافي وكمية المرتجع (قراءة فقط، نفس منطق حساب الزبون بلا خصم مزدوج)'
+  ] },
   { v: '4.27.43', date: '2026-11-14', items: [
     'تقرير مبيعات الدَّين يأخذ تاريخ البيع واسم البائع من الفاتورة نفسها في الأرشيف — لا من وقت الإدراج. فحتى الديون القديمة التي أدرجتها اليوم تنتقل لتاريخ فاتورتها (أمس مثلًا) ولموظفها الحقيقي. وأُضيف اسم «البائع» تحت كل سطر لترى مصدر النسب بنفسك'
   ] },
@@ -9112,24 +9115,46 @@ function renderEmpDebtByDay(name, list) {
       return r.invNum && empInvNums.has(r.invNum);              // احتياطي: فاتورة خارج الأرشيف وبلا اسم موظف
     });
     if (!mine.length) { host.innerHTML = '<div style="color:var(--textMuted);font-size:12.5px;padding:12px;text-align:center;border:1px dashed var(--border);border-radius:12px;">لا توجد أصناف مُسجّلة بالدَّين لهذا الموظف في هذه الفترة</div>'; return; }
+    // ===== خصم المرتجعات (قراءة فقط) — نفس منطق حساب الزبون (autoApplyDebtReturns) =====
+    const nrm = t => normalizeArabicName(String(t || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+    const retByInv = {};
+    (flat || []).forEach(e => { if (!e || e.type === 'return') return; const rl = invReturnedList(e); if (!rl || !rl.length) return; const num = String(e.number || ''); if (!num) return; const m = retByInv[num] = retByInv[num] || {}; rl.forEach(r => { const k = nrm(r && r.name); if (k) m[k] = (m[k] || 0) + Number((r && r.qty) || 0); }); });
+    const leftByInv = {};
+    Object.keys(retByInv).forEach(num => { const left = Object.assign({}, retByInv[num]); debts.forEach(d => { if (String(d.invoiceNumber || '') !== num) return; const k = nrm(d.itemName); const applied = (d.returned ? Number(d.qty || 1) : 0) + Number(d.returnedQty || 0); if (left[k]) left[k] = Math.max(0, left[k] - applied); }); leftByInv[num] = left; });
+    const netMap = new Map();
+    mine.forEach(d => { const q = Number(d.qty || 1), amt = Number(d.amount || 0), unit = q > 0 ? amt / q : amt; if (d.returned) { netMap.set(d, { qty: 0, amount: 0, retQty: q, full: true }); return; } const num = String(d.invoiceNumber || ''); const left = leftByInv[num]; const k = nrm(d.itemName); let take = 0; if (left && left[k] > 0.0001) { take = Math.min(left[k], q); left[k] -= take; } netMap.set(d, { qty: q - take, amount: r3(unit * (q - take)), retQty: r3(Number(d.returnedQty || 0) + take), full: false }); });
     const byDay = {};
     mine.forEach(d => { const key = dayKey(resolveDebt(d).date); (byDay[key] = byDay[key] || []).push(d); });
     const days = Object.keys(byDay).sort().reverse();
-    const grand = mine.reduce((s, d) => s + (Number(d.amount) || 0), 0);
-    let h = '<div style="background:#FEF3C7;border-radius:12px;padding:10px 13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px;"><span style="color:#92400E;">إجمالي مبيعات الدَّين</span><span style="color:#92400E;">' + fmtMoney(grand) + ' د.ل · ' + mine.length + ' صنف</span></div>';
+    const grossSum = mine.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const grand = r3(mine.reduce((s, d) => s + ((netMap.get(d) || {}).amount || 0), 0));
+    const retSum = r3(grossSum - grand);
+    let h = '<div style="background:#FEF3C7;border-radius:12px;padding:10px 13px;margin-bottom:10px;font-weight:800;font-size:13px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#92400E;">إجمالي مبيعات الدَّين' + (retSum > 0 ? ' (صافي)' : '') + '</span><span style="color:#92400E;">' + fmtMoney(grand) + ' د.ل · ' + mine.length + ' صنف</span></div>'
+      + (retSum > 0 ? '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;font-size:11.5px;font-weight:700;"><span style="color:#B45309;">قبل المرتجعات ' + fmtMoney(grossSum) + '</span><span style="color:#DC2626;">− مرتجعات ' + fmtMoney(retSum) + '</span></div>' : '')
+      + '</div>';
     days.forEach(key => {
       const recs = byDay[key];
       let dayLabel;
       if (key === '0000-00-00') dayLabel = 'تاريخ غير معروف';
       else { const d = new Date(key); dayLabel = CAM_DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + CAM_MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
-      const dayTotal = recs.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+      const dayTotal = r3(recs.reduce((s, d) => s + ((netMap.get(d) || {}).amount || 0), 0));
       const inner = recs.map(d => {
-        const paid = d.paid ? '<span style="background:#DCFCE7;color:#15803D;border-radius:7px;padding:1px 7px;font-size:10.5px;font-weight:800;margin-right:6px;">مسدّد</span>' : '';
+        const nm = netMap.get(d) || { amount: Number(d.amount) || 0, retQty: 0, full: false };
+        const hasRet = nm.retQty > 0 || nm.full;
+        const paid = (d.paid && !nm.full) ? '<span style="background:#DCFCE7;color:#15803D;border-radius:7px;padding:1px 7px;font-size:10.5px;font-weight:800;margin-right:6px;">مسدّد</span>' : '';
         const r = resolveDebt(d);
         const seller = r.empName ? ' · <span style="color:#2563EB;font-weight:700;">البائع: ' + escapeHtml(r.empName) + '</span>' : '';
+        const amtCell = hasRet
+          ? '<span style="text-decoration:line-through;color:#94A3B8;">' + fmtMoney(d.amount) + '</span> → <b>' + fmtMoney(nm.amount) + '</b>'
+          : fmtQty(d.qty || 1) + ' × ' + fmtMoney(d.price) + ' = ' + fmtMoney(d.amount);
+        const retNote = hasRet
+          ? '<div style="font-size:11px;color:#DC2626;font-weight:800;margin-top:2px;">↩ مرتجع ' + fmtQty(nm.retQty) + ' من ' + fmtQty(d.qty || 1) + (nm.full ? ' (كامل)' : '') + '</div>'
+          : '';
         return '<div style="margin-top:8px;padding-top:7px;border-top:1px dashed var(--border2);">'
-          + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(String(d.itemName || 'صنف')) + '</span><span style="direction:ltr;white-space:nowrap;">' + fmtQty(d.qty || 1) + ' × ' + fmtMoney(d.price) + ' = ' + fmtMoney(d.amount) + '</span></div>'
+          + '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:700;"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(String(d.itemName || 'صنف')) + '</span><span style="direction:ltr;white-space:nowrap;">' + amtCell + '</span></div>'
           + '<div style="font-size:11.5px;color:var(--textMuted);margin-top:2px;">' + paid + 'على: ' + escapeHtml(String(d.customerName || 'زبون')) + ' · فاتورة ' + escapeHtml(String(d.invoiceNumber || '')) + seller + '</div>'
+          + retNote
           + '</div>';
       }).join('');
       h += '<div style="border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;">'
