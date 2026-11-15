@@ -4462,15 +4462,17 @@ function openDebtDay(key) {
       return;
     }
     const byCust = {};
-    g.records.forEach(r => { const k = r.customerId || r.customerName; (byCust[k] = byCust[k] || { id: r.customerId, name: r.customerName, total: 0, rows: [] }); byCust[k].total += Number(r.amount || 0); byCust[k].rows.push(r); });
-    const custs = Object.values(byCust).sort((a, b) => b.total - a.total);
+    g.records.forEach(r => { const k = r.customerId || r.customerName; const b = (byCust[k] = byCust[k] || { id: r.customerId, name: r.customerName, total: 0, rows: [], lastAt: 0 }); b.total += Number(r.amount || 0); b.rows.push(r); const t = Date.parse(r.createdAt || '') || 0; if (t > b.lastAt) b.lastAt = t; });
+    // ترتيب حسب وقت الإدراج (الأحدث أولًا) — "بالساعة"
+    const custs = Object.values(byCust).sort((a, b) => (b.lastAt - a.lastAt) || (b.total - a.total));
+    const clockOf = ts => { if (!ts) return ''; const d = new Date(ts); let h = d.getHours(); const ap = h < 12 ? 'ص' : 'م'; h = h % 12 || 12; return h + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + ap; };
     let h = `<div style="display:flex;gap:8px;margin-bottom:12px;">
         <div style="flex:1;background:var(--surface);border-radius:16px;padding:12px;text-align:center;"><div style="font-size:12px;color:var(--textMuted);font-weight:600;">ديون جديدة</div><div style="font-size:18px;font-weight:800;color:#16A34A;margin-top:3px;">${fmtMoney(g.total)}</div></div>
         <div style="flex:1;background:var(--surface);border-radius:16px;padding:12px;text-align:center;"><div style="font-size:12px;color:var(--textMuted);font-weight:600;">تحصيل</div><div style="font-size:18px;font-weight:800;color:#2563EB;margin-top:3px;">${fmtMoney(g.collected)}</div></div>
       </div>`;
     h += custs.map(c => `<div class="searchResultRow" style="display:block;${c.id ? 'cursor:pointer;' : ''}" ${c.id ? `onclick="openCustomerDebt('${c.id}','${String(c.name).replace(/'/g, '')}')"` : ''}>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-          <span style="font-size:15px;font-weight:800;">${escapeHtml(c.name)}</span>
+          <span style="font-size:15px;font-weight:800;">${escapeHtml(c.name)}${c.lastAt ? ' <span style="font-size:11px;color:var(--textMuted);font-weight:600;">· ' + clockOf(c.lastAt) + '</span>' : ''}</span>
           <span style="font-size:15.5px;font-weight:800;direction:ltr;white-space:nowrap;">${fmtMoney(c.total)} د.ل</span>
         </div>
         ${c.rows.map(r => `<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:12.5px;color:var(--textMuted);">
@@ -7376,9 +7378,16 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.45';
+const APP_VERSION = '4.27.47';
 const APP_BUILD_DATE = '2026-11-15';
 const APP_RELEASES = [
+  { v: '4.27.47', date: '2026-11-15', items: [
+    'قائمة ديون الزبائن اليومية صارت مرتّبة بالساعة (الأحدث إدراجًا أولًا) بدل المبلغ، مع إظهار وقت آخر دَّين بجانب الاسم.',
+    'مُنتقي الزبون عند إدراج صنف بالدَّين صار يرتّب الزبائن بالأكثر تكرارًا في الشراء بالدَّين أولًا (مع عدد الديون بجانب الاسم) بدل الترتيب الأبجدي.'
+  ] },
+  { v: '4.27.46', date: '2026-11-15', items: [
+    'تقرير مبيعات الموظفين: تحكّم كامل بالتاريخ. أُضيف زرّ «كل الأيام» لمراجعة الأرشيف كاملًا، وزرّ «تخصيص» يفتح مُدخلَي «من/إلى» لاختيار أي يوم أو فترة (يجلب الأيام الأقدم من ٣ شهور من السيرفر عند الطلب). مبيعات الدَّين تتبع نفس الفترة المختارة'
+  ] },
   { v: '4.27.45', date: '2026-11-15', items: [
     'تنظيف عرض مبيعات الدَّين ليكون أوضح وأريح للعين: الكمية 1 تُعرض بالمبلغ مباشرة بدل «1 × 90 = 90»، والكمية أكثر من 1 تبقى مفصّلة. وأُزيل سطر «البائع» المكرّر من كل صف (التقرير كله لنفس الموظف)، وصار وسم «مسدّد» بجانب رقم الفاتورة'
   ] },
@@ -8991,23 +9000,50 @@ function renderInvIcon(idx, isReturn, number) {
 /* ================= مبيعات الموظفين (تقرير أداء كل موظف) ================= */
 let empReportMode = 'today';
 let empReportEntries = [];
+let empCustomFrom = '';
+let empCustomTo = '';
+function empFmtDate(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function empReportRange(mode) {
-  const fmt = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const fmt = empFmtDate;
   const now = new Date();
   if (mode === 'yesterday') { const y = new Date(now); y.setDate(y.getDate()-1); const s = fmt(y); return { from: s, to: s }; }
   if (mode === 'week') { const f = new Date(now); f.setDate(f.getDate()-6); return { from: fmt(f), to: fmt(now) }; }
   if (mode === 'month') { const f = new Date(now.getFullYear(), now.getMonth(), 1); return { from: fmt(f), to: fmt(now) }; }
+  if (mode === 'all') { return { from: '2000-01-01', to: fmt(now) }; }
+  if (mode === 'custom') { const f = empCustomFrom || fmt(now), t = empCustomTo || fmt(now); return (f <= t) ? { from: f, to: t } : { from: t, to: f }; }
   const s = fmt(now); return { from: s, to: s };
 }
 function openEmpReport() { empReportMode = 'today'; openModal('empReportModal'); renderEmpReport(); }
-function empReportSetPeriod(mode) { empReportMode = mode; renderEmpReport(); }
+function empReportSetPeriod(mode) {
+  empReportMode = mode;
+  if (mode === 'custom') {
+    const now = new Date();
+    if (!empCustomFrom) empCustomFrom = empFmtDate(new Date(now.getFullYear(), now.getMonth(), 1));
+    if (!empCustomTo) empCustomTo = empFmtDate(now);
+  }
+  renderEmpReport();
+}
+function empReportSetCustom(which, val) {
+  if (!val) return;
+  if (which === 'from') empCustomFrom = val; else empCustomTo = val;
+  empReportMode = 'custom';
+  renderEmpReport();
+}
 function empReportEmpName(e) { return (e && e.empName && String(e.empName).trim()) ? String(e.empName).trim() : 'غير محدد'; }
 function renderEmpReport() {
   const body = document.getElementById('empReportBody');
   if (!body) return;
-  const periods = [['today','اليوم'],['yesterday','أمس'],['week','آخر ٧ أيام'],['month','هذا الشهر']];
-  const chips = periods.map(p => `<button onclick="empReportSetPeriod('${p[0]}')" style="flex:1;border:1.5px solid ${empReportMode===p[0]?'#2563EB':'var(--border)'};background:${empReportMode===p[0]?'#2563EB':'var(--surface2)'};color:${empReportMode===p[0]?'#fff':'var(--text)'};border-radius:12px;padding:9px 4px;font-size:12.5px;font-weight:700;cursor:pointer;">${p[1]}</button>`).join('');
-  const head = `<div style="display:flex;gap:6px;margin-bottom:12px;">${chips}</div>`;
+  const periods = [['today','اليوم'],['yesterday','أمس'],['week','آخر ٧ أيام'],['month','هذا الشهر'],['all','كل الأيام'],['custom','تخصيص']];
+  const chips = periods.map(p => `<button onclick="empReportSetPeriod('${p[0]}')" style="flex:1 1 auto;min-width:70px;border:1.5px solid ${empReportMode===p[0]?'#2563EB':'var(--border)'};background:${empReportMode===p[0]?'#2563EB':'var(--surface2)'};color:${empReportMode===p[0]?'#fff':'var(--text)'};border-radius:12px;padding:9px 4px;font-size:12.5px;font-weight:700;cursor:pointer;">${p[1]}</button>`).join('');
+  const customRow = (empReportMode === 'custom')
+    ? `<div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;">
+         <span style="font-size:12px;color:var(--textMuted);font-weight:800;flex-shrink:0;">من</span>
+         <input type="date" lang="en" value="${empCustomFrom}" onchange="empReportSetCustom('from', this.value)" style="flex:1;min-width:0;height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 8px;background:var(--surface2);color:var(--text);font-size:13px;">
+         <span style="font-size:12px;color:var(--textMuted);font-weight:800;flex-shrink:0;">إلى</span>
+         <input type="date" lang="en" value="${empCustomTo}" onchange="empReportSetCustom('to', this.value)" style="flex:1;min-width:0;height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 8px;background:var(--surface2);color:var(--text);font-size:13px;">
+       </div>`
+    : '';
+  const head = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${chips}</div>` + customRow;
   body.innerHTML = head + '<div class="emptyMsg">جاري التحميل...</div>';
   const range = empReportRange(empReportMode);
   fetchArchiveRange(range.from, range.to).then(entries => {
@@ -9747,10 +9783,15 @@ function openCustomerPickerList() {
   const listEl = document.getElementById('customerPickerList');
   listEl.innerHTML = skeletonHtml();
   openModal('customerPickerModal');
-  liveOnce('data/customers').then(snap => {
+  Promise.all([liveOnce('data/customers'), liveOnce('data/debts').catch(() => null)]).then(([snap, dsnap]) => {
     const val = snap.val();
-    customerPickerAll = val ? Object.entries(val).map(([id, c]) => ({ id, name: String((c && c.name) || ''), norm: normalizeArabicName(c && c.name) })) : [];
-    customerPickerAll.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+    // عدد مرات الشراء بالدَّين لكل زبون — للترتيب بالأكثر تكرارًا في القائمة الافتراضية
+    const cnt = {};
+    const debts = (dsnap && dsnap.val) ? (dsnap.val() || {}) : {};
+    Object.values(debts).forEach(d => { if (!d) return; const k = d.customerId || d.customerName; if (k) cnt[k] = (cnt[k] || 0) + 1; });
+    customerPickerAll = val ? Object.entries(val).map(([id, c]) => ({ id, name: String((c && c.name) || ''), norm: normalizeArabicName(c && c.name), cnt: cnt[id] || 0 })) : [];
+    // الافتراضي (بدون بحث): الأكثر تكرارًا أولًا ثم أبجدي
+    customerPickerAll.sort((a, b) => (b.cnt - a.cnt) || a.name.localeCompare(b.name, 'ar'));
     filterCustomerPicker();
   }).catch(err => {
     listEl.innerHTML = '<div class="emptyMsg">تعذّر تحميل الزبائن - تأكد من النت وحاول مرة أخرى</div>';
@@ -9796,7 +9837,7 @@ function filterCustomerPicker() {
     html += `<div class="emptyMsg">لا يوجد اسم مطابق</div>`;
   } else {
     if (q) html += `<div class="cpCount">${matches.length} نتيجة</div>`;
-    html += matches.map((c, i) => `<div class="searchResultRow cpRow" style="cursor:pointer" onclick="pickCustomerFromList(${i})"><div class="n">${highlightCustomerMatch(c.name, raw)}</div></div>`).join('');
+    html += matches.map((c, i) => `<div class="searchResultRow cpRow" style="cursor:pointer" onclick="pickCustomerFromList(${i})"><div class="n">${highlightCustomerMatch(c.name, raw)}${(!raw && c.cnt) ? ' <span style="font-size:11px;color:var(--textMuted);font-weight:600;">· ' + c.cnt + ' دين</span>' : ''}</div></div>`).join('');
   }
   listEl.innerHTML = html;
   listEl.scrollTop = 0;
