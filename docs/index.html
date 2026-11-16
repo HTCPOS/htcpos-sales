@@ -5442,7 +5442,12 @@ async function camFsLoad(isRetry) {
     camFsDbg.bridgeUrl = api;
     let r;
     try { r = await fetch(api + '/play?code=' + encodeURIComponent(br.code) + '&cam=' + cam + '&t=' + stamp + '&speed=' + camSpeed, { cache: 'no-store' }); }
-    catch (e) { camFsShowError('طلب /play', 'فشل الاتصال بالجسر: ' + (e && e.message ? e.message : e)); return; }
+    catch (e) {
+      const raw = (e && e.message ? e.message : String(e));
+      const netlike = /load failed|failed to fetch|network|timed ?out|connection|refused|dns|unreachable/i.test(raw);
+      camFsShowError('طلب /play', 'فشل الوصول للجسر: ' + raw + (netlike ? '\nهذا ليس خطأ في التطبيق — النفق لم يُوصَل أصلًا. السبب غالبًا أحد التالي:\n• المكينة مطفأة أو ليست على الإنترنت\n• النفق (cloudflared) متوقف\n• رابط الجسر تغيّر ولم يُنشَر الجديد بعد\nالحل: تأكد أن المكينة تعمل وعلى النت، ثم افتح إعدادات الكاميرا ← «إعادة تشغيل الجسر».' : ''));
+      return;
+    }
     camFsDbg.playStatus = r.status;
     if (!r.ok) { camFsShowError('طلب /play', 'الجسر رفض الطلب (رمز ' + r.status + ')' + (r.status === 403 ? ' — رمز الوصول غير مطابق' : '')); return; }
     const j = await r.json();
@@ -7378,9 +7383,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.47';
-const APP_BUILD_DATE = '2026-11-15';
+const APP_VERSION = '4.27.48';
+const APP_BUILD_DATE = '2026-11-16';
 const APP_RELEASES = [
+  { v: '4.27.48', date: '2026-11-16', items: [
+    'رسالة خطأ الكاميرا «Load failed» صارت تشرح السبب والحل: المكينة مطفأة/ليست على النت، أو النفق متوقف، أو رابط الجسر تغيّر — مع إرشاد لإعادة تشغيل الجسر. (الخطأ نفسه بنية وليس في التطبيق)'
+  ] },
   { v: '4.27.47', date: '2026-11-15', items: [
     'قائمة ديون الزبائن اليومية صارت مرتّبة بالساعة (الأحدث إدراجًا أولًا) بدل المبلغ، مع إظهار وقت آخر دَّين بجانب الاسم.',
     'مُنتقي الزبون عند إدراج صنف بالدَّين صار يرتّب الزبائن بالأكثر تكرارًا في الشراء بالدَّين أولًا (مع عدد الديون بجانب الاسم) بدل الترتيب الأبجدي.'
