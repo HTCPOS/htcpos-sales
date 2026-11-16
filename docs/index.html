@@ -2367,12 +2367,30 @@ setTimeout(() => window.hideSplash(), 4000);
     </div>
     <div id="errorsStatusCard" style="border-radius:12px;padding:12px;margin:10px 0;font-size:13px;font-weight:700;line-height:1.7;"></div>
     <div id="diagCard" style="margin:10px 0;"></div>
+    <button type="button" onclick="openItemMonitor()" style="width:100%;border:1.5px dashed var(--border);background:var(--surface2);color:var(--text);border-radius:12px;padding:11px;font-size:12.5px;font-weight:800;cursor:pointer;margin:2px 0 12px;">🔍 مراقبة إضافة صنف (تشخيص)</button>
     <div id="rescuePanel"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
       <span style="font-size:12px;color:var(--textMuted);font-weight:700;">آخر الأخطاء (الأحدث فوق)</span>
       <button onclick="clearErrorLog()" style="background:#FEE2E2;color:#DC2626;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;">مسح الكل</button>
     </div>
     <div id="errorsBody"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="itemMonitorModal" onclick="if(event.target===this)closeModal('itemMonitorModal')">
+  <div class="modalSheet" style="max-height:90vh;">
+    <button class="closeM" onclick="closeModal('itemMonitorModal')"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3>مراقبة إضافة صنف</h3>
+    <div style="font-size:12.5px;color:var(--textMuted);line-height:1.9;margin-bottom:12px;background:var(--surface);border-radius:12px;padding:11px 13px;">
+      أداة تشخيص <b>قراءة فقط</b> — لا تكتب ولا تعدّل شيئًا. الهدف: نعرف بالضبط ماذا يكتب الكاشير عند إضافة صنف، لنبني الإضافة بصفر أخطاء.<br>
+      ① اضغط «التقط قبل الإضافة».<br>② أضِف الصنف من <b>الكاشير</b> نفسه.<br>③ ارجع هنا واضغط «التقط بعد الإضافة».<br>④ انسخ التقرير وأرسله لي.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button type="button" onclick="itemMonBaseline()" style="flex:1;height:46px;border:none;border-radius:12px;background:#2563EB;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">① قبل الإضافة</button>
+      <button type="button" id="itemMonCaptureBtn" onclick="itemMonCapture()" disabled style="flex:1;height:46px;border:none;border-radius:12px;background:#16A34A;color:#fff;font-weight:800;font-size:13px;cursor:pointer;opacity:.5;">② بعد الإضافة</button>
+    </div>
+    <div id="itemMonStatus" style="font-size:12.5px;font-weight:700;line-height:1.7;margin-bottom:6px;"></div>
+    <div id="itemMonReport"></div>
   </div>
 </div>
 
@@ -7383,9 +7401,12 @@ function gsSearchCashierInvoice(digits) {
 
 /* ================= حول التطبيق ================= */
 // ⚠️ مع كل تحديث للتطبيق: ارفع APP_VERSION وAPP_BUILD_DATE وأضف إصدارًا جديدًا في أول APP_RELEASES
-const APP_VERSION = '4.27.48';
+const APP_VERSION = '4.27.49';
 const APP_BUILD_DATE = '2026-11-16';
 const APP_RELEASES = [
+  { v: '4.27.49', date: '2026-11-16', items: [
+    'أداة «مراقبة إضافة صنف» (تشخيص، قراءة فقط): من نافذة الأخطاء وحالة الكاشير. تلتقط حالة الأصناف قبل وبعد إضافتك صنفًا من الكاشير، ثم تعرض تقريرًا كاملًا بالصنف المُضاف وحقوله بالضبط — لبناء ميزة الإضافة بصفر أخطاء دون تخمين. لا تكتب ولا تعدّل أي شيء'
+  ] },
   { v: '4.27.48', date: '2026-11-16', items: [
     'رسالة خطأ الكاميرا «Load failed» صارت تشرح السبب والحل: المكينة مطفأة/ليست على النت، أو النفق متوقف، أو رابط الجسر تغيّر — مع إرشاد لإعادة تشغيل الجسر. (الخطأ نفسه بنية وليس في التطبيق)'
   ] },
@@ -8736,6 +8757,63 @@ function renderDiagCard() {
     el.innerHTML = buildDiagHtml({ total: total, breakdown: breakdown });
   }).catch(() => { if (document.getElementById('diagCard')) document.getElementById('diagCard').innerHTML = buildDiagHtml({ total: 0, breakdown: [] }); });
 }
+// ======= مراقبة إضافة صنف (قراءة فقط) — لرصد ما يكتبه الكاشير عند إضافة صنف =======
+let itemMonBase = null;
+let itemMonLastReport = '';
+function itemMonMaxId(items) { let mx = 0; Object.keys(items || {}).forEach(k => { const n = parseInt(String(k).replace(/\D/g, ''), 10); if (!isNaN(n) && n > mx) mx = n; }); return mx; }
+function openItemMonitor() {
+  itemMonBase = null; itemMonLastReport = '';
+  const st = document.getElementById('itemMonStatus'); if (st) { st.textContent = ''; st.style.color = ''; }
+  const rp = document.getElementById('itemMonReport'); if (rp) rp.innerHTML = '';
+  const cb = document.getElementById('itemMonCaptureBtn'); if (cb) { cb.disabled = true; cb.style.opacity = '.5'; }
+  openModal('itemMonitorModal');
+}
+function itemMonBaseline() {
+  const st = document.getElementById('itemMonStatus');
+  if (st) { st.style.color = 'var(--textMuted)'; st.textContent = 'جارٍ الالتقاط...'; }
+  db.ref('data/items').once('value').then(snap => {
+    const items = snap.val() || {};
+    itemMonBase = { items: items, keys: new Set(Object.keys(items)), count: Object.keys(items).length, maxId: itemMonMaxId(items), at: Date.now() };
+    if (st) { st.style.color = '#15803D'; st.textContent = '✓ تم الالتقاط قبل الإضافة · ' + itemMonBase.count + ' صنف · أعلى رقم ' + itemMonBase.maxId + '.\nالآن أضِف الصنف من الكاشير ثم اضغط ②.'; }
+    const cb = document.getElementById('itemMonCaptureBtn'); if (cb) { cb.disabled = false; cb.style.opacity = '1'; }
+  }).catch(e => { if (st) { st.style.color = '#DC2626'; st.textContent = 'تعذّر الالتقاط: ' + (e && e.message ? e.message : e); } });
+}
+function itemMonFieldDiff(a, b) {
+  const out = []; const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  keys.forEach(k => { const av = a ? a[k] : undefined, bv = b ? b[k] : undefined; if (JSON.stringify(av) !== JSON.stringify(bv)) out.push(k + ': ' + JSON.stringify(av) + '→' + JSON.stringify(bv)); });
+  return out.length ? out : ['(تغيّر غير حقلي)'];
+}
+function itemMonCapture() {
+  if (!itemMonBase) return;
+  const st = document.getElementById('itemMonStatus');
+  const rp = document.getElementById('itemMonReport');
+  if (st) { st.style.color = 'var(--textMuted)'; st.textContent = 'جارٍ المقارنة...'; }
+  db.ref('data/items').once('value').then(snap => {
+    const now = snap.val() || {};
+    const nowKeys = Object.keys(now);
+    const added = nowKeys.filter(k => !itemMonBase.keys.has(k));
+    const removed = [...itemMonBase.keys].filter(k => !(k in now));
+    const modified = nowKeys.filter(k => itemMonBase.keys.has(k) && JSON.stringify(now[k]) !== JSON.stringify(itemMonBase.items[k]));
+    const lines = [];
+    lines.push('تقرير مراقبة إضافة صنف · إصدار ' + APP_VERSION);
+    lines.push('قبل: ' + itemMonBase.count + ' صنف (أعلى رقم ' + itemMonBase.maxId + ') ← بعد: ' + nowKeys.length + ' صنف (أعلى رقم ' + itemMonMaxId(now) + ')');
+    lines.push('أُضيف: ' + added.length + ' · عُدِّل: ' + modified.length + ' · حُذِف: ' + removed.length);
+    lines.push('');
+    added.forEach(k => { lines.push('■ صنف مُضاف · المفتاح: ' + k); lines.push(JSON.stringify(now[k], null, 2)); lines.push(''); });
+    if (modified.length) { lines.push('— أصناف عُدِّلت (قد يكون بسبب المزامنة) —'); modified.slice(0, 12).forEach(k => { lines.push('● ' + k + ': ' + itemMonFieldDiff(itemMonBase.items[k], now[k]).join(' · ')); }); if (modified.length > 12) lines.push('... و' + (modified.length - 12) + ' غيرها'); lines.push(''); }
+    if (removed.length) { lines.push('— أصناف حُذفت —'); removed.slice(0, 20).forEach(k => lines.push('● ' + k)); lines.push(''); }
+    if (!added.length && !modified.length && !removed.length) { lines.push('⚠ لم يُرصد أي تغيير. تأكد أنك أضفت الصنف على الكاشير وأن الكاشير متصل وزامن، ثم اضغط ② مرة أخرى.'); }
+    const sampleKey = nowKeys.find(k => !added.includes(k)) || nowKeys[0];
+    if (sampleKey) { lines.push('— عيّنة صنف موجود (مرجع الحقول) · ' + sampleKey + ' —'); lines.push(JSON.stringify(now[sampleKey], null, 2)); }
+    const report = lines.join('\n');
+    itemMonLastReport = report;
+    if (st) { st.style.color = added.length ? '#15803D' : '#B45309'; st.textContent = added.length ? ('✓ رُصد ' + added.length + ' صنف مُضاف — انسخ التقرير وأرسله لي.') : 'انتهت المقارنة — راجع التقرير بالأسفل.'; }
+    if (rp) rp.innerHTML = '<pre style="white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;background:var(--surface);border-radius:12px;padding:12px;font-size:11px;line-height:1.6;max-height:46vh;overflow:auto;margin:10px 0;">' + report.replace(/</g, '&lt;') + '</pre>'
+      + '<button type="button" onclick="itemMonCopy()" style="width:100%;height:46px;border:none;border-radius:12px;background:#2563EB;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">نسخ التقرير</button>';
+  }).catch(e => { if (st) { st.style.color = '#DC2626'; st.textContent = 'تعذّرت المقارنة: ' + (e && e.message ? e.message : e); } });
+}
+function itemMonCopy() { copyTextToClipboard(itemMonLastReport, 'تم نسخ التقرير — الصقه لي'); }
+
 function renderErrorsModal() {
   renderErrorsStatusCard();
   try { renderDiagCard(); } catch (e) {}
